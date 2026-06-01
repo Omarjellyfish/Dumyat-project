@@ -10,7 +10,7 @@ namespace DumyatRuntime
 
         [Header("Audio Sources")]
         [SerializeField] private AudioSource sfxAudioSourcePrefab;
-        [SerializeField] private AudioSource voiceAudioSourcePrefab;
+        [SerializeField] private AudioSource voiceAudioSourcePrefab;    
 
         // The Object Pool
         private IObjectPool<AudioSource> audioPool;
