@@ -12,10 +12,7 @@ namespace DumyatRuntime
         [SerializeField] private float fadeDuration = 3.0f;
 
         private void OnTriggerEnter(Collider other)
-        {
-            // In a networked game, you must verify this is the LOCAL player.
-            // If another client's avatar walks into the zone, you don't want YOUR audio to change.
-            
+        {   
                 WorldAudioManager.Singleton.PlayAmbient(zoneAmbience, fadeDuration);
         }
     }

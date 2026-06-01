@@ -4,12 +4,13 @@ using System.Collections;
 
 namespace DumyatRuntime
 {
-    public class SoundFXManager : MonoBehaviour
+    public class SoundManager : MonoBehaviour
     {
-        public static SoundFXManager Singleton { get; private set; }
+        public static SoundManager Singleton { get; private set; }
 
         [Header("Audio Sources")]
         [SerializeField] private AudioSource sfxAudioSourcePrefab;
+        [SerializeField] private AudioSource voiceAudioSourcePrefab;
 
         // The Object Pool
         private IObjectPool<AudioSource> audioPool;
@@ -82,6 +83,12 @@ namespace DumyatRuntime
             if (clips == null || clips.Length == 0) return;
 
             AudioClip clip = clips[Random.Range(0, clips.Length)];
+            PlaySoundFxAtPosition(clip, targetTransform, volume);
+        }
+
+
+        public void PlayVoiceLine(AudioClip clip, Transform targetTransform, float volume)
+        {
             PlaySoundFxAtPosition(clip, targetTransform, volume);
         }
         #endregion
