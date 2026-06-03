@@ -85,6 +85,16 @@ namespace DumyatRuntime
             PlaySoundFxAtPosition(clip, targetTransform, volume);
         }
 
+        public void PlayLoopingSoundFxAtPosition(AudioClip clip, Transform targetTransform, float volume)
+        {
+            if (clip == null) return;
+            AudioSource source = audioPool.Get();
+            source.transform.position = targetTransform.position;
+            source.clip = clip;
+            source.volume = volume;
+            source.loop = true;
+            source.Play();
+        }
 
         public void PlayVoiceLine(AudioClip clip, Transform targetTransform, float volume)
         {
