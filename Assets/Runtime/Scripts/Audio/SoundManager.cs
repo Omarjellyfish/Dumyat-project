@@ -7,7 +7,6 @@ namespace DumyatRuntime
     public class SoundManager : MonoBehaviour
     {
         public static SoundManager Singleton { get; private set; }
-
         [Header("Audio Sources")]
         [SerializeField] private AudioSource sfxAudioSourcePrefab;
         [SerializeField] private AudioSource voiceAudioSourcePrefab;    
