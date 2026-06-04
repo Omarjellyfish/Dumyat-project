@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Pool;
 using System.Collections;
-
+using UnityEngine.Audio;
 namespace DumyatRuntime
 {
     public class SoundManager : MonoBehaviour
@@ -10,7 +10,8 @@ namespace DumyatRuntime
 
         [Header("Audio Sources")]
         [SerializeField] private AudioSource sfxAudioSourcePrefab;
-        [SerializeField] private AudioSource voiceAudioSourcePrefab;    
+        [SerializeField] private AudioSource voiceAudioSourcePrefab;
+        [SerializeField] private AudioMixerGroup defaultMixerGroup; 
 
         // The Object Pool
         private IObjectPool<AudioSource> audioPool;
@@ -62,7 +63,7 @@ namespace DumyatRuntime
         #endregion
 
         #region Public API
-        public void PlaySoundFxAtPosition(AudioClip clip, Transform targetTransform, float volume)
+        public void PlaySoundFxAtPosition(AudioClip clip, Transform targetTransform, float volume, AudioMixerGroup mixerGroup = null)
         {
             if (clip == null) return;
 
@@ -72,18 +73,23 @@ namespace DumyatRuntime
             source.transform.position = targetTransform.position;
             source.clip = clip;
             source.volume = volume;
+            if (mixerGroup != null)
+                source.outputAudioMixerGroup = mixerGroup;
+            else
+                source.outputAudioMixerGroup = defaultMixerGroup;
+
             source.Play();
 
             // Start a coroutine to return it to the pool when finished
             StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
         }
 
-        public void PlayRandomSoundFxAtPosition(AudioClip[] clips, Transform targetTransform, float volume)
+        public void PlayRandomSoundFxAtPosition(AudioClip[] clips, Transform targetTransform, float volume, AudioMixerGroup mixerGroup = null)
         {
             if (clips == null || clips.Length == 0) return;
 
             AudioClip clip = clips[Random.Range(0, clips.Length)];
-            PlaySoundFxAtPosition(clip, targetTransform, volume);
+            PlaySoundFxAtPosition(clip, targetTransform, volume, mixerGroup);
         }
 
         public void PlayLoopingSoundFxAtPosition(AudioClip clip, Transform targetTransform, float volume)
