@@ -24,7 +24,8 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: 5572739bf74016d46ae1ba1495e34e91, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _USE_HORIZON_COLOR
   m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
@@ -55,12 +56,20 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Depth_Color_Fresnel_Power: 4.49
+    - _Float: 0
     - _Fresnel_Power: 12.5
-    - _Normal_Scale: 0.33
+    - _Horizon_Color_Fresnel_Power: 25.1
+    - _Normal_Scale: 5.43
+    - _Normal_Speed: 0.054
     - _Normal_Strength: 2.32
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Smoothness: 1
+    - _USE_HORIZON_COLOR: 1
+    - _USE_HSV_COLORS: 0
     m_Colors:
+    - _Horizon_Color: {r: 3.7420416, g: 4.1199756, b: 3.8656652, a: 1}
     - _Water_A: {r: 1, g: 1, b: 1, a: 0}
     - _Water_B: {r: 0, g: 0, b: 0, a: 1}
     - _Water_Depth_Color: {r: 0, g: 0.22812359, b: 0.4245283, a: 0}
