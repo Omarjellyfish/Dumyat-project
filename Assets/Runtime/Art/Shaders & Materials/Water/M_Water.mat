@@ -28,7 +28,7 @@ Material:
   - _USE_HORIZON_COLOR
   m_InvalidKeywords: []
   m_LightmapFlags: 2
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -59,7 +59,7 @@ Material:
     - _Depth_Color_Fresnel_Power: 4.49
     - _Float: 0
     - _Fresnel_Power: 12.5
-    - _Horizon_Color_Fresnel_Power: 25.1
+    - _Horizon_Color_Fresnel_Power: 10.9
     - _Normal_Scale: 5.43
     - _Normal_Speed: 0.054
     - _Normal_Strength: 2.32
@@ -69,10 +69,10 @@ Material:
     - _USE_HORIZON_COLOR: 1
     - _USE_HSV_COLORS: 0
     m_Colors:
-    - _Horizon_Color: {r: 3.7420416, g: 4.1199756, b: 3.8656652, a: 1}
+    - _Horizon_Color: {r: 0.6514058, g: 0.7156938, b: 0.68668544, a: 1}
     - _Water_A: {r: 1, g: 1, b: 1, a: 0}
     - _Water_B: {r: 0, g: 0, b: 0, a: 1}
     - _Water_Depth_Color: {r: 0, g: 0.22812359, b: 0.4245283, a: 0}
-    - _Water_Shallow_Color: {r: 0, g: 0.46712375, b: 1, a: 0}
+    - _Water_Shallow_Color: {r: 1, g: 0.32126835, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
