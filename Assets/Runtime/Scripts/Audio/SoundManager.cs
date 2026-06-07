@@ -10,10 +10,8 @@ namespace DumyatRuntime
 
         [Header("Audio Sources")]
         [SerializeField] private AudioSource sfxAudioSourcePrefab;
-        [SerializeField] private AudioSource voiceAudioSourcePrefab;
         [SerializeField] private AudioMixerGroup defaultMixerGroup; 
 
-        // The Object Pool
         private IObjectPool<AudioSource> audioPool;
 
         private void Awake()
@@ -26,22 +24,20 @@ namespace DumyatRuntime
             Singleton = this;
             DontDestroyOnLoad(gameObject);
 
-            // Initialize the pool
             audioPool = new ObjectPool<AudioSource>(
                 createFunc: CreatePooledItem,
                 actionOnGet: OnTakeFromPool,
                 actionOnRelease: OnReturnedToPool,
                 actionOnDestroy: OnDestroyPoolObject,
                 collectionCheck: false,
-                defaultCapacity: 10, // Start with 10 sources ready to go
-                maxSize: 30 // Don't let it grow infinitely
+                defaultCapacity: 10, 
+                maxSize: 30 
             );
         }
 
         #region Pooling Logic
         private AudioSource CreatePooledItem()
         {
-            // Create a new AudioSource under this manager's hierarchy
             AudioSource source = Instantiate(sfxAudioSourcePrefab, transform);
             return source;
         }
@@ -67,7 +63,6 @@ namespace DumyatRuntime
         {
             if (clip == null) return;
 
-            // Grab an available AudioSource from the pool
             AudioSource source = audioPool.Get();
 
             source.transform.position = targetTransform.position;
@@ -80,7 +75,6 @@ namespace DumyatRuntime
 
             source.Play();
 
-            // Start a coroutine to return it to the pool when finished
             StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
         }
 
@@ -103,18 +97,17 @@ namespace DumyatRuntime
             source.Play();
         }
 
-        public void PlayVoiceLine(AudioClip clip, Transform targetTransform, float volume)
+        public void PlayVoiceLine(AudioClip clip, Transform targetTransform, float volume, AudioMixerGroup mixerGroup = null)
         {
-            PlaySoundFxAtPosition(clip, targetTransform, volume);
+            PlaySoundFxAtPosition(clip, targetTransform, volume, mixerGroup);
         }
         #endregion
 
-        // Coroutine to handle returning the source safely
         private IEnumerator ReturnToPoolAfterClip(AudioSource source, float delay)
         {
             yield return new WaitForSeconds(delay);
 
-            // Only release it back if it hasn't been destroyed by scene loads
+
             if (source != null)
             {
                 source.Stop();
