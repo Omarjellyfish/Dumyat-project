@@ -4,15 +4,15 @@ using System.Collections;
 using UnityEngine.Audio;
 namespace DumyatRuntime
 {
-    public class SoundManager : MonoBehaviour
+    public class SoundManager : MonoBehaviour, IManager
     {
         public static SoundManager Singleton { get; private set; }
 
         [Header("Audio Sources")]
-        [SerializeField] private AudioSource sfxAudioSourcePrefab;
-        [SerializeField] private AudioMixerGroup defaultMixerGroup; 
+        [SerializeField] private AudioSource _sfxAudioSourcePrefab;
+        [SerializeField] private AudioMixerGroup _defaultMixerGroup;
 
-        private IObjectPool<AudioSource> audioPool;
+        private IObjectPool<AudioSource> _audioPool;
 
         private void Awake()
         {
@@ -24,21 +24,21 @@ namespace DumyatRuntime
             Singleton = this;
             DontDestroyOnLoad(gameObject);
 
-            audioPool = new ObjectPool<AudioSource>(
+            _audioPool = new ObjectPool<AudioSource>(
                 createFunc: CreatePooledItem,
                 actionOnGet: OnTakeFromPool,
                 actionOnRelease: OnReturnedToPool,
                 actionOnDestroy: OnDestroyPoolObject,
                 collectionCheck: false,
-                defaultCapacity: 10, 
-                maxSize: 30 
+                defaultCapacity: 10,
+                maxSize: 30
             );
         }
 
         #region Pooling Logic
         private AudioSource CreatePooledItem()
         {
-            AudioSource source = Instantiate(sfxAudioSourcePrefab, transform);
+            AudioSource source = Instantiate(_sfxAudioSourcePrefab, transform);
             return source;
         }
 
@@ -63,7 +63,7 @@ namespace DumyatRuntime
         {
             if (clip == null) return;
 
-            AudioSource source = audioPool.Get();
+            AudioSource source = _audioPool.Get();
 
             source.transform.position = targetTransform.position;
             source.clip = clip;
@@ -71,7 +71,7 @@ namespace DumyatRuntime
             if (mixerGroup != null)
                 source.outputAudioMixerGroup = mixerGroup;
             else
-                source.outputAudioMixerGroup = defaultMixerGroup;
+                source.outputAudioMixerGroup = _defaultMixerGroup;
 
             source.Play();
 
@@ -89,7 +89,7 @@ namespace DumyatRuntime
         public void PlayLoopingSoundFxAtPosition(AudioClip clip, Transform targetTransform, float volume)
         {
             if (clip == null) return;
-            AudioSource source = audioPool.Get();
+            AudioSource source = _audioPool.Get();
             source.transform.position = targetTransform.position;
             source.clip = clip;
             source.volume = volume;
@@ -112,7 +112,7 @@ namespace DumyatRuntime
             {
                 source.Stop();
                 source.clip = null;
-                audioPool.Release(source);
+                _audioPool.Release(source);
             }
         }
     }
