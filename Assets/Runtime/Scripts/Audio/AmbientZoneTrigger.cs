@@ -13,7 +13,10 @@ namespace DumyatRuntime
 
         private void OnTriggerEnter(Collider other)
         {   
+
+            if(other.CompareTag("Player"))
                 WorldAudioManager.Singleton.PlayAmbient(zoneAmbience, fadeDuration);
+             WorldAudioManager.Singleton.DoesExist();
         }
     }
 }

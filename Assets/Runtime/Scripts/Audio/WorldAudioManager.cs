@@ -72,6 +72,11 @@ namespace DumyatRuntime
             currentAmbientFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
             activeAmbientSource = fadingInSource;
         }
+
+        public void DoesExist()
+        {
+            Debug.Log("WorldAudioManager exists and is accessible!");
+        }
         #endregion
 
         // Generic crossfade coroutine used by both Music and Ambient systems
