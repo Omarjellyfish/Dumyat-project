@@ -3,26 +3,26 @@ using UnityEngine;
 
 namespace DumyatRuntime
 {
-    public class WorldAudioManager : MonoBehaviour
+    public class WorldAudioManager : MonoBehaviour,IManager
     {
         public static WorldAudioManager Singleton { get; private set; }
 
         [Header("Music Sources (A/B Setup)")]
-        [SerializeField] private AudioSource musicSourceA;
-        [SerializeField] private AudioSource musicSourceB;
+        [SerializeField] private AudioSource _musicSourceA;
+        [SerializeField] private AudioSource _musicSourceB;
 
         [Header("Ambient Sources (A/B Setup)")]
-        [SerializeField] private AudioSource ambientSourceA;
-        [SerializeField] private AudioSource ambientSourceB;
+        [SerializeField] private AudioSource _ambientSourceA;
+        [SerializeField] private AudioSource _ambientSourceB;
 
         [Header("Global Settings")]
         [SerializeField] private float defaultFadeDuration = 2.0f;
 
-        private AudioSource activeMusicSource;
-        private AudioSource activeAmbientSource;
+        private AudioSource _activeMusicSource;
+        private AudioSource _activeAmbientSource;
 
-        private Coroutine currentMusicFadeCoroutine;
-        private Coroutine currentAmbientFadeCoroutine;
+        private Coroutine _currentMusicFadeCoroutine;
+        private Coroutine _currentAmbientFadeCoroutine;
 
         private void Awake()
         {
@@ -34,24 +34,24 @@ namespace DumyatRuntime
             Singleton = this;
             DontDestroyOnLoad(gameObject);
 
-            activeMusicSource = musicSourceA;
-            activeAmbientSource = ambientSourceA;
+            _activeMusicSource = _musicSourceA;
+            _activeAmbientSource = _ambientSourceA;
         }
 
         #region Music Logic
         public void PlayMusic(AudioClip newClip, float fadeDuration = -1f)
         {
             if (newClip == null) return;
-            if (activeMusicSource.clip == newClip && activeMusicSource.isPlaying) return;
+            if (_activeMusicSource.clip == newClip && _activeMusicSource.isPlaying) return;
 
             float duration = fadeDuration < 0 ? defaultFadeDuration : fadeDuration;
-            AudioSource fadingInSource = (activeMusicSource == musicSourceA) ? musicSourceB : musicSourceA;
-            AudioSource fadingOutSource = activeMusicSource;
+            AudioSource fadingInSource = (_activeMusicSource == _musicSourceA) ? _musicSourceB : _musicSourceA;
+            AudioSource fadingOutSource = _activeMusicSource;
 
-            if (currentMusicFadeCoroutine != null) StopCoroutine(currentMusicFadeCoroutine);
+            if (_currentMusicFadeCoroutine != null) StopCoroutine(_currentMusicFadeCoroutine);
 
-            currentMusicFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
-            activeMusicSource = fadingInSource;
+            _currentMusicFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
+            _activeMusicSource = fadingInSource;
         }
         #endregion
 
@@ -61,16 +61,20 @@ namespace DumyatRuntime
             if (newClip == null) return;
 
             // This check prevents audio stuttering if the player walks back and forth across a zone border
-            if (activeAmbientSource.clip == newClip && activeAmbientSource.isPlaying) return;
+            if (_activeAmbientSource.clip == newClip && _activeAmbientSource.isPlaying) return;
 
             float duration = fadeDuration < 0 ? defaultFadeDuration : fadeDuration;
-            AudioSource fadingInSource = (activeAmbientSource == ambientSourceA) ? ambientSourceB : ambientSourceA;
-            AudioSource fadingOutSource = activeAmbientSource;
+            AudioSource fadingInSource = (_activeAmbientSource == _ambientSourceA) ? _ambientSourceB : _ambientSourceA;
+            AudioSource fadingOutSource = _activeAmbientSource;
+            if (_currentAmbientFadeCoroutine != null) StopCoroutine(_currentAmbientFadeCoroutine);
 
-            if (currentAmbientFadeCoroutine != null) StopCoroutine(currentAmbientFadeCoroutine);
+            _currentAmbientFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
+            _activeAmbientSource = fadingInSource;
+        }
 
-            currentAmbientFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
-            activeAmbientSource = fadingInSource;
+        public void DoesExist()
+        {
+            Debug.Log("WorldAudioManager exists and is accessible!");
         }
         #endregion
 

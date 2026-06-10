@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1899706537936452284}
   - component: {fileID: 6360802494237510531}
   m_Layer: 0
-  m_Name: SFXAudioManager
+  m_Name: SoundManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,3 +45,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SoundFXManager
   sfxAudioSourcePrefab: {fileID: 5438773861651403346, guid: 6a06569637663b540bd7231b7a853c15, type: 3}
+  defaultMixerGroup: {fileID: 24300002, guid: 233ff8984c06c4f49b2c465831a77077, type: 2}
