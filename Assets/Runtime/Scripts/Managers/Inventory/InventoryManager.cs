@@ -23,7 +23,7 @@ namespace DumyatRuntime
         [Header("Global Hooks")]
         public static InventoryManager Singleton { get; private set; }
 
-        // Broadcasts the item state whenever modifying quantities (great for UI updates)
+        // Broadcasts the item state whenever modifying quantities 
         public static Action<InventoryItem> OnInventoryChanged;
 
 
