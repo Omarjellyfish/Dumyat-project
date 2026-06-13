@@ -1,21 +1,29 @@
 using System;
+using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DumyatRuntime
 {
     [Serializable]
     public class InventoryItem
     {
-        public string itemID;
+        [FormerlySerializedAs("itemID")]
+        [SerializeField] private string _itemID;
 
-        public int quantity;
+        [FormerlySerializedAs("quantity")]
+        [SerializeField] private int _quantity;
 
-
+        public string ItemID => _itemID;
+        public int Quantity 
+        { 
+            get => _quantity; 
+            set => _quantity = value; 
+        }
 
         public InventoryItem(string id, int amount)
         {
-            itemID = id;
-            quantity = amount;
-            
+            _itemID = id;
+            _quantity = amount;
         }
     }
 }

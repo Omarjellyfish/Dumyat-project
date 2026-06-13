@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DumyatRuntime
 {
@@ -15,10 +16,10 @@ namespace DumyatRuntime
     {
         [Header("References")]
         [Tooltip("Contains all items and their individaul item data,  Assign your central database asset here.")]
-        public ItemDatabase itemDatabase; //contains item data which has the 2dsprite, the prefab, and more
+        [SerializeField] private ItemDatabase _itemDatabase; 
 
         [Header("Runtime State")]
-        public InventorySaveData currentInventory = new InventorySaveData();
+        [SerializeField] private InventorySaveData _currentInventory = new InventorySaveData();
 
         [Header("Global Hooks")]
         public static InventoryManager Singleton { get; private set; }
@@ -26,10 +27,12 @@ namespace DumyatRuntime
         // Broadcasts the item state whenever modifying quantities 
         public static Action<InventoryItem> OnInventoryChanged;
 
-
-        public static Action<string, int> OnItemDropped;
+        // Broadcasts the item data and amount dropped
+        public static Action<ItemData, int> OnItemDropped;
 
         private const string SAVE_FILE_NAME = "/inventory_save.json";
+
+        public IReadOnlyList<InventoryItem> CurrentItems => _currentInventory.items;
 
         private void Awake()
         {
@@ -41,36 +44,36 @@ namespace DumyatRuntime
             Singleton = this;
             DontDestroyOnLoad(gameObject);
 
-            LoadInventory();
+            _currentInventory = InventorySaveSystem.Load();
         }
 
         public void AddItemToInventory(string idToAdd, int amount)
         {
-            if (itemDatabase == null)
+            if (_itemDatabase == null)
             {
                 Debug.LogError("InventoryManager: Database reference is unassigned!");
                 return;
             }
 
-            ItemData blueprint = itemDatabase.GetItemByID(idToAdd);
+            ItemData blueprint = _itemDatabase.GetItemByID(idToAdd);
             if (blueprint == null) return;
 
-            InventoryItem existingItem = currentInventory.items.Find(item => item.itemID == idToAdd);
+            InventoryItem existingItem = _currentInventory.items.Find(item => item.ItemID == idToAdd);
 
             if (existingItem != null)
             {
-                existingItem.quantity += amount;
+                existingItem.Quantity += amount;
                 OnInventoryChanged?.Invoke(existingItem);
             }
             else
             {
                 InventoryItem newItem = new InventoryItem(idToAdd, amount);
-                currentInventory.items.Add(newItem);
+                _currentInventory.items.Add(newItem);
                 OnInventoryChanged?.Invoke(newItem);
             }
 
-            Debug.Log($"Inventory Data: Appended {amount}x '{blueprint.displayName}'.");
-            SaveInventory();
+            Debug.Log($"Inventory Data: Appended {amount}x '{blueprint.DisplayName}'.");
+            InventorySaveSystem.Save(_currentInventory);
         }
 
         /// <summary>
@@ -78,54 +81,29 @@ namespace DumyatRuntime
         /// </summary>
         public void DropItem(string idToDrop, int amountToDrop = 1)
         {
-            InventoryItem item = currentInventory.items.Find(i => i.itemID == idToDrop);
+            InventoryItem item = _currentInventory.items.Find(i => i.ItemID == idToDrop);
 
-            if (item == null || item.quantity < amountToDrop)
+            if (item == null || item.Quantity < amountToDrop)
             {
                 Debug.LogWarning($"Inventory Data: Unable to drop {amountToDrop}x '{idToDrop}'. Insufficient quantity.");
                 return;
             }
 
-            item.quantity -= amountToDrop;
+            item.Quantity -= amountToDrop;
 
-            if (item.quantity <= 0)
+            if (item.Quantity <= 0)
             {
-                currentInventory.items.Remove(item);
+                _currentInventory.items.Remove(item);
             }
 
-            OnItemDropped?.Invoke(idToDrop, amountToDrop);
+            ItemData blueprint = _itemDatabase.GetItemByID(idToDrop);
+            if (blueprint != null)
+            {
+                OnItemDropped?.Invoke(blueprint, amountToDrop);
+            }
 
             OnInventoryChanged?.Invoke(item);
-            SaveInventory();
+            InventorySaveSystem.Save(_currentInventory);
         }
-
-        #region Persistence Layer (JSON File Serialization)
-
-        public void SaveInventory()
-        {
-            string json = JsonUtility.ToJson(currentInventory, true);
-            string savePath = Application.persistentDataPath + SAVE_FILE_NAME;
-
-            File.WriteAllText(savePath, json);
-            Debug.Log($"Inventory Data Saved: {savePath}");
-        }
-
-        public void LoadInventory()
-        {
-            string savePath = Application.persistentDataPath + SAVE_FILE_NAME;
-
-            if (File.Exists(savePath))
-            {
-                string json = File.ReadAllText(savePath);
-                JsonUtility.FromJsonOverwrite(json, currentInventory);
-                Debug.Log("Inventory Data Loaded.");
-            }
-            else
-            {
-                Debug.Log("No existing save file located. Initializing an empty player inventory.");
-            }
-        }
-
-        #endregion
     }
 }

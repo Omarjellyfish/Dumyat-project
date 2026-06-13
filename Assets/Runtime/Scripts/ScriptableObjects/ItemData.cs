@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DumyatRuntime
 {
@@ -6,13 +7,26 @@ namespace DumyatRuntime
     public class ItemData : ScriptableObject
     {
         [Header("Core Info")]
-        public string itemID; 
-        public string displayName;
-        [TextArea] public string description;
+        [FormerlySerializedAs("itemID")]
+        [SerializeField] private string _itemID; 
+
+        [FormerlySerializedAs("displayName")]
+        [SerializeField] private string _displayName;
+
+        [FormerlySerializedAs("description")]
+        [TextArea] [SerializeField] private string _description;
 
         [Header("Graphics")]
-        public Sprite icon;
-        public GameObject dropPrefab; 
+        [FormerlySerializedAs("icon")]
+        [SerializeField] private Sprite _icon;
 
+        [FormerlySerializedAs("dropPrefab")]
+        [SerializeField] private GameObject _dropPrefab; 
+
+        public string ItemID => _itemID;
+        public string DisplayName => _displayName;
+        public string Description => _description;
+        public Sprite Icon => _icon;
+        public GameObject DropPrefab => _dropPrefab;
     }
 }
