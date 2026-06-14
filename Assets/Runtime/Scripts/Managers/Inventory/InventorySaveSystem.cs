@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -7,13 +8,17 @@ namespace DumyatRuntime
     {
         private const string SAVE_FILE_NAME = "/inventory_save.json";
 
-        public static void Save(InventorySaveData data)
+        public static async void SaveAsync(InventorySaveData data)
         {
             string json = JsonUtility.ToJson(data, true);
             string savePath = Application.persistentDataPath + SAVE_FILE_NAME;
 
-            File.WriteAllText(savePath, json);
-            Debug.Log($"Inventory Data Saved: {savePath}");
+            await Task.Run(() =>
+            {
+                File.WriteAllText(savePath, json);
+            });
+
+            Debug.Log($"Inventory Data Saved Asynchronously: {savePath}");
         }
 
         public static InventorySaveData Load()

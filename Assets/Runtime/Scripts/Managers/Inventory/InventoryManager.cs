@@ -24,15 +24,13 @@ namespace DumyatRuntime
         [Header("Global Hooks")]
         public static InventoryManager Singleton { get; private set; }
 
-        // Broadcasts the item state whenever modifying quantities 
         public static Action<InventoryItem> OnInventoryChanged;
-
-        // Broadcasts the item data and amount dropped
         public static Action<ItemData, int> OnItemDropped;
 
         private const string SAVE_FILE_NAME = "/inventory_save.json";
 
         public IReadOnlyList<InventoryItem> CurrentItems => _currentInventory.items;
+        public ItemDatabase ItemDatabase => _itemDatabase;
 
         private void Awake()
         {
@@ -73,7 +71,7 @@ namespace DumyatRuntime
             }
 
             Debug.Log($"Inventory Data: Appended {amount}x '{blueprint.DisplayName}'.");
-            InventorySaveSystem.Save(_currentInventory);
+            InventorySaveSystem.SaveAsync(_currentInventory);
         }
 
         /// <summary>
@@ -103,7 +101,7 @@ namespace DumyatRuntime
             }
 
             OnInventoryChanged?.Invoke(item);
-            InventorySaveSystem.Save(_currentInventory);
+            InventorySaveSystem.SaveAsync(_currentInventory);
         }
     }
 }

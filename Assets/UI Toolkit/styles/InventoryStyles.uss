@@ -1,0 +1,87 @@
+/* Inventory Main Screen Styles */
+.inventory-panel {
+    background-color: rgba(20, 20, 20, 0.95);
+    border-radius: 12px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.1);
+    padding: 24px;
+    width: 100%;
+    height: 100%;
+}
+
+.inventory-title {
+    font-size: 28px;
+    color: #FFFFFF;
+    -unity-font-style: bold;
+    align-self: center;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+}
+
+.inventory-scrollview {
+    flex-grow: 1;
+}
+
+/* Inventory Slot Styles */
+.slot-row {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(40, 40, 40, 0.7);
+    margin-bottom: 12px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.05);
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.slot-row:hover {
+    background-color: rgba(60, 60, 60, 0.85);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.slot-icon {
+    width: 50px;
+    height: 50px;
+    margin-right: 18px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    background-size: contain;
+}
+
+.slot-name {
+    flex-grow: 1;
+    color: #E0E0E0;
+    font-size: 18px;
+    -unity-font-style: bold;
+}
+
+.slot-quantity {
+    margin-right: 24px;
+    color: #FFD54F;
+    font-size: 20px;
+    -unity-font-style: bold;
+}
+
+.slot-drop-btn {
+    background-color: #D32F2F;
+    color: #FFFFFF;
+    font-size: 14px;
+    border-radius: 6px;
+    padding: 8px 16px;
+    border-width: 0;
+    -unity-font-style: bold;
+    transition-property: background-color, scale;
+    transition-duration: 0.1s;
+}
+
+.slot-drop-btn:hover {
+    background-color: #F44336;
+    scale: 1.05;
+}
+
+.slot-drop-btn:active {
+    background-color: #B71C1C;
+    scale: 0.95;
+}
