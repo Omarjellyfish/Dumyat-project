@@ -9,18 +9,15 @@ namespace DumyatRuntime
     {
         private const string SAVE_FILE_NAME = "/dumyat_master_save.json";
 
-        // This is the active state of all saved data in memory
         public static GameSaveData CurrentSaveData { get; private set; }
 
         public static async void SaveGameAsync()
         {
             if (CurrentSaveData == null) return;
 
-            // Serialize on the main thread to ensure Unity safety
             string json = JsonUtility.ToJson(CurrentSaveData, true);
             string savePath = Application.persistentDataPath + SAVE_FILE_NAME;
 
-            // Background file writing
             await Task.Run(() =>
             {
                 File.WriteAllText(savePath, json);

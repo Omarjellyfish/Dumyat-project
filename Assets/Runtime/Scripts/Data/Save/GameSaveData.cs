@@ -7,8 +7,7 @@ namespace DumyatRuntime
     {
         public InventorySaveData inventoryData = new InventorySaveData();
 
-        // Future expansions will go here!
-        // public PlayerSaveData playerData = new PlayerSaveData();
-        // public QuestSaveData questData = new QuestSaveData();
+        public QuestSaveData questData = new QuestSaveData();
+        public PersistenceSaveData persistenceData = new PersistenceSaveData();
     }
 }
