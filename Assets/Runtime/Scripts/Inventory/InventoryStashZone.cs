@@ -22,8 +22,14 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-          
-
+            if (_inventoryUI == null)
+            {
+                _inventoryUI = FindFirstObjectByType<InventoryToolkitUI>();
+                if (_inventoryUI == null)
+                {
+                    Debug.LogWarning("InventoryStashZone: Could not find InventoryToolkitUI in the scene automatically!");
+                }
+            }
 
             if (TryGetComponent<XRGrabInteractable>(out _interactable))
             {
@@ -51,7 +57,7 @@ namespace DumyatRuntime
         private void OnStashGrabbed(SelectEnterEventArgs args)
         {
             Debug.Log("InventoryStashZone: Stash was grabbed!");
-            
+
             if (_inventoryUI != null)
             {
                 _inventoryUI.OpenUI();
@@ -66,7 +72,7 @@ namespace DumyatRuntime
         private void OnStashReleased(SelectExitEventArgs args)
         {
             Debug.Log("InventoryStashZone: Stash was released.");
-            
+
             if (_inventoryUI != null)
             {
                 _inventoryUI.CloseUI();
@@ -111,7 +117,7 @@ namespace DumyatRuntime
 
         private void OnItemDroppedInZone(SelectExitEventArgs args)
         {
-            if (args.interactableObject is XRGrabInteractable grabInteractable && 
+            if (args.interactableObject is XRGrabInteractable grabInteractable &&
                 grabInteractable.TryGetComponent<ItemPickup>(out var pickup))
             {
                 grabInteractable.selectExited.RemoveListener(OnItemDroppedInZone);
