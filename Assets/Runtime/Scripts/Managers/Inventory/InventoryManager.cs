@@ -6,28 +6,20 @@ using UnityEngine.Serialization;
 
 namespace DumyatRuntime
 {
-    [Serializable]
-    public class InventorySaveData
-    {
-        public List<InventoryItem> items = new List<InventoryItem>();
-    }
-
     public class InventoryManager : MonoBehaviour
     {
         [Header("References")]
         [Tooltip("Contains all items and their individaul item data,  Assign your central database asset here.")]
-        [SerializeField] private ItemDatabase _itemDatabase; 
+        [SerializeField] private ItemDatabase _itemDatabase;
 
         [Header("Runtime State")]
-        [SerializeField] private InventorySaveData _currentInventory = new InventorySaveData();
+        private InventorySaveData _currentInventory;
 
         [Header("Global Hooks")]
         public static InventoryManager Singleton { get; private set; }
 
         public static Action<InventoryItem> OnInventoryChanged;
         public static Action<ItemData, int> OnItemDropped;
-
-        private const string SAVE_FILE_NAME = "/inventory_save.json";
 
         public IReadOnlyList<InventoryItem> CurrentItems => _currentInventory.items;
         public ItemDatabase ItemDatabase => _itemDatabase;
@@ -42,7 +34,14 @@ namespace DumyatRuntime
             Singleton = this;
             DontDestroyOnLoad(gameObject);
 
-            _currentInventory = InventorySaveSystem.Load();
+            // Ensure the master save is loaded first
+            if (SaveManager.CurrentSaveData == null)
+            {
+                SaveManager.LoadGame();
+            }
+
+            // Link the manager's local state to the master save data
+            _currentInventory = SaveManager.CurrentSaveData.inventoryData;
         }
 
         public void AddItemToInventory(string idToAdd, int amount)
@@ -71,7 +70,7 @@ namespace DumyatRuntime
             }
 
             Debug.Log($"Inventory Data: Appended {amount}x '{blueprint.DisplayName}'.");
-            InventorySaveSystem.SaveAsync(_currentInventory);
+            SaveManager.SaveGameAsync();
         }
 
         /// <summary>
@@ -101,7 +100,7 @@ namespace DumyatRuntime
             }
 
             OnInventoryChanged?.Invoke(item);
-            InventorySaveSystem.SaveAsync(_currentInventory);
+            SaveManager.SaveGameAsync();
         }
     }
 }

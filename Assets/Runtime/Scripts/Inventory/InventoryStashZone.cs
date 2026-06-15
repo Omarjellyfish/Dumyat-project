@@ -1,8 +1,8 @@
 using UnityEngine;
-#if XR_INTERACTION_TOOLKIT
-using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
-#endif
+using UnityEngine.XR.Interaction.Toolkit;
+
+
 
 namespace DumyatRuntime
 {
@@ -16,42 +16,38 @@ namespace DumyatRuntime
         [SerializeField] private AudioClip _stashSound;
         [SerializeField] private AudioSource _audioSource;
 
-#if XR_INTERACTION_TOOLKIT
-        private XRBaseInteractable _interactable;
-#endif
+
+        private XRGrabInteractable _interactable;
+
 
         private void Awake()
         {
-            if (TryGetComponent<Collider>(out var col))
-            {
-                col.isTrigger = true;
-            }
+          
 
-#if XR_INTERACTION_TOOLKIT
-            if (TryGetComponent<XRBaseInteractable>(out _interactable))
+
+            if (TryGetComponent<XRGrabInteractable>(out _interactable))
             {
                 _interactable.selectEntered.AddListener(OnStashGrabbed);
                 _interactable.selectExited.AddListener(OnStashReleased);
             }
             else
             {
-                Debug.LogError("InventoryStashZone: Missing XR Simple Interactable component! Please add an 'XR Simple Interactable' to this GameObject so it can be grabbed.");
+                Debug.LogError("InventoryStashZone: Missing XR Grab Interactable component! Please add an 'XR Grab Interactable' to this GameObject so it can be grabbed.");
             }
-#endif
+
         }
 
         private void OnDestroy()
         {
-#if XR_INTERACTION_TOOLKIT
+
             if (_interactable != null)
             {
                 _interactable.selectEntered.RemoveListener(OnStashGrabbed);
                 _interactable.selectExited.RemoveListener(OnStashReleased);
             }
-#endif
+
         }
 
-#if XR_INTERACTION_TOOLKIT
         private void OnStashGrabbed(SelectEnterEventArgs args)
         {
             Debug.Log("InventoryStashZone: Stash was grabbed!");
@@ -76,13 +72,11 @@ namespace DumyatRuntime
                 _inventoryUI.CloseUI();
             }
         }
-#endif
 
         private void OnTriggerEnter(Collider other)
         {
             if (other.TryGetComponent<ItemPickup>(out var pickup))
             {
-#if XR_INTERACTION_TOOLKIT
                 if (pickup.TryGetComponent<XRGrabInteractable>(out var grabInteractable))
                 {
                     if (!grabInteractable.isSelected)
@@ -98,23 +92,23 @@ namespace DumyatRuntime
                 {
                     StashItem(pickup);
                 }
-#else
+
                 StashItem(pickup);
-#endif
+
             }
         }
 
         private void OnTriggerExit(Collider other)
         {
-#if XR_INTERACTION_TOOLKIT
+
             if (other.TryGetComponent<XRGrabInteractable>(out var grabInteractable))
             {
                 grabInteractable.selectExited.RemoveListener(OnItemDroppedInZone);
             }
-#endif
+
         }
 
-#if XR_INTERACTION_TOOLKIT
+
         private void OnItemDroppedInZone(SelectExitEventArgs args)
         {
             if (args.interactableObject is XRGrabInteractable grabInteractable && 
@@ -124,7 +118,7 @@ namespace DumyatRuntime
                 StashItem(pickup);
             }
         }
-#endif
+
 
         private void StashItem(ItemPickup pickup)
         {

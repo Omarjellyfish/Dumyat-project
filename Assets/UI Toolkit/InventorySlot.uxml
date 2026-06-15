@@ -1,9 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:Style src="project://database/Assets/UI%20Toolkit/styles/InventoryStyles.uss" />
-    <ui:VisualElement class="slot-row">
-        <ui:VisualElement name="ItemIcon" class="slot-icon" />
-        <ui:Label name="ItemName" text="Item Name" class="slot-name" />
-        <ui:Label name="ItemQuantity" text="x0" class="slot-quantity" />
-        <ui:Button name="DropButton" text="Drop" class="slot-drop-btn" />
-    </ui:VisualElement>
-</ui:UXML>
