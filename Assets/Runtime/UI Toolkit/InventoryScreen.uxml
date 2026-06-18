@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/InventoryStyles.uss" />
+    <ui:VisualElement name="MainCanvas" class="inventory-panel">
+        <ui:Label text="INVENTORY" class="inventory-title" />
+        <ui:ScrollView name="SlotContainer" class="inventory-scrollview" />
+    </ui:VisualElement>
+</ui:UXML>
