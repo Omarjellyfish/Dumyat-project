@@ -6,24 +6,22 @@ namespace DumyatRuntime
     {
         [Header("Detection Settings")]
         [SerializeField] private LayerMask _woodLayer;
-        [SerializeField] private float _drawInterval = 0.05f;
         [SerializeField] private float _rayDistance = 0.05f;
-        [SerializeField] private DecalPainter _decalPainter;
-        Vector3 _lastDrawPosition;
-        private float _lastDrawTime;
+        [SerializeField] private PaintBrush _paintBrush;
+        [SerializeField] private Color _penColor = Color.black;
+        [SerializeField] private float _brushSize = 0.02f;
 
         private void Update()
         {
-            if (Time.time - _lastDrawTime < _drawInterval) return;
-            if (Physics.Raycast(transform.position, -transform.forward, out RaycastHit hit, _rayDistance, _woodLayer))
+            if (Physics.Raycast(transform.position, -transform.forward,
+                out RaycastHit hit, _rayDistance, _woodLayer))
             {
-                if (Vector3.Distance(_lastDrawPosition, hit.point) < 0.005f)
-                    return;
-                _lastDrawPosition = hit.point;
-                _lastDrawTime = Time.time;
-                _decalPainter.SpawnDecal(hit.point, hit.normal);
+                WoodPaintSurface wood = hit.collider.GetComponent<WoodPaintSurface>();
+                if (wood != null)
+                    _paintBrush.PaintAt(wood, hit.textureCoord, _penColor, _brushSize);
             }
         }
+
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.red;
