@@ -1,0 +1,7 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/PerformanceMonitorStyle.uss?fileID=7433441132597879392&amp;guid=612fc3e65f000d741beb3068c1070fee&amp;type=3#PerformanceMonitorStyle"/>
+    <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
+        <ui:Label text="Label" name="row-title" class="text row-text row-title row"/>
+        <ui:Label text="Label" name="row-value" class="text row"/>
+    </ui:VisualElement>
+</ui:UXML>
