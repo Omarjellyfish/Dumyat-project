@@ -38,7 +38,7 @@ namespace DumyatRuntime
             _lineRenderer.startWidth = _lineWidth;
             _lineRenderer.endWidth = _lineWidth;
             _lineRenderer.positionCount = 2;
-            _lineRenderer.enabled = false; 
+            _lineRenderer.enabled = false;
         }
 
         private void StartLineDraw(ActivateEventArgs args)
@@ -49,7 +49,7 @@ namespace DumyatRuntime
 
         private void EndLineDraw(DeactivateEventArgs args)
         {
-            _penTip.ExitLineDrawingMode() ;
+            _penTip.FinalizeLine();
             _lineRenderer.enabled = false;
         }
 
