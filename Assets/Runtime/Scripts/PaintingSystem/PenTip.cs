@@ -11,7 +11,7 @@ namespace DumyatRuntime
         [SerializeField] private LineDrawing _lineDraw;
         [SerializeField] private Color _penColor = Color.black;
         [SerializeField] private float _brushSize = 0.02f;
-[SerializeField] private float _brushSizeLine = 0.02f;
+        [SerializeField] private float _brushSizeLine = 0.02f;
         private float _lastDrawnTime;
         [SerializeField] private float _timeInterval = 0.01f;
 
