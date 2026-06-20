@@ -88,8 +88,7 @@ namespace DumyatRuntime
                 }
 
                 // --- Calculate Physical Bounds (Tier 2 & 3) ---
-                // We use the physical bounding box to determine position and size.
-                // This makes the system 100% immune to weird model pivots or joint anchor variations!
+                // Uses oriented local bounds (rotation-stable) instead of world AABB
                 Bounds localBounds = CalculateStructuralLocalBounds(partObj, rootBody.transform);
 
                 // --- TIER 2: SPATIAL MATH (Position & Rotation Match) ---
@@ -107,10 +106,17 @@ namespace DumyatRuntime
                     PartBlueprint blueprint = unfulfilledSlots[i];
 
                     float posError = Vector3.Distance(localPos, blueprint.ExpectedLocalPosition);
-                    float rotError = Quaternion.Angle(localRot, blueprint.ExpectedLocalRotation);
 
-                    // Candidate must be within position and rotation tolerances
-                    if (posError <= blueprint.PositionTolerance && rotError <= blueprint.RotationTolerance)
+                    // If the slot ignores rotation, treat rotation error as 0 (always passes)
+                    float rotError = blueprint.IgnoreRotation
+                        ? 0f
+                        : Quaternion.Angle(localRot, blueprint.ExpectedLocalRotation);
+
+                    // Candidate must be within position tolerance
+                    // Rotation tolerance is only checked when IgnoreRotation is false
+                    bool rotationPasses = blueprint.IgnoreRotation || rotError <= blueprint.RotationTolerance;
+
+                    if (posError <= blueprint.PositionTolerance && rotationPasses)
                     {
                         if (posError < minPosError)
                         {
@@ -142,7 +148,7 @@ namespace DumyatRuntime
                     {
                         failedParts.Add(new PartFailure(
                             partObj,
-                            FailReason.Oversized, // Or Undersized based on details
+                            FailReason.Oversized,
                             $"'{partObj.name}' does not fit slot '{blueprint.SlotName}'. " +
                             $"Size: ({localSize.x:F3}, {localSize.y:F3}, {localSize.z:F3}) " +
                             $"Expected range: ({minSize.x:F3}, {minSize.y:F3}, {minSize.z:F3}) " +
@@ -154,7 +160,9 @@ namespace DumyatRuntime
                     {
                         // All 3 tiers passed — calculate quality score
                         float posScore = 1f - (posError / blueprint.PositionTolerance);
-                        float rotScore = 1f - (rotError / blueprint.RotationTolerance);
+                        float rotScore = blueprint.IgnoreRotation
+                            ? 1f
+                            : 1f - (rotError / blueprint.RotationTolerance);
                         totalScore += (posScore + rotScore) / 2f;
                         matchedCount++;
 
@@ -173,10 +181,10 @@ namespace DumyatRuntime
                     foreach (var slot in unfulfilledSlots)
                     {
                         float pErr = Vector3.Distance(localPos, slot.ExpectedLocalPosition);
-                        float rErr = Quaternion.Angle(localRot, slot.ExpectedLocalRotation);
+                        float rErr = slot.IgnoreRotation ? 0f : Quaternion.Angle(localRot, slot.ExpectedLocalRotation);
                         Debug.Log($"<color=cyan>  vs slot '{slot.SlotName}': " +
                                   $"expectedPos={slot.ExpectedLocalPosition} posError={pErr:F4} (tol={slot.PositionTolerance}) | " +
-                                  $"rotError={rErr:F1}° (tol={slot.RotationTolerance})</color>");
+                                  $"rotError={rErr:F1}° (tol={slot.RotationTolerance}) ignoreRot={slot.IgnoreRotation}</color>");
                     }
                     // --- END DEBUG ---
 
@@ -235,7 +243,8 @@ namespace DumyatRuntime
 
         /// <summary>
         /// Calculates the physical bounding box of a part in the root's unscaled local space.
-        /// This ignores the root's scale so that measurements remain in actual world meters.
+        /// Uses each collider's own local bounds (rotation-stable) instead of the world-axis-aligned
+        /// Collider.bounds, so that rotating the entire assembly does not change the measured result.
         /// </summary>
         private static Bounds CalculateStructuralLocalBounds(GameObject part, Transform rootTransform)
         {
@@ -253,21 +262,26 @@ namespace DumyatRuntime
                 // Skip colliders on decoration objects
                 if (col.GetComponent<IDecoration>() != null) continue;
 
-                Vector3[] corners = GetBoundsCorners(col.bounds);
+                // Get the collider's own local bounds (these never change with world rotation)
+                Bounds colliderLocalBounds = GetColliderLocalBounds(col);
+                Vector3[] corners = GetBoundsCorners(colliderLocalBounds);
+
+                // Transform: collider-local → world → root-local (unscaled)
+                Matrix4x4 colliderToWorld = col.transform.localToWorldMatrix;
 
                 foreach (Vector3 corner in corners)
                 {
-                    // Transform the world corner into the root's unscaled local space
-                    Vector3 localCorner = worldToUnscaledLocal.MultiplyPoint3x4(corner);
+                    Vector3 worldCorner = colliderToWorld.MultiplyPoint3x4(corner);
+                    Vector3 rootLocalCorner = worldToUnscaledLocal.MultiplyPoint3x4(worldCorner);
 
                     if (!hasInitialized)
                     {
-                        localBounds = new Bounds(localCorner, Vector3.zero);
+                        localBounds = new Bounds(rootLocalCorner, Vector3.zero);
                         hasInitialized = true;
                     }
                     else
                     {
-                        localBounds.Encapsulate(localCorner);
+                        localBounds.Encapsulate(rootLocalCorner);
                     }
                 }
             }
@@ -276,7 +290,37 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Extracts the 8 world-space corners from an axis-aligned bounding box.
+        /// Returns the collider's bounding box in its own local space (rotation-independent).
+        /// Unlike Collider.bounds which returns a world-axis-aligned box that changes shape
+        /// when the object rotates, these local bounds are always consistent.
+        /// </summary>
+        private static Bounds GetColliderLocalBounds(Collider col)
+        {
+            if (col is BoxCollider box)
+                return new Bounds(box.center, box.size);
+
+            if (col is SphereCollider sphere)
+                return new Bounds(sphere.center, Vector3.one * sphere.radius * 2f);
+
+            if (col is CapsuleCollider capsule)
+            {
+                float diameter = capsule.radius * 2f;
+                Vector3 size = new Vector3(diameter, diameter, diameter);
+                size[capsule.direction] = Mathf.Max(capsule.height, diameter);
+                return new Bounds(capsule.center, size);
+            }
+
+            if (col is MeshCollider mesh && mesh.sharedMesh != null)
+                return mesh.sharedMesh.bounds;
+
+            // Fallback for unknown collider types: use world bounds center in local space
+            Vector3 localCenter = col.transform.InverseTransformPoint(col.bounds.center);
+            Vector3 localSize = col.bounds.size; // Approximate
+            return new Bounds(localCenter, localSize);
+        }
+
+        /// <summary>
+        /// Extracts the 8 corners from a bounding box.
         /// </summary>
         private static Vector3[] GetBoundsCorners(Bounds b)
         {

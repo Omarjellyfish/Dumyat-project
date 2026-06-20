@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1983f9c7ef6777c488c4df2e4661f496, type: 3}
+  m_Name: 'Recipe_Chair2 '
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CraftingRecipe
+  _recipeName: 'Root Seat '
+  _requiredParts:
+  - SlotName: Back Rest
+    ExpectedLocalPosition: {x: 0.0020000935, y: 0.36616173, z: 0.1567254}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    ExpectedSize: {x: 0.4109602, y: 0.5128635, z: 0.14642048}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}
+  - SlotName: Leg_1
+    ExpectedLocalPosition: {x: 0.23314607, y: -0.34823483, z: 0.1618433}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    ExpectedSize: {x: 0.08724022, y: 0.47700965, z: 0.13618374}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}
+  - SlotName: Leg_2
+    ExpectedLocalPosition: {x: 0.23314607, y: -0.34823483, z: -0.1618433}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    ExpectedSize: {x: 0.08724022, y: 0.47700965, z: 0.13618374}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}
+  - SlotName: Leg_3
+    ExpectedLocalPosition: {x: -0.23314595, y: -0.34823483, z: -0.1618433}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    ExpectedSize: {x: 0.08724022, y: 0.47700965, z: 0.13618374}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}
+  - SlotName: Leg_4
+    ExpectedLocalPosition: {x: -0.23314595, y: -0.34823483, z: 0.1618433}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    ExpectedSize: {x: 0.08724022, y: 0.47700965, z: 0.13618374}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}

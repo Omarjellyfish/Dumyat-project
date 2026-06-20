@@ -7,6 +7,8 @@ namespace DumyatRuntime.Editor
     /// <summary>
     /// Editor tool that inspects a physical reference assembly in the scene 
     /// and records its layout into a CraftingRecipe ScriptableObject.
+    /// After recording, runs a verification pass to confirm the recipe
+    /// matches the assembly it was captured from.
     /// </summary>
     public class CraftingRecipeRecorder
     {
@@ -41,6 +43,9 @@ namespace DumyatRuntime.Editor
             FixedJoint[] rootJoints = rootBody.GetComponents<FixedJoint>();
             List<PartBlueprint> blueprints = new List<PartBlueprint>();
 
+            // Also keep track of parts for the verification pass
+            List<(Rigidbody Body, GameObject PartObj)> recordedParts = new List<(Rigidbody, GameObject)>();
+
             foreach (FixedJoint joint in rootJoints)
             {
                 if (joint.connectedBody == null) continue;
@@ -58,7 +63,7 @@ namespace DumyatRuntime.Editor
                     continue;
                 }
 
-                // Calculate local bounds in unscaled space
+                // Calculate local bounds using oriented local bounds (rotation-stable)
                 Bounds localBounds = CalculateStructuralLocalBounds(partObj, rootBody.transform);
 
                 PartBlueprint bp = new PartBlueprint();
@@ -69,12 +74,16 @@ namespace DumyatRuntime.Editor
                 bp.ExpectedLocalRotation = Quaternion.Inverse(rootBody.transform.rotation) * attachedBody.rotation;
                 bp.ExpectedSize = localBounds.size;
 
+                // Default: ignore rotation for most pieces (symmetric legs, planks, etc.)
+                bp.IgnoreRotation = true;
+
                 // Reasonable default tolerances (can be adjusted in Inspector)
                 bp.PositionTolerance = 0.1f;
                 bp.RotationTolerance = 15f;
                 bp.SizeTolerance = new Vector3(0.02f, 0.05f, 0.02f);
 
                 blueprints.Add(bp);
+                recordedParts.Add((attachedBody, partObj));
             }
 
             if (blueprints.Count == 0)
@@ -83,18 +92,124 @@ namespace DumyatRuntime.Editor
                 return;
             }
 
+            // --- VERIFICATION PASS ---
+            // Run the same best-fit matching logic the validator uses to confirm
+            // that every recorded part matches exactly one blueprint slot.
+            int verifyErrors = VerifyRecipeAgainstAssembly(rootBody, blueprints, recordedParts);
+
+            // --- RESOLVE ROOT PREFAB ---
+            // Find the source prefab asset so the recipe can spawn it at runtime
+            GameObject rootPrefab = PrefabUtility.GetCorrespondingObjectFromSource(selectedObj);
+            if (rootPrefab == null)
+            {
+                Debug.LogWarning("[RecipeRecorder] Could not find source prefab for the root object. " +
+                                 "The Root Prefab field will be empty — assign it manually in the Inspector.");
+            }
+
             // Create and save ScriptableObject
             CraftingRecipe recipe = ScriptableObject.CreateInstance<CraftingRecipe>();
-            recipe.Editor_SetData(selectedObj.name, blueprints.ToArray());
+            recipe.Editor_SetData(selectedObj.name, rootPrefab, blueprints.ToArray());
 
             AssetDatabase.CreateAsset(recipe, path);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            EditorUtility.DisplayDialog("Success", $"Recorded {blueprints.Count} parts. Crafting Recipe saved successfully to:\n{path}", "OK");
+            string verifyMsg = verifyErrors == 0
+                ? "Verification PASSED — all parts match their recorded slots."
+                : $"Verification found {verifyErrors} issue(s). Check the Console for details. Recipe saved but may need tolerance adjustments.";
+
+            EditorUtility.DisplayDialog("Success", $"Recorded {blueprints.Count} parts.\n\n{verifyMsg}\n\nSaved to:\n{path}", "OK");
             Selection.activeObject = recipe;
         }
 
+        /// <summary>
+        /// Runs the same best-fit matching logic from CraftingValidator against the recorded
+        /// blueprints to confirm they produce a perfect match on the source assembly.
+        /// Returns the number of mismatches found.
+        /// </summary>
+        private static int VerifyRecipeAgainstAssembly(
+            Rigidbody rootBody,
+            List<PartBlueprint> blueprints,
+            List<(Rigidbody Body, GameObject PartObj)> parts)
+        {
+            int errors = 0;
+            var unfulfilledSlots = new List<PartBlueprint>(blueprints);
+
+            foreach (var (attachedBody, partObj) in parts)
+            {
+                Bounds localBounds = CalculateStructuralLocalBounds(partObj, rootBody.transform);
+                Vector3 localPos = localBounds.center;
+                Quaternion localRot = Quaternion.Inverse(rootBody.transform.rotation) * attachedBody.rotation;
+
+                int bestSlotIndex = -1;
+                float minPosError = float.MaxValue;
+
+                for (int i = 0; i < unfulfilledSlots.Count; i++)
+                {
+                    PartBlueprint bp = unfulfilledSlots[i];
+                    float posError = Vector3.Distance(localPos, bp.ExpectedLocalPosition);
+                    float rotError = bp.IgnoreRotation ? 0f : Quaternion.Angle(localRot, bp.ExpectedLocalRotation);
+
+                    bool rotationPasses = bp.IgnoreRotation || rotError <= bp.RotationTolerance;
+
+                    if (posError <= bp.PositionTolerance && rotationPasses)
+                    {
+                        if (posError < minPosError)
+                        {
+                            minPosError = posError;
+                            bestSlotIndex = i;
+                        }
+                    }
+                }
+
+                if (bestSlotIndex != -1)
+                {
+                    PartBlueprint matchedBp = unfulfilledSlots[bestSlotIndex];
+
+                    // Also verify size tolerance
+                    Vector3 localSize = localBounds.size;
+                    Vector3 minSize = matchedBp.ExpectedSize - matchedBp.SizeTolerance;
+                    Vector3 maxSize = matchedBp.ExpectedSize + matchedBp.SizeTolerance;
+
+                    bool sizeOk =
+                        localSize.x >= minSize.x && localSize.x <= maxSize.x &&
+                        localSize.y >= minSize.y && localSize.y <= maxSize.y &&
+                        localSize.z >= minSize.z && localSize.z <= maxSize.z;
+
+                    if (sizeOk)
+                    {
+                        Debug.Log($"<color=green>[Verify] '{partObj.name}' → slot '{matchedBp.SlotName}' ✓ (posErr={minPosError:F4})</color>");
+                        unfulfilledSlots.RemoveAt(bestSlotIndex);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Verify] '{partObj.name}' matched slot '{matchedBp.SlotName}' spatially but FAILED size check. " +
+                                         $"Size: {localSize} Expected: {matchedBp.ExpectedSize} ±{matchedBp.SizeTolerance}");
+                        errors++;
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"[Verify] '{partObj.name}' did NOT match any blueprint slot! " +
+                                   $"localPos={localPos} localRot={localRot.eulerAngles} size={localBounds.size}");
+                    errors++;
+                }
+            }
+
+            foreach (var remaining in unfulfilledSlots)
+            {
+                Debug.LogError($"[Verify] Blueprint slot '{remaining.SlotName}' was never matched by any part!");
+                errors++;
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Calculates the physical bounding box of a part in the root's unscaled local space.
+        /// Uses each collider's own local bounds (rotation-stable) instead of the world-axis-aligned
+        /// Collider.bounds, so measurements remain consistent regardless of assembly orientation.
+        /// </summary>
         private static Bounds CalculateStructuralLocalBounds(GameObject part, Transform rootTransform)
         {
             Bounds localBounds = new Bounds(Vector3.zero, Vector3.zero);
@@ -110,23 +225,59 @@ namespace DumyatRuntime.Editor
             {
                 if (col.GetComponent<IDecoration>() != null) continue;
 
-                Vector3[] corners = GetBoundsCorners(col.bounds);
+                // Get the collider's own local bounds (these never change with world rotation)
+                Bounds colliderLocalBounds = GetColliderLocalBounds(col);
+                Vector3[] corners = GetBoundsCorners(colliderLocalBounds);
+
+                // Transform: collider-local → world → root-local (unscaled)
+                Matrix4x4 colliderToWorld = col.transform.localToWorldMatrix;
+
                 foreach (Vector3 corner in corners)
                 {
-                    Vector3 localCorner = worldToUnscaledLocal.MultiplyPoint3x4(corner);
+                    Vector3 worldCorner = colliderToWorld.MultiplyPoint3x4(corner);
+                    Vector3 rootLocalCorner = worldToUnscaledLocal.MultiplyPoint3x4(worldCorner);
+
                     if (!hasInitialized)
                     {
-                        localBounds = new Bounds(localCorner, Vector3.zero);
+                        localBounds = new Bounds(rootLocalCorner, Vector3.zero);
                         hasInitialized = true;
                     }
                     else
                     {
-                        localBounds.Encapsulate(localCorner);
+                        localBounds.Encapsulate(rootLocalCorner);
                     }
                 }
             }
 
             return localBounds;
+        }
+
+        /// <summary>
+        /// Returns the collider's bounding box in its own local space (rotation-independent).
+        /// </summary>
+        private static Bounds GetColliderLocalBounds(Collider col)
+        {
+            if (col is BoxCollider box)
+                return new Bounds(box.center, box.size);
+
+            if (col is SphereCollider sphere)
+                return new Bounds(sphere.center, Vector3.one * sphere.radius * 2f);
+
+            if (col is CapsuleCollider capsule)
+            {
+                float diameter = capsule.radius * 2f;
+                Vector3 size = new Vector3(diameter, diameter, diameter);
+                size[capsule.direction] = Mathf.Max(capsule.height, diameter);
+                return new Bounds(capsule.center, size);
+            }
+
+            if (col is MeshCollider mesh && mesh.sharedMesh != null)
+                return mesh.sharedMesh.bounds;
+
+            // Fallback for unknown collider types
+            Vector3 localCenter = col.transform.InverseTransformPoint(col.bounds.center);
+            Vector3 localSize = col.bounds.size;
+            return new Bounds(localCenter, localSize);
         }
 
         private static Vector3[] GetBoundsCorners(Bounds bounds)
