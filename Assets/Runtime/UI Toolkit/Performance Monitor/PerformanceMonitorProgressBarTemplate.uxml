@@ -1,0 +1,12 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/PerformanceMonitorStyle.uss?fileID=7433441132597879392&amp;guid=612fc3e65f000d741beb3068c1070fee&amp;type=3#PerformanceMonitorStyle"/>
+    <ui:VisualElement name="bar-row" style="flex-grow: 1; flex-direction: row; align-items: center;">
+        <ui:VisualElement name="bar" class="progress-bar" style="flex-grow: 1; flex-direction: row;">
+            <ui:VisualElement name="bar-track" class="progress-bar progress-bar-track" style="flex-grow: 1;">
+                <ui:VisualElement name="bar-fill" class="progress-bar-fill" style="flex-grow: 1;"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="bar-target-line" class="progress-bar-target-line" style="flex-grow: 1;"/>
+        </ui:VisualElement>
+        <ui:Label text="Label" name="bar-value" class="progress-bar-value"/>
+    </ui:VisualElement>
+</ui:UXML>
