@@ -327,6 +327,53 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3a44c6df34e36b3459d40311c4a648f0, type: 3}
   m_PrefabInstance: {fileID: 113415448}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &331339601
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 331339603}
+  - component: {fileID: 331339602}
+  m_Layer: 0
+  m_Name: FloatingUIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &331339602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331339601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 453f5462c814e8a41b2ec29944ee2c7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.FloatingUIManager
+  _floatingTextPrefab: {fileID: 7440501674235039691, guid: f931aa795203df242abc2a619dc5d195, type: 3}
+  _initialPoolSize: 5
+  offset: {x: 0, y: 0.1, z: 0}
+--- !u!4 &331339603
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331339601}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 19.30963, y: 0.72995, z: 9.21017}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &429311466
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -993,6 +1040,7 @@ MonoBehaviour:
   _penTip: {fileID: 1905119971}
   _lineMaterial: {fileID: 2100000, guid: 0266695b5852f4148aa4a00d6e0d9426, type: 2}
   _lineWidth: 0.05
+  offset: {x: 0, y: 0.06, z: 0}
 --- !u!1 &1492058522
 GameObject:
   m_ObjectHideFlags: 0
@@ -1793,3 +1841,4 @@ SceneRoots:
   - {fileID: 629376981735954349}
   - {fileID: 66221629}
   - {fileID: 429311466}
+  - {fileID: 331339603}
