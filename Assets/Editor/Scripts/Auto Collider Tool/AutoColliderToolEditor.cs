@@ -35,7 +35,7 @@ namespace DumyatEditor
             AutoColliderToolSO tool = (AutoColliderToolSO)target;
             generateButton.clicked += () => 
             {
-                tool.GenerateColliderForSelected();
+                tool.GenerateCollidersForMultipleSelectedObjects();
             };
 
             // 6. Inject the button into the UI layout

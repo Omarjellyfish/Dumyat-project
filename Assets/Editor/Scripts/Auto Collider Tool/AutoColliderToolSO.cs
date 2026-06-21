@@ -6,10 +6,11 @@ namespace DumyatEditor
     [CreateAssetMenu(fileName = "AutoColliderTool", menuName = "Dumyat/Tools/AutoColliderTool")]
     public class AutoColliderToolSO : ScriptableObject
     {
-        public void GenerateColliderForSelected()
+        public void GenerateColliderForOneSelectedObject()
         {
             if (!ObjectSelectionHelper.TryGetSelectedObject(out GameObject selectedObj)) return;
-            if (!ColliderFactory.TryGetVertices(selectedObj, out Vector3[] vertices)) return;
+            if (!ColliderFactory.TryGetMeshFilter(selectedObj, out MeshFilter meshFilter)) return;
+            if (!ColliderFactory.TryGetVertices(meshFilter, out Vector3[] vertices)) return;
 
             // 1. Calculate dimensions using our pure math class
             var (size, center) = GeometryCalculator.CalculateLocalBounds(vertices);
@@ -20,6 +21,33 @@ namespace DumyatEditor
 
             Debug.Log($"Successfully auto-fitted BoxCollider to {selectedObj.name}!", selectedObj);
         }
+
+        public void GenerateCollidersForMultipleSelectedObjects()
+        {
+            if (!ObjectSelectionHelper.TryGetSelectedObjects(out GameObject[] selectedObjects)) return;
+
+            // Wrap the batch in a single Undo group so one Ctrl+Z undoes the whole batch
+            Undo.IncrementCurrentGroup();
+            Undo.SetCurrentGroupName("Batch Auto-Fit Colliders");
+            int group = Undo.GetCurrentGroup();
+
+            foreach (var obj in selectedObjects)
+            {
+                if (!ColliderFactory.TryGetMeshFilter(obj, out MeshFilter meshFilter)) continue;
+                if (!ColliderFactory.TryGetVertices(meshFilter, out Vector3[] vertices)) continue;
+
+                var (size, center) = GeometryCalculator.CalculateLocalBounds(vertices);
+
+                BoxCollider boxCollider = ColliderFactory.GetOrCreateBoxCollider(obj);
+                ColliderFactory.ApplyDimensions(boxCollider, size, center);
+
+                Debug.Log($"Successfully auto-fitted BoxCollider to {obj.name}!", obj);
+            }
+
+            Undo.CollapseUndoOperations(group);
+            Debug.Log($"Successfully auto-fitted BoxColliders to {selectedObjects.Length} objects.");
+        }
+        
     }
 
     public static class ObjectSelectionHelper
@@ -30,6 +58,16 @@ namespace DumyatEditor
             if (selectedObj != null) return true;
 
             Debug.LogWarning("Auto Collider: Please select a GameObject in the scene first!");
+            return false;
+        }
+
+        // Returns the full array of selected objects
+        public static bool TryGetSelectedObjects(out GameObject[] selectedObjects)
+        {
+            selectedObjects = Selection.gameObjects;
+            if (selectedObjects != null && selectedObjects.Length != 0)   return true;
+
+            Debug.LogWarning("Auto Collider: Please select one or more GameObjects in the scene first!");
             return false;
         }
     }
@@ -59,15 +97,38 @@ namespace DumyatEditor
 
     public static class ColliderFactory
     {
-        public static bool TryGetVertices(GameObject target, out Vector3[] vertices)
+        public static bool TryGetMeshFilter(GameObject target, out MeshFilter meshFilter)
+        {
+            meshFilter = target.GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
+                return true;
+
+            Debug.LogWarning($"Auto Collider: {target.name} lacks a valid MeshFilter with a mesh.", target);
+            return false;
+        }
+
+        public static bool TryGetMultipleMeshFilters(GameObject target, out MeshFilter[] meshFilters)
+        {
+            meshFilters = target.GetComponentsInChildren<MeshFilter>();
+            if (meshFilters != null && meshFilters.Length > 0)
+                return true;
+
+            Debug.LogWarning($"Auto Collider: {target.name} and its children lack valid MeshFilters with meshes.", target);
+            return false;
+        }
+
+        public static bool TryGetVertices(MeshFilter meshFilter, out Vector3[] vertices)
         {
             vertices = null;
-            if (target == null) return false;
-
-            var meshFilter = target.GetComponent<MeshFilter>();
-            if (meshFilter == null || meshFilter.sharedMesh == null)
+            if (meshFilter == null)
             {
-                Debug.LogWarning($"Auto Collider: {target.name} lacks a valid MeshFilter.", target);
+                Debug.LogWarning($"Auto Collider: Provided MeshFilter is null.", meshFilter);
+                return false;
+            }
+
+            if (meshFilter.sharedMesh == null)
+            {
+                Debug.LogWarning($"Auto Collider: MeshFilter does not have a mesh assigned.", meshFilter.gameObject);
                 return false;
             }
 
