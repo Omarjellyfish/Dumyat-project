@@ -36,24 +36,35 @@ namespace DumyatRuntime
         public List<PartFailure> FailedParts;
     }
 
-    /// <summary>
-    /// Static utility class that runs the 3-tier validation gauntlet
-    /// against a root Rigidbody and a CraftingRecipe.
-    /// </summary>
     public static class CraftingValidator
     {
         public static event Action<ValidationResult> OnValidationComplete;
 
         public static void ValidateBuild(Rigidbody rootBody, CraftingRecipe recipe)
         {
+            if (recipe == null || rootBody == null)
+            {
+                string errorMsg = "Validation failed: ";
+                if (recipe == null) errorMsg += "No recipe selected. ";
+                if (rootBody == null) errorMsg += "Root object is missing.";
+
+                var failResult = new ValidationResult
+                {
+                    IsSuccess = false,
+                    QualityScore = 0f,
+                    Message = errorMsg,
+                    FailedParts = new List<PartFailure>()
+                };
+                OnValidationComplete?.Invoke(failResult);
+                return;
+            }
+
             var failedParts = new List<PartFailure>();
             float totalScore = 0f;
             int matchedCount = 0;
 
-            // Gather all direct attachments to the root via FixedJoints
             FixedJoint[] rootJoints = rootBody.GetComponents<FixedJoint>();
 
-            // We store the attached body AND the exact local point on the root where it was glued (the anchor)
             var directAttachments = new List<(Rigidbody Body, Vector3 LocalGluePoint)>();
 
             foreach (FixedJoint joint in rootJoints)
@@ -64,7 +75,6 @@ namespace DumyatRuntime
                 }
             }
 
-            // Copy blueprint slots so we can mark them fulfilled
             var unfulfilledSlots = new List<PartBlueprint>(recipe.RequiredParts);
 
             foreach (var attachment in directAttachments)
@@ -72,10 +82,8 @@ namespace DumyatRuntime
                 Rigidbody attachedBody = attachment.Body;
                 GameObject partObj = attachedBody.gameObject;
 
-                // Skip cosmetics attached directly to the root (e.g. a cushion on the seat)
                 if (partObj.GetComponent<IDecoration>() != null) continue;
 
-                // --- TIER 1: ANTI-CHEAT (Glued Tower Detection) ---
                 GameObject contaminant = FindStructuralContaminant(attachedBody);
                 if (contaminant != null)
                 {
@@ -84,14 +92,11 @@ namespace DumyatRuntime
                         FailReason.GluedTower,
                         $"'{partObj.name}' has structural piece '{contaminant.name}' glued to it."
                     ));
-                    continue; // Don't bother grading a contaminated piece
+                    continue;
                 }
 
-                // --- Calculate Physical Bounds (Tier 2 & 3) ---
-                // Uses oriented local bounds (rotation-stable) instead of world AABB
                 Bounds localBounds = CalculateStructuralLocalBounds(partObj, rootBody.transform);
 
-                // --- TIER 2: SPATIAL MATH (Position & Rotation Match) ---
                 Vector3 localPos = localBounds.center;
                 Quaternion localRot = Quaternion.Inverse(rootBody.transform.rotation) * attachedBody.rotation;
 
@@ -100,20 +105,16 @@ namespace DumyatRuntime
                 float minPosError = float.MaxValue;
                 float bestRotError = 0f;
 
-                // Find the best-fit slot out of all compatible slots
                 for (int i = 0; i < unfulfilledSlots.Count; i++)
                 {
                     PartBlueprint blueprint = unfulfilledSlots[i];
 
                     float posError = Vector3.Distance(localPos, blueprint.ExpectedLocalPosition);
 
-                    // If the slot ignores rotation, treat rotation error as 0 (always passes)
                     float rotError = blueprint.IgnoreRotation
                         ? 0f
                         : Quaternion.Angle(localRot, blueprint.ExpectedLocalRotation);
 
-                    // Candidate must be within position tolerance
-                    // Rotation tolerance is only checked when IgnoreRotation is false
                     bool rotationPasses = blueprint.IgnoreRotation || rotError <= blueprint.RotationTolerance;
 
                     if (posError <= blueprint.PositionTolerance && rotationPasses)
@@ -133,7 +134,6 @@ namespace DumyatRuntime
                     float posError = minPosError;
                     float rotError = bestRotError;
 
-                    // --- TIER 3: PROPORTIONAL BOUNDS ---
                     Vector3 localSize = localBounds.size;
 
                     Vector3 minSize = blueprint.ExpectedSize - blueprint.SizeTolerance;
@@ -154,11 +154,10 @@ namespace DumyatRuntime
                             $"Expected range: ({minSize.x:F3}, {minSize.y:F3}, {minSize.z:F3}) " +
                             $"to ({maxSize.x:F3}, {maxSize.y:F3}, {maxSize.z:F3})"
                         ));
-                        matchedSlot = true; // Spatially matched, just failed bounds grading
+                        matchedSlot = true;
                     }
                     else
                     {
-                        // All 3 tiers passed — calculate quality score
                         float posScore = 1f - (posError / blueprint.PositionTolerance);
                         float rotScore = blueprint.IgnoreRotation
                             ? 1f
@@ -173,7 +172,6 @@ namespace DumyatRuntime
 
                 if (!matchedSlot)
                 {
-                    // --- DEBUG DIAGNOSTICS ---
                     Debug.Log($"<color=yellow>[DIAG] '{partObj.name}' bounds center (localPos): {localPos}</color>");
                     Debug.Log($"<color=yellow>[DIAG] '{partObj.name}' localRot: {localRot.eulerAngles}</color>");
                     Debug.Log($"<color=yellow>[DIAG] '{partObj.name}' bounds size: {localBounds.size}</color>");
@@ -186,7 +184,6 @@ namespace DumyatRuntime
                                   $"expectedPos={slot.ExpectedLocalPosition} posError={pErr:F4} (tol={slot.PositionTolerance}) | " +
                                   $"rotError={rErr:F1}° (tol={slot.RotationTolerance}) ignoreRot={slot.IgnoreRotation}</color>");
                     }
-                    // --- END DEBUG ---
 
                     failedParts.Add(new PartFailure(
                         partObj,
@@ -196,7 +193,6 @@ namespace DumyatRuntime
                 }
             }
 
-            // Check for unfulfilled slots (missing parts)
             foreach (PartBlueprint missingSlot in unfulfilledSlots)
             {
                 failedParts.Add(new PartFailure(
@@ -206,7 +202,6 @@ namespace DumyatRuntime
                 ));
             }
 
-            // Build final result
             var result = new ValidationResult
             {
                 IsSuccess = failedParts.Count == 0,
@@ -220,10 +215,6 @@ namespace DumyatRuntime
             OnValidationComplete?.Invoke(result);
         }
 
-        /// <summary>
-        /// Checks if a structural piece has another structural piece FixedJoint'd to it.
-        /// Returns the contaminating GameObject, or null if clean.
-        /// </summary>
         private static GameObject FindStructuralContaminant(Rigidbody part)
         {
             FixedJoint[] childJoints = part.GetComponents<FixedJoint>();
@@ -241,17 +232,11 @@ namespace DumyatRuntime
             return null;
         }
 
-        /// <summary>
-        /// Calculates the physical bounding box of a part in the root's unscaled local space.
-        /// Uses each collider's own local bounds (rotation-stable) instead of the world-axis-aligned
-        /// Collider.bounds, so that rotating the entire assembly does not change the measured result.
-        /// </summary>
         private static Bounds CalculateStructuralLocalBounds(GameObject part, Transform rootTransform)
         {
             Bounds localBounds = new Bounds(Vector3.zero, Vector3.zero);
             bool hasInitialized = false;
 
-            // Create a matrix that represents the root's position and rotation, but with a scale of 1.
             Matrix4x4 unscaledRootMatrix = Matrix4x4.TRS(rootTransform.position, rootTransform.rotation, Vector3.one);
             Matrix4x4 worldToUnscaledLocal = unscaledRootMatrix.inverse;
 
@@ -259,14 +244,11 @@ namespace DumyatRuntime
 
             foreach (Collider col in colliders)
             {
-                // Skip colliders on decoration objects
                 if (col.GetComponent<IDecoration>() != null) continue;
 
-                // Get the collider's own local bounds (these never change with world rotation)
                 Bounds colliderLocalBounds = GetColliderLocalBounds(col);
                 Vector3[] corners = GetBoundsCorners(colliderLocalBounds);
 
-                // Transform: collider-local → world → root-local (unscaled)
                 Matrix4x4 colliderToWorld = col.transform.localToWorldMatrix;
 
                 foreach (Vector3 corner in corners)
@@ -289,11 +271,6 @@ namespace DumyatRuntime
             return localBounds;
         }
 
-        /// <summary>
-        /// Returns the collider's bounding box in its own local space (rotation-independent).
-        /// Unlike Collider.bounds which returns a world-axis-aligned box that changes shape
-        /// when the object rotates, these local bounds are always consistent.
-        /// </summary>
         private static Bounds GetColliderLocalBounds(Collider col)
         {
             if (col is BoxCollider box)
@@ -313,15 +290,11 @@ namespace DumyatRuntime
             if (col is MeshCollider mesh && mesh.sharedMesh != null)
                 return mesh.sharedMesh.bounds;
 
-            // Fallback for unknown collider types: use world bounds center in local space
             Vector3 localCenter = col.transform.InverseTransformPoint(col.bounds.center);
-            Vector3 localSize = col.bounds.size; // Approximate
+            Vector3 localSize = col.bounds.size;
             return new Bounds(localCenter, localSize);
         }
 
-        /// <summary>
-        /// Extracts the 8 corners from a bounding box.
-        /// </summary>
         private static Vector3[] GetBoundsCorners(Bounds b)
         {
             return new Vector3[]

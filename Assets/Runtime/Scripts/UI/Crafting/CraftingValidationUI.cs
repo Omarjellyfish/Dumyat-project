@@ -13,9 +13,9 @@ namespace DumyatRuntime
         [SerializeField] private VisualTreeAsset _diagnosticItemTemplate;
 
         [Header("Visual Styling")]
-        [SerializeField] private Color _successColor = new Color(0.0f, 0.9f, 0.46f, 1f); // #00E676
-        [SerializeField] private Color _failColor = new Color(1f, 0.09f, 0.26f, 1f); // #FF1744
-        [SerializeField] private Color _idleColor = new Color(0.21f, 0.27f, 0.31f, 1f); // #37474F
+        [SerializeField] private Color _successColor = new Color(0.0f, 0.9f, 0.46f, 1f);
+        [SerializeField] private Color _failColor = new Color(1f, 0.09f, 0.26f, 1f);
+        [SerializeField] private Color _idleColor = new Color(0.21f, 0.27f, 0.31f, 1f);
         
         [Header("Icons")]
         [SerializeField] private Texture2D _successIcon;
@@ -123,10 +123,17 @@ namespace DumyatRuntime
                 }
                 else
                 {
-                    foreach (var failure in result.FailedParts)
+                    if (result.FailedParts == null || result.FailedParts.Count == 0)
                     {
-                        string message = $"[{failure.Reason}] {failure.Details}";
-                        AddDiagnosticItem(message, false);
+                        AddDiagnosticItem(result.Message, false);
+                    }
+                    else
+                    {
+                        foreach (var failure in result.FailedParts)
+                        {
+                            string message = $"[{failure.Reason}] {failure.Details}";
+                            AddDiagnosticItem(message, false);
+                        }
                     }
                 }
             }

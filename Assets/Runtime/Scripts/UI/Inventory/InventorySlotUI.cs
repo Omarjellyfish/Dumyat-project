@@ -12,7 +12,7 @@ namespace DumyatRuntime
         [SerializeField] private TextMeshProUGUI _nameText;
 
         private string _boundItemID;
-
+        // the UI slot with the item data and quantity
         public void Setup(ItemData itemData, int quantity)
         {
             _boundItemID = itemData.ItemID;

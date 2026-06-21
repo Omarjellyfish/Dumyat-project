@@ -48,10 +48,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee8f89014f36c7f4eaaa3a7ca3da38a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.WorldAudioManager
-  musicSourceA: {fileID: 6500489407054119856}
-  musicSourceB: {fileID: 8933406251904231488}
-  ambientSourceA: {fileID: 4120970875615430903}
-  ambientSourceB: {fileID: 2588038096372557322}
+  _musicSourceA: {fileID: 0}
+  _musicSourceB: {fileID: 0}
+  _ambientSourceA: {fileID: 0}
+  _ambientSourceB: {fileID: 0}
   defaultFadeDuration: 0.2
 --- !u!1001 &253169141958270287
 PrefabInstance:
@@ -117,11 +117,6 @@ PrefabInstance:
 --- !u!4 &8725305472684369857 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8833226721283865230, guid: c96a19cc6efd9ee43bd2d99c48fdcace, type: 3}
-  m_PrefabInstance: {fileID: 253169141958270287}
-  m_PrefabAsset: {fileID: 0}
---- !u!82 &8933406251904231488 stripped
-AudioSource:
-  m_CorrespondingSourceObject: {fileID: 8681456126908314895, guid: c96a19cc6efd9ee43bd2d99c48fdcace, type: 3}
   m_PrefabInstance: {fileID: 253169141958270287}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2471591042733094591
@@ -190,11 +185,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8833226721283865230, guid: c96a19cc6efd9ee43bd2d99c48fdcace, type: 3}
   m_PrefabInstance: {fileID: 2471591042733094591}
   m_PrefabAsset: {fileID: 0}
---- !u!82 &6500489407054119856 stripped
-AudioSource:
-  m_CorrespondingSourceObject: {fileID: 8681456126908314895, guid: c96a19cc6efd9ee43bd2d99c48fdcace, type: 3}
-  m_PrefabInstance: {fileID: 2471591042733094591}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5127135275151518027
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -256,11 +246,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3850f7f98545e2947adcc2ea6b0db96c, type: 3}
---- !u!82 &2588038096372557322 stripped
-AudioSource:
-  m_CorrespondingSourceObject: {fileID: 7263656052329090881, guid: 3850f7f98545e2947adcc2ea6b0db96c, type: 3}
-  m_PrefabInstance: {fileID: 5127135275151518027}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2969366647516471139 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7931526576651073064, guid: 3850f7f98545e2947adcc2ea6b0db96c, type: 3}
@@ -330,10 +315,5 @@ PrefabInstance:
 --- !u!4 &3742316440022397342 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7931526576651073064, guid: 3850f7f98545e2947adcc2ea6b0db96c, type: 3}
-  m_PrefabInstance: {fileID: 6772588778553395126}
-  m_PrefabAsset: {fileID: 0}
---- !u!82 &4120970875615430903 stripped
-AudioSource:
-  m_CorrespondingSourceObject: {fileID: 7263656052329090881, guid: 3850f7f98545e2947adcc2ea6b0db96c, type: 3}
   m_PrefabInstance: {fileID: 6772588778553395126}
   m_PrefabAsset: {fileID: 0}
