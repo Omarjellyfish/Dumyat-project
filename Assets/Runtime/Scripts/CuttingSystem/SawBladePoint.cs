@@ -14,7 +14,7 @@ namespace DumyatRuntime
         {
             if (Physics.Raycast(transform.position, -transform.forward, out RaycastHit hit, _rayDistance, _woodLayer))
             {
-                _hitNormal = hit.normal;
+                _hitNormal = hit.normal; 
                 _hitPoint = hit.point;
                 _isTouchingWood = true;
             }
