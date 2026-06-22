@@ -91,7 +91,6 @@ namespace DumyatRuntime
                                        (_bladeTip._isTouchingWood ? _bladeTip._hitObject :
                                        _bladeBase._hitObject);
 
-                // ✅ pass current movement direction instead of normals
                 _woodSlicer.PerformCut(_hitPoints, _currentDirection, woodToCut);
                 _strokeCount = 0;
                 _hitPoints.Clear();

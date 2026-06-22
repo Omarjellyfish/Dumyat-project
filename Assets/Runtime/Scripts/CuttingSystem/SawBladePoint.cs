@@ -6,11 +6,11 @@ namespace DumyatRuntime
     {
         [SerializeField] private LayerMask _woodLayer;
         [SerializeField] private float _rayDistance = 0.05f;
-        public bool _isTouchingWood = false;
+        [HideInInspector] public bool _isTouchingWood = false;
 
-        public Vector3 _hitPoint;
-        public Vector3 _hitNormal;
-        public GameObject _hitObject;
+        [HideInInspector] public Vector3 _hitPoint;
+        [HideInInspector] public Vector3 _hitNormal;
+        [HideInInspector] public GameObject _hitObject;
         public void CheckContact()
         {
             if (Physics.Raycast(transform.position, -transform.forward, out RaycastHit hit, _rayDistance, _woodLayer))

@@ -43,7 +43,8 @@ namespace DumyatRuntime
                     case PenMode.FreeDraw:
                         if (Time.time - _lastDrawnTime >= _timeInterval)
                         {
-                            _paintBrush.PaintAt(wood, hit.textureCoord, _penColor, _brushSize);
+                            Vector2 uv = wood.GetUVFromWorldPoint(hit.point);
+                            _paintBrush.PaintAt(wood, uv, _penColor, _brushSize);
                             _lastDrawnTime = Time.time;
                         }
                         break;
@@ -52,7 +53,7 @@ namespace DumyatRuntime
                         if (!_pointASet)
                         {
                             _pointAWorld = hit.point;
-                            _pointAUV = hit.textureCoord;
+                            _pointAUV = wood.GetUVFromWorldPoint(hit.point);
                             _pointASet = true;
                         }
                         _lineDraw.UpdateLinePositions(_pointAWorld, hit.point);
@@ -72,7 +73,7 @@ namespace DumyatRuntime
             Physics.Raycast(transform.position, -transform.forward,
                 out RaycastHit hit, _rayDistance, _woodLayer);
 
-            Vector2 finalUV = hit.textureCoord;
+            Vector2 finalUV = _currentWood.GetUVFromWorldPoint(hit.point);
 
             float distance = Vector2.Distance(_pointAUV, finalUV);
             float brushSpacing = _brushSize * 0.5f;
