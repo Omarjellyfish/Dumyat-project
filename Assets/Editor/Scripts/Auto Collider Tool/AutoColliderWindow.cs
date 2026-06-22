@@ -1,5 +1,4 @@
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,6 +6,8 @@ namespace DumyatEditor
 {
     public class AutoColliderWindow : EditorWindow
     {
+        private bool _displayColliders = false;
+
         [MenuItem("Dumyat/Auto Collider Tool")]
         public static void OpenWindow()
         {
@@ -33,9 +34,44 @@ namespace DumyatEditor
             // --- Buttons ---
             root.Add(MakeButton("Fit Selected Object", GenerateForSelected));
             root.Add(MakeButton("Fit Batch Selected Objects", GenerateForBatch));
-            root.Add(MakeButton("Fit Batch Selected Objects (Children Included)",   GenerateForBatchChildrenIncluded));
+            root.Add(MakeButton("Fit Batch Selected Objects (Children Included)", GenerateForBatchChildrenIncluded));
 
             root.Add(MakeRedButton("Delete Colliders on Selected", DeleteCollidersOnSelected));
+
+            // --- Divider ---
+            MakeDivider(root);
+
+            // --- Display Colliders Toggle ---
+            root.Add(MakeDisplayToggle("Display Colliders", _displayColliders, OnDisplayCollidersToggled));
+        }
+
+        private Toggle MakeDisplayToggle(string label, bool value = false, System.Action<bool> OnToggleChanged = null)
+        {
+            Toggle displayToggle = new Toggle(label);
+            displayToggle.value = value;
+            displayToggle.style.marginBottom = 6;
+            displayToggle.RegisterValueChangedCallback(evt =>
+            {
+                _displayColliders = evt.newValue;
+                OnToggleChanged?.Invoke(_displayColliders);
+            });
+            return displayToggle;
+        }
+
+        private static void MakeDivider(VisualElement root)
+        {
+            VisualElement divider = new VisualElement();
+            divider.style.height = 1;
+            divider.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f);
+            divider.style.marginTop = 8;
+            divider.style.marginBottom = 8;
+            root.Add(divider);
+        }
+
+        private void OnDisplayCollidersToggled(bool isOn)
+        {
+            ColliderGizmoDrawer.DisplayColliders(isOn);
+            SceneView.RepaintAll();
         }
 
         private Button MakeButton(string label, System.Action action)
@@ -64,7 +100,7 @@ namespace DumyatEditor
             return btn;
         }
 
-        // --- Logic (same as before, just moved here) ---
+        // --- Logic ---
 
         private void GenerateForSelected()
         {
@@ -168,6 +204,110 @@ namespace DumyatEditor
 
             Undo.CollapseUndoOperations(group);
             Debug.Log($"Deleted {deletedCount} BoxCollider(s) from selected and their children.");
+        }
+    }
+
+    public static class ObjectSelectionHelper
+    {
+        public static bool TryGetSelectedObject(out GameObject selectedObj)
+        {
+            selectedObj = Selection.activeGameObject;
+            if (selectedObj != null) return true;
+
+            Debug.LogWarning("Auto Collider: Please select a GameObject in the scene first!");
+            return false;
+        }
+
+        // Returns the full array of selected objects
+        public static bool TryGetSelectedObjects(out GameObject[] selectedObjects)
+        {
+            selectedObjects = Selection.gameObjects;
+            if (selectedObjects != null && selectedObjects.Length != 0)   return true;
+
+            Debug.LogWarning("Auto Collider: Please select one or more GameObjects in the scene first!");
+            return false;
+        }
+    }
+
+    public static class GeometryCalculator
+    {
+        public static (Vector3 size, Vector3 center) CalculateLocalBounds(Vector3[] vertices)
+        {
+            if (vertices == null || vertices.Length == 0)
+                return (Vector3.zero, Vector3.zero);
+
+            Vector3 min = vertices[0];
+            Vector3 max = vertices[0];
+
+            for (int i = 1; i < vertices.Length; i++)
+            {
+                min = Vector3.Min(min, vertices[i]);
+                max = Vector3.Max(max, vertices[i]);
+            }
+
+            Vector3 size = max - min;
+            Vector3 center = (min + max) / 2f;
+
+            return (size, center);
+        }
+    }
+
+    public static class ColliderFactory
+    {
+        public static bool TryGetMeshFilter(GameObject target, out MeshFilter meshFilter)
+        {
+            meshFilter = target.GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
+                return true;
+
+            Debug.LogWarning($"Auto Collider: {target.name} lacks a valid MeshFilter with a mesh.", target);
+            return false;
+        }
+
+        public static bool TryGetMultipleMeshFilters(GameObject target, out MeshFilter[] meshFilters)
+        {
+            meshFilters = target.GetComponentsInChildren<MeshFilter>();
+            if (meshFilters != null && meshFilters.Length > 0)
+                return true;
+
+            Debug.LogWarning($"Auto Collider: {target.name} and its children lack valid MeshFilters with meshes.", target);
+            return false;
+        }
+
+        public static bool TryGetVertices(MeshFilter meshFilter, out Vector3[] vertices)
+        {
+            vertices = null;
+            if (meshFilter == null)
+            {
+                Debug.LogWarning($"Auto Collider: Provided MeshFilter is null.", meshFilter);
+                return false;
+            }
+
+            if (meshFilter.sharedMesh == null)
+            {
+                Debug.LogWarning($"Auto Collider: MeshFilter does not have a mesh assigned.", meshFilter.gameObject);
+                return false;
+            }
+
+            vertices = meshFilter.sharedMesh.vertices;
+            return vertices != null && vertices.Length > 0;
+        }
+
+        public static BoxCollider GetOrCreateBoxCollider(GameObject target)
+        {
+            if (target.TryGetComponent<BoxCollider>(out var existingCollider))
+            {
+                Undo.RecordObject(existingCollider, "Auto Fit Box Collider");
+                return existingCollider;
+            }
+
+            return Undo.AddComponent<BoxCollider>(target);
+        }
+
+        public static void ApplyDimensions(BoxCollider collider, Vector3 size, Vector3 center)
+        {
+            collider.size = size;
+            collider.center = center;
         }
     }
 }
