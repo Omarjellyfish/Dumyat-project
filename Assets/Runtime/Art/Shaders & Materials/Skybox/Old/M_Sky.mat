@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7574270447274976646
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Sky
+  m_Shader: {fileID: -6465566751694194690, guid: aca46de04018e22469e2d53f748169a6, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: _Day_Horizon_Color
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Day_Horizon_Blend: 1.59
+    - _Day_Nadir_Blend: 0.2
+    - _Day_Zenth_Blend: 0.2
+    - _HorizonBlend: 1.59
+    - _MoonOffset: -0.02
+    - _Moon_Crispness: 20.74
+    - _Moon_Radius: 0.0375
+    - _NadirBlend: 0.2
+    - _Night_Horizon_Blend: 205.48
+    - _Night_Nadir_Blend: 1
+    - _Night_Zenth_Blend: 1.22
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _StarHeight: 201.6
+    - _StarPower: 48.3
+    - _Sun_Crispness: 13.11
+    - _Sun_Radius: 0.05
+    - _ZenthBlend: 0.2
+    m_Colors:
+    - _Day_Ground_Color: {r: 0, g: 0.05490196, b: 0.02745098, a: 1}
+    - _Day_Horizon_Color: {r: 0.30495727, g: 0.5923148, b: 0.7264151, a: 1}
+    - _Day_Sky_Color: {r: 0.3466536, g: 0.74773455, b: 0.7735849, a: 0}
+    - _Ground_Color: {r: 0, g: 0, b: 0, a: 1}
+    - _Horizon_Color: {r: 0, g: 0, b: 0, a: 1}
+    - _Moon_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Night_Ground_Color: {r: 0.018689923, g: 0.051672913, b: 0.18867922, a: 1}
+    - _Night_Horizion_Color: {r: 0.016642937, g: 0.11711884, b: 0.20754719, a: 1}
+    - _Night_Sky_Color: {r: 0.06697223, g: 0.11671843, b: 0.3301887, a: 1}
+    - _Sky_Color: {r: 0, g: 0, b: 0, a: 0}
+    - _Stars_Color: {r: 24543.877, g: 24543.877, b: 24543.877, a: 0}
+    - _Sun_Color: {r: 1, g: 1, b: 1, a: 0}
+    - _WorldSpaceLightPos0: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
