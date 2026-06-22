@@ -10,6 +10,7 @@ namespace DumyatRuntime
 
         public Vector3 _hitPoint;
         public Vector3 _hitNormal;
+        public GameObject _hitObject;
         public void CheckContact()
         {
             if (Physics.Raycast(transform.position, -transform.forward, out RaycastHit hit, _rayDistance, _woodLayer))
@@ -17,6 +18,7 @@ namespace DumyatRuntime
                 _hitNormal = hit.normal; 
                 _hitPoint = hit.point;
                 _isTouchingWood = true;
+                _hitObject = hit.collider.gameObject;
             }
             else
                 _isTouchingWood = false;

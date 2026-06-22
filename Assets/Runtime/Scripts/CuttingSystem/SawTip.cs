@@ -20,7 +20,7 @@ namespace DumyatRuntime
         int _strokeCount;
         List<Vector3> _hitPoints;
         List<Vector3> _hitNormal;
-
+        [SerializeField] private WoodSlicer _woodSlicer;
         void Start()
         {
             _hitPoints = new List<Vector3>();
@@ -87,6 +87,12 @@ namespace DumyatRuntime
             }
             if (_strokeCount == 15)
             {
+                GameObject woodToCut = _bladeMid._isTouchingWood ? _bladeMid._hitObject :
+                                       (_bladeTip._isTouchingWood ? _bladeTip._hitObject :
+                                       _bladeBase._hitObject);
+
+                // ✅ pass current movement direction instead of normals
+                _woodSlicer.PerformCut(_hitPoints, _currentDirection, woodToCut);
                 _strokeCount = 0;
                 _hitPoints.Clear();
                 _hitNormal.Clear();
