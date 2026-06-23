@@ -591,6 +591,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.46466804, y: 0.11889748, z: 0.013223308}
   m_Center: {x: -0.03770277, y: 0.0029876027, z: -0.0015437809}
+--- !u!114 &421675540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421675527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 732d532c2fd743440b9f99ae163892ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SawConstraint
+  _woodLayer:
+    serializedVersion: 2
+    m_Bits: 1073741824
+  offset: {x: 0, y: -0.05, z: 0}
+  _boxHalfExtents: {x: 0.2, y: 0.02, z: 0.02}
+  _detectionDistance: 0.1
 --- !u!1001 &429311466
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1066,6 +1084,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2c0c6bcc98ac4234d826f0f14fbe3b1f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 421675539}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2c0c6bcc98ac4234d826f0f14fbe3b1f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 421675540}
   m_SourcePrefab: {fileID: 100100000, guid: 2c0c6bcc98ac4234d826f0f14fbe3b1f, type: 3}
 --- !u!1 &1160077674
 GameObject:
