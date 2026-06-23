@@ -6,7 +6,6 @@ namespace DumyatRuntime
 {
     public enum FailReason
     {
-        GluedTower,
         NoSlotMatch,
         Oversized,
         MissingPart
@@ -63,35 +62,23 @@ namespace DumyatRuntime
             float totalScore = 0f;
             int matchedCount = 0;
 
-            FixedJoint[] rootJoints = rootBody.GetComponents<FixedJoint>();
-
-            var directAttachments = new List<(Rigidbody Body, Vector3 LocalGluePoint)>();
-
-            foreach (FixedJoint joint in rootJoints)
-            {
-                if (joint.connectedBody != null)
-                {
-                    directAttachments.Add((joint.connectedBody, joint.anchor));
-                }
-            }
+            // --- GRAPH TRAVERSAL GATHER STEP ---
+            // Uses BFS to walk the entire FixedJoint graph starting from root.
+            // Returns a flat list of all StructuralPiece components connected
+            // at ANY depth (Root → A → B → C all discovered).
+            List<StructuralPiece> connectedPieces = AssemblyGraphUtility.GetAllConnectedPieces(rootBody);
 
             var unfulfilledSlots = new List<PartBlueprint>(recipe.RequiredParts);
 
-            foreach (var attachment in directAttachments)
+            foreach (StructuralPiece piece in connectedPieces)
             {
-                Rigidbody attachedBody = attachment.Body;
-                GameObject partObj = attachedBody.gameObject;
+                GameObject partObj = piece.gameObject;
+                Rigidbody attachedBody = piece.GetComponent<Rigidbody>();
 
-                if (partObj.GetComponent<IDecoration>() != null) continue;
-
-                GameObject contaminant = FindStructuralContaminant(attachedBody);
-                if (contaminant != null)
+                // Safety: skip if Rigidbody is missing (shouldn't happen in a valid assembly)
+                if (attachedBody == null)
                 {
-                    failedParts.Add(new PartFailure(
-                        partObj,
-                        FailReason.GluedTower,
-                        $"'{partObj.name}' has structural piece '{contaminant.name}' glued to it."
-                    ));
+                    Debug.LogWarning($"[CraftingValidator] '{partObj.name}' has StructuralPiece but no Rigidbody. Skipping.");
                     continue;
                 }
 
@@ -213,23 +200,6 @@ namespace DumyatRuntime
             };
 
             OnValidationComplete?.Invoke(result);
-        }
-
-        private static GameObject FindStructuralContaminant(Rigidbody part)
-        {
-            FixedJoint[] childJoints = part.GetComponents<FixedJoint>();
-
-            foreach (FixedJoint joint in childJoints)
-            {
-                if (joint.connectedBody == null) continue;
-
-                if (joint.connectedBody.GetComponent<IStructuralPiece>() != null)
-                {
-                    return joint.connectedBody.gameObject;
-                }
-            }
-
-            return null;
         }
 
         private static Bounds CalculateStructuralLocalBounds(GameObject part, Transform rootTransform)

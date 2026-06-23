@@ -39,31 +39,31 @@ namespace DumyatRuntime.Editor
 
             if (string.IsNullOrEmpty(path)) return;
 
-            // Find all connected parts via FixedJoints
-            FixedJoint[] rootJoints = rootBody.GetComponents<FixedJoint>();
+            // --- GRAPH TRAVERSAL GATHER STEP ---
+            // Uses the shared BFS utility to discover all connected structural
+            // pieces at ANY depth (Root → A → B → C all discovered).
+            // This is the same gather logic the CraftingValidator uses,
+            // ensuring the Recorder and Validator always see identical pieces.
+            List<StructuralPiece> connectedPieces = AssemblyGraphUtility.GetAllConnectedPieces(rootBody);
+
             List<PartBlueprint> blueprints = new List<PartBlueprint>();
 
-            // Also keep track of parts for the verification pass
+            // Keep track of parts for the verification pass
             List<(Rigidbody Body, GameObject PartObj)> recordedParts = new List<(Rigidbody, GameObject)>();
 
-            foreach (FixedJoint joint in rootJoints)
+            foreach (StructuralPiece piece in connectedPieces)
             {
-                if (joint.connectedBody == null) continue;
+                GameObject partObj = piece.gameObject;
+                Rigidbody attachedBody = piece.GetComponent<Rigidbody>();
 
-                Rigidbody attachedBody = joint.connectedBody;
-                GameObject partObj = attachedBody.gameObject;
-
-                // Skip cosmetics
-                if (partObj.GetComponent<IDecoration>() != null) continue;
-
-                // Verify it has structural piece script
-                if (partObj.GetComponent<IStructuralPiece>() == null)
+                if (attachedBody == null)
                 {
-                    Debug.LogWarning($"[RecipeRecorder] Skipping '{partObj.name}' because it does not have a component implementing IStructuralPiece.");
+                    Debug.LogWarning($"[RecipeRecorder] Skipping '{partObj.name}' — has StructuralPiece but no Rigidbody.");
                     continue;
                 }
 
                 // Calculate local bounds using oriented local bounds (rotation-stable)
+                // This uses the unscaled root matrix so measurements are in actual world meters.
                 Bounds localBounds = CalculateStructuralLocalBounds(partObj, rootBody.transform);
 
                 PartBlueprint bp = new PartBlueprint();
@@ -88,7 +88,7 @@ namespace DumyatRuntime.Editor
 
             if (blueprints.Count == 0)
             {
-                EditorUtility.DisplayDialog("Warning", "No structural pieces (with IStructuralPiece components) were found attached to the selected root Rigidbody via FixedJoints.", "OK");
+                EditorUtility.DisplayDialog("Warning", "No structural pieces (with StructuralPiece components) were found connected to the selected root Rigidbody via the FixedJoint graph.", "OK");
                 return;
             }
 
