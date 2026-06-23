@@ -6,139 +6,288 @@ using UnityEngine.XR.Interaction.Toolkit.UI;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Minimal end-to-end demo of <see cref="GeminiClient"/>: a button fires a hard-coded prompt and
-    /// the reply (or fallback message) is logged to the console and shown on a UI label. If no UI is
-    /// wired in the Inspector, a small world-space panel is built automatically in front of the player
-    /// so the sample works when simply dropped into a scene.
+    /// End-to-end demo of <see cref="GeminiClient"/> and <see cref="ElevenLabsClient"/>.
+    /// Exposes two independent TTS paths:
+    /// <list type="number">
+    ///   <item><b>Speak custom text</b> — sends the <see cref="_customTtsText"/> field directly to ElevenLabs.</item>
+    ///   <item><b>Speak LLM response</b> — first fetches a Gemini reply, then passes it to ElevenLabs.</item>
+    /// </list>
+    /// Wire the buttons and labels in the Inspector, or leave them empty to get an auto-built
+    /// world-space panel (useful when dropping the component into a scene without a canvas).
     /// </summary>
     public class GeminiTestSample : MonoBehaviour
     {
-        [Header("Prompt")]
+        [Header("Gemini Prompt")]
         [SerializeField, TextArea]
         private string _prompt = "In one short sentence, greet a player who just reached the summit of Mount Dumyat.";
 
-        [Header("UI (optional — auto-built when left empty)")]
-        [SerializeField] private Button _sendButton;
-        [SerializeField] private TMP_Text _responseLabel;
+        [Header("ElevenLabs TTS — Custom Text (Option 1)")]
+        [SerializeField, TextArea]
+        private string _customTtsText = "Welcome to the summit of Mount Dumyat!";
+        [SerializeField] private Button _speakCustomButton;
 
-        private const string IdleText = "Press \"Ask Gemini\" to send the prompt.";
-        private const string WaitingText = "Thinking…";
+        [Header("ElevenLabs TTS — LLM Response (Option 2)")]
+        [SerializeField] private Button _askAndSpeakButton;
+
+        [Header("Shared")]
+        [SerializeField] private Button _askGeminiButton;
+        [SerializeField] private TMP_Text _responseLabel;
+        [SerializeField] private AudioSource _audioSource;
+
+        private const string IdleText = "Press a button below to test Gemini or TTS.";
+        private const string WaitingGeminiText = "Asking Gemini…";
+        private const string WaitingTtsText = "Synthesising speech…";
+
+        private string _lastGeminiResponse;
+        private System.DateTime _promptStartTime;
 
         private void Start()
         {
-            if (_sendButton == null || _responseLabel == null)
+            if (_askGeminiButton == null || _responseLabel == null || _speakCustomButton == null || _askAndSpeakButton == null)
                 BuildFallbackUI();
 
             if (_responseLabel != null)
                 _responseLabel.text = IdleText;
 
-            if (_sendButton != null)
-                _sendButton.onClick.AddListener(SendPrompt);
+            if (_askGeminiButton != null)
+                _askGeminiButton.onClick.AddListener(SendPrompt);
+
+            if (_speakCustomButton != null)
+                _speakCustomButton.onClick.AddListener(SpeakCustomText);
+
+            if (_askAndSpeakButton != null)
+            {
+                _askAndSpeakButton.onClick.AddListener(AskAndSpeak);
+                _askAndSpeakButton.interactable = true;
+            }
         }
 
         private void OnDestroy()
         {
-            if (_sendButton != null)
-                _sendButton.onClick.RemoveListener(SendPrompt);
+            if (_askGeminiButton != null) _askGeminiButton.onClick.RemoveListener(SendPrompt);
+            if (_speakCustomButton != null) _speakCustomButton.onClick.RemoveListener(SpeakCustomText);
+            if (_askAndSpeakButton != null) _askAndSpeakButton.onClick.RemoveListener(AskAndSpeak);
         }
 
-        /// <summary>Sends the configured prompt. Public so it can also be wired to other UI events.</summary>
-        public void SendPrompt()
+        // ── Option 1: Speak custom text ─────────────────────────────────────────────────────────
+
+        /// <summary>Sends <see cref="_customTtsText"/> directly to ElevenLabs TTS.</summary>
+        public void SpeakCustomText()
+        {
+            if (ElevenLabsClient.Singleton == null)
+            {
+                WarnAndDisplay("GeminiTestSample: No ElevenLabsClient in the scene.");
+                return;
+            }
+
+            Debug.Log($"GeminiTestSample: Speaking custom text → \"{_customTtsText}\"");
+            SetAllInteractable(false);
+            SetLabel(WaitingTtsText);
+            ElevenLabsClient.Singleton.Speak(_customTtsText, OnAudioReady, OnTtsFailure);
+        }
+
+        // ── Option 2: Ask Gemini, then speak the reply ──────────────────────────────────────────
+
+        /// <summary>Sends the LLM prompt and, on success, passes the reply to ElevenLabs.</summary>
+        public void AskAndSpeak()
         {
             if (GeminiClient.Singleton == null)
             {
-                const string message = "GeminiTestSample: No GeminiClient in the scene.";
-                Debug.LogWarning(message);
-                if (_responseLabel != null) _responseLabel.text = message;
+                WarnAndDisplay("GeminiTestSample: No GeminiClient in the scene.");
                 return;
             }
 
             Debug.Log($"GeminiTestSample: Sending prompt → \"{_prompt}\"");
-            SetInteractable(false);
-            if (_responseLabel != null) _responseLabel.text = WaitingText;
-
-            GeminiClient.Singleton.SendPrompt(_prompt, OnResponse, OnFailure);
+            SetAllInteractable(false);
+            SetLabel(WaitingGeminiText);
+            _promptStartTime = System.DateTime.Now;
+            GeminiClient.Singleton.SendPrompt(_prompt, OnResponseThenSpeak, OnGeminiFailure);
         }
 
-        private void OnResponse(string reply)
+        private void OnResponseThenSpeak(string reply)
         {
-            Debug.Log($"GeminiTestSample: Gemini replied → {reply}");
-            if (_responseLabel != null) _responseLabel.text = reply;
-            SetInteractable(true);
+            _lastGeminiResponse = reply;
+            double elapsed = System.DateTime.Now.Subtract(_promptStartTime).TotalMilliseconds;
+            Debug.Log($"GeminiTestSample: Gemini replied in {elapsed:F0} ms → {reply}");
+            SetLabel(reply);
+
+            if (ElevenLabsClient.Singleton == null)
+            {
+                Debug.LogWarning("GeminiTestSample: No ElevenLabsClient — skipping TTS.");
+                SetAllInteractable(true);
+                return;
+            }
+
+            SetLabel($"{reply}\n\n[Synthesising speech…]");
+            ElevenLabsClient.Singleton.Speak(reply, OnAudioReady, OnTtsFailure);
         }
 
-        private void OnFailure(string fallback)
+        // ── Gemini-only (no TTS) ─────────────────────────────────────────────────────────────────
+
+        /// <summary>Sends the configured prompt without TTS. Public so it can be wired to other UI events.</summary>
+        public void SendPrompt()
         {
-            Debug.LogWarning($"GeminiTestSample: Request failed; showing fallback → {fallback}");
-            if (_responseLabel != null) _responseLabel.text = fallback;
-            SetInteractable(true);
+            if (GeminiClient.Singleton == null)
+            {
+                WarnAndDisplay("GeminiTestSample: No GeminiClient in the scene.");
+                return;
+            }
+
+            Debug.Log($"GeminiTestSample: Sending prompt → \"{_prompt}\"");
+            SetAllInteractable(false);
+            SetLabel(WaitingGeminiText);
+            _promptStartTime = System.DateTime.Now;
+            GeminiClient.Singleton.SendPrompt(_prompt, OnGeminiResponse, OnGeminiFailure);
         }
 
-        private void SetInteractable(bool value)
+        private void OnGeminiResponse(string reply)
         {
-            if (_sendButton != null) _sendButton.interactable = value;
+            _lastGeminiResponse = reply;
+            double elapsed = System.DateTime.Now.Subtract(_promptStartTime).TotalMilliseconds;
+            Debug.Log($"GeminiTestSample: Gemini replied in {elapsed:F0} ms → {reply}");
+            SetLabel(reply);
+            SetAllInteractable(true);
         }
 
-        // --- Auto-built world-space UI ---------------------------------------------------------
+        private void OnGeminiFailure(string fallback)
+        {
+            Debug.LogWarning($"GeminiTestSample: Gemini request failed; fallback → {fallback}");
+            SetLabel(fallback);
+            SetAllInteractable(true);
+        }
+
+        // ── Shared TTS callbacks ─────────────────────────────────────────────────────────────────
+
+        private void OnAudioReady(AudioClip clip)
+        {
+            Debug.Log($"GeminiTestSample: Audio ready — {clip.length:F2}s, {clip.frequency} Hz.");
+            if (_audioSource != null)
+            {
+                _audioSource.clip = clip;
+                _audioSource.Play();
+            }
+            else
+            {
+                Debug.LogWarning("GeminiTestSample: No AudioSource assigned — audio won't play.");
+            }
+
+            // Restore labels after "Synthesising" suffix (re-show the full response text).
+            if (!string.IsNullOrEmpty(_lastGeminiResponse))
+                SetLabel(_lastGeminiResponse);
+
+            SetAllInteractable(true);
+        }
+
+        private void OnTtsFailure(string message)
+        {
+            Debug.LogWarning($"GeminiTestSample: TTS failed — {message}");
+            SetLabel($"TTS failed: {message}");
+            SetAllInteractable(true);
+        }
+
+        // ── Helpers ──────────────────────────────────────────────────────────────────────────────
+
+        private void SetLabel(string text)
+        {
+            if (_responseLabel != null) _responseLabel.text = text;
+        }
+
+        private void SetAllInteractable(bool value)
+        {
+            if (_askGeminiButton != null)  _askGeminiButton.interactable = value;
+            if (_speakCustomButton != null) _speakCustomButton.interactable = value;
+            if (_askAndSpeakButton != null) _askAndSpeakButton.interactable = value;
+        }
+
+        private void WarnAndDisplay(string message)
+        {
+            Debug.LogWarning(message);
+            SetLabel(message);
+        }
+
+        // ── Auto-built world-space UI ────────────────────────────────────────────────────────────
 
         private void BuildFallbackUI()
         {
-            GameObject canvasGO = new GameObject("Gemini Sample Canvas",
+            GameObject canvasGO = new GameObject("AI Sample Canvas",
                 typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(TrackedDeviceGraphicRaycaster));
             Canvas canvas = canvasGO.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
 
             RectTransform canvasRect = (RectTransform)canvasGO.transform;
-            canvasRect.sizeDelta = new Vector2(600f, 400f);
+            canvasRect.sizeDelta = new Vector2(600f, 560f);
             canvasRect.localScale = Vector3.one * 0.0015f;
             PositionInFrontOfCamera(canvasRect);
 
             // Dark background panel.
-            GameObject panelGO = CreateUIChild("Panel", canvasRect);
-            Image panel = panelGO.AddComponent<Image>();
+            Image panel = CreateUIChild("Panel", canvasRect).AddComponent<Image>();
             panel.color = new Color(0f, 0f, 0f, 0.75f);
             Stretch(panel.rectTransform);
 
-            // Response label (top portion).
+            // Response label (upper portion).
             if (_responseLabel == null)
             {
                 GameObject labelGO = CreateUIChild("Response Label", canvasRect);
                 TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
-                label.fontSize = 24f;
+                label.fontSize = 22f;
                 label.color = Color.white;
                 label.alignment = TextAlignmentOptions.TopLeft;
                 RectTransform lr = label.rectTransform;
-                lr.anchorMin = new Vector2(0.05f, 0.30f);
-                lr.anchorMax = new Vector2(0.95f, 0.95f);
-                lr.offsetMin = Vector2.zero;
-                lr.offsetMax = Vector2.zero;
+                lr.anchorMin = new Vector2(0.05f, 0.40f);
+                lr.anchorMax = new Vector2(0.95f, 0.96f);
+                lr.offsetMin = lr.offsetMax = Vector2.zero;
                 _responseLabel = label;
             }
 
-            // Button (bottom portion).
-            if (_sendButton == null)
-            {
-                GameObject buttonGO = CreateUIChild("Ask Button", canvasRect);
-                Image buttonImage = buttonGO.AddComponent<Image>();
-                buttonImage.color = new Color(0.16f, 0.42f, 0.78f, 1f);
-                Button button = buttonGO.AddComponent<Button>();
-                button.targetGraphic = buttonImage;
-                RectTransform br = (RectTransform)buttonGO.transform;
-                br.anchorMin = new Vector2(0.30f, 0.05f);
-                br.anchorMax = new Vector2(0.70f, 0.22f);
-                br.offsetMin = Vector2.zero;
-                br.offsetMax = Vector2.zero;
+            // "Ask Gemini" button.
+            if (_askGeminiButton == null)
+                _askGeminiButton = BuildButton("Ask Gemini", canvasRect, new Vector2(0.05f, 0.28f), new Vector2(0.48f, 0.40f), new Color(0.16f, 0.42f, 0.78f));
 
-                GameObject btnTextGO = CreateUIChild("Text", br);
-                TextMeshProUGUI btnText = btnTextGO.AddComponent<TextMeshProUGUI>();
-                btnText.text = "Ask Gemini";
-                btnText.fontSize = 28f;
-                btnText.color = Color.white;
-                btnText.alignment = TextAlignmentOptions.Center;
-                Stretch(btnText.rectTransform);
+            // "Ask + Speak" button.
+            if (_askAndSpeakButton == null)
+                _askAndSpeakButton = BuildButton("Ask + Speak", canvasRect, new Vector2(0.52f, 0.28f), new Vector2(0.95f, 0.40f), new Color(0.20f, 0.55f, 0.30f));
 
-                _sendButton = button;
-            }
+            // "Speak Custom" button.
+            if (_speakCustomButton == null)
+                _speakCustomButton = BuildButton("Speak Custom Text", canvasRect, new Vector2(0.05f, 0.13f), new Vector2(0.95f, 0.25f), new Color(0.60f, 0.35f, 0.10f));
+
+            // Small label showing what the custom text is.
+            GameObject hintGO = CreateUIChild("Custom TTS Hint", canvasRect);
+            TextMeshProUGUI hint = hintGO.AddComponent<TextMeshProUGUI>();
+            hint.text = $"Custom: \"{_customTtsText}\"";
+            hint.fontSize = 16f;
+            hint.color = new Color(0.8f, 0.8f, 0.8f);
+            hint.alignment = TextAlignmentOptions.Center;
+            RectTransform hr = hint.rectTransform;
+            hr.anchorMin = new Vector2(0.05f, 0.03f);
+            hr.anchorMax = new Vector2(0.95f, 0.12f);
+            hr.offsetMin = hr.offsetMax = Vector2.zero;
+
+            // Auto-add an AudioSource if none assigned.
+            if (_audioSource == null)
+                _audioSource = canvasGO.AddComponent<AudioSource>();
+        }
+
+        private Button BuildButton(string label, RectTransform parent, Vector2 anchorMin, Vector2 anchorMax, Color color)
+        {
+            GameObject go = CreateUIChild(label + " Button", parent);
+            Image img = go.AddComponent<Image>();
+            img.color = color;
+            Button btn = go.AddComponent<Button>();
+            btn.targetGraphic = img;
+            RectTransform rt = (RectTransform)go.transform;
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+
+            GameObject textGO = CreateUIChild("Text", rt);
+            TextMeshProUGUI txt = textGO.AddComponent<TextMeshProUGUI>();
+            txt.text = label;
+            txt.fontSize = 24f;
+            txt.color = Color.white;
+            txt.alignment = TextAlignmentOptions.Center;
+            Stretch(txt.rectTransform);
+            return btn;
         }
 
         private static GameObject CreateUIChild(string name, Transform parent)
@@ -152,8 +301,7 @@ namespace DumyatRuntime
         {
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
         }
 
         private static void PositionInFrontOfCamera(RectTransform canvasRect)

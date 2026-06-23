@@ -206,6 +206,55 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b734f2bd29eeddd4d85afb0c266228c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &335216978
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 335216979}
+  - component: {fileID: 335216980}
+  m_Layer: 0
+  m_Name: ElevenLabs Client
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &335216979
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 335216978}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 4.57463, y: 0, z: -9.10778}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1792739130}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &335216980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 335216978}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65a06c0498cc30d43bf8eac84a0d8a54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ElevenLabsClient
+  _config: {fileID: 0}
+  _speed: 1
+  _style: 0.15
+  _timeoutSeconds: 30
+  _fallbackMessage: Text-to-speech is unavailable right now.
 --- !u!4 &408001515 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3962516690148115046, guid: 1d744080cd254f349817aaa960f31c57, type: 3}
@@ -666,6 +715,190 @@ Transform:
   - {fileID: 1036875012}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1700000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1700000002}
+  - component: {fileID: 1700000003}
+  - component: {fileID: 1700000004}
+  - component: {fileID: 1700000005}
+  m_Layer: 0
+  m_Name: Gemini AI Test
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1700000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1700000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecb1b782128c442fb49ebb7c079ff806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _config: {fileID: 11400000, guid: 4d8832d058057cc489c87f63a820506b, type: 2}
+  _timeoutSeconds: 20
+  _maxRetries: 1
+  _retryDelaySeconds: 0.5
+  _fallbackMessage: Sorry, I can't respond right now. Please try again in a moment.
+--- !u!114 &1700000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daa30369407d486c8c1bb84717e4d469, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _prompt: In one short sentence, greet a player who just reached the summit of Mount
+    Dumyat.
+  _customTtsText: "\u0623\u0647\u0644\u0627\u064B \u0628\u064A\u0643\u0645 \u0641\u064A
+    \u0642\u0644\u0628 \u062F\u0645\u064A\u0627\u0637.. \u0627\u0644\u0645\u0643\u0627\u0646
+    \u0627\u0644\u0644\u064A \u0628\u064A\u0642\u0627\u0628\u0644 \u0641\u064A\u0647
+    \u0627\u0644\u0646\u064A\u0644 \u0627\u0644\u0628\u062D\u0631 \u0641\u064A \u0645\u0634\u0647\u062F
+    \u0645\u0627\u0644\u0648\u0634 \u0645\u062B\u064A\u0644!\n\n\u0627\u0645\u0634\u0648\u0627
+    \u0645\u0639\u0627\u0646\u0627 \u0641\u064A \u0634\u0648\u0627\u0631\u0639\u0647\u0627\u060C
+    \u0627\u062A\u0641\u0631\u062C\u0648\u0627 \u0639\u0644\u0649 \u0634\u0637 \u0631\u0627\u0633
+    \u0627\u0644\u0628\u0631\u060C \u0648\u0634\u0648\u0641\u0648\u0627 \u0625\u0632\u0627\u064A
+    \u0625\u064A\u062F \u0627\u0644\u0635\u0646\u0627\u064A\u0639\u064A\u0629 \u0647\u0646\u0627
+    \u0628\u062A\u062D\u0648\u0644 \u0627\u0644\u062E\u0634\u0628 \u0644\u0644\u0648\u062D\u0627\u062A
+    \u0641\u0646\u064A\u0629 \u0628\u062A\u0644\u0641 \u0627\u0644\u0639\u0627\u0644\u0645
+    \u0643\u0644\u0647.\n\n\u062F\u0648\u0642\u0648\u0627 \u062D\u0644\u0627\u0648\u0629
+    \u0627\u0644\u0645\u0634\u0628\u0643 \u0627\u0644\u062F\u0645\u064A\u0627\u0637\u064A\u060C
+    \u0648\u0627\u0633\u062A\u0645\u062A\u0639\u0648\u0627 \u0628\u0631\u062D\u0644\u062A\u0643\u0645
+    \u0645\u0639\u0627\u0646\u0627.. \u0625\u0646\u062A\u0648\u0627 \u0645\u0634
+    \u0645\u062C\u0631\u062F \u0632\u0648\u0627\u0631\u060C \u0625\u0646\u062A\u0648\u0627
+    \u062C\u0632\u0621 \u0645\u0646 \u0627\u0644\u062D\u0643\u0627\u064A\u0629!"
+  _speakCustomButton: {fileID: 0}
+  _askAndSpeakButton: {fileID: 0}
+  _askGeminiButton: {fileID: 0}
+  _responseLabel: {fileID: 0}
+  _audioSource: {fileID: 0}
+--- !u!82 &1700000005
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700000001}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1001 &1737992523
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -728,6 +961,63 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3109989708722272112, guid: 60d3ebe2dc2ad0a498a9bb9423a82d1e, type: 3}
   m_PrefabInstance: {fileID: 1737992523}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1750014880
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_Name
+      value: XR Device Simulator
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
 --- !u!1 &1792739129
 GameObject:
   m_ObjectHideFlags: 0
@@ -762,6 +1052,7 @@ Transform:
   - {fileID: 745193121511913609}
   - {fileID: 1276075396469156577}
   - {fileID: 442182878}
+  - {fileID: 335216979}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1972162104
@@ -1069,71 +1360,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5483883585974181068, guid: a8ab9422d2a27a94c9a36b58dca28ad9, type: 3}
   m_PrefabInstance: {fileID: 6200874939317366059}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1700000001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1700000002}
-  - component: {fileID: 1700000003}
-  - component: {fileID: 1700000004}
-  m_Layer: 0
-  m_Name: Gemini AI Test
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1700000002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1700000001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1700000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1700000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ecb1b782128c442fb49ebb7c079ff806, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  _config: {fileID: 11400000, guid: 4d8832d058057cc489c87f63a820506b, type: 2}
-  _timeoutSeconds: 20
-  _maxRetries: 1
-  _retryDelaySeconds: 0.5
-  _fallbackMessage: Sorry, I can't respond right now. Please try again in a moment.
---- !u!114 &1700000004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1700000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: daa30369407d486c8c1bb84717e4d469, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  _prompt: In one short sentence, greet a player who just reached the summit of Mount Dumyat.
-  _sendButton: {fileID: 0}
-  _responseLabel: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1145,3 +1371,4 @@ SceneRoots:
   - {fileID: 1290287097}
   - {fileID: 21868515}
   - {fileID: 1700000002}
+  - {fileID: 1750014880}
