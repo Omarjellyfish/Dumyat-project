@@ -39,16 +39,10 @@ namespace DumyatRuntime.Editor
 
             if (string.IsNullOrEmpty(path)) return;
 
-            // --- GRAPH TRAVERSAL GATHER STEP ---
-            // Uses the shared BFS utility to discover all connected structural
-            // pieces at ANY depth (Root → A → B → C all discovered).
-            // This is the same gather logic the CraftingValidator uses,
-            // ensuring the Recorder and Validator always see identical pieces.
             List<StructuralPiece> connectedPieces = AssemblyGraphUtility.GetAllConnectedPieces(rootBody);
 
             List<PartBlueprint> blueprints = new List<PartBlueprint>();
 
-            // Keep track of parts for the verification pass
             List<(Rigidbody Body, GameObject PartObj)> recordedParts = new List<(Rigidbody, GameObject)>();
 
             foreach (StructuralPiece piece in connectedPieces)
@@ -62,8 +56,6 @@ namespace DumyatRuntime.Editor
                     continue;
                 }
 
-                // Calculate local bounds using oriented local bounds (rotation-stable)
-                // This uses the unscaled root matrix so measurements are in actual world meters.
                 Bounds localBounds = CalculateStructuralLocalBounds(partObj, rootBody.transform);
 
                 PartBlueprint bp = new PartBlueprint();

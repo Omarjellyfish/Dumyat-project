@@ -62,10 +62,6 @@ namespace DumyatRuntime
             float totalScore = 0f;
             int matchedCount = 0;
 
-            // --- GRAPH TRAVERSAL GATHER STEP ---
-            // Uses BFS to walk the entire FixedJoint graph starting from root.
-            // Returns a flat list of all StructuralPiece components connected
-            // at ANY depth (Root → A → B → C all discovered).
             List<StructuralPiece> connectedPieces = AssemblyGraphUtility.GetAllConnectedPieces(rootBody);
 
             var unfulfilledSlots = new List<PartBlueprint>(recipe.RequiredParts);
@@ -75,7 +71,6 @@ namespace DumyatRuntime
                 GameObject partObj = piece.gameObject;
                 Rigidbody attachedBody = piece.GetComponent<Rigidbody>();
 
-                // Safety: skip if Rigidbody is missing (shouldn't happen in a valid assembly)
                 if (attachedBody == null)
                 {
                     Debug.LogWarning($"[CraftingValidator] '{partObj.name}' has StructuralPiece but no Rigidbody. Skipping.");
