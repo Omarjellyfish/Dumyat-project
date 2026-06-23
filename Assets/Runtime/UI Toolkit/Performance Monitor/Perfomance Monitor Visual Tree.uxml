@@ -1,0 +1,65 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="PerformanceMonitorProgressBarTemplate" src="project://database/Assets/Runtime/UI%20Toolkit/Performance%20Monitor/PerformanceMonitorProgressBarTemplate.uxml?fileID=9197481963319205126&amp;guid=1b2c82cdd14f3ab4786e0d10dd423d06&amp;type=3#PerformanceMonitorProgressBarTemplate"/>
+    <ui:Template name="PerformanceMonitorRowTemplate" src="project://database/Assets/Runtime/UI%20Toolkit/Performance%20Monitor/PerformanceMonitorRowTemplate.uxml?fileID=9197481963319205126&amp;guid=3e8a5d8677ec8554a933f494ca1b0b6d&amp;type=3#PerformanceMonitorRowTemplate"/>
+    <ui:Template name="space" src="project://database/Assets/Runtime/UI%20Toolkit/space.uxml?fileID=9197481963319205126&amp;guid=5e92cd1d685339d4da01bf7a27e196b2&amp;type=3#space"/>
+    <Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/PerformanceMonitorStyle.uss?fileID=7433441132597879392&amp;guid=612fc3e65f000d741beb3068c1070fee&amp;type=3#PerformanceMonitorStyle"/>
+    <ui:VisualElement name="Menu" style="flex-grow: 1; background-color: rgba(77, 94, 111, 0.96); border-top-left-radius: 17px; border-top-right-radius: 17px; border-bottom-right-radius: 17px; border-bottom-left-radius: 17px; border-top-width: 4px; border-right-width: 4px; border-bottom-width: 4px; border-left-width: 4px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0);">
+        <ui:Label text="Performance Monitor" name="title" class="title"/>
+        <ui:VisualElement name="Metrics" style="flex-grow: 1; flex-direction: column;">
+            <ui:VisualElement name="fps-region" class="region">
+                <ui:VisualElement name="metrics" style="flex-grow: 1; flex-direction: row;">
+                    <ui:Instance template="PerformanceMonitorRowTemplate" name="fps-row" style="flex-shrink: 1; justify-content: space-around; min-height: auto;">
+                        <AttributeOverrides element-name="row-title" text="FPS: "/>
+                    </ui:Instance>
+                    <ui:Instance template="PerformanceMonitorRowTemplate" name="frame-time-row">
+                        <AttributeOverrides element-name="row-title" text="Frame Time:"/>
+                    </ui:Instance>
+                </ui:VisualElement>
+                <ui:Instance template="space" name="space"/>
+                <ui:Instance template="PerformanceMonitorProgressBarTemplate" name="fps-bar"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="triangles-count-region" class="region">
+                <ui:VisualElement name="metrics" style="flex-grow: 1; flex-direction: row;">
+                    <ui:Instance template="PerformanceMonitorRowTemplate" name="triangles-row">
+                        <AttributeOverrides element-name="row-title" text="Triangles:"/>
+                    </ui:Instance>
+                    <ui:Instance template="PerformanceMonitorRowTemplate" name="vertices-row">
+                        <AttributeOverrides element-name="row-title" text="Vertices:"/>
+                    </ui:Instance>
+                </ui:VisualElement>
+                <ui:VisualElement name="space" style="flex-grow: 1; flex-basis: 7px;"/>
+                <ui:Instance template="PerformanceMonitorProgressBarTemplate" name="tri-bar"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="batches-region" class="region">
+                <ui:VisualElement name="metrics" style="flex-grow: 1; flex-direction: row;">
+                    <ui:Instance template="PerformanceMonitorRowTemplate" name="batches-row">
+                        <AttributeOverrides element-name="row-title" text="Batches:"/>
+                    </ui:Instance>
+                    <ui:Instance template="PerformanceMonitorRowTemplate" name="setpass-row">
+                        <AttributeOverrides element-name="row-title" text="Setpass:"/>
+                    </ui:Instance>
+                </ui:VisualElement>
+                <ui:VisualElement name="space" style="flex-grow: 1; flex-basis: 7px;"/>
+                <ui:Instance template="PerformanceMonitorProgressBarTemplate" name="batches-bar"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="processor-frame-time" class="region" style="flex-grow: 0;">
+                <ui:Instance template="PerformanceMonitorRowTemplate" name="cpu-time-row">
+                    <AttributeOverrides element-name="row-title" text="CPU Time:"/>
+                </ui:Instance>
+                <ui:Instance template="PerformanceMonitorRowTemplate" name="gpu-time-row">
+                    <AttributeOverrides element-name="row-title" text="GPU Time:"/>
+                </ui:Instance>
+                <ui:Instance template="space" name="space"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="memory-region" class="region">
+                <ui:Instance template="PerformanceMonitorRowTemplate" name="gc-memory-row">
+                    <AttributeOverrides element-name="row-title" text="GC Memory:"/>
+                </ui:Instance>
+                <ui:Instance template="PerformanceMonitorRowTemplate" name="system-memory-row">
+                    <AttributeOverrides element-name="row-title" text="System Memory:"/>
+                </ui:Instance>
+                <ui:Instance template="space" name="space"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
