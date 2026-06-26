@@ -10,7 +10,7 @@ namespace DumyatRuntime
         [SerializeField] protected GameObject _visualObject;
         [SerializeField] private float _detectionDistance = 0.1f;
         [SerializeField] private float _sideRayOffset = 0.02f;
-
+        public bool IsConstrained => _isConstrained;
         [Header("Appearance Clearance")]
         [Tooltip("Adjust this value in the inspector if the tool still clips into the wood mesh.")]
         [SerializeField] private float _surfaceClearance = 0.005f; // NEW FIXED GAP VARIABLE
@@ -21,7 +21,7 @@ namespace DumyatRuntime
         protected XRGrabInteractable _xrGrab;
 
         private Vector3 _handPositionAtSnap;
-        protected Vector3 _automaticSnapOffset; 
+        protected Vector3 _automaticSnapOffset;
         private bool _isConstrained = false;
 
         protected virtual void Awake()
@@ -59,12 +59,12 @@ namespace DumyatRuntime
             if (TryDetectSurface(out RaycastHit hit, out Vector3 avgNormal))
             {
                 _isConstrained = true;
-                _hitPosition = hit.point; 
+                _hitPosition = hit.point;
                 _hitNormal = avgNormal;
                 _lockedRotation = transform.rotation;
-                
-                _handPositionAtSnap = GetTrackedHandPosition(); 
-                
+
+                _handPositionAtSnap = GetTrackedHandPosition();
+
                 // FIXED: Instead of tracking hand layout, push up out of the wood by our clearance value
                 _automaticSnapOffset = avgNormal * _surfaceClearance;
 
@@ -94,16 +94,16 @@ namespace DumyatRuntime
         private bool TryDetectSurface(out RaycastHit hit, out Vector3 averagedNormal)
         {
             Vector3 origin = transform.position;
-            Vector3 dir    = -transform.up; 
-            Vector3 side   = transform.right * _sideRayOffset;
+            Vector3 dir = -transform.up;
+            Vector3 side = transform.right * _sideRayOffset;
 
-            bool cHit = Physics.Raycast(origin,        dir, out RaycastHit hC, _detectionDistance, _woodLayer);
+            bool cHit = Physics.Raycast(origin, dir, out RaycastHit hC, _detectionDistance, _woodLayer);
             bool lHit = Physics.Raycast(origin - side, dir, out RaycastHit hL, _detectionDistance, _woodLayer);
             bool rHit = Physics.Raycast(origin + side, dir, out RaycastHit hR, _detectionDistance, _woodLayer);
 
             if (!cHit && !lHit && !rHit)
             {
-                hit           = default;
+                hit = default;
                 averagedNormal = Vector3.up;
                 return false;
             }
@@ -125,10 +125,10 @@ namespace DumyatRuntime
         private void OnDrawGizmos()
         {
             Vector3 origin = transform.position;
-            Vector3 dir    = -transform.up; 
-            Vector3 side   = transform.right * _sideRayOffset;
+            Vector3 dir = -transform.up;
+            Vector3 side = transform.right * _sideRayOffset;
 
-            DrawRayGizmo(origin,        dir, Color.yellow);
+            DrawRayGizmo(origin, dir, Color.yellow);
             DrawRayGizmo(origin - side, dir, Color.cyan);
             DrawRayGizmo(origin + side, dir, Color.cyan);
         }

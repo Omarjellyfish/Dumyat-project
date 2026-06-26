@@ -251,7 +251,7 @@ GameObject:
   - component: {fileID: 330568727}
   - component: {fileID: 330568726}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: saw
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -401,7 +401,7 @@ MonoBehaviour:
   m_ThrowVelocityScale: 1.5
   m_ThrowAngularVelocityScale: 1
   m_ForceGravityOnDetach: 0
-  m_RetainTransformParent: 1
+  m_RetainTransformParent: 0
   m_StartingSingleGrabTransformers: []
   m_StartingMultipleGrabTransformers: []
   m_AddDefaultGrabTransformers: 1
@@ -636,7 +636,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -856,7 +856,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2c0c6bcc98ac4234d826f0f14fbe3b1f, type: 3}
       propertyPath: m_Name
-      value: saw_low
+      value: saw_mesh
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -895,7 +895,7 @@ GameObject:
   - component: {fileID: 1160077676}
   - component: {fileID: 1160077675}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: bladepoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1546,7 +1546,7 @@ GameObject:
   - component: {fileID: 1986905403}
   - component: {fileID: 1986905402}
   m_Layer: 0
-  m_Name: Cube_1
+  m_Name: bladepoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1598,7 +1598,7 @@ GameObject:
   - component: {fileID: 2090004570}
   - component: {fileID: 2090004569}
   m_Layer: 0
-  m_Name: Cube_2
+  m_Name: bladepoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

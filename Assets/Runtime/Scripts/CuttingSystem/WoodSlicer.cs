@@ -1,36 +1,91 @@
 using UnityEngine;
 using System.Collections.Generic;
 using EzySlice;
-using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using System;
+
 namespace DumyatRuntime
 {
     public class WoodSlicer : MonoBehaviour
     {
         [SerializeField] private Material _crossSectionMaterial;
+        [SerializeField] private Transform _bladeDirectionReference;
 
-        Vector3 _averagePosition;
-        Vector3 _averageDirection;
-        int originalWoodLayer;
+        [Header("Debug")]
+        [SerializeField] private bool _drawDebug = true;
+        [SerializeField] private float _debugRayLength = 0.5f;
 
-        public void PerformCut(List<Vector3> _hitPoint, Vector3 sawDirection, GameObject wood)
+        private Vector3 _averagePosition;
+        private Vector3 _averageDirection;
+        private int originalWoodLayer;
+
+        private Vector3 _lastCutPosition;
+        private Vector3 _lastCutNormal;
+        private Vector3 _lastBladeForward;
+        private Vector3 _lastBladeUp;
+        private Vector3 _lastSawDirection;
+        private bool _hasDebugCut;
+
+        public void PerformCut(List<Vector3> hitPoints, Vector3 sawDirection, GameObject wood)
         {
-            Vector3 _sumOfPosition = new Vector3();
-
-            for (int i = 0; i < _hitPoint.Count; i++)
+            if (wood == null)
             {
-                _sumOfPosition += _hitPoint[i];
+                Debug.LogWarning("WoodSlicer: No wood object passed.");
+                return;
             }
 
-            _averagePosition = _sumOfPosition / _hitPoint.Count;
-            Vector3 bladeDirection = transform.up;
-            _averageDirection = Vector3.Cross(sawDirection, bladeDirection).normalized;
+            if (_bladeDirectionReference == null)
+            {
+                Debug.LogError("WoodSlicer: Blade Direction Reference is not assigned.");
+                return;
+            }
+
+            if (hitPoints == null || hitPoints.Count == 0)
+            {
+                Debug.LogWarning("WoodSlicer: No hit points collected.");
+                return;
+            }
+
+            Vector3 sumOfPosition = Vector3.zero;
+
+            for (int i = 0; i < hitPoints.Count; i++)
+            {
+                sumOfPosition += hitPoints[i];
+            }
+
+            _averagePosition = sumOfPosition / hitPoints.Count;
+
+Vector3 bladeLength = _bladeDirectionReference.right.normalized;
+Vector3 bladeHeight = _bladeDirectionReference.up.normalized;
+_averageDirection = Vector3.Cross(bladeLength, bladeHeight).normalized;
+
+            if (_averageDirection == Vector3.zero)
+            {
+                Debug.LogWarning("WoodSlicer: Invalid cut direction.");
+                return;
+            }
+
+            _lastCutPosition = _averagePosition;
+            _lastCutNormal = _averageDirection;
+            _lastBladeForward = bladeLength;
+            _lastBladeUp = bladeHeight;
+            _lastSawDirection = sawDirection;
+            _hasDebugCut = true;
+
+            Debug.Log(
+                $"CUT DEBUG | hit count: {hitPoints.Count} | " +
+                $"cut pos: {_averagePosition} | " +
+                $"cut normal: {_averageDirection} | " +
+                $"blade forward: {bladeLength} | " +
+                $"blade up: {bladeHeight} | " +
+                $"old saw direction: {sawDirection}"
+            );
+
             SlicedHull hull = wood.Slice(_averagePosition, _averageDirection);
             originalWoodLayer = wood.layer;
+
             if (hull == null)
             {
-                Debug.LogWarning("Slice failed - no valid hull returned");
+                Debug.LogWarning("Slice failed - no valid hull returned.");
                 return;
             }
 
@@ -45,9 +100,11 @@ namespace DumyatRuntime
 
             Destroy(wood);
         }
+
         private void SetupPiece(GameObject piece, RenderTexture originalPaint)
         {
-            if (piece == null) return;
+            if (piece == null)
+                return;
 
             MeshCollider col = piece.AddComponent<MeshCollider>();
             col.convex = true;
@@ -59,8 +116,26 @@ namespace DumyatRuntime
             piece.layer = originalWoodLayer;
 
             WoodPaintSurface woodSurface = piece.AddComponent<WoodPaintSurface>();
-
             woodSurface.CopyPaintFrom(originalPaint);
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (!_drawDebug || !_hasDebugCut)
+                return;
+
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawSphere(_lastCutPosition, 0.025f);
+            Gizmos.DrawRay(_lastCutPosition, _lastCutNormal * _debugRayLength);
+
+            Gizmos.color = Color.blue;
+            Gizmos.DrawRay(_lastCutPosition, _lastBladeForward * _debugRayLength);
+
+            Gizmos.color = Color.green;
+            Gizmos.DrawRay(_lastCutPosition, _lastBladeUp * _debugRayLength);
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(_lastCutPosition, _lastSawDirection.normalized * _debugRayLength);
         }
     }
 }
