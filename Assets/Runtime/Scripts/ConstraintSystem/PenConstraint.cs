@@ -2,18 +2,19 @@ using UnityEngine;
 
 namespace DumyatRuntime
 {
-    public class PenConstraint : MonoBehaviour
+    public class PenConstraint : SurfaceConstraint
     {
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
+        protected override void ConstrainMovement()
         {
-        
-        }
+            Vector3 delta = GetMovementSinceSnap();
 
-        // Update is called once per frame
-        void Update()
-        {
-        
+            // Project movement straight onto the 2D surface plane
+            float perpendicularAmount = Vector3.Dot(delta, _hitNormal);
+            Vector3 slidingMovement = delta - (_hitNormal * perpendicularAmount);
+
+            // Position = Pure surface hit point + automatically captured length of the pen + sliding travel path
+            _visualObject.transform.position = _hitPosition + _automaticSnapOffset + slidingMovement;
+            _visualObject.transform.rotation = Quaternion.LookRotation(transform.forward, _hitNormal);
         }
     }
 }

@@ -21,6 +21,7 @@ namespace DumyatRuntime
         List<Vector3> _hitPoints;
         List<Vector3> _hitNormal;
         [SerializeField] private WoodSlicer _woodSlicer;
+        
         void Start()
         {
             _hitPoints = new List<Vector3>();
