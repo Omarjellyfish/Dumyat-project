@@ -1,0 +1,27 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/PlayerAttackEditorStyles.uss?fileID=7433441132597879392&amp;guid=faa4c1504957d794e861cc859bf80c01&amp;type=3#PlayerAttackEditorStyles"/>
+    <ui:VisualElement name="Pane1" style="flex-grow: 1; flex-direction: row;">
+        <ui:VisualElement name="Vars" class="section" style="flex-grow: 1; width: 60%;">
+            <ui:Label text="Movement" style="-unity-font-style: bold; font-size: 24px; -unity-text-outline-width: 1px; letter-spacing: 9px; -unity-text-outline-color: rgb(43, 43, 43);"/>
+            <uie:PropertyField binding-path="_playerMovementSpeed" name="MovementSpeed"/>
+            <uie:PropertyField binding-path="_playerDashSpeed" name="DashSpeed"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="Buttons" class="section" style="flex-grow: 1; width: 40%;">
+            <ui:Button text="Randomize Move Speed" name="RandomizeMoveSpeed" class="button"/>
+            <ui:Button text="Set To Default Values" name="DefaultValues" class="button"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="Pane2" style="flex-grow: 1;">
+        <ui:Label text="Hello World!!! I&apos;m testing &lt;b&gt;&lt;color=#FF9515&gt;Rich Text&lt;/color&gt;&lt;/b&gt;. &#10;And here is a &lt;a href=&quot;https://www.youtube.com/watch?v=dQw4w9WgXcQ&quot;&gt;Link&lt;/a&gt;&#10;&#10;&lt;a href=&quot;https://docs.google.com/document/d/1u4vuT4Fjpjnovndz4B1uzqEuZJfdT3-a73CnbTYXXLA/edit?tab=t.0&quot; &gt;Dumyat Project Guidelines&lt;/a&gt;" class="section" style="opacity: 1; font-size: 15px; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="Pane3" style="flex-grow: 1;">
+        <ui:VisualElement class="section" style="flex-grow: 1;">
+            <uie:PropertyField binding-path="_showValues" name="ShowValues"/>
+            <ui:VisualElement name="AllElementsToHide" style="flex-grow: 1; display: flex;">
+                <uie:PropertyField binding-path="_attackDamage" name="AttackDamage" style="display: flex;"/>
+                <uie:PropertyField name="AttackRange" binding-path="_attackRange"/>
+                <ui:EnumField label="Enum" value="Center" type="DumyatEditor.PlayerAttackStats+AttackType, Project.Editor" binding-path="PlayerAttackType"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

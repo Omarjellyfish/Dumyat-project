@@ -1,0 +1,48 @@
+:root {
+}
+
+.button {
+    height: 40px;
+    white-space: normal;
+    margin-top: 6px;
+    margin-right: 20px;
+    margin-bottom: 6px;
+    margin-left: 20px;
+    padding-top: 6px;
+    padding-right: 6px;
+    padding-bottom: 6px;
+    padding-left: 6px;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+    border-bottom-right-radius: 9px;
+    border-bottom-left-radius: 9px;
+    border-top-width: 6px;
+    border-right-width: 6px;
+    border-bottom-width: 6px;
+    border-left-width: 6px;
+    border-left-color: rgb(72, 72, 72);
+    border-right-color: rgb(48, 48, 48);
+    border-top-color: rgb(72, 72, 72);
+    border-bottom-color: rgb(51, 51, 51);
+    transition-duration: 0.15s;
+}
+
+.button:hover {
+    scale: 1.05 1.05;
+}
+
+.section {
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    margin-left: 6px;
+    padding-top: 6px;
+    padding-right: 6px;
+    padding-bottom: 6px;
+    padding-left: 6px;
+    background-color: var(--unity-colors-default-background);
+    border-top-left-radius: 13px;
+    border-top-right-radius: 13px;
+    border-bottom-right-radius: 13px;
+    border-bottom-left-radius: 13px;
+}

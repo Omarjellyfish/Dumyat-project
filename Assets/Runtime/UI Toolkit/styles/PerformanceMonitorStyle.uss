@@ -1,0 +1,117 @@
+:root {
+}
+
+.title {
+    -unity-font-style: bold;
+    font-size: 21px;
+    -unity-text-align: upper-center;
+    -unity-font-definition: url("project://database/Assets/Runtime/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&guid=aac3631e38408604ebf2f2973521f99a&type=3#NotInter-Regular");
+    opacity: 1;
+    color: rgb(0, 0, 0);
+}
+
+.row-title {
+    margin-bottom: -10px;
+    color: rgb(0, 0, 0);
+    -unity-font-style: bold;
+}
+
+.row-value {
+}
+
+.row {
+    margin-bottom: -8px;
+    justify-content: flex-start;
+    align-self: auto;
+    -unity-text-align: upper-left;
+    flex-basis: auto;
+}
+
+.region {
+    background-color: rgb(230, 237, 243);
+    flex-grow: 0;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-bottom: 0;
+    margin-left: 6px;
+    padding-top: 6px;
+    padding-right: 6px;
+    padding-bottom: 6px;
+    padding-left: 6px;
+    flex-basis: auto;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-left-color: rgb(31, 31, 31);
+    border-right-color: rgb(31, 31, 31);
+    border-top-color: rgb(31, 31, 31);
+    border-bottom-color: rgb(31, 31, 31);
+}
+
+.progress-bar-track {
+    flex-grow: 1;
+    height: 0%;
+    border-left-color: rgb(24, 24, 24);
+    border-right-color: rgb(24, 24, 24);
+    border-top-color: rgb(24, 24, 24);
+    border-bottom-color: rgb(24, 24, 24);
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    background-color: rgb(55, 55, 55);
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    overflow: hidden;
+    min-width: 0;
+    max-width: none;
+    min-height: 0;
+    justify-content: space-evenly;
+    align-items: center;
+    align-self: center;
+}
+
+.progress-bar-fill {
+    width: auto;
+    height: auto;
+    background-color: rgb(255, 255, 255);
+    align-items: stretch;
+    align-content: flex-start;
+    align-self: flex-start;
+}
+
+.progress-bar-target-line {
+    position: absolute;
+    width: 2px;
+    background-color: rgb(255, 88, 0);
+    height: 149%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    translate: -50% -50%;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+.progress-bar {
+    height: 16px;
+    background-size: 100% 599%;
+}
+
+
+
+.progress-bar-value {
+    display: none;
+}

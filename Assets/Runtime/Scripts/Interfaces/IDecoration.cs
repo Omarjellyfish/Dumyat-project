@@ -1,9 +1,4 @@
-using UnityEngine;
-
 namespace DumyatRuntime
 {
-    public class IDecoration
-    {
-    
-    }
+    public interface IDecoration { }
 }
