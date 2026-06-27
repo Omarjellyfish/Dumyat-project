@@ -12,8 +12,8 @@ namespace DumyatRuntime
         [SerializeField] private SurfaceConstraint _surfaceConstraint;
         [SerializeField] private WoodSlicer _woodSlicer;
 
-        [SerializeField] private float _minimumMoveDistance = 0.005f;
-        [SerializeField] private int _strokesNeededToCut = 15;
+        [Header("Settings")]
+        [SerializeField] private SawSettingsSO _settings;
 
         [Header("Floating Text")]
         [SerializeField] private bool _showFloatingText = true;
@@ -84,7 +84,7 @@ private FloatingText _activeFloatingText;
             Vector3 bladeAxis = _bladeDirectionReference.right.normalized;
             float strokeAmount = Vector3.Dot(rawDelta, bladeAxis);
 
-            if (Mathf.Abs(strokeAmount) < _minimumMoveDistance)
+            if (Mathf.Abs(strokeAmount) < _settings.minimumMoveDistance)
                 return;
 
             _previousDirection = _currentDirection;
@@ -100,10 +100,13 @@ private FloatingText _activeFloatingText;
                 _strokeCount++;
                 AddCurrentHitPoints();
 
-                ShowFloatingText($"Sawing {_strokeCount}/{_strokesNeededToCut}");
+                ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
+                
+                SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
+                    _settings.sawStrokeClips, transform, _settings.sfxVolume);
             }
 
-            if (_strokeCount >= _strokesNeededToCut)
+            if (_strokeCount >= _settings.strokesNeededToCut)
             {
                 GameObject woodToCut = GetCurrentWoodObject();
 
@@ -111,6 +114,9 @@ private FloatingText _activeFloatingText;
                 {
                     _woodSlicer.PerformCut(_hitPoints, _currentDirection, woodToCut);
                     ShowFloatingText("Cut!");
+
+                    SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
+                        _settings.cutCompleteClips, transform, _settings.sfxVolume);
                 }
 
                 _strokeCount = 0;
