@@ -17,6 +17,7 @@ namespace DumyatRuntime
         // Cached property IDs for optimization
         private static readonly int PlaneNormalID = Shader.PropertyToID("_PlaneNormal");
         private static readonly int PlanePositionID = Shader.PropertyToID("_PlanePositionFromOriginAlongNormal");
+        private static readonly int PlaneRightID = Shader.PropertyToID("_PlaneRight");
 
         void Update()
         {
@@ -25,9 +26,12 @@ namespace DumyatRuntime
             Vector3 planeNormal = transform.forward;
             Vector3 planePosition = transform.position;
             float h = Vector3.Dot(planeNormal, planePosition);
+            Vector3 planeRight = transform.right;
+            
 
             targetMaterial.SetVector(PlaneNormalID, planeNormal);
             targetMaterial.SetFloat(PlanePositionID, h);
+            targetMaterial.SetVector(PlaneRightID, planeRight); 
         }
 
         void OnDrawGizmos()
