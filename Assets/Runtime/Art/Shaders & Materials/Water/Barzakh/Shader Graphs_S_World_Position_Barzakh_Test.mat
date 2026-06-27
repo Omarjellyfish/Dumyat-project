@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Shader Graphs_S_World_Position_Barzakh_Test
-  m_Shader: {fileID: -6465566751694194690, guid: 95ed4193031c7754d976f587a5254b6e, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: e6333f657ed165a498748647103567c5, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -62,13 +62,16 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Noise_Scale: 1.03
+    - _Distance_from_orgin_along_the_normal: 0
+    - _Noise_Scale: 4.6
     - _Noise_Strength: 0.59
     - _Plane_Offset: 0.6
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Speed: 1.04
-    m_Colors: []
+    - _Speed: 3.03
+    - _XRMotionVectorsPass: 1
+    m_Colors:
+    - _Plane_Normal: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &6605654482251157239
