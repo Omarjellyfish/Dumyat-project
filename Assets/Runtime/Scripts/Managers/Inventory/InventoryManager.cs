@@ -34,13 +34,11 @@ namespace DumyatRuntime
             Singleton = this;
             DontDestroyOnLoad(gameObject);
 
-            // Ensure the master save is loaded first
             if (SaveManager.CurrentSaveData == null)
             {
                 SaveManager.LoadGame();
             }
 
-            // Link the manager's local state to the master save data
             _currentInventory = SaveManager.CurrentSaveData.inventoryData;
         }
 

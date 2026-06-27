@@ -1,0 +1,91 @@
+.container {
+    flex-grow: 1;
+    background-color: rgba(21, 24, 31, 0.86);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header-area {
+    margin-bottom: 16px;
+    align-items: center;
+}
+
+.status-title {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.status-indicator {
+    height: 4px;
+    width: 100%;
+    margin-top: 4px;
+    background-color: #37474F;
+    border-radius: 2px;
+}
+
+.quality-score {
+    font-size: 18px;
+    color: white;
+    margin-bottom: 12px;
+    -unity-text-align: middle-center;
+}
+
+.diagnostic-list {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.button-area {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.action-button {
+    flex-grow: 1;
+    margin: 0 4px;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    -unity-font-style: bold;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.action-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.action-button:active {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Diagnostic Item Styles */
+.diagnostic-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.diagnostic-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+.diagnostic-text {
+    color: white;
+    font-size: 14px;
+    white-space: normal;
+    flex-shrink: 1;
+}
