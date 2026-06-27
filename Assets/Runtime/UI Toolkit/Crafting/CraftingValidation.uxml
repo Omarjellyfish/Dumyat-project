@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Runtime/UI Toolkit/Crafting/CraftingValidation.uss" />
+    <ui:VisualElement class="container">
+        <ui:VisualElement class="header-area">
+            <ui:Label text="READY TO VALIDATE" name="status-title" class="status-title" />
+            <ui:VisualElement name="status-indicator" class="status-indicator" />
+        </ui:VisualElement>
+        
+        <ui:Label text="Quality: 100%" name="quality-score" class="quality-score" style="display: none;" />
+        
+        <ui:ScrollView name="diagnostic-scroll" class="diagnostic-list" />
+        
+        <ui:VisualElement class="button-area">
+            <ui:Button text="CLEAR LOG" name="reset-button" class="action-button" />
+            <ui:Button text="VALIDATE ASSEMBLY" name="validate-button" class="action-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
