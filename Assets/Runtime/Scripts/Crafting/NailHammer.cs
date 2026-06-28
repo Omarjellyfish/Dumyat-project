@@ -63,6 +63,10 @@ namespace DumyatRuntime
             if (Time.time < _lastImpactTime + _settings.impactCooldown) return;
             float speed = _currentVelocity.magnitude;
             if (speed < _settings.minImpactVelocity) return;
+
+            HapticFeedback.Singleton?.TriggerVibration(
+                _settings.generalImpactHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
+
             Rigidbody plankABody = collision.rigidbody;
             if (plankABody == null) return;
             if (plankABody.GetComponent<StructuralPiece>() == null) return;
@@ -125,7 +129,7 @@ namespace DumyatRuntime
             SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
                 _settings.nailInClips, transform, _settings.sfxVolume);
             HapticFeedback.Singleton?.TriggerVibration(
-                _settings.nailInHapticProfile, GetGrabbingHand());
+                _settings.nailInHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Attached '{plankA.name}' ↔ '{plankB.name}' at {contact.point}");
             OnNailAttached?.Invoke(contact.point, plankA.gameObject, plankB.gameObject);
         }
@@ -142,7 +146,7 @@ namespace DumyatRuntime
             SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
                 _settings.nailOutClips, transform, _settings.sfxVolume);
             HapticFeedback.Singleton?.TriggerVibration(
-                _settings.nailOutHapticProfile, GetGrabbingHand());
+                _settings.nailOutHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Detached '{bodyA.name}' ↔ '{bodyB.name}' at {contact.point}");
             OnNailRemoved?.Invoke(contact.point, bodyA.gameObject, bodyB.gameObject);
         }
@@ -232,16 +236,6 @@ namespace DumyatRuntime
                     closestMarker = marker;
                 }
             }
-        }
-        #endregion
-        #region Haptic Hand Detection
-        private HapticHand GetGrabbingHand()
-        {
-            if (_grabInteractable.interactorsSelecting.Count == 0)
-                return HapticHand.Right;
-            IXRSelectInteractor interactor = _grabInteractable.interactorsSelecting[0];
-            string interactorName = (interactor as MonoBehaviour)?.gameObject.name.ToLower() ?? "";
-            return interactorName.Contains("left") ? HapticHand.Left : HapticHand.Right;
         }
         #endregion
     }

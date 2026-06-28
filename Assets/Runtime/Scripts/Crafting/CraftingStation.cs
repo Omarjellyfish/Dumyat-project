@@ -12,6 +12,10 @@ namespace DumyatRuntime
         [SerializeField] private Transform _spawnPoint;
         [SerializeField] private CraftingRecipe[] _availableRecipes;
 
+        [Header("Spawn Audio")]
+        [SerializeField] private AudioClip[] _spawnClips;
+        [SerializeField, Range(0f, 1f)] private float _spawnSfxVolume = 0.8f;
+
         private GameObject _currentRootObject;
 
         public CraftingRecipe[] AvailableRecipes => _availableRecipes;
@@ -51,6 +55,8 @@ namespace DumyatRuntime
                 {
                     Debug.LogWarning($"[CraftingStation] Spawned root {recipe.RootPrefab.name} is missing a Rigidbody.");
                 }
+
+                PlaySpawnAudio();
             }
             else
             {
@@ -61,6 +67,14 @@ namespace DumyatRuntime
         public void CheckBuild()
         {
             CraftingValidator.ValidateBuild(_rootBody, _recipe);
+        }
+
+        private void PlaySpawnAudio()
+        {
+            if (_spawnPoint == null) return;
+
+            SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
+                _spawnClips, _spawnPoint, _spawnSfxVolume);
         }
     }
 }
