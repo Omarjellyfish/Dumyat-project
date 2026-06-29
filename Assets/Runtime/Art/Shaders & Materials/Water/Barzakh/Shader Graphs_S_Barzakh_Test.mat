@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: 95ed4193031c7754d976f587a5254b6e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _ENABLE_FOAM_NOISE
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -49,15 +50,19 @@ Material:
     - _Barrier_Width: 0.37
     - _Barrier_Width_Variation: 0.3
     - _Distance_from_orgin_along_the_normal: -0.09
-    - _Float: 1.15
-    - _Float_1: 0.06
+    - _ENABLE_FOAM_NOISE: 1
+    - _Float: 1.6
+    - _Float_1: 16
     - _Float_2: 0.83
     - _FoamWidth: 0.5
-    - _Foam_Contrast: 0.042
+    - _Foam_Contrast: 0.015
+    - _Foam_Noise_Warp_speed: -0.18
     - _Foam_Noise_intensity: 1
-    - _Foam_Power: 0.83
+    - _Foam_Power: 1.74
     - _Foam_Scroll_Speed: 0.3
+    - _Foam_Warp_Noise_Scale: 7.1
     - _Foam_Width_Variation: 0.3
+    - _Foam_noise_Scale: 10.79
     - _Intersection_Foam_Speed: 0
     - _Noise_Scale: 1.19
     - _Noise_Strength: 1.12
@@ -68,6 +73,7 @@ Material:
     - _QueueOffset: 0
     - _Speed: -0.48
     - _UnevenIntensity: 0
+    - _Warp_Strength: 1.17
     - _Wave_Barrer_Speed: 0.2
     - _Wave_Foam_Speed: -0.15
     - _XRMotionVectorsPass: 1
@@ -78,12 +84,13 @@ Material:
     - _Color_1: {r: 0, g: 0.3936084, b: 0.754717, a: 0}
     - _Foam_Color: {r: 1, g: 1, b: 1, a: 0}
     - _Foam_Noise: {r: 0.29, g: 0.79, b: 0, a: 0}
+    - _Foam_Noise_Warp_Direction: {r: 0, g: 0, b: 0, a: 0}
     - _Foam_Smoothness: {r: -0.18, g: 1.06, b: 0, a: 0}
     - _Frequencies: {r: 0.32, g: 1.17, b: 0.89, a: 0}
     - _Intersection_Color: {r: 1, g: 1, b: 1, a: 0}
-    - _Intersection_Smoothness: {r: -0.09, g: 0.21, b: 0, a: 0}
+    - _Intersection_Smoothness: {r: -0.49, g: 0.14, b: 0, a: 0}
     - _MinMaxBarrrerWidth: {r: 0.05, g: 0.3, b: 0, a: 0}
-    - _Min_Max_Foam_Width: {r: 0.05, g: 0.24, b: 0, a: 0}
+    - _Min_Max_Foam_Width: {r: 0.02, g: 0.07, b: 0, a: 0}
     - _Ocean_Color: {r: 0, g: 0.16862747, b: 0.38823527, a: 1}
     - _PlaneNormal: {r: -0.6395946, g: 0, b: 0.7687124, a: 0}
     - _PlaneRight: {r: 0.7687124, g: 0, b: 0.6395946, a: 0}
