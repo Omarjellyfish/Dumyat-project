@@ -27,6 +27,8 @@ namespace DumyatRuntime
             Vector3 planePosition = transform.position;
             float h = Vector3.Dot(planeNormal, planePosition);
             Vector3 planeRight = transform.right;
+
+            
             
 
             targetMaterial.SetVector(PlaneNormalID, planeNormal);
