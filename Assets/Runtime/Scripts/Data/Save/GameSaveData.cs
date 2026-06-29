@@ -9,5 +9,6 @@ namespace DumyatRuntime
 
         public QuestSaveData questData = new QuestSaveData();
         public PersistenceSaveData persistenceData = new PersistenceSaveData();
+        public CraftingSaveData craftingData = new CraftingSaveData();
     }
 }
