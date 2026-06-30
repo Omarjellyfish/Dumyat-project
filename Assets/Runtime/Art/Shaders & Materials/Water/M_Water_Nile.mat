@@ -20,8 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_Water_VertexOffload
-  m_Shader: {fileID: -6465566751694194690, guid: 5572739bf74016d46ae1ba1495e34e91, type: 3}
+  m_Name: M_Water_Nile
+  m_Shader: {fileID: -6465566751694194690, guid: d3c3fb3e97c61154ebd6cb2c58b546f4, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
@@ -31,15 +31,21 @@ Material:
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
+  stringTagMap:
+    RenderType: Opaque
   disabledShaderPasses:
   - MOTIONVECTORS
+  - SHADOWCASTER
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _Normals:
-        m_Texture: {fileID: 2800000, guid: 17830dd2283778a449e105ec4ca541f2, type: 3}
+        m_Texture: {fileID: 2800000, guid: ccfef2659a52086469ceefb7ce500ba4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SubSWaterFragment_b07818d3d9d84d7f80f2590f5d619421_Normals_2106640565_Texture2D:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -56,23 +62,45 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
+    - _CastShadows: 0
+    - _Cull: 2
     - _Depth_Color_Fresnel_Power: 4.49
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _ENVIRONMENTREFLECTIONS_OFF: 0
     - _Float: 0
     - _Fresnel_Power: 12.5
     - _Horizon_Color_Fresnel_Power: 10.9
-    - _Normal_Scale: 6.69
+    - _Normal_Distance_Fade: 3.7
+    - _Normal_Scale: 2.88
     - _Normal_Speed: 0.054
-    - _Normal_Strength: 9.9
+    - _Normal_Strength: 1
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Smoothness: 1
+    - _ReceiveShadows: 1
+    - _Smoothness: 0.812
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
     - _USE_HORIZON_COLOR: 1
     - _USE_HSV_COLORS: 0
+    - _VERTEX_NORMAL_DISTANCE_FADE: 1
+    - _WorkflowMode: 1
+    - _XRMotionVectorsPass: 1
+    - _ZTest: 4
+    - _ZWrite: 1
+    - _ZWriteControl: 0
     m_Colors:
-    - _Horizon_Color: {r: 0.6514058, g: 0.7156938, b: 0.68668544, a: 1}
+    - _Horizon_Color: {r: 0.02121901, g: 0.05448028, b: 0.084376216, a: 1}
+    - _Specular_Color: {r: 0.3301887, g: 0.3301887, b: 0.3301887, a: 0}
+    - _Vector2: {r: 30.22, g: 87.22, b: 0, a: 0}
     - _Water_A: {r: 1, g: 1, b: 1, a: 0}
     - _Water_B: {r: 0, g: 0, b: 0, a: 1}
-    - _Water_Depth_Color: {r: 0, g: 0.22812359, b: 0.4245283, a: 0}
+    - _Water_Depth_Color: {r: 0.056470275, g: 0.33626893, b: 0.4433962, a: 0}
     - _Water_Shallow_Color: {r: 0.46755964, g: 0.67616963, b: 0.745283, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

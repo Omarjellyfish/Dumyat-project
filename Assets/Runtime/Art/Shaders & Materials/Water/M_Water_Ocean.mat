@@ -20,14 +20,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_Water_VertexOffload 1
-  m_Shader: {fileID: -6465566751694194690, guid: cc36c3232d4c939409ced4c1251343c7, type: 3}
+  m_Name: M_Water_Ocean
+  m_Shader: {fileID: -6465566751694194690, guid: d3c3fb3e97c61154ebd6cb2c58b546f4, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _USE_HORIZON_COLOR
-  m_InvalidKeywords:
-  - _VERTEX_NORMAL_DISTANCE_FADE
+  m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -43,6 +42,10 @@ Material:
     m_TexEnvs:
     - _Normals:
         m_Texture: {fileID: 2800000, guid: ccfef2659a52086469ceefb7ce500ba4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SubSWaterFragment_b07818d3d9d84d7f80f2590f5d619421_Normals_2106640565_Texture2D:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -73,7 +76,7 @@ Material:
     - _Fresnel_Power: 12.5
     - _Horizon_Color_Fresnel_Power: 10.9
     - _Normal_Distance_Fade: 3.7
-    - _Normal_Scale: 2.88
+    - _Normal_Scale: 6.01
     - _Normal_Speed: 0.054
     - _Normal_Strength: 1
     - _QueueControl: 0
@@ -87,6 +90,7 @@ Material:
     - _USE_HSV_COLORS: 0
     - _VERTEX_NORMAL_DISTANCE_FADE: 1
     - _WorkflowMode: 1
+    - _XRMotionVectorsPass: 1
     - _ZTest: 4
     - _ZWrite: 1
     - _ZWriteControl: 0
@@ -96,7 +100,7 @@ Material:
     - _Vector2: {r: 30.22, g: 87.22, b: 0, a: 0}
     - _Water_A: {r: 1, g: 1, b: 1, a: 0}
     - _Water_B: {r: 0, g: 0, b: 0, a: 1}
-    - _Water_Depth_Color: {r: 0, g: 0.22812359, b: 0.4245283, a: 0}
+    - _Water_Depth_Color: {r: 0.03137237, g: 0.25475878, b: 0.4433962, a: 0}
     - _Water_Shallow_Color: {r: 0.46755964, g: 0.67616963, b: 0.745283, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
