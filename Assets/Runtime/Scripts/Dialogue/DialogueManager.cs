@@ -31,13 +31,33 @@ namespace DumyatRuntime
             }
         }
 
-        IEnumerator PlaySequence(SO_DialogueSequence sequences, Transform speaker)
+        IEnumerator PlaySequence(SO_DialogueSequence sequence, Transform speaker)
         {
             _currentlyPlay = true;
-            foreach(SO_DialogueSequence sequence in sequences._dialogueLines)
+
+            foreach (SO_DialogueLine line in sequence.DialogueLines)
             {
-                
+                if (sequence._arabic)
+                {
+                    FloatingUIManager.Instance.Show(speaker.position, line.ArabicText);
+                }
+                else
+                    FloatingUIManager.Instance.Show(speaker.position, line.EnglishText);
+
+                _audioSource.clip = line.VoiceClip;
+                _audioSource.Play();
+                while (_audioSource.isPlaying && _buttonToSkip.action.WasPressedThisFrame())
+                {
+                yield return null;
+                    
+                }
+                if(!_buttonToSkip.action.WasPressedThisFrame())
+                {
+                    _audioSource.Stop();
+                    FloatingUIManager.Instance.Hide(_floatingText);
+                }
             }
         }
+        
     }
 }
