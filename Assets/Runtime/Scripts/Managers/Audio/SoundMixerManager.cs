@@ -9,7 +9,7 @@ namespace DumyatRuntime
 
         private const string MASTER_VOLUME_KEY = "MasterVolume";
         private const string MUSIC_VOLUME_KEY = "MusicVolume";
-        private const string SOUND_FX_VOLUME_KEY = "SoundFXVolume";
+        private const string SOUND_FX_VOLUME_KEY = "SFXVolume";
 
         private void Start()
         {
