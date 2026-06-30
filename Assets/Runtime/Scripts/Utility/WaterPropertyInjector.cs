@@ -1,4 +1,3 @@
-using System.Runtime.Serialization;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -14,11 +13,13 @@ namespace DumyatRuntime
         [Header("Target Blend Material")]
         public Material barzakhMaterial;
 
-        [Header("Prefix Names")]
-        [SerializeField] private string riverPrefix = "River_";
-        [SerializeField] private string oceanPrefix = "Ocean_";
-
         private void OnValidate()
+        {
+            if (barzakhMaterial == null || riverMaterial == null || oceanMaterial == null) return;
+            SyncAll();
+        }
+
+        void Update()
         {
             SyncAll();
         }
@@ -27,40 +28,38 @@ namespace DumyatRuntime
         {
             if (barzakhMaterial == null) return;
 
-            // Sync River properties and tell the script to look for the "River_" prefix
             if (riverMaterial != null)
             {
-                SyncWithPrefix(riverMaterial, barzakhMaterial, riverPrefix);
+                SyncWithPrefix(riverMaterial, barzakhMaterial, "River_");
             }
 
-            // Sync Ocean properties and tell the script to look for the "Ocean_" prefix
             if (oceanMaterial != null)
             {
-                SyncWithPrefix(oceanMaterial, barzakhMaterial, oceanPrefix);
+                SyncWithPrefix(oceanMaterial, barzakhMaterial, "Ocean_");
             }
-            
+
             Debug.Log("<color=cyan>[Water Sync]</color> Synced prefixes successfully!");
         }
 
         private void SyncWithPrefix(Material source, Material target, string prefix)
         {
             Shader sourceShader = source.shader;
-            int propertyCount = sourceShader.GetPropertyCount();
+            
+            // Unity 6 Native replacement for ShaderUtil.GetPropertyCount
+            int propertyCount = sourceShader.GetPropertyCount(); 
 
             for (int i = 0; i < propertyCount; i++)
             {
-                string sourcePropName = sourceShader.GetPropertyName(i); // e.g., "_WaveSpeed"
-                
-                // Clean up any leading underscores from the source property name
-                string cleanSourceName = sourcePropName.TrimStart('_'); 
-
-                // Construct the target name matching your Barzakh Blackboard IDs (e.g., "_River_WaveSpeed")
+                // Unity 6 Native replacement for ShaderUtil.GetPropertyName
+                string sourcePropName = sourceShader.GetPropertyName(i); 
+                string cleanSourceName = sourcePropName.TrimStart('_');
                 string targetPropName = "_" + prefix + cleanSourceName;
 
-                // If the Barzakh shader has this prefixed property, copy the data over!
                 if (target.HasProperty(targetPropName))
                 {
-                    ShaderPropertyType type = sourceShader.GetPropertyType(i);
+                    // Unity 6 Native replacement for ShaderUtil.GetPropertyType 
+                    // (returns UnityEngine.Rendering.ShaderPropertyType)
+                    ShaderPropertyType type = sourceShader.GetPropertyType(i); 
 
                     switch (type)
                     {
@@ -71,10 +70,10 @@ namespace DumyatRuntime
                             target.SetVector(targetPropName, source.GetVector(sourcePropName));
                             break;
                         case ShaderPropertyType.Float:
-                        case ShaderPropertyType.Range:
+                        case ShaderPropertyType.Range: // Natively handled by ShaderPropertyType enum
                             target.SetFloat(targetPropName, source.GetFloat(sourcePropName));
                             break;
-                        case ShaderPropertyType.Texture:
+                        case ShaderPropertyType.Texture: // Unity 6 uses ShaderPropertyType.Texture instead of TexEnv
                             target.SetTexture(targetPropName, source.GetTexture(sourcePropName));
                             target.SetTextureScale(targetPropName, source.GetTextureScale(sourcePropName));
                             target.SetTextureOffset(targetPropName, source.GetTextureOffset(sourcePropName));
