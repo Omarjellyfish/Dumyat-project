@@ -17,7 +17,7 @@ namespace DumyatRuntime
 
         private const string EndpointFormat = "https://api.elevenlabs.io/v1/text-to-speech/{0}";
         private const string DefaultConfigResourcePath = "AI/Secrets/ElevenLabsConfig";
-        private const string ModelId = "eleven_multilingual_v2";
+        private const string DefaultModelId = "eleven_multilingual_v2";
 
         [Header("Configuration")]
         [Tooltip("ElevenLabs credentials/voice. If left empty it is loaded from Resources/AI/Secrets/ElevenLabsConfig.")]
@@ -39,6 +39,10 @@ namespace DumyatRuntime
         public bool IsConfigured => _config != null
             && !string.IsNullOrWhiteSpace(_config.ApiKey)
             && !string.IsNullOrWhiteSpace(_config.VoiceId);
+
+        /// <summary>True when an API key is present. Used by per-voice callers (e.g. the TTS model)
+        /// that supply their own voice ID and so don't require a configured default voice.</summary>
+        public bool HasApiKey => _config != null && !string.IsNullOrWhiteSpace(_config.ApiKey);
 
         private void Awake()
         {
@@ -65,11 +69,30 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Synthesises <paramref name="text"/> using the configured voice. On success
-        /// <paramref name="onSuccess"/> receives a ready-to-play <see cref="AudioClip"/>;
+        /// Synthesises <paramref name="text"/> using the configured voice and default model.
+        /// On success <paramref name="onSuccess"/> receives a ready-to-play <see cref="AudioClip"/>;
         /// on failure <paramref name="onFailure"/> receives a human-readable message.
         /// </summary>
         public void Speak(string text, Action<AudioClip> onSuccess, Action<string> onFailure = null)
+        {
+            if (!IsConfigured)
+            {
+                Debug.LogWarning("ElevenLabsClient: Missing API key/voice config; cannot synthesise speech.");
+                onFailure?.Invoke(_fallbackMessage);
+                return;
+            }
+
+            Speak(text, _config.VoiceId, DefaultModelId, onSuccess, onFailure);
+        }
+
+        /// <summary>
+        /// Synthesises <paramref name="text"/> with an explicit <paramref name="voiceId"/> and
+        /// <paramref name="modelId"/> (e.g. a per-merchant Egyptian-Arabic voice, or a low-latency
+        /// flash model). Falls back to the default model when <paramref name="modelId"/> is empty.
+        /// Used by <see cref="ElevenLabsTTSModel"/> so a single REST/auth/error path is shared.
+        /// </summary>
+        public void Speak(string text, string voiceId, string modelId,
+            Action<AudioClip> onSuccess, Action<string> onFailure = null)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -78,20 +101,29 @@ namespace DumyatRuntime
                 return;
             }
 
-            if (!IsConfigured)
+            if (_config == null || string.IsNullOrWhiteSpace(_config.ApiKey))
             {
-                Debug.LogWarning("ElevenLabsClient: Missing API key/voice config; cannot synthesise speech.");
+                Debug.LogWarning("ElevenLabsClient: Missing API key; cannot synthesise speech.");
                 onFailure?.Invoke(_fallbackMessage);
                 return;
             }
 
-            StartCoroutine(SpeakRoutine(text, onSuccess, onFailure));
+            if (string.IsNullOrWhiteSpace(voiceId))
+            {
+                Debug.LogWarning("ElevenLabsClient: No voice ID supplied; cannot synthesise speech.");
+                onFailure?.Invoke(_fallbackMessage);
+                return;
+            }
+
+            string model = string.IsNullOrWhiteSpace(modelId) ? DefaultModelId : modelId;
+            StartCoroutine(SpeakRoutine(text, voiceId, model, onSuccess, onFailure));
         }
 
-        private IEnumerator SpeakRoutine(string text, Action<AudioClip> onSuccess, Action<string> onFailure)
+        private IEnumerator SpeakRoutine(string text, string voiceId, string modelId,
+            Action<AudioClip> onSuccess, Action<string> onFailure)
         {
-            string url = string.Format(EndpointFormat, _config.VoiceId);
-            byte[] body = System.Text.Encoding.UTF8.GetBytes(BuildRequestJson(text));
+            string url = string.Format(EndpointFormat, voiceId);
+            byte[] body = System.Text.Encoding.UTF8.GetBytes(BuildRequestJson(text, modelId));
             Debug.Log($"ElevenLabsClient: POST {url} — speed={_speed}, style={_style} ({body.Length} bytes)");
 
             using (UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
@@ -127,12 +159,12 @@ namespace DumyatRuntime
             onFailure?.Invoke(_fallbackMessage);
         }
 
-        private string BuildRequestJson(string text)
+        private string BuildRequestJson(string text, string modelId)
         {
             var payload = new ElevenLabsTtsRequest
             {
                 text = text,
-                model_id = ModelId,
+                model_id = modelId,
                 voice_settings = new ElevenLabsVoiceSettings
                 {
                     stability = 0.5f,

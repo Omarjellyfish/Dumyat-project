@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -12,7 +13,7 @@ namespace DumyatRuntime
     /// handling and a basic retry, falling back to a configurable message when every attempt fails.
     /// Results are delivered through callbacks so callers stay decoupled (<see cref="ILlmClient"/>).
     /// </summary>
-    public class GeminiClient : MonoBehaviour, IManager, ILlmClient
+    public class GeminiClient : MonoBehaviour, IManager, ILlmClient, ILLMModel
     {
         public static GeminiClient Singleton { get; private set; }
 
@@ -23,6 +24,10 @@ namespace DumyatRuntime
         [Header("Configuration")]
         [Tooltip("Gemini credentials/model. If left empty it is loaded from Resources/AI/Secrets/GeminiConfig.")]
         [SerializeField] private GeminiConfig _config;
+
+        [Header("Model Pool")]
+        [Tooltip("Selection priority within LLMManager; higher = preferred.")]
+        [SerializeField] private int _priority = 0;
 
         [Header("Reliability")]
         [Tooltip("Seconds to wait for a response before the request is treated as a failure.")]
@@ -37,6 +42,28 @@ namespace DumyatRuntime
 
         /// <summary>True when a config with a non-empty API key is available.</summary>
         public bool IsConfigured => _config != null && !string.IsNullOrWhiteSpace(_config.ApiKey);
+
+        // --- ILLMModel (pooled by LLMManager) --------------------------------------
+
+        /// <inheritdoc/>
+        public string ModelName => _config != null ? _config.ModelName : "Gemini";
+
+        /// <inheritdoc/>
+        public bool IsAvailable => IsConfigured;
+
+        /// <inheritdoc/>
+        public int Priority => _priority;
+
+        /// <summary>
+        /// Awaitable text generation for <see cref="LLMManager"/>: bridges the callback-based
+        /// <see cref="SendPrompt"/> to a Task, yielding null on failure so the manager can fall back.
+        /// </summary>
+        public Task<string> GenerateTextAsync(string prompt)
+        {
+            var tcs = new TaskCompletionSource<string>();
+            SendPrompt(prompt, reply => tcs.TrySetResult(reply), _ => tcs.TrySetResult(null));
+            return tcs.Task;
+        }
 
         private void Awake()
         {
