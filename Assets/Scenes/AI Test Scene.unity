@@ -476,7 +476,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65a06c0498cc30d43bf8eac84a0d8a54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ElevenLabsClient
-  _config: {fileID: 11400000, guid: a03982ba90cc4874f81665756d501c98, type: 2}
+  _config: {fileID: 11400000, guid: 1edf6ecdfae13a3429dcc1bfe76d83d6, type: 2}
   _speed: 1
   _style: 0
   _timeoutSeconds: 30
@@ -1006,7 +1006,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1451360109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1211,13 +1211,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efdd7eff7f020a64da0bf879efa12a86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ElevenLabsScribeClient
-  _config: {fileID: 11400000, guid: a03982ba90cc4874f81665756d501c98, type: 2}
-  _languageCode: 
+  _config: {fileID: 11400000, guid: 1edf6ecdfae13a3429dcc1bfe76d83d6, type: 2}
+  _languageCode: ara
+  _microphoneDevice: 
   _autoStart: 0
   _silenceThresholdSeconds: 1.2
   _silenceAmplitudeThreshold: 0.02
+  _playbackSource: {fileID: 0}
+  _playbackOnMicDisable: 1
   _connectionTimeoutSeconds: 5
   _responseTimeoutSeconds: 5
+  _verboseLogging: 1
   _priority: 0
 --- !u!114 &1507805456
 MonoBehaviour:
@@ -1276,7 +1280,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecb1b782128c442fb49ebb7c079ff806, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.GeminiClient
-  _config: {fileID: 11400000, guid: 1a62784d6e66e04469b879995ec715b5, type: 2}
+  _config: {fileID: 11400000, guid: 4d8832d058057cc489c87f63a820506b, type: 2}
   _priority: 0
   _timeoutSeconds: 20
   _maxRetries: 1
@@ -1438,6 +1442,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 362416952}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1944448082
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1944448084}
+  - component: {fileID: 1944448083}
+  m_Layer: 0
+  m_Name: STT Voice Harness Test
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1944448083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1944448082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4cf5e1977c3a12438eb143586e54c5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SttVoiceTestHarness
+  _grantConsentOnPlay: 1
+  _disableMerchantTest: 1
+  _scribeClient: {fileID: 0}
+  _microphoneEnabled: 0
+  _captureMode: 1
+  _controlBinding: <Keyboard> Space
+  _vadAmplitudeThreshold: 0.094
+  _vadSilenceSeconds: 1.2
+  _reconnectCooldownSeconds: 2
+--- !u!4 &1944448084
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1944448082}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.5, y: 0, z: 2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1977238059
 GameObject:
   m_ObjectHideFlags: 0
@@ -1493,3 +1550,4 @@ SceneRoots:
   - {fileID: 312599907}
   - {fileID: 1258428920}
   - {fileID: 1451360110}
+  - {fileID: 1944448084}

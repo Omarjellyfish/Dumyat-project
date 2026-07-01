@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -10,22 +11,26 @@ namespace DumyatRuntime
 {
     /// <summary>
     /// Real-time speech-to-text using ElevenLabs Scribe v2 Realtime over a WebSocket.
-    /// Captures the player's microphone, streams 16 kHz PCM16 audio in chunks, detects
-    /// end-of-utterance via silence, and surfaces the transcribed text through events.
     ///
-    /// GATING: capture only ever starts when <see cref="ConsentManager.IsVoiceModeAvailable"/>
-    /// is true, and is torn down immediately if consent is revoked mid-session
-    /// (via <see cref="ConsentManager.OnConsentChanged"/>). The negotiation system should
-    /// subscribe to <see cref="OnTranscriptionFailed"/> and fall back to scripted dialogue.
+    /// SESSION vs UTTERANCE: the WebSocket is a persistent SESSION — it is opened once (on the
+    /// first mic enable, or explicitly via <see cref="OpenSession"/> when e.g. the player enters
+    /// the market) and KEPT OPEN across many utterances. It does NOT close when a transcript is
+    /// returned. Close it explicitly with <see cref="CloseSession"/> (e.g. leaving the market).
     ///
-    /// ENDPOINT/FORMAT: sourced from ElevenLabs docs (June 2026) —
+    /// The MICROPHONE is a separate toggle (<see cref="SetMicrophoneEnabled"/> /
+    /// <see cref="MicrophoneEnabled"/>). Enabling it captures + streams one utterance; disabling it
+    /// commits the utterance for transcription and plays the captured audio back locally (so you can
+    /// judge recording quality). The session stays open the whole time.
+    ///
+    /// GATING: capture only ever starts when <see cref="ConsentManager.IsVoiceModeAvailable"/> is
+    /// true, and the whole session is torn down if consent is revoked mid-session. The negotiation
+    /// system should subscribe to <see cref="OnTranscriptionFailed"/> and fall back to scripted lines.
+    ///
+    /// ENDPOINT/FORMAT: verified against ElevenLabs docs (July 2026) —
     /// https://elevenlabs.io/docs/api-reference/speech-to-text/v-1-speech-to-text-realtime
-    /// TODO: confirm the endpoint, model_id and message field names against your account's
-    /// current API version before shipping; ElevenLabs may revise these.
     ///
     /// TRANSPORT: System.Net.WebSockets.ClientWebSocket (built into .NET — no extra package).
-    /// Works in the Editor, on Mono/IL2CPP Standalone and Android. It does NOT work on WebGL;
-    /// if a WebGL build is ever needed this must be swapped for a JS-interop socket.
+    /// Works in the Editor, on Mono/IL2CPP Standalone and Android. It does NOT work on WebGL.
     /// </summary>
     public class ElevenLabsScribeClient : MonoBehaviour, IManager, ISTTModel
     {
@@ -49,17 +54,20 @@ namespace DumyatRuntime
         [SerializeField] private ElevenLabsConfig _config;
 
         // LOCALE — CRITICAL (see docs/MERCHANT_CONTEXT.md): the player speaks Egyptian Arabic,
-        // not MSA. Generic Arabic STT is trained heavily on MSA/news audio and performs worse
-        // on fast colloquial market speech. Set this to the code that best recognises Egyptian
-        // dialect for your account and TEST it on real dialect audio; leaving it empty lets
-        // Scribe auto-detect language across 90+ languages.
+        // not MSA. Set this to the code that best recognises Egyptian dialect for your account and
+        // TEST it on real dialect audio; leaving it empty lets Scribe auto-detect the language.
         [Tooltip("Scribe language_code. MUST be configured/tested for Egyptian Arabic, not " +
                  "generic Arabic/MSA (see docs/MERCHANT_CONTEXT.md). Empty = auto-detect.")]
         [SerializeField] private string _languageCode = "";
 
+        [Header("Microphone Device")]
+        [Tooltip("Preferred microphone. Empty = system default (first connected device). The Inspector " +
+                 "shows a live list that updates as microphones are connected/disconnected.")]
+        [SerializeField] private string _microphoneDevice = "";
+
         [Header("Capture Mode")]
-        [Tooltip("If true, automatically begins listening whenever voice mode becomes available " +
-                 "(otherwise call StartListening() — push-to-talk).")]
+        [Tooltip("If true, automatically enables the microphone whenever voice mode becomes available " +
+                 "(otherwise call SetMicrophoneEnabled() — push-to-talk / manual).")]
         [SerializeField] private bool _autoStart = false;
 
         [Header("Silence Detection")]
@@ -68,24 +76,87 @@ namespace DumyatRuntime
         [Tooltip("Peak sample amplitude (0-1) below which audio is considered silence.")]
         [SerializeField, Range(0f, 0.5f)] private float _silenceAmplitudeThreshold = 0.02f;
 
+        [Header("Playback")]
+        [Tooltip("AudioSource used to play the captured utterance back when the mic is disabled. " +
+                 "Created automatically if left empty.")]
+        [SerializeField] private AudioSource _playbackSource;
+        [Tooltip("Play the recorded utterance locally when the microphone is disabled.")]
+        [SerializeField] private bool _playbackOnMicDisable = true;
+
         [Header("Reliability")]
         [Tooltip("Seconds to wait for the WebSocket to connect before failing.")]
         [SerializeField, Min(1f)] private float _connectionTimeoutSeconds = 5f;
-        [Tooltip("Seconds to wait for the final transcript after committing before failing.")]
+        [Tooltip("Seconds to wait for the final transcript after committing before failing (session stays open).")]
         [SerializeField, Min(1f)] private float _responseTimeoutSeconds = 5f;
 
-        /// <summary>Fires once with the final transcribed utterance text.</summary>
+        [Header("Debug")]
+        [Tooltip("Log the full session/utterance lifecycle to the Console for testing.")]
+        [SerializeField] private bool _verboseLogging = false;
+
+        private const string LogPrefix = "[Scribe STT]";
+
+        /// <summary>Fires once with the final transcribed utterance text. Session stays open after.</summary>
         public event Action<string> OnTranscriptionComplete;
 
         /// <summary>
         /// Fires with a human-readable reason when transcription cannot be completed
-        /// (no consent/internet, connect failure, timeout, server error). Catchable by
-        /// the negotiation system to fall back to scripted dialogue.
+        /// (no consent/internet, connect failure, timeout, server error).
         /// </summary>
         public event Action<string> OnTranscriptionFailed;
 
-        /// <summary>True while the microphone is being captured and streamed.</summary>
-        public bool IsListening { get; private set; }
+        /// <summary>True while the microphone is enabled (capturing + streaming an utterance).</summary>
+        public bool MicrophoneEnabled { get; private set; }
+
+        /// <inheritdoc/>
+        /// <summary>ISTTModel view of capture state — true while the mic is enabled.</summary>
+        public bool IsListening => MicrophoneEnabled;
+
+        /// <summary>True while the persistent WebSocket session is open (or connecting).</summary>
+        public bool IsSessionOpen => _socketOpen || _connecting;
+
+        /// <summary>
+        /// Peak amplitude (0-1) of the most recent captured audio chunk. Useful for a live
+        /// input-level meter when calibrating <see cref="_silenceAmplitudeThreshold"/>. 0 when idle.
+        /// </summary>
+        public float CurrentInputLevel { get; private set; }
+
+        /// <summary>Names of the microphone devices currently connected to the system (live).</summary>
+        public static string[] AvailableMicrophoneDevices => Microphone.devices;
+
+        /// <summary>
+        /// Preferred microphone device name; empty = system default (first connected device). Applied
+        /// on the next capture — toggle the mic off/on to switch devices mid-session.
+        /// </summary>
+        public string MicrophoneDevice
+        {
+            get => _microphoneDevice;
+            set => _microphoneDevice = value ?? string.Empty;
+        }
+
+        /// <summary>
+        /// When true (default) the utterance finalizes automatically after
+        /// <see cref="_silenceThresholdSeconds"/> of silence following speech. Set false for
+        /// push-to-talk, where the caller disables the mic explicitly.
+        /// </summary>
+        public bool AutoStopOnSilence { get; set; } = true;
+
+        /// <summary>Seconds of silence (after speech) before a voice-activity utterance auto-finalizes.</summary>
+        public float SilenceThresholdSeconds
+        {
+            get => _silenceThresholdSeconds;
+            set => _silenceThresholdSeconds = Mathf.Max(0.1f, value);
+        }
+
+        /// <summary>Peak amplitude (0-1) below which audio counts as silence for voice-activity detection.</summary>
+        public float SilenceAmplitudeThreshold
+        {
+            get => _silenceAmplitudeThreshold;
+            set => _silenceAmplitudeThreshold = Mathf.Clamp(value, 0f, 0.5f);
+        }
+
+        // The Scribe server rejects a commit with less than 0.3s of uncommitted audio. Require a bit
+        // more so a too-short blip is discarded locally instead of triggering a server error.
+        private const float MinCommitSeconds = 0.4f;
 
         [Header("Model Pool")]
         [Tooltip("Selection priority within STTManager; higher = preferred.")]
@@ -105,11 +176,16 @@ namespace DumyatRuntime
         private readonly ConcurrentQueue<Action> _mainThreadQueue = new ConcurrentQueue<Action>();
         private readonly ConcurrentQueue<string> _outgoing = new ConcurrentQueue<string>();
 
-        private ClientWebSocket _socket;
         private CancellationTokenSource _cts;
         private volatile bool _socketOpen;
+        private volatile bool _connecting;
 
-        // --- Microphone state (main-thread only) ---
+        // Each connection attempt gets a unique epoch. Cross-thread callbacks carry the epoch they
+        // were started under and are ignored unless it still matches _sessionEpoch — this stops a
+        // dead connection's late failure from tearing down a freshly reconnected session.
+        private int _sessionEpoch;
+
+        // --- Microphone / utterance state (main-thread only) ---
         private string _micDevice;
         private AudioClip _micClip;
         private float[] _readBuffer;
@@ -117,11 +193,13 @@ namespace DumyatRuntime
         private int _lastReadPos;
         private bool _speechStarted;
         private float _lastVoiceTime;
+        private int _captureSampleRate;
+        private int _streamedSampleCount;   // samples streamed to the server for the current utterance
+        private readonly List<float> _recordedSamples = new List<float>();
 
-        // --- Finalization / timeout state (main-thread only) ---
+        // --- Per-utterance finalization / timeout state (main-thread only) ---
         private bool _awaitingFinal;
         private float _commitSentTime;
-        private bool _sessionEnded;   // guards against double end (timeout + late response)
 
         private void Awake()
         {
@@ -148,7 +226,7 @@ namespace DumyatRuntime
 
         private void Start()
         {
-            if (_autoStart) StartListening();
+            if (_autoStart) SetMicrophoneEnabled(true);
         }
 
         private void OnDisable()
@@ -159,82 +237,158 @@ namespace DumyatRuntime
 
         private void OnDestroy()
         {
-            AbortSession();
+            TeardownSocket();
         }
 
-        // --- Public control (push-to-talk) -----------------------------------------
+        // --- Public session control ------------------------------------------------
 
         /// <summary>
-        /// Begins capturing and streaming the microphone. No-op if already listening.
-        /// Fails fast (via <see cref="OnTranscriptionFailed"/>) if voice mode is unavailable,
-        /// the device is offline, no config/mic exists, or the socket can't connect.
+        /// Opens the persistent WebSocket session and keeps it open. Idempotent. Call this when the
+        /// player enters the market (or just enable the mic — it auto-opens). Fails fast (via
+        /// <see cref="OnTranscriptionFailed"/>) if voice mode is unavailable, offline, or unconfigured.
         /// </summary>
-        public void StartListening()
+        public bool OpenSession()
         {
-            if (IsListening) return;
+            if (_socketOpen || _connecting) return true;
 
-            // Point 7: fail fast on consent/connectivity before touching mic or socket.
             if (ConsentManager.Singleton == null || !ConsentManager.Singleton.IsVoiceModeAvailable())
             {
-                Fail("Voice mode unavailable (consent not granted or offline).");
-                return;
+                NotifyFailed("Voice mode unavailable (consent not granted or offline).");
+                return false;
             }
             if (Application.internetReachability == NetworkReachability.NotReachable)
             {
-                Fail("No internet connection.");
-                return;
+                NotifyFailed("No internet connection.");
+                return false;
             }
             if (_config == null || string.IsNullOrWhiteSpace(_config.ApiKey))
             {
-                Fail("ElevenLabs API key is not configured.");
-                return;
-            }
-            if (Microphone.devices == null || Microphone.devices.Length == 0)
-            {
-                Fail("No microphone device found.");
-                return;
+                NotifyFailed("ElevenLabs API key is not configured.");
+                return false;
             }
 
-            if (!StartMicrophone())
-            {
-                Fail("Failed to start microphone capture.");
-                return;
-            }
-
-            IsListening = true;
-            _sessionEnded = false;
+            _connecting = true;
             _awaitingFinal = false;
-            _speechStarted = false;
-            _lastVoiceTime = Time.unscaledTime;
-
             _cts = new CancellationTokenSource();
-            _ = RunSocketAsync(_cts.Token);   // fire-and-forget; all exceptions handled inside
+            int epoch = ++_sessionEpoch;
+            _ = RunSocketAsync(epoch, _cts.Token);   // fire-and-forget; all exceptions handled inside
+            Log("Opening session — connecting WebSocket…");
+            return true;
         }
 
         /// <summary>
-        /// Stops capturing and asks the server to finalize the current utterance (sends a
-        /// commit). The final transcript (or a timeout failure) arrives via the events.
+        /// Closes the persistent session: stops the mic (without committing) and tears down the
+        /// socket. Call this when the player leaves the market. Idempotent.
         /// </summary>
-        public void StopListening()
+        public void CloseSession()
         {
-            if (!IsListening) return;
+            if (!_socketOpen && !_connecting && !MicrophoneEnabled) return;
+            Log("Closing session — tearing down mic + socket.");
+            TeardownSocket();
+        }
+
+        // --- Public microphone toggle ----------------------------------------------
+
+        /// <summary>
+        /// Toggles the microphone. Enabling auto-opens the session (if needed) and begins capturing
+        /// one utterance; disabling commits the utterance for transcription, plays the captured audio
+        /// back locally, and LEAVES THE SESSION OPEN for the next utterance.
+        /// </summary>
+        public void SetMicrophoneEnabled(bool enabled)
+        {
+            if (enabled) EnableMicrophone();
+            else DisableMicrophone();
+        }
+
+        private void EnableMicrophone()
+        {
+            if (MicrophoneEnabled) return;
+
+            // Auto-open the session on first use, then validate the mic device.
+            if (!IsSessionOpen && !OpenSession()) return;
+
+            if (Microphone.devices == null || Microphone.devices.Length == 0)
+            {
+                NotifyFailed("No microphone device found.");
+                return;
+            }
+            if (!StartMicrophone())
+            {
+                NotifyFailed("Failed to start microphone capture.");
+                return;
+            }
+
+            _speechStarted = false;
+            _lastVoiceTime = Time.unscaledTime;
+            _awaitingFinal = false;
+            _streamedSampleCount = 0;
+            _recordedSamples.Clear();
+            _captureSampleRate = _micClip.frequency;
+            MicrophoneEnabled = true;
+
+            Log($"Microphone ENABLED — {(AutoStopOnSilence ? "armed (voice-activity)" : "capturing")} " +
+                $"on '{_micDevice}' (session {(_socketOpen ? "open" : "connecting")}, " +
+                $"silence: {_silenceThresholdSeconds}s @ amp<{_silenceAmplitudeThreshold}).");
+        }
+
+        // Explicit mic-off (push-to-talk release, or the master toggle turning off): commit any
+        // in-progress utterance and STOP the microphone. The session (socket) stays open.
+        private void DisableMicrophone()
+        {
+            if (!MicrophoneEnabled) return;
 
             StopMicrophone();
-            IsListening = false;
+            MicrophoneEnabled = false;
+            CurrentInputLevel = 0f;
 
-            if (_socketOpen && !_sessionEnded)
+            FinalizeUtterance(keepMicOpen: false);
+        }
+
+        // Commits the current utterance (if any audio was streamed) and plays the capture back.
+        // In voice-activity mode this fires on silence and leaves the mic OPEN (armed) for the next
+        // utterance; on explicit mic-off the mic is already stopped.
+        private void FinalizeUtterance(bool keepMicOpen)
+        {
+            int rate = _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate;
+            float streamedSeconds = _streamedSampleCount / (float)rate;
+
+            if (_streamedSampleCount > 0 && streamedSeconds < MinCommitSeconds)
             {
-                // Send an empty final chunk with commit=true to finalize, then wait for
-                // committed_transcript (or the response timeout).
+                // Below the server's minimum — committing would just be rejected. Discard locally.
+                Log($"Utterance too short ({streamedSeconds:F2}s < {MinCommitSeconds}s) — discarded, not committed.");
+            }
+            else if (_streamedSampleCount > 0 && _socketOpen && !_awaitingFinal)
+            {
+                // Commit=true finalizes THIS utterance; the socket stays open for the next one.
                 EnqueueAudioChunk(Array.Empty<byte>(), commit: true);
                 _awaitingFinal = true;
                 _commitSentTime = Time.unscaledTime;
+                Log($"Utterance committed ({streamedSeconds:F2}s streamed), awaiting transcript. " +
+                    (keepMicOpen ? "Mic stays OPEN (armed for next utterance)." : "Mic stopped. Session OPEN."));
             }
-            else if (!_sessionEnded)
+            else if (!keepMicOpen)
             {
-                // Socket never opened — nothing will come back; tear down quietly.
-                AbortSession();
+                Log("Mic disabled — no captured voice to commit.");
             }
+
+            _speechStarted = false;
+            _streamedSampleCount = 0;
+
+            if (_playbackOnMicDisable) PlayRecordedAudio();
+            _recordedSamples.Clear();
+        }
+
+        // --- ISTTModel compatibility (delegate to the mic toggle) ------------------
+
+        /// <inheritdoc/>
+        public void StartListening() => SetMicrophoneEnabled(true);
+
+        /// <inheritdoc/>
+        public void StopListening() => SetMicrophoneEnabled(false);
+
+        private void Log(string message)
+        {
+            if (_verboseLogging) Debug.Log($"{LogPrefix} {message}");
         }
 
         // --- Per-frame: drain cross-thread results, capture audio, check timeouts ---
@@ -246,15 +400,18 @@ namespace DumyatRuntime
                 action?.Invoke();
             }
 
-            if (IsListening && _socketOpen)
+            if (MicrophoneEnabled && _socketOpen)
             {
                 CaptureAndStreamAudio();
             }
 
-            if (_awaitingFinal && !_sessionEnded
-                && Time.unscaledTime - _commitSentTime > _responseTimeoutSeconds)
+            // Utterance-level timeout: the socket is alive but no transcript came back. Surface it
+            // but KEEP THE SESSION OPEN so the next utterance can proceed.
+            if (_awaitingFinal && Time.unscaledTime - _commitSentTime > _responseTimeoutSeconds)
             {
-                Fail("Timed out waiting for transcription response.");
+                _awaitingFinal = false;
+                Debug.LogWarning("ElevenLabsScribeClient: Timed out waiting for transcription response.");
+                OnTranscriptionFailed?.Invoke("Timed out waiting for transcription response.");
             }
         }
 
@@ -262,7 +419,9 @@ namespace DumyatRuntime
 
         private bool StartMicrophone()
         {
-            _micDevice = Microphone.devices[0];
+            _micDevice = ResolveMicrophoneDevice();
+            if (string.IsNullOrEmpty(_micDevice)) return false;
+
             // 1-second ring buffer, looping, at the rate Scribe expects.
             _micClip = Microphone.Start(_micDevice, true, 1, RequiredSampleRate);
             if (_micClip == null) return false;
@@ -275,11 +434,25 @@ namespace DumyatRuntime
             {
                 // The device forced a different rate. We tag chunks with the real rate, but
                 // audio_format=pcm_16000 expects 16 kHz — quality/recognition may suffer.
-                // TODO: resample to 16 kHz if this warning fires on target hardware.
                 Debug.LogWarning($"ElevenLabsScribeClient: mic opened at {_micClip.frequency} Hz, " +
                                  $"expected {RequiredSampleRate} Hz.");
             }
             return true;
+        }
+
+        // Picks the configured device if it's currently connected, otherwise the first available one.
+        private string ResolveMicrophoneDevice()
+        {
+            string[] devices = Microphone.devices;
+            if (devices == null || devices.Length == 0) return null;
+
+            if (!string.IsNullOrEmpty(_microphoneDevice) && Array.IndexOf(devices, _microphoneDevice) >= 0)
+                return _microphoneDevice;
+
+            if (!string.IsNullOrEmpty(_microphoneDevice))
+                Debug.LogWarning($"ElevenLabsScribeClient: microphone '{_microphoneDevice}' not connected; " +
+                                 $"using '{devices[0]}'.");
+            return devices[0];
         }
 
         private void StopMicrophone()
@@ -313,25 +486,68 @@ namespace DumyatRuntime
                 if (abs > peak) peak = abs;
             }
             _lastReadPos = currentPos;
+            CurrentInputLevel = peak;
 
-            // Don't stream once we've committed and are waiting for the final result.
-            if (!_awaitingFinal)
+            // In voice-activity mode (AutoStopOnSilence) capture begins at the FIRST voiced chunk and
+            // then streams the utterance CONTIGUOUSLY until the silence-commit — so the natural sub-
+            // threshold dips between syllables/words are kept and the audio isn't fragmented. Only the
+            // idle audio BEFORE speech starts (leading dead air / background silence) is dropped. In
+            // push-to-talk mode the full held audio is streamed.
+            bool voiced = peak >= _silenceAmplitudeThreshold;
+            bool sendChunk = !AutoStopOnSilence || _speechStarted || voiced;
+
+            // Stream AND record only what passes the gate, so the local playback track mirrors
+            // exactly what the STT model receives — no leading/idle silence, just the utterance.
+            // (Skip while awaiting the final result after a commit.)
+            if (!_awaitingFinal && sendChunk)
             {
                 EnqueueAudioChunk(FloatsToPcm16(chunk), commit: false);
+                _streamedSampleCount += chunk.Length;
+                _recordedSamples.AddRange(chunk);
             }
 
-            // Silence detection: finalize after _silenceThresholdSeconds of quiet, but only
-            // once the player has actually started speaking (avoids finalizing on dead air).
+            // Voice-activity segmentation: capture "starts" on the first voiced chunk and "stops"
+            // after _silenceThresholdSeconds of quiet, which commits the utterance WITHOUT closing
+            // the mic — it stays open (armed) for the next utterance.
             if (peak >= _silenceAmplitudeThreshold)
             {
+                if (!_speechStarted)
+                    Log($"Speech DETECTED (peak {peak:F3} >= {_silenceAmplitudeThreshold}) — capturing.");
                 _speechStarted = true;
                 _lastVoiceTime = Time.unscaledTime;
             }
-            else if (_speechStarted && !_awaitingFinal
+            else if (AutoStopOnSilence && _speechStarted && !_awaitingFinal
                      && Time.unscaledTime - _lastVoiceTime >= _silenceThresholdSeconds)
             {
-                StopListening();   // graceful finalize
+                Log($"Silence for {_silenceThresholdSeconds}s after speech — committing (mic stays open).");
+                FinalizeUtterance(keepMicOpen: true);
             }
+        }
+
+        // --- Local playback of the captured utterance ------------------------------
+
+        private void PlayRecordedAudio()
+        {
+            if (_recordedSamples.Count == 0)
+            {
+                Log("No recorded audio to play back.");
+                return;
+            }
+
+            if (_playbackSource == null)
+            {
+                _playbackSource = GetComponent<AudioSource>();
+                if (_playbackSource == null) _playbackSource = gameObject.AddComponent<AudioSource>();
+                _playbackSource.playOnAwake = false;
+            }
+
+            int rate = _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate;
+            var clip = AudioClip.Create("STT_Recording", _recordedSamples.Count, 1, rate, false);
+            clip.SetData(_recordedSamples.ToArray(), 0);
+            _playbackSource.clip = clip;
+            _playbackSource.Play();
+            Log($"Playing back recorded audio ({_recordedSamples.Count} samples @ {rate} Hz, " +
+                $"{_recordedSamples.Count / (float)rate:F2}s).");
         }
 
         private static byte[] FloatsToPcm16(float[] samples)
@@ -354,44 +570,68 @@ namespace DumyatRuntime
                 message_type = "input_audio_chunk",
                 audio_base_64 = pcm.Length > 0 ? Convert.ToBase64String(pcm) : string.Empty,
                 commit = commit,
-                sample_rate = _micClip != null ? _micClip.frequency : RequiredSampleRate
+                sample_rate = _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate
             };
             _outgoing.Enqueue(JsonUtility.ToJson(chunk));
         }
 
         // --- WebSocket lifecycle (background) --------------------------------------
 
-        private async Task RunSocketAsync(CancellationToken token)
+        // The socket is a LOCAL owned entirely by this task — never a shared field — so overlapping
+        // connections (during a reconnect) can't stomp on each other. Teardown cancels the token,
+        // which unwinds the loops and disposes the socket in the finally.
+        private async Task RunSocketAsync(int epoch, CancellationToken token)
         {
+            ClientWebSocket socket = null;
             try
             {
-                _socket = new ClientWebSocket();
-                _socket.Options.SetRequestHeader("xi-api-key", _config.ApiKey);
+                socket = new ClientWebSocket();
+                socket.Options.SetRequestHeader("xi-api-key", _config.ApiKey);
+                // Protocol-level pings keep the connection alive through proxies / idle periods.
+                socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(15);
 
                 var uri = new Uri(BuildConnectUrl());
 
-                // Connection timeout (point 7): cancel the connect if it stalls.
                 using (var connectCts = CancellationTokenSource.CreateLinkedTokenSource(token))
                 {
                     connectCts.CancelAfter(TimeSpan.FromSeconds(_connectionTimeoutSeconds));
-                    await _socket.ConnectAsync(uri, connectCts.Token);
+                    await socket.ConnectAsync(uri, connectCts.Token);
                 }
 
-                _socketOpen = true;
+                // Publish "connected" on the main thread, but only if this attempt is still current.
+                PostToMainThread(() =>
+                {
+                    if (epoch != _sessionEpoch) return;   // superseded/torn down while connecting
+                    _socketOpen = true;
+                    _connecting = false;
+                    if (_micClip != null) _lastReadPos = Microphone.GetPosition(_micDevice);
+                    Log("WebSocket CONNECTED — session open, streaming when mic enabled.");
+                });
 
-                // Skip any audio captured before the socket opened.
-                PostToMainThread(() => { if (_micClip != null) _lastReadPos = Microphone.GetPosition(_micDevice); });
+                await Task.WhenAll(SendLoopAsync(socket, token), ReceiveLoopAsync(socket, epoch, token));
 
-                await Task.WhenAll(SendLoopAsync(token), ReceiveLoopAsync(token));
+                // Both loops ended without us cancelling on purpose → the connection dropped.
+                if (!token.IsCancellationRequested)
+                    PostSessionFail(epoch, "Connection ended unexpectedly.");
             }
             catch (OperationCanceledException)
             {
-                // Expected on teardown or connect timeout; only the latter is a failure.
-                if (!_socketOpen) PostFail("WebSocket connection timed out.");
+                // token cancelled = intentional teardown (no failure). Otherwise the linked
+                // connect-timeout fired.
+                if (!token.IsCancellationRequested)
+                    PostSessionFail(epoch, "WebSocket connection timed out.");
             }
             catch (Exception ex)
             {
-                PostFail($"WebSocket error: {ex.Message}");
+                PostSessionFail(epoch, $"WebSocket error: {ex.Message}");
+            }
+            finally
+            {
+                if (socket != null)
+                {
+                    try { socket.Abort(); } catch { }
+                    socket.Dispose();
+                }
             }
         }
 
@@ -406,14 +646,14 @@ namespace DumyatRuntime
             return sb.ToString();
         }
 
-        private async Task SendLoopAsync(CancellationToken token)
+        private async Task SendLoopAsync(ClientWebSocket socket, CancellationToken token)
         {
-            while (!token.IsCancellationRequested && _socket.State == WebSocketState.Open)
+            while (!token.IsCancellationRequested && socket.State == WebSocketState.Open)
             {
                 if (_outgoing.TryDequeue(out string json))
                 {
                     byte[] payload = Encoding.UTF8.GetBytes(json);
-                    await _socket.SendAsync(new ArraySegment<byte>(payload),
+                    await socket.SendAsync(new ArraySegment<byte>(payload),
                         WebSocketMessageType.Text, true, token);
                 }
                 else
@@ -423,22 +663,29 @@ namespace DumyatRuntime
             }
         }
 
-        private async Task ReceiveLoopAsync(CancellationToken token)
+        private async Task ReceiveLoopAsync(ClientWebSocket socket, int epoch, CancellationToken token)
         {
             var buffer = new byte[8192];
             var message = new StringBuilder();
 
-            while (!token.IsCancellationRequested && _socket.State == WebSocketState.Open)
+            while (!token.IsCancellationRequested && socket.State == WebSocketState.Open)
             {
                 WebSocketReceiveResult result;
                 try
                 {
-                    result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), token);
+                    result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), token);
                 }
                 catch (OperationCanceledException) { break; }
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
+                    // The server closed the socket — surface the reason instead of hanging silently.
+                    string status = result.CloseStatus.HasValue
+                        ? $"{(int)result.CloseStatus.Value} {result.CloseStatus.Value}"
+                        : "no status";
+                    string desc = string.IsNullOrEmpty(result.CloseStatusDescription)
+                        ? "" : $" — {result.CloseStatusDescription}";
+                    PostSessionFail(epoch, $"Server closed the WebSocket ({status}){desc}.");
                     break;
                 }
 
@@ -447,11 +694,11 @@ namespace DumyatRuntime
 
                 string json = message.ToString();
                 message.Clear();
-                HandleServerMessage(json);
+                HandleServerMessage(json, epoch);
             }
         }
 
-        private void HandleServerMessage(string json)
+        private void HandleServerMessage(string json, int epoch)
         {
             ScribeServerMessage msg;
             try { msg = JsonUtility.FromJson<ScribeServerMessage>(json); }
@@ -468,64 +715,74 @@ namespace DumyatRuntime
                 case MsgCommittedTranscript:
                 case MsgCommittedTranscriptTimestamps:
                     string text = msg.text;
-                    PostToMainThread(() => CompleteTranscription(text));
+                    PostToMainThread(() => { if (epoch == _sessionEpoch) CompleteTranscription(text); });
                     break;
 
                 default:
-                    // error / auth_error / quota_exceeded / rate_limited / unknown.
+                    // A server error MESSAGE (e.g. "commit request ignored") is per-utterance, not a
+                    // dead connection — the socket is still open, so keep the SESSION alive. Only an
+                    // actual socket close (handled in ReceiveLoop) tears the session down.
                     string reason = string.IsNullOrEmpty(msg.error) ? msg.message_type : msg.error;
-                    PostFail($"Scribe error: {reason}");
+                    PostUtteranceFail(epoch, $"Scribe error: {reason}");
                     break;
             }
         }
 
         // --- Completion / failure (main thread) ------------------------------------
 
+        // A transcript arrived. Fire it and KEEP THE SESSION OPEN for the next utterance.
         private void CompleteTranscription(string text)
         {
-            if (_sessionEnded) return;
-            _sessionEnded = true;
+            if (!_awaitingFinal) return;   // stray/duplicate — ignore
             _awaitingFinal = false;
 
-            AbortSession();
-            OnTranscriptionComplete?.Invoke(text ?? string.Empty);
+            string result = text ?? string.Empty;
+            Log($"Transcript RECEIVED ({result.Length} chars): \"{result}\". Session stays OPEN.");
+            OnTranscriptionComplete?.Invoke(result);
         }
 
-        private void Fail(string reason)
+        // Pre-session validation failure (consent/config/mic). Nothing to tear down.
+        private void NotifyFailed(string reason)
         {
-            if (_sessionEnded) return;
-            _sessionEnded = true;
-            _awaitingFinal = false;
-
             Debug.LogWarning($"ElevenLabsScribeClient: {reason}");
-            AbortSession();
             OnTranscriptionFailed?.Invoke(reason);
         }
 
-        // Tears down mic + socket without firing events. Safe to call repeatedly.
-        private void AbortSession()
+        // Per-utterance failure (e.g. server rejected a commit). The SESSION stays open — just clear
+        // the pending state so the next utterance can proceed on the same connection.
+        private void FailUtterance(string reason)
         {
-            IsListening = false;
+            _awaitingFinal = false;
+            Debug.LogWarning($"ElevenLabsScribeClient: {reason}");
+            OnTranscriptionFailed?.Invoke(reason);
+        }
+
+        // Fatal SESSION failure (socket died / server closed). Tears the whole session down.
+        private void FailSession(string reason)
+        {
+            bool notify = _awaitingFinal || MicrophoneEnabled || _connecting || _socketOpen;
+            Debug.LogWarning($"ElevenLabsScribeClient: {reason}");
+            TeardownSocket();
+            if (notify) OnTranscriptionFailed?.Invoke(reason);
+        }
+
+        // Tears down mic + socket without firing events. Safe to call repeatedly. Bumping the epoch
+        // invalidates any in-flight callbacks from the connection being torn down. Cancelling the
+        // token unwinds RunSocketAsync, which disposes its own socket in its finally.
+        private void TeardownSocket()
+        {
+            _sessionEpoch++;
+            MicrophoneEnabled = false;
             _socketOpen = false;
+            _connecting = false;
+            _awaitingFinal = false;
+            CurrentInputLevel = 0f;
 
             StopMicrophone();
 
-            try { _cts?.Cancel(); } catch { /* already disposed */ }
-
-            ClientWebSocket socket = _socket;
-            _socket = null;
-            if (socket != null)
-            {
-                // Dispose off the main thread; close handshake may block briefly.
-                Task.Run(() =>
-                {
-                    try { socket.Abort(); } catch { }
-                    socket.Dispose();
-                });
-            }
-
             CancellationTokenSource cts = _cts;
             _cts = null;
+            try { cts?.Cancel(); } catch { /* already disposed */ }
             cts?.Dispose();
         }
 
@@ -533,24 +790,32 @@ namespace DumyatRuntime
 
         private void HandleConsentChanged(ConsentState state)
         {
-            // Point 2: stop capture immediately if consent/voice is no longer available.
-            if (IsListening && (ConsentManager.Singleton == null
-                                || !ConsentManager.Singleton.IsVoiceModeAvailable()))
+            // Stop the whole session immediately if consent/voice is no longer available.
+            if (IsSessionOpen && (ConsentManager.Singleton == null
+                                  || !ConsentManager.Singleton.IsVoiceModeAvailable()))
             {
-                Fail("Voice mode revoked mid-session.");
+                FailSession("Voice mode revoked mid-session.");
             }
-            else if (_autoStart && !IsListening
+            else if (_autoStart && !MicrophoneEnabled
                      && ConsentManager.Singleton != null
                      && ConsentManager.Singleton.IsVoiceModeAvailable())
             {
-                StartListening();
+                SetMicrophoneEnabled(true);
             }
         }
 
         // --- Cross-thread helpers --------------------------------------------------
 
         private void PostToMainThread(Action action) => _mainThreadQueue.Enqueue(action);
-        private void PostFail(string reason) => _mainThreadQueue.Enqueue(() => Fail(reason));
+
+        // Only fails the session if the reporting connection is still the current one — a stale
+        // failure from a dropped connection must not tear down a freshly reconnected session.
+        private void PostSessionFail(int epoch, string reason) =>
+            _mainThreadQueue.Enqueue(() => { if (epoch == _sessionEpoch) FailSession(reason); });
+
+        // Per-utterance failure (session-preserving), epoch-guarded like PostSessionFail.
+        private void PostUtteranceFail(int epoch, string reason) =>
+            _mainThreadQueue.Enqueue(() => { if (epoch == _sessionEpoch) FailUtterance(reason); });
 
         // --- Serializable DTOs (JsonUtility) ---------------------------------------
 
