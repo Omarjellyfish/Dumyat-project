@@ -37,11 +37,13 @@ namespace DumyatRuntime
         [Header("Root Piece")]
         [Tooltip("The prefab for the root structural piece (e.g. Chair Seat)")]
         [SerializeField] private GameObject _rootPrefab;
+        [SerializeField] private GameObject _hologramPrefab;
 
         [SerializeField] private PartBlueprint[] _requiredParts;
 
         public string RecipeName => _recipeName;
         public GameObject RootPrefab => _rootPrefab;
+        public GameObject HologramPrefab => _hologramPrefab;
         public PartBlueprint[] RequiredParts => _requiredParts;
 
 #if UNITY_EDITOR
