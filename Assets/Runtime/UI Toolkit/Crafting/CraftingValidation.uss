@@ -1,63 +1,91 @@
-.container {
+/* ─────────────────────────────────────────────────────────
+   CraftingValidation.uss
+   Compact validation panel — dynamic sizing, scrollable
+   diagnostics, never covers full screen.
+   ───────────────────────────────────────────────────────── */
+
+.validation-root {
     flex-grow: 1;
-    background-color: rgba(21, 24, 31, 0.86);
-    border-radius: 12px;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    picking-mode: ignore;
+}
+
+.container {
+    width: 38%;
+    min-width: 320px;
+    max-width: 520px;
+    height: 55%;
+    min-height: 300px;
+    max-height: 560px;
+    background-color: rgba(18, 22, 30, 0.92);
+    border-radius: 14px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.1);
-    padding: 16px;
-    display: flex;
+    border-color: rgba(255, 255, 255, 0.08);
+    padding: 3%;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .header-area {
-    margin-bottom: 16px;
+    flex-shrink: 0;
+    margin-bottom: 2%;
     align-items: center;
 }
 
 .status-title {
-    font-size: 24px;
+    font-size: 20px;
     -unity-font-style: bold;
     color: white;
+    -unity-text-align: middle-center;
 }
 
 .status-indicator {
-    height: 4px;
+    height: 3px;
     width: 100%;
-    margin-top: 4px;
+    margin-top: 6px;
     background-color: #37474F;
     border-radius: 2px;
 }
 
 .quality-score {
-    font-size: 18px;
+    font-size: 16px;
     color: white;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     -unity-text-align: middle-center;
+    flex-shrink: 0;
 }
 
+/* ── Diagnostic list — forced scroll ── */
 .diagnostic-list {
     flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    padding: 8px;
+    padding: 6px;
 }
 
 .button-area {
+    flex-shrink: 0;
     flex-direction: row;
     justify-content: space-between;
-    margin-top: 16px;
+    margin-top: 10px;
 }
 
 .action-button {
     flex-grow: 1;
     margin: 0 4px;
-    padding: 12px;
+    padding: 10px;
     border-radius: 6px;
     background-color: rgba(255, 255, 255, 0.1);
     color: white;
+    font-size: 13px;
     -unity-font-style: bold;
     border-width: 0;
-    transition-duration: 0.2s;
+    transition-duration: 0.15s;
 }
 
 .action-button:hover {
@@ -68,24 +96,28 @@
     background-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Diagnostic Item Styles */
+/* ── Diagnostic item ── */
 .diagnostic-item {
     flex-direction: row;
-    align-items: center;
-    padding: 8px;
-    border-bottom-width: 1px;
-    border-bottom-color: rgba(255, 255, 255, 0.05);
+    align-items: flex-start;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 .diagnostic-icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
     margin-right: 8px;
+    margin-top: 2px;
+    flex-shrink: 0;
 }
 
 .diagnostic-text {
     color: white;
-    font-size: 14px;
+    font-size: 13px;
     white-space: normal;
     flex-shrink: 1;
 }

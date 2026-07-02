@@ -24,9 +24,21 @@ namespace DumyatRuntime
         protected Vector3 _automaticSnapOffset;
         private bool _isConstrained = false;
 
+        // Captured once at Awake from however _visualObject is already positioned in the editor
+        // relative to this transform. This is the offset that must be preserved every frame -
+        // otherwise the mesh gets snapped back to sit exactly on the handle.
+        protected Vector3 _visualLocalOffsetPosition;
+        protected Quaternion _visualLocalOffsetRotation;
+
         protected virtual void Awake()
         {
             _xrGrab = GetComponent<XRGrabInteractable>();
+
+            if (_visualObject != null)
+            {
+                _visualLocalOffsetPosition = transform.InverseTransformPoint(_visualObject.transform.position);
+                _visualLocalOffsetRotation = Quaternion.Inverse(transform.rotation) * _visualObject.transform.rotation;
+            }
         }
 
         private void OnEnable()
@@ -49,8 +61,11 @@ namespace DumyatRuntime
             }
             else
             {
-                _visualObject.transform.position = transform.position;
-                _visualObject.transform.rotation = transform.rotation;
+                // Keep the mesh's authored local offset (position+rotation relative to the saw
+                // handle) instead of forcing it to exactly match the handle's world pose. Without
+                // this, any offset given to _visualObject in the editor gets erased every frame.
+                _visualObject.transform.position = transform.TransformPoint(_visualLocalOffsetPosition);
+                _visualObject.transform.rotation = transform.rotation * _visualLocalOffsetRotation;
             }
         }
 
