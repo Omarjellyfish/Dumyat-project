@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/Crafting/CraftingStationMenu.uss" />
+    <ui:VisualElement name="CraftingRoot" class="crafting-root">
+        <ui:VisualElement name="CraftingPanel" class="crafting-panel">
+            <ui:VisualElement class="crafting-header">
+                <ui:Label text="CRAFTING BLUEPRINTS" class="crafting-title" />
+            </ui:VisualElement>
+            <ui:ScrollView name="BlueprintContainer" class="blueprint-scroll" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Runtime/UI Toolkit/Crafting/CraftingValidation.uss" />
+    <ui:VisualElement class="validation-root">
+        <ui:VisualElement class="container">
+            <ui:VisualElement class="header-area">
+                <ui:Label text="READY TO VALIDATE" name="status-title" class="status-title" />
+                <ui:VisualElement name="status-indicator" class="status-indicator" />
+            </ui:VisualElement>
+
+            <ui:Label text="Quality: 100%" name="quality-score" class="quality-score" style="display: none;" />
+
+            <ui:ScrollView name="diagnostic-scroll" class="diagnostic-list" />
+
+            <ui:VisualElement class="button-area">
+                <ui:Button text="CLEAR LOG" name="reset-button" class="action-button" />
+                <ui:Button text="VALIDATE BUILD" name="validate-button" class="action-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

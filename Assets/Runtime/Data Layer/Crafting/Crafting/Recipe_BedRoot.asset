@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1983f9c7ef6777c488c4df2e4661f496, type: 3}
+  m_Name: Recipe_BedRoot
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CraftingRecipe
+  _recipeName: BedRoot
+  _rootPrefab: {fileID: 8288135791658880345, guid: 2653603470322004bbf829a68494fc77, type: 3}
+  _requiredParts:
+  - SlotName: bedrame right
+    ExpectedLocalPosition: {x: -0.96307904, y: -0.333, z: -0.7638235}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    IgnoreRotation: 1
+    ExpectedSize: {x: 1.8538698, y: 0.35733843, z: 0.0763638}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}
+  - SlotName: bedrame left
+    ExpectedLocalPosition: {x: -0.9630862, y: -0.333, z: 0.7638236}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    IgnoreRotation: 1
+    ExpectedSize: {x: 1.8538698, y: 0.35733843, z: 0.0763638}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}
+  - SlotName: bedframe down
+    ExpectedLocalPosition: {x: -1.8627846, y: -0.333, z: 0.0061522126}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    IgnoreRotation: 1
+    ExpectedSize: {x: 0.05445862, y: 0.35733843, z: 1.4635876}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}

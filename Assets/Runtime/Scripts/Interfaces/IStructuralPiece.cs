@@ -1,9 +1,4 @@
-using UnityEngine;
-
 namespace DumyatRuntime
 {
-    public class IStructuralPiece
-    {
-    
-    }
+    public interface IStructuralPiece { }
 }

@@ -1,5 +1,4 @@
 using UnityEngine;
-using System;
 
 namespace DumyatRuntime
 {
@@ -16,8 +15,6 @@ namespace DumyatRuntime
         public static GameManager Singleton { get; private set; }
 
         [SerializeField] private GameState _currentState = GameState.MainMenu;
-
-        public event Action<GameState> OnGameStateChanged;
 
         private void Awake()
         {
@@ -41,7 +38,7 @@ namespace DumyatRuntime
                 return;
             _currentState = newState;
             HandleGlobalSystems(_currentState);
-            OnGameStateChanged?.Invoke(_currentState);
+            EventBus.Publish(new GameStateChangedEvent(_currentState));
         }
 
         private void HandleGlobalSystems(GameState state)
