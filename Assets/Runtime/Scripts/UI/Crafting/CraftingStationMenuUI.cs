@@ -60,43 +60,78 @@ namespace DumyatRuntime
             foreach (var recipe in recipesToShow)
             {
                 if (recipe == null) continue;
-
-                var itemContainer = new VisualElement();
-                itemContainer.style.flexDirection = FlexDirection.Row;
-                itemContainer.style.justifyContent = Justify.SpaceBetween;
-                itemContainer.style.alignItems = Align.Center;
-                itemContainer.style.paddingTop = 10;
-                itemContainer.style.paddingBottom = 10;
-                itemContainer.style.borderBottomWidth = 1;
-                itemContainer.style.borderBottomColor = new Color(0.3f, 0.3f, 0.3f);
-
-                var nameLabel = new Label(recipe.RecipeName);
-                nameLabel.style.color = Color.white;
-                nameLabel.style.fontSize = 18;
-                itemContainer.Add(nameLabel);
-
-                var actionButton = new Button();
-                actionButton.style.width = 100;
-                actionButton.style.height = 30;
-
-                bool isUnlocked = CraftingManager.Singleton != null && CraftingManager.Singleton.IsBlueprintUnlocked(recipe.RecipeName);
-
-                if (isUnlocked)
-                {
-                    actionButton.text = "Select";
-                    actionButton.style.backgroundColor = new Color(0.2f, 0.6f, 0.2f);
-                    actionButton.clicked += () => OnSelectClicked(recipe);
-                }
-                else
-                {
-                    actionButton.text = "Buy";
-                    actionButton.style.backgroundColor = new Color(0.6f, 0.4f, 0.1f);
-                    actionButton.clicked += () => OnBuyClicked(recipe, actionButton);
-                }
-
-                itemContainer.Add(actionButton);
-                _blueprintContainer.Add(itemContainer);
+                _blueprintContainer.Add(CreateBlueprintCard(recipe));
             }
+        }
+
+        private VisualElement CreateBlueprintCard(CraftingRecipe recipe)
+        {
+            var card = new VisualElement();
+            card.AddToClassList("blueprint-card");
+
+            // ── Top row: name + button ──
+            var topRow = new VisualElement();
+            topRow.AddToClassList("blueprint-card-top");
+
+            var nameLabel = new Label(recipe.RecipeName);
+            nameLabel.AddToClassList("blueprint-name");
+            topRow.Add(nameLabel);
+
+            var actionButton = new Button();
+            actionButton.AddToClassList("bp-action-btn");
+
+            bool isUnlocked = CraftingManager.Singleton != null
+                && CraftingManager.Singleton.IsBlueprintUnlocked(recipe.RecipeName);
+
+            if (isUnlocked)
+            {
+                actionButton.text = "Select";
+                actionButton.AddToClassList("bp-btn-select");
+                actionButton.clicked += () => OnSelectClicked(recipe);
+            }
+            else
+            {
+                actionButton.text = "Buy";
+                actionButton.AddToClassList("bp-btn-buy");
+                actionButton.clicked += () => OnBuyClicked(recipe, actionButton);
+            }
+
+            topRow.Add(actionButton);
+            card.Add(topRow);
+
+            // ── Details section: blueprint specifics ──
+            var detailsContainer = new VisualElement();
+            detailsContainer.AddToClassList("blueprint-details");
+
+            int partCount = recipe.RequiredParts != null ? recipe.RequiredParts.Length : 0;
+            AddDetailLabel(detailsContainer, $"Parts needed: {partCount}");
+
+            if (recipe.RequiredParts != null)
+            {
+                foreach (var part in recipe.RequiredParts)
+                {
+                    if (!string.IsNullOrEmpty(part.SlotName))
+                    {
+                        // Convert to centimeters (* 100) and format cleanly (e.g. 4 x 31 x 4 cm)
+                        float sizeX = part.ExpectedSize.x * 100f;
+                        float sizeY = part.ExpectedSize.y * 100f;
+                        float sizeZ = part.ExpectedSize.z * 100f;
+                        string sizeText = $"{sizeX:F0} x {sizeY:F0} x {sizeZ:F0} cm";
+                        AddDetailLabel(detailsContainer, $"• {part.SlotName} (Size: {sizeText})");
+                    }
+                }
+            }
+
+            card.Add(detailsContainer);
+
+            return card;
+        }
+
+        private void AddDetailLabel(VisualElement parent, string text)
+        {
+            var label = new Label(text);
+            label.AddToClassList("blueprint-detail-label");
+            parent.Add(label);
         }
 
         private void OnBuyClicked(CraftingRecipe recipe, Button button)
@@ -107,7 +142,8 @@ namespace DumyatRuntime
             }
 
             button.text = "Select";
-            button.style.backgroundColor = new Color(0.2f, 0.6f, 0.2f);
+            button.RemoveFromClassList("bp-btn-buy");
+            button.AddToClassList("bp-btn-select");
 
             button.clicked += () => OnSelectClicked(recipe);
 

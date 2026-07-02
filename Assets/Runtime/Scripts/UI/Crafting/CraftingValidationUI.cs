@@ -59,12 +59,12 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            CraftingValidator.OnValidationComplete += HandleValidationResult;
+            EventBus.Subscribe<CraftingValidatedEvent>(HandleValidationResult);
         }
 
         private void OnDisable()
         {
-            CraftingValidator.OnValidationComplete -= HandleValidationResult;
+            EventBus.Unsubscribe<CraftingValidatedEvent>(HandleValidationResult);
             
             if (_validateButton != null)
                 _validateButton.clicked -= OnValidateClick;
@@ -92,12 +92,14 @@ namespace DumyatRuntime
             ResetUI();
         }
 
-        private void HandleValidationResult(ValidationResult result)
+        private void HandleValidationResult(CraftingValidatedEvent evt)
         {
+            ValidationResult result = evt.Result;
+
             ClearDiagnosticsList();
 
             if (_statusTitle != null)
-                _statusTitle.text = result.IsSuccess ? "BUILD SUCCESS" : "BUILD FAILED";
+                _statusTitle.text = result.IsSuccess ? "BUILD PASSED" : "NEEDS WORK";
 
             if (_statusIndicator != null)
                 _statusIndicator.style.backgroundColor = result.IsSuccess ? _successColor : _failColor;
@@ -106,7 +108,7 @@ namespace DumyatRuntime
             {
                 if (result.IsSuccess)
                 {
-                    _qualityScore.text = $"Quality: {result.QualityScore * 100f:F1}%";
+                    _qualityScore.text = $"Quality: {result.QualityScore * 100f:F0}%";
                     _qualityScore.style.display = DisplayStyle.Flex;
                 }
                 else
@@ -119,7 +121,7 @@ namespace DumyatRuntime
             {
                 if (result.IsSuccess)
                 {
-                    AddDiagnosticItem("Assembly verified successfully!", true);
+                    AddDiagnosticItem("All parts matched!", true);
                 }
                 else
                 {
@@ -131,11 +133,23 @@ namespace DumyatRuntime
                     {
                         foreach (var failure in result.FailedParts)
                         {
-                            string message = $"[{failure.Reason}] {failure.Details}";
-                            AddDiagnosticItem(message, false);
+                            string prefix = GetReasonPrefix(failure.Reason);
+                            AddDiagnosticItem($"{prefix} {failure.Details}", false);
                         }
                     }
                 }
+            }
+        }
+
+        private string GetReasonPrefix(FailReason reason)
+        {
+            switch (reason)
+            {
+                case FailReason.Oversized:   return "\u2B06";
+                case FailReason.Undersized:  return "\u2B07";
+                case FailReason.OffCenter:   return "\u2194";
+                case FailReason.MissingPart: return "\u2753";
+                default:                     return "\u26A0";
             }
         }
 

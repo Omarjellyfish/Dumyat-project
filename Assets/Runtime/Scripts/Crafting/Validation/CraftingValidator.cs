@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +7,8 @@ namespace DumyatRuntime
     {
         NoSlotMatch,
         Oversized,
+        Undersized,
+        OffCenter,
         MissingPart
     }
 
@@ -37,8 +38,6 @@ namespace DumyatRuntime
 
     public static class CraftingValidator
     {
-        public static event Action<ValidationResult> OnValidationComplete;
-
         public static void ValidateBuild(Rigidbody rootBody, CraftingRecipe recipe)
         {
             if (recipe == null || rootBody == null)
@@ -54,7 +53,7 @@ namespace DumyatRuntime
                     Message = errorMsg,
                     FailedParts = new List<PartFailure>()
                 };
-                OnValidationComplete?.Invoke(failResult);
+                EventBus.Publish(new CraftingValidatedEvent(failResult));
                 return;
             }
 
@@ -128,13 +127,14 @@ namespace DumyatRuntime
 
                     if (!isSizeValid)
                     {
+                        string sizeHint = BuildSizeHint(localSize, blueprint.ExpectedSize);
+                        bool isTooLarge = localSize.x > maxSize.x || localSize.y > maxSize.y || localSize.z > maxSize.z;
+                        FailReason sizeReason = isTooLarge ? FailReason.Oversized : FailReason.Undersized;
+
                         failedParts.Add(new PartFailure(
                             partObj,
-                            FailReason.Oversized,
-                            $"'{partObj.name}' does not fit slot '{blueprint.SlotName}'. " +
-                            $"Size: ({localSize.x:F3}, {localSize.y:F3}, {localSize.z:F3}) " +
-                            $"Expected range: ({minSize.x:F3}, {minSize.y:F3}, {minSize.z:F3}) " +
-                            $"to ({maxSize.x:F3}, {maxSize.y:F3}, {maxSize.z:F3})"
+                            sizeReason,
+                            $"'{blueprint.SlotName}' — {sizeHint}"
                         ));
                         matchedSlot = true;
                     }
@@ -154,23 +154,25 @@ namespace DumyatRuntime
 
                 if (!matchedSlot)
                 {
-                    Debug.Log($"<color=yellow>[DIAG] '{partObj.name}' bounds center (localPos): {localPos}</color>");
-                    Debug.Log($"<color=yellow>[DIAG] '{partObj.name}' localRot: {localRot.eulerAngles}</color>");
-                    Debug.Log($"<color=yellow>[DIAG] '{partObj.name}' bounds size: {localBounds.size}</color>");
-
+                    // Find closest slot for a useful hint
+                    string closestSlotName = "unknown";
+                    float closestError = float.MaxValue;
                     foreach (var slot in unfulfilledSlots)
                     {
                         float pErr = Vector3.Distance(localPos, slot.ExpectedLocalPosition);
-                        float rErr = slot.IgnoreRotation ? 0f : Quaternion.Angle(localRot, slot.ExpectedLocalRotation);
-                        Debug.Log($"<color=cyan>  vs slot '{slot.SlotName}': " +
-                                  $"expectedPos={slot.ExpectedLocalPosition} posError={pErr:F4} (tol={slot.PositionTolerance}) | " +
-                                  $"rotError={rErr:F1}° (tol={slot.RotationTolerance}) ignoreRot={slot.IgnoreRotation}</color>");
+                        if (pErr < closestError)
+                        {
+                            closestError = pErr;
+                            closestSlotName = slot.SlotName;
+                        }
                     }
+
+                    string positionHint = BuildPositionHint(localPos, closestSlotName, unfulfilledSlots);
 
                     failedParts.Add(new PartFailure(
                         partObj,
-                        FailReason.NoSlotMatch,
-                        $"'{partObj.name}' does not match any remaining blueprint slot."
+                        FailReason.OffCenter,
+                        positionHint
                     ));
                 }
             }
@@ -180,7 +182,7 @@ namespace DumyatRuntime
                 failedParts.Add(new PartFailure(
                     null,
                     FailReason.MissingPart,
-                    $"Required slot '{missingSlot.SlotName}' was not filled."
+                    $"'{missingSlot.SlotName}' is missing"
                 ));
             }
 
@@ -194,7 +196,7 @@ namespace DumyatRuntime
                     : $"Build failed with {failedParts.Count} issue(s)."
             };
 
-            OnValidationComplete?.Invoke(result);
+            EventBus.Publish(new CraftingValidatedEvent(result));
         }
 
         private static Bounds CalculateStructuralLocalBounds(GameObject part, Transform rootTransform)
@@ -274,5 +276,70 @@ namespace DumyatRuntime
                 new Vector3(b.max.x, b.max.y, b.max.z)
             };
         }
+
+        #region Human-Readable Error Helpers
+
+        private static string BuildSizeHint(Vector3 actualSize, Vector3 expectedSize)
+        {
+            float xDiff = ((actualSize.x - expectedSize.x) / expectedSize.x) * 100f;
+            float yDiff = ((actualSize.y - expectedSize.y) / expectedSize.y) * 100f;
+            float zDiff = ((actualSize.z - expectedSize.z) / expectedSize.z) * 100f;
+
+            float maxAbsDiff = Mathf.Max(Mathf.Abs(xDiff), Mathf.Abs(yDiff), Mathf.Abs(zDiff));
+            string direction = maxAbsDiff == Mathf.Abs(xDiff) ? "width"
+                             : maxAbsDiff == Mathf.Abs(yDiff) ? "height"
+                             : "depth";
+
+            float signedDiff = direction == "width" ? xDiff : direction == "height" ? yDiff : zDiff;
+
+            if (signedDiff > 0f)
+                return $"Too big ({direction} +{signedDiff:F0}%)";
+            else
+                return $"Too small ({direction} {signedDiff:F0}%)";
+        }
+
+        private static string BuildPositionHint(Vector3 actualPos, string closestSlotName,
+            List<PartBlueprint> slots)
+        {
+            PartBlueprint? matchedSlot = null;
+            foreach (var slot in slots)
+            {
+                if (slot.SlotName == closestSlotName)
+                {
+                    matchedSlot = slot;
+                    break;
+                }
+            }
+
+            if (matchedSlot == null)
+                return $"Extra part — doesn't match any slot";
+
+            PartBlueprint bp = matchedSlot.Value;
+            Vector3 offset = actualPos - bp.ExpectedLocalPosition;
+            float distance = offset.magnitude;
+
+            // Express error as percentage of position tolerance
+            float errorPct = (distance / Mathf.Max(bp.PositionTolerance, 0.001f)) * 100f;
+
+            // Cardinal direction hint
+            string directionHint = GetDirectionHint(offset);
+
+            return $"'{closestSlotName}' is off center — {directionHint} ({errorPct:F0}% error)";
+        }
+
+        private static string GetDirectionHint(Vector3 offset)
+        {
+            float absX = Mathf.Abs(offset.x);
+            float absY = Mathf.Abs(offset.y);
+            float absZ = Mathf.Abs(offset.z);
+
+            if (absX >= absY && absX >= absZ)
+                return offset.x > 0 ? "too far right" : "too far left";
+            if (absY >= absX && absY >= absZ)
+                return offset.y > 0 ? "too high" : "too low";
+            return offset.z > 0 ? "too far forward" : "too far back";
+        }
+
+        #endregion
     }
 }
