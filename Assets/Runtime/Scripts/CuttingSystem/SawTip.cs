@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace DumyatRuntime
 {
@@ -100,10 +102,15 @@ private FloatingText _activeFloatingText;
                 _strokeCount++;
                 AddCurrentHitPoints();
 
+                EventBus.Publish(new SawStrokeEvent(_strokeCount, _settings.strokesNeededToCut, _bladeMid.transform.position));
+
                 ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
                 
                 SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
                     _settings.sawStrokeClips, transform, _settings.sfxVolume);
+
+                HapticFeedback.Singleton?.TriggerVibration(
+                    _settings.sawStrokeHapticProfile, XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
             }
 
             if (_strokeCount >= _settings.strokesNeededToCut)
@@ -117,6 +124,9 @@ private FloatingText _activeFloatingText;
 
                     SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
                         _settings.cutCompleteClips, transform, _settings.sfxVolume);
+
+                    HapticFeedback.Singleton?.TriggerVibration(
+                        _settings.cutCompleteHapticProfile, XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
                 }
 
                 _strokeCount = 0;

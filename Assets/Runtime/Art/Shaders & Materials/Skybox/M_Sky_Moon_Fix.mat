@@ -37,6 +37,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _Moon_Texture:
+        m_Texture: {fileID: 2800000, guid: ec8ce8717b81f324193694bd158274ca, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_10ac47388c04475cbb52713bf67f32fa_Texture_1_Texture2D:
         m_Texture: {fileID: 2800000, guid: ec8ce8717b81f324193694bd158274ca, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -60,19 +64,20 @@ Material:
     - _Day_Zenth_Blend: 0.2
     - _MoonOffset: 0
     - _MoonPhase: 0.073
-    - _MoonSize: 0.052
+    - _MoonSize: 0.081
     - _Moon_Crispness: 0
     - _Moon_Radius: 0
-    - _Moon_Textuer_Offset: 6.52
+    - _Moon_Textuer_Offset: 0.5
     - _Night_Horizon_Blend: 118.98
     - _Night_Nadir_Blend: 0.7
     - _Night_Zenth_Blend: 1.1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _StarHeight: 261.7
-    - _StarPower: 32.21
+    - _StarPower: 40
     - _Sun_Crispness: 57.43
     - _Sun_Radius: 0.17
+    - _XRMotionVectorsPass: 1
     m_Colors:
     - _Day_Ground_Color: {r: 0, g: 0.2422363, b: 0.2981131, a: 1}
     - _Day_Horizon_Color: {r: 0.106265455, g: 0.54609233, b: 0.7509433, a: 1}

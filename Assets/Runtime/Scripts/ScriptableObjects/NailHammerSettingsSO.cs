@@ -38,6 +38,9 @@ namespace DumyatRuntime
         public float sfxVolume = 0.8f;
 
         [Header("Haptics")]
+        [Tooltip("Haptic profile for every general hit that reaches minimum velocity.")]
+        public HapticProfileSO generalImpactHapticProfile;
+
         [Tooltip("Haptic profile for the grabbing hand when nailing in.")]
         public HapticProfileSO nailInHapticProfile;
 
