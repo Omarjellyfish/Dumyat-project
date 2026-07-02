@@ -64,6 +64,8 @@ namespace DumyatRuntime
                 }
 
                 PlaySpawnAudio();
+
+                EventBus.Publish(new RecipeSelectedEvent(recipe, this));
             }
             else
             {

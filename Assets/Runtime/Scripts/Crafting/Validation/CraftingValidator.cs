@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -39,8 +38,6 @@ namespace DumyatRuntime
 
     public static class CraftingValidator
     {
-        public static event Action<ValidationResult> OnValidationComplete;
-
         public static void ValidateBuild(Rigidbody rootBody, CraftingRecipe recipe)
         {
             if (recipe == null || rootBody == null)
@@ -56,7 +53,7 @@ namespace DumyatRuntime
                     Message = errorMsg,
                     FailedParts = new List<PartFailure>()
                 };
-                OnValidationComplete?.Invoke(failResult);
+                EventBus.Publish(new CraftingValidatedEvent(failResult));
                 return;
             }
 
@@ -199,7 +196,7 @@ namespace DumyatRuntime
                     : $"Build failed with {failedParts.Count} issue(s)."
             };
 
-            OnValidationComplete?.Invoke(result);
+            EventBus.Publish(new CraftingValidatedEvent(result));
         }
 
         private static Bounds CalculateStructuralLocalBounds(GameObject part, Transform rootTransform)

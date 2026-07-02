@@ -59,12 +59,12 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            CraftingValidator.OnValidationComplete += HandleValidationResult;
+            EventBus.Subscribe<CraftingValidatedEvent>(HandleValidationResult);
         }
 
         private void OnDisable()
         {
-            CraftingValidator.OnValidationComplete -= HandleValidationResult;
+            EventBus.Unsubscribe<CraftingValidatedEvent>(HandleValidationResult);
             
             if (_validateButton != null)
                 _validateButton.clicked -= OnValidateClick;
@@ -92,8 +92,10 @@ namespace DumyatRuntime
             ResetUI();
         }
 
-        private void HandleValidationResult(ValidationResult result)
+        private void HandleValidationResult(CraftingValidatedEvent evt)
         {
+            ValidationResult result = evt.Result;
+
             ClearDiagnosticsList();
 
             if (_statusTitle != null)

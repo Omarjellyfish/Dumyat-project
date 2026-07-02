@@ -59,6 +59,8 @@ namespace DumyatRuntime
                     {
                         glueBlob.AttachedBodyA = hitBody;
                     }
+
+                    EventBus.Publish(new GlueAppliedEvent(hit.point, hitBody.gameObject));
                 }
             }
         }

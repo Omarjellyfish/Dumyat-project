@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -17,8 +16,6 @@ namespace DumyatRuntime
         private Vector3 _currentVelocity;
         private bool _isGrabbed;
         private float _lastImpactTime = -999f;
-        public event Action<Vector3, GameObject, GameObject> OnNailAttached;
-        public event Action<Vector3, GameObject, GameObject> OnNailRemoved;
         #region Lifecycle
         private void Awake()
         {
@@ -131,7 +128,7 @@ namespace DumyatRuntime
             HapticFeedback.Singleton?.TriggerVibration(
                 _settings.nailInHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Attached '{plankA.name}' ↔ '{plankB.name}' at {contact.point}");
-            OnNailAttached?.Invoke(contact.point, plankA.gameObject, plankB.gameObject);
+            EventBus.Publish(new NailAttachedEvent(contact.point, plankA.gameObject, plankB.gameObject));
         }
         private void RemoveAttachment(Rigidbody bodyA, Rigidbody bodyB,
                                        FixedJoint joint, ContactPoint contact)
@@ -148,7 +145,7 @@ namespace DumyatRuntime
             HapticFeedback.Singleton?.TriggerVibration(
                 _settings.nailOutHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Detached '{bodyA.name}' ↔ '{bodyB.name}' at {contact.point}");
-            OnNailRemoved?.Invoke(contact.point, bodyA.gameObject, bodyB.gameObject);
+            EventBus.Publish(new NailRemovedEvent(contact.point, bodyA.gameObject, bodyB.gameObject));
         }
         private int CountJointsBetween(Rigidbody bodyA, Rigidbody bodyB, FixedJoint excludeJoint)
         {

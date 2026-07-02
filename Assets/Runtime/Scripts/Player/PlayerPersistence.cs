@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -6,8 +5,6 @@ namespace DumyatRuntime
     public class PlayerPersistence : MonoBehaviour, IManager
     {
         public static PlayerPersistence Singleton { get; private set; }
-
-        public static Action<string> OnKeyUnlocked;
 
         private PersistenceSaveData _persistenceData;
 
@@ -44,7 +41,7 @@ namespace DumyatRuntime
                 SaveManager.SaveGameAsync();
                 
                 Debug.Log($"PlayerPersistence: Key Unlocked -> '{key}'");
-                OnKeyUnlocked?.Invoke(key);
+                EventBus.Publish(new KeyUnlockedEvent(key));
             }
         }
     }

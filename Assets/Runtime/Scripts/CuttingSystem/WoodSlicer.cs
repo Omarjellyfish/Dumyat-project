@@ -101,6 +101,8 @@ namespace DumyatRuntime
             SetupPiece(upperPiece, wood, originalPaint);
             SetupPiece(lowerPiece, wood, originalPaint);
 
+            EventBus.Publish(new WoodCutEvent(_averagePosition, wood, upperPiece, lowerPiece));
+
             Destroy(wood);
         }
 

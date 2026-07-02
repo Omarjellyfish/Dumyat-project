@@ -102,6 +102,8 @@ private FloatingText _activeFloatingText;
                 _strokeCount++;
                 AddCurrentHitPoints();
 
+                EventBus.Publish(new SawStrokeEvent(_strokeCount, _settings.strokesNeededToCut, _bladeMid.transform.position));
+
                 ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
                 
                 SoundManager.Singleton?.PlayRandomSoundFxAtPosition(

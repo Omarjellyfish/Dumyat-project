@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -21,8 +20,6 @@ namespace DumyatRuntime
         private Vector3 _currentVelocity;
         private bool _isGrabbed;
         private float _lastImpactTime = -999f;
-
-        public event Action<Vector3, GameObject, GameObject> OnAttachmentRemoved;
 
         #region Lifecycle
         private void Awake()
@@ -160,7 +157,7 @@ namespace DumyatRuntime
                 _settings.nailOutHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
 
             Debug.Log($"[CrowbarTool] Detached '{bodyA.name}' ↔ '{bodyB.name}' at {contact.point}");
-            OnAttachmentRemoved?.Invoke(contact.point, bodyA.gameObject, bodyB.gameObject);
+            EventBus.Publish(new AttachmentRemovedEvent(contact.point, bodyA.gameObject, bodyB.gameObject));
         }
 
         private int CountJointsBetween(Rigidbody bodyA, Rigidbody bodyB, FixedJoint excludeJoint)
