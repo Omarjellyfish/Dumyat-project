@@ -18,12 +18,12 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            InventoryManager.OnItemDropped += HandlePlayerDrop;
+            EventBus.Subscribe<ItemDroppedEvent>(HandlePlayerDrop);
         }
 
         private void OnDisable()
         {
-            InventoryManager.OnItemDropped -= HandlePlayerDrop;
+            EventBus.Unsubscribe<ItemDroppedEvent>(HandlePlayerDrop);
         }
 
         public GameObject SpawnItem(string itemID, Vector3 spawnPosition, Quaternion spawnRotation, int quantity = 1)
@@ -49,8 +49,11 @@ namespace DumyatRuntime
             return spawnedInstance;
         }
 
-        private void HandlePlayerDrop(ItemData blueprint, int quantity)
+        private void HandlePlayerDrop(ItemDroppedEvent evt)
         {
+            ItemData blueprint = evt.Item;
+            int quantity = evt.Amount;
+
             Transform playerHead = Camera.main.transform;
 
             Vector3 dropPosition = playerHead.position + (playerHead.forward * 0.5f);

@@ -7,10 +7,16 @@ namespace DumyatRuntime
         [Header("Validation References")]
         [SerializeField] private Rigidbody _rootBody;
         [SerializeField] private CraftingRecipe _recipe;
+        [SerializeField] private GameObject _hologramObject;
 
         [Header("Blueprint Selection")]
         [SerializeField] private Transform _spawnPoint;
+        [SerializeField] private Transform _spawnPointHologram;
         [SerializeField] private CraftingRecipe[] _availableRecipes;
+
+        [Header("Spawn Audio")]
+        [SerializeField] private AudioClip[] _spawnClips;
+        [SerializeField, Range(0f, 1f)] private float _spawnSfxVolume = 0.8f;
 
         private GameObject _currentRootObject;
 
@@ -30,6 +36,11 @@ namespace DumyatRuntime
             if (_spawnPoint != null && recipe.RootPrefab != null)
             {
                 _currentRootObject = Instantiate(recipe.RootPrefab, _spawnPoint.position, _spawnPoint.rotation);
+                if (recipe.HologramPrefab != null)
+                {
+                    _hologramObject = Instantiate(recipe.HologramPrefab, _spawnPointHologram.position, _spawnPointHologram.rotation);
+                }
+                
 
                 if (_currentRootObject.TryGetComponent<Rigidbody>(out var rb))
                 {
@@ -51,6 +62,10 @@ namespace DumyatRuntime
                 {
                     Debug.LogWarning($"[CraftingStation] Spawned root {recipe.RootPrefab.name} is missing a Rigidbody.");
                 }
+
+                PlaySpawnAudio();
+
+                EventBus.Publish(new RecipeSelectedEvent(recipe, this));
             }
             else
             {
@@ -61,6 +76,14 @@ namespace DumyatRuntime
         public void CheckBuild()
         {
             CraftingValidator.ValidateBuild(_rootBody, _recipe);
+        }
+
+        private void PlaySpawnAudio()
+        {
+            if (_spawnPoint == null) return;
+
+            SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
+                _spawnClips, _spawnPoint, _spawnSfxVolume);
         }
     }
 }

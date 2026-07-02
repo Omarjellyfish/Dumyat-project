@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,9 +16,6 @@ namespace DumyatRuntime
 
         [Header("Global Hooks")]
         public static InventoryManager Singleton { get; private set; }
-
-        public static Action<InventoryItem> OnInventoryChanged;
-        public static Action<ItemData, int> OnItemDropped;
 
         public IReadOnlyList<InventoryItem> CurrentItems => _currentInventory.items;
         public ItemDatabase ItemDatabase => _itemDatabase;
@@ -58,13 +54,13 @@ namespace DumyatRuntime
             if (existingItem != null)
             {
                 existingItem.Quantity += amount;
-                OnInventoryChanged?.Invoke(existingItem);
+                EventBus.Publish(new InventoryChangedEvent(existingItem));
             }
             else
             {
                 InventoryItem newItem = new InventoryItem(idToAdd, amount);
                 _currentInventory.items.Add(newItem);
-                OnInventoryChanged?.Invoke(newItem);
+                EventBus.Publish(new InventoryChangedEvent(newItem));
             }
 
             Debug.Log($"Inventory Data: Appended {amount}x '{blueprint.DisplayName}'.");
@@ -94,10 +90,10 @@ namespace DumyatRuntime
             ItemData blueprint = _itemDatabase.GetItemByID(idToDrop);
             if (blueprint != null)
             {
-                OnItemDropped?.Invoke(blueprint, amountToDrop);
+                EventBus.Publish(new ItemDroppedEvent(blueprint, amountToDrop));
             }
 
-            OnInventoryChanged?.Invoke(item);
+            EventBus.Publish(new InventoryChangedEvent(item));
             SaveManager.SaveGameAsync();
         }
     }

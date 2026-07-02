@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -17,8 +16,6 @@ namespace DumyatRuntime
         private Vector3 _currentVelocity;
         private bool _isGrabbed;
         private float _lastImpactTime = -999f;
-        public event Action<Vector3, GameObject, GameObject> OnNailAttached;
-        public event Action<Vector3, GameObject, GameObject> OnNailRemoved;
         #region Lifecycle
         private void Awake()
         {
@@ -63,6 +60,10 @@ namespace DumyatRuntime
             if (Time.time < _lastImpactTime + _settings.impactCooldown) return;
             float speed = _currentVelocity.magnitude;
             if (speed < _settings.minImpactVelocity) return;
+
+            HapticFeedback.Singleton?.TriggerVibration(
+                _settings.generalImpactHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
+
             Rigidbody plankABody = collision.rigidbody;
             if (plankABody == null) return;
             if (plankABody.GetComponent<StructuralPiece>() == null) return;
@@ -125,9 +126,9 @@ namespace DumyatRuntime
             SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
                 _settings.nailInClips, transform, _settings.sfxVolume);
             HapticFeedback.Singleton?.TriggerVibration(
-                _settings.nailInHapticProfile, GetGrabbingHand());
+                _settings.nailInHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Attached '{plankA.name}' ↔ '{plankB.name}' at {contact.point}");
-            OnNailAttached?.Invoke(contact.point, plankA.gameObject, plankB.gameObject);
+            EventBus.Publish(new NailAttachedEvent(contact.point, plankA.gameObject, plankB.gameObject));
         }
         private void RemoveAttachment(Rigidbody bodyA, Rigidbody bodyB,
                                        FixedJoint joint, ContactPoint contact)
@@ -142,9 +143,9 @@ namespace DumyatRuntime
             SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
                 _settings.nailOutClips, transform, _settings.sfxVolume);
             HapticFeedback.Singleton?.TriggerVibration(
-                _settings.nailOutHapticProfile, GetGrabbingHand());
+                _settings.nailOutHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Detached '{bodyA.name}' ↔ '{bodyB.name}' at {contact.point}");
-            OnNailRemoved?.Invoke(contact.point, bodyA.gameObject, bodyB.gameObject);
+            EventBus.Publish(new NailRemovedEvent(contact.point, bodyA.gameObject, bodyB.gameObject));
         }
         private int CountJointsBetween(Rigidbody bodyA, Rigidbody bodyB, FixedJoint excludeJoint)
         {
@@ -199,6 +200,15 @@ namespace DumyatRuntime
             }
             Quaternion nailRotation = Quaternion.LookRotation(contact.normal);
             GameObject nail = Instantiate(_settings.nailPrefab, contact.point, nailRotation, parent);
+            // 2. Get the original scale of the prefab
+            Vector3 prefabScale = _settings.nailPrefab.transform.localScale;
+
+            // 3. Divide the prefab scale by the parent's global scale
+            nail.transform.localScale = new Vector3(
+                prefabScale.x / parent.lossyScale.x,
+                prefabScale.y / parent.lossyScale.y,
+                prefabScale.z / parent.lossyScale.z);
+
             NailVisualMarker marker = nail.AddComponent<NailVisualMarker>();
             marker.ConnectedBodyA = bodyA;
             marker.ConnectedBodyB = bodyB;
@@ -232,16 +242,6 @@ namespace DumyatRuntime
                     closestMarker = marker;
                 }
             }
-        }
-        #endregion
-        #region Haptic Hand Detection
-        private HapticHand GetGrabbingHand()
-        {
-            if (_grabInteractable.interactorsSelecting.Count == 0)
-                return HapticHand.Right;
-            IXRSelectInteractor interactor = _grabInteractable.interactorsSelecting[0];
-            string interactorName = (interactor as MonoBehaviour)?.gameObject.name.ToLower() ?? "";
-            return interactorName.Contains("left") ? HapticHand.Left : HapticHand.Right;
         }
         #endregion
     }

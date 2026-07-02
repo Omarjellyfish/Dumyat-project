@@ -21,5 +21,12 @@ namespace DumyatRuntime
 
         [Range(0f, 1f)]
         public float sfxVolume = 0.8f;
+
+        [Header("Haptics")]
+        [Tooltip("Haptic profile for every sawing stroke.")]
+        public HapticProfileSO sawStrokeHapticProfile;
+
+        [Tooltip("Haptic profile when the cut is successfully completed.")]
+        public HapticProfileSO cutCompleteHapticProfile;
     }
 }
