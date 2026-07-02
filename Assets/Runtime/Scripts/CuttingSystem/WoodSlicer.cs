@@ -125,6 +125,8 @@ namespace DumyatRuntime
 
             WoodPaintSurface woodSurface = piece.AddComponent<WoodPaintSurface>();
             woodSurface.CopyPaintFrom(originalPaint);
+
+            piece.transform.localScale = originalWood.transform.localScale;
         }
 
         private void RecenterMeshPivot(GameObject piece)

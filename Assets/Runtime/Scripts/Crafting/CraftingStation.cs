@@ -7,9 +7,11 @@ namespace DumyatRuntime
         [Header("Validation References")]
         [SerializeField] private Rigidbody _rootBody;
         [SerializeField] private CraftingRecipe _recipe;
+        [SerializeField] private GameObject _hologramObject;
 
         [Header("Blueprint Selection")]
         [SerializeField] private Transform _spawnPoint;
+        [SerializeField] private Transform _spawnPointHologram;
         [SerializeField] private CraftingRecipe[] _availableRecipes;
 
         [Header("Spawn Audio")]
@@ -34,6 +36,11 @@ namespace DumyatRuntime
             if (_spawnPoint != null && recipe.RootPrefab != null)
             {
                 _currentRootObject = Instantiate(recipe.RootPrefab, _spawnPoint.position, _spawnPoint.rotation);
+                if (recipe.HologramPrefab != null)
+                {
+                    _hologramObject = Instantiate(recipe.HologramPrefab, _spawnPointHologram.position, _spawnPointHologram.rotation);
+                }
+                
 
                 if (_currentRootObject.TryGetComponent<Rigidbody>(out var rb))
                 {
