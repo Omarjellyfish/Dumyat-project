@@ -7,6 +7,7 @@ namespace DumyatRuntime
     public class DialogueManager : MonoBehaviour
     {
         public static DialogueManager Instance { get; private set; }
+        public static event System.Action<SO_DialogueSequence> OnDialogueFinished;
 
         [SerializeField] private AudioSource _audioSource;
         [SerializeField] private InputActionReference _buttonToSkip;
@@ -38,12 +39,14 @@ namespace DumyatRuntime
         {
             _currentlyPlay = true;
 
-            foreach (SO_DialogueLine line in sequence.DialogueLines)
+            SO_DialogueLine current = sequence.StartingLine;
+
+            while (current != null)
             {
-                string textToShow = _settingsManager.GetLanguage() ? line.ArabicText : line.EnglishText;
+                string textToShow = _settingsManager.GetLanguage() ? current.ArabicText : current.EnglishText;
                 _floatingText = FloatingUIManager.Instance.Show(speaker.position, textToShow);
 
-                _audioSource.clip = line.VoiceClip;
+                _audioSource.clip = current.VoiceClip;
                 _audioSource.Play();
 
                 while (_audioSource.isPlaying)
@@ -57,6 +60,17 @@ namespace DumyatRuntime
                 }
 
                 FloatingUIManager.Instance.Hide(_floatingText);
+
+                if (current.HasChoices)
+                {
+                    // TODO: show choice UI, wait for player pick
+                    // current = pickedChoice.NextLine;
+                    current = null; // placeholder until choice UI exists
+                }
+                else
+                {
+                    current = current.NextLine;
+                }
             }
 
             if (sequence.Type == DialogueType.Interrupting)
@@ -64,6 +78,7 @@ namespace DumyatRuntime
                 SetLocomotionEnabled(true);
             }
 
+            OnDialogueFinished?.Invoke(sequence);
             _currentlyPlay = false;
         }
 
