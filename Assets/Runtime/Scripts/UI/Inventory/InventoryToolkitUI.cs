@@ -31,7 +31,7 @@ namespace DumyatRuntime
             // The main container in your UI Builder document where slots will be added
             _slotContainer = _root.Q<VisualElement>("SlotContainer");
 
-            InventoryManager.OnInventoryChanged += HandleInventoryChanged;
+            EventBus.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
 
             _root.style.display = _startOpen ? DisplayStyle.Flex : DisplayStyle.None;
             
@@ -43,7 +43,7 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
-            InventoryManager.OnInventoryChanged -= HandleInventoryChanged;
+            EventBus.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         public void ToggleUI()
@@ -74,8 +74,10 @@ namespace DumyatRuntime
             _root.style.display = DisplayStyle.None;
         }
 
-        private void HandleInventoryChanged(InventoryItem updatedItem)
+        private void HandleInventoryChanged(InventoryChangedEvent evt)
         {
+            InventoryItem updatedItem = evt.Item;
+
             if (_root == null || _root.style.display == DisplayStyle.None) return;
 
             if (updatedItem.Quantity <= 0)

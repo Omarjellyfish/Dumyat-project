@@ -28,12 +28,12 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            InventoryManager.OnInventoryChanged += HandleInventoryChanged;
+            EventBus.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         private void OnDisable()
         {
-            InventoryManager.OnInventoryChanged -= HandleInventoryChanged;
+            EventBus.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         public void ToggleUI()
@@ -67,9 +67,11 @@ namespace DumyatRuntime
             }
         }
 
-        private void HandleInventoryChanged(InventoryItem updatedItem)
+        private void HandleInventoryChanged(InventoryChangedEvent evt)
         {
-            // If the UI is closed, don't bother updating individual slots right now, 
+            InventoryItem updatedItem = evt.Item;
+
+            // If the UI is closed, don't bother updating individual slots right now,
             // we will rebuild it when opened.
             if (_uiPanel != null && !_uiPanel.activeSelf) return;
 

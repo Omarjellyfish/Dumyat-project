@@ -36,6 +36,7 @@ namespace DumyatRuntime
             _isPaused = true;
             _pauseMenuPanel.SetActive(true);
             Time.timeScale = 0f;
+            EventBus.Publish(new GamePauseToggledEvent(true));
         }
 
         public void Resume()
@@ -43,6 +44,7 @@ namespace DumyatRuntime
             _isPaused = false;
             _pauseMenuPanel.SetActive(false);
             Time.timeScale = 1f;
+            EventBus.Publish(new GamePauseToggledEvent(false));
         }
 
         public void Restart()
