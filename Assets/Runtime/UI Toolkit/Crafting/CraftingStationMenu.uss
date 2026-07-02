@@ -1,0 +1,141 @@
+/* ─────────────────────────────────────────────────────────
+   CraftingStationMenu.uss
+   Compact, scalable panel — never covers the full screen.
+   Uses percentage-based sizing so it adapts to any resolution.
+   ───────────────────────────────────────────────────────── */
+
+/* Root wrapper – centered on screen, never fullscreen */
+.crafting-root {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    picking-mode: ignore;
+}
+
+.crafting-panel {
+    width: 38%;
+    min-width: 320px;
+    max-width: 520px;
+    height: 60%;
+    min-height: 360px;
+    max-height: 640px;
+    background-color: rgba(18, 22, 30, 0.92);
+    border-radius: 14px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    padding: 3%;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── Header ── */
+.crafting-header {
+    flex-shrink: 0;
+    margin-bottom: 2%;
+    padding-bottom: 2%;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+    align-items: center;
+}
+
+.crafting-title {
+    font-size: 22px;
+    color: #E8EAF0;
+    -unity-font-style: bold;
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+}
+
+/* ── Blueprint scroll area ── */
+.blueprint-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+/* ── Individual blueprint card ── */
+.blueprint-card {
+    flex-direction: column;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.04);
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.blueprint-card:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.blueprint-card-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.blueprint-name {
+    color: #E0E0E0;
+    font-size: 16px;
+    -unity-font-style: bold;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.blueprint-details {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.04);
+}
+
+.blueprint-detail-label {
+    font-size: 12px;
+    color: rgba(200, 210, 220, 0.6);
+    margin-bottom: 2px;
+    white-space: normal;
+}
+
+/* ── Action buttons ── */
+.bp-action-btn {
+    min-width: 72px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border-width: 0;
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: #FFFFFF;
+    flex-shrink: 0;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
+}
+
+.bp-action-btn:hover {
+    scale: 1.04;
+}
+
+.bp-action-btn:active {
+    scale: 0.96;
+}
+
+.bp-btn-select {
+    background-color: #2E7D32;
+}
+
+.bp-btn-select:hover {
+    background-color: #388E3C;
+}
+
+.bp-btn-buy {
+    background-color: #BF6900;
+}
+
+.bp-btn-buy:hover {
+    background-color: #E08200;
+}

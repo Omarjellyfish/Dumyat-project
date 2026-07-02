@@ -1,7 +1,11 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/InventoryStyles.uss" />
-    <ui:VisualElement name="MainCanvas" class="inventory-panel" style="width: 400px; height: 600px; background-color: rgba(0, 0, 0, 0.8); border-radius: 10px; padding: 20px;">
-        <ui:Label text="CRAFTING BLUEPRINTS" class="inventory-title" style="color: white; font-size: 24px; -unity-font-style: bold; margin-bottom: 15px; -unity-text-align: middle-center;"/>
-        <ui:ScrollView name="BlueprintContainer" class="inventory-scrollview" style="flex-grow: 1;" />
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/Crafting/CraftingStationMenu.uss" />
+    <ui:VisualElement name="CraftingRoot" class="crafting-root">
+        <ui:VisualElement name="CraftingPanel" class="crafting-panel">
+            <ui:VisualElement class="crafting-header">
+                <ui:Label text="CRAFTING BLUEPRINTS" class="crafting-title" />
+            </ui:VisualElement>
+            <ui:ScrollView name="BlueprintContainer" class="blueprint-scroll" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -9,12 +9,12 @@ namespace DumyatRuntime.Testing
 
         private void OnEnable()
         {
-            CraftingValidator.OnValidationComplete += HandleValidationResult;
+            EventBus.Subscribe<CraftingValidatedEvent>(HandleValidationResult);
         }
 
         private void OnDisable()
         {
-            CraftingValidator.OnValidationComplete -= HandleValidationResult;
+            EventBus.Unsubscribe<CraftingValidatedEvent>(HandleValidationResult);
         }
 
         private void Update()
@@ -27,8 +27,10 @@ namespace DumyatRuntime.Testing
             }
         }
 
-        private void HandleValidationResult(ValidationResult result)
+        private void HandleValidationResult(CraftingValidatedEvent evt)
         {
+            ValidationResult result = evt.Result;
+
             if (result.IsSuccess)
             {
                 Debug.Log($"<color=green>SUCCESS!</color> Score: {result.QualityScore * 100:F1}%\n{result.Message}");

@@ -106,3 +106,13 @@ InitTestScene*.unity*
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
+# --- Secrets / API keys ---
+# The AI service config ScriptableObject SCRIPTS (.cs) are tracked, but the
+# .asset INSTANCES hold real API keys and must never be committed.
+# Keep secret-bearing config assets in a "Secrets" folder, or rely on the
+# default asset names below.
+/[Aa]ssets/**/[Ss]ecrets/
+GeminiConfig.asset
+GeminiConfig.asset.meta
+ElevenLabsConfig.asset
+ElevenLabsConfig.asset.meta

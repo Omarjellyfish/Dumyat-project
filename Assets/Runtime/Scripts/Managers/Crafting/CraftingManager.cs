@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,8 +6,6 @@ namespace DumyatRuntime
     public class CraftingManager : MonoBehaviour, IManager
     {
         public static CraftingManager Singleton { get; private set; }
-
-        public static Action<string> OnBlueprintUnlocked;
 
         [SerializeField] private RecipeDatabase _recipeDatabase;
 
@@ -50,7 +47,7 @@ namespace DumyatRuntime
                 SaveManager.SaveGameAsync();
 
                 Debug.Log($"CraftingManager: Blueprint Unlocked -> '{recipeName}'");
-                OnBlueprintUnlocked?.Invoke(recipeName);
+                EventBus.Publish(new BlueprintUnlockedEvent(recipeName));
             }
         }
 
