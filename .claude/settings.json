@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find 'C:\\\\Users\\\\rohyy/.unity' g:/Unity/Projects/Dumyat-project/ProjectSettings g:/Unity/Projects/Dumyat-project/UserSettings -type f '\\(' -iname *mcp* -o -iname *approv* -o -iname *trust* -o -iname *client* '\\)')",
+      "Bash(find 'C:\\\\Users\\\\rohyy/AppData/Local/Unity' 'C:\\\\Users\\\\rohyy/AppData/Roaming/Unity' -maxdepth 4 -type f '\\(' -iname *mcp* -o -iname *client* -o -iname *approv* -o -iname *revok* '\\)')",
+      "mcp__unity-mcp__Unity_ManageAsset",
+      "Bash(rm -v \"Assets/Runtime/Scripts/Interfaces/IManager.cs\" \"Assets/Runtime/Scripts/Interfaces/IManager.cs.meta\")",
+      "Bash(grep -rn \"IManager\" Assets/Runtime/Scripts/)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(gh auth *)",
+      "Bash(git symbolic-ref *)",
+      "Bash(git push *)",
+      "Bash(ls -la)",
+      "Bash(cat MEMORY.md)"
+    ]
+  }
+}
