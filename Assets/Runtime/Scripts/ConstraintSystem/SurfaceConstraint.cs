@@ -74,9 +74,30 @@ namespace DumyatRuntime
             if (TryDetectSurface(out RaycastHit hit, out Vector3 avgNormal))
             {
                 _isConstrained = true;
-                _hitPosition = hit.point;
+
+                // NEW: subclasses can override RefineHitPosition to snap somewhere
+                // more specific than the raw raycast hit point (e.g. nearest edge).
+                _hitPosition = RefineHitPosition(hit, avgNormal);
+
                 _hitNormal = avgNormal;
-                _lockedRotation = transform.rotation;
+
+                // FIXED: previously this was just `transform.rotation` (whatever angle your
+                // hand happened to be at when you pressed activate) - it ignored avgNormal
+                // entirely, which is why the tool would lock at a random tilt instead of
+                // lying flush on the wood. Build a rotation whose UP axis matches the surface
+                // normal (since our raycasts go -transform.up into the wood, transform.up is
+                // the "away from wood" axis) while keeping as much of your hand's heading
+                // (forward direction) as possible.
+                Vector3 projectedForward = Vector3.ProjectOnPlane(transform.forward, avgNormal);
+                if (projectedForward.sqrMagnitude < 0.0001f)
+                {
+                    // Hand forward was pointing almost straight along the normal (looking
+                    // straight down at the wood) - fall back to the right axis so we don't
+                    // get a zero vector into LookRotation.
+                    projectedForward = Vector3.ProjectOnPlane(transform.right, avgNormal);
+                }
+                projectedForward.Normalize();
+                _lockedRotation = Quaternion.LookRotation(projectedForward, avgNormal);
 
                 _handPositionAtSnap = GetTrackedHandPosition();
 
@@ -90,6 +111,14 @@ namespace DumyatRuntime
         private void OnDeactivate(DeactivateEventArgs arg0)
         {
             _isConstrained = false;
+        }
+
+        // NEW: override this in a subclass to change what point the tool snaps to
+        // once a surface has been detected. Default behaviour is unchanged
+        // (snaps to the raw raycast hit point).
+        protected virtual Vector3 RefineHitPosition(RaycastHit hit, Vector3 normal)
+        {
+            return hit.point;
         }
 
         protected Vector3 GetTrackedHandPosition()
