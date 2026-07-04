@@ -11,13 +11,15 @@ namespace DumyatRuntime
         private ISoundService _sound;
         private IHapticService _haptics;
         private IFloatingTextService _floatingText;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(ISoundService sound, IHapticService haptics, IFloatingTextService floatingText)
+        private void Inject(ISoundService sound, IHapticService haptics, IFloatingTextService floatingText, IEventService eventService)
         {
             _sound = sound;
             _haptics = haptics;
             _floatingText = floatingText;
+            _eventService = eventService;
         }
 
         [SerializeField] private SawBladePoint _bladeTip;
@@ -115,7 +117,7 @@ private FloatingText _activeFloatingText;
                 _strokeCount++;
                 AddCurrentHitPoints();
 
-                EventBus.Publish(new SawStrokeEvent(_strokeCount, _settings.strokesNeededToCut, _bladeMid.transform.position));
+                _eventService.Publish(new SawStrokeEvent(_strokeCount, _settings.strokesNeededToCut, _bladeMid.transform.position));
 
                 ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
                 

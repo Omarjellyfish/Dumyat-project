@@ -21,7 +21,13 @@ namespace DumyatRuntime
     /// </summary>
     public sealed class GameStateService : IGameStateService
     {
+        private readonly IEventService _eventService;
         private GameState _currentState = GameState.MainMenu;
+
+        public GameStateService(IEventService eventService)
+        {
+            _eventService = eventService;
+        }
 
         public GameState CurrentState => _currentState;
 
@@ -30,7 +36,7 @@ namespace DumyatRuntime
             if (_currentState == newState) return;
             _currentState = newState;
             HandleGlobalSystems(_currentState);
-            EventBus.Publish(new GameStateChangedEvent(_currentState));
+            _eventService.Publish(new GameStateChangedEvent(_currentState));
         }
 
         private void HandleGlobalSystems(GameState state)

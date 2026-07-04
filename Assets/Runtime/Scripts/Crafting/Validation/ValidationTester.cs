@@ -1,5 +1,6 @@
 using UnityEngine;
 using DumyatRuntime;
+using Reflex.Attributes;
 
 namespace DumyatRuntime.Testing
 {
@@ -7,14 +8,19 @@ namespace DumyatRuntime.Testing
     {
         [SerializeField] private CraftingStation _station;
 
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IEventService eventService) => _eventService = eventService;
+
         private void OnEnable()
         {
-            EventBus.Subscribe<CraftingValidatedEvent>(HandleValidationResult);
+            _eventService.Subscribe<CraftingValidatedEvent>(HandleValidationResult);
         }
 
         private void OnDisable()
         {
-            EventBus.Unsubscribe<CraftingValidatedEvent>(HandleValidationResult);
+            _eventService.Unsubscribe<CraftingValidatedEvent>(HandleValidationResult);
         }
 
         private void Update()

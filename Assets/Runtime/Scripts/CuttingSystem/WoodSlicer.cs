@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using EzySlice;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -9,6 +10,11 @@ namespace DumyatRuntime
     {
         [SerializeField] private Material _crossSectionMaterial;
         [SerializeField] private Transform _bladeDirectionReference;
+
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IEventService eventService) => _eventService = eventService;
 
         [Header("Debug")]
         [SerializeField] private bool _drawDebug = true;
@@ -101,7 +107,7 @@ namespace DumyatRuntime
             SetupPiece(upperPiece, wood, originalPaint);
             SetupPiece(lowerPiece, wood, originalPaint);
 
-            EventBus.Publish(new WoodCutEvent(_averagePosition, wood, upperPiece, lowerPiece));
+            _eventService.Publish(new WoodCutEvent(_averagePosition, wood, upperPiece, lowerPiece));
 
             Destroy(wood);
         }

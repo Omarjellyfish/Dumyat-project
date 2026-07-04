@@ -10,11 +10,13 @@ namespace DumyatRuntime
     public sealed class PlayerPersistenceService : IPlayerPersistenceService
     {
         private readonly ISaveService _saveService;
+        private readonly IEventService _eventService;
         private readonly PersistenceSaveData _persistenceData;
 
-        public PlayerPersistenceService(ISaveService saveService)
+        public PlayerPersistenceService(ISaveService saveService, IEventService eventService)
         {
             _saveService = saveService;
+            _eventService = eventService;
             _persistenceData = _saveService.CurrentSaveData.persistenceData;
         }
 
@@ -34,7 +36,7 @@ namespace DumyatRuntime
                 _saveService.SaveAsync();
 
                 Debug.Log($"PlayerPersistenceService: Key Unlocked -> '{key}'");
-                EventBus.Publish(new KeyUnlockedEvent(key));
+                _eventService.Publish(new KeyUnlockedEvent(key));
             }
         }
     }

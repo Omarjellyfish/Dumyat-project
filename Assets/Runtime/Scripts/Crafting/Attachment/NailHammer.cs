@@ -14,12 +14,14 @@ namespace DumyatRuntime
 
         private ISoundService _sound;
         private IHapticService _haptics;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(ISoundService sound, IHapticService haptics)
+        private void Inject(ISoundService sound, IHapticService haptics, IEventService eventService)
         {
             _sound = sound;
             _haptics = haptics;
+            _eventService = eventService;
         }
 
         private XRGrabInteractable _grabInteractable;
@@ -140,7 +142,7 @@ namespace DumyatRuntime
             _haptics?.TriggerVibration(
                 _settings.nailInHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Attached '{plankA.name}' ↔ '{plankB.name}' at {contact.point}");
-            EventBus.Publish(new NailAttachedEvent(contact.point, plankA.gameObject, plankB.gameObject));
+            _eventService.Publish(new NailAttachedEvent(contact.point, plankA.gameObject, plankB.gameObject));
         }
         private void RemoveAttachment(Rigidbody bodyA, Rigidbody bodyB,
                                        FixedJoint joint, ContactPoint contact)
@@ -157,7 +159,7 @@ namespace DumyatRuntime
             _haptics?.TriggerVibration(
                 _settings.nailOutHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Detached '{bodyA.name}' ↔ '{bodyB.name}' at {contact.point}");
-            EventBus.Publish(new NailRemovedEvent(contact.point, bodyA.gameObject, bodyB.gameObject));
+            _eventService.Publish(new NailRemovedEvent(contact.point, bodyA.gameObject, bodyB.gameObject));
         }
         private int CountJointsBetween(Rigidbody bodyA, Rigidbody bodyB, FixedJoint excludeJoint)
         {

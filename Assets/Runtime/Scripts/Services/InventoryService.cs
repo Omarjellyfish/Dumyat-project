@@ -7,19 +7,21 @@ namespace DumyatRuntime
     /// Plain C# implementation of <see cref="IInventoryService"/>, constructed by Reflex.
     /// Replaces the former <c>InventoryManager</c> MonoBehaviour-singleton: it holds no scene state,
     /// so its dependencies (the shared save store and the item database asset) are injected via the
-    /// constructor by <see cref="GameInstaller"/>. Cross-system reactions still flow through
-    /// <see cref="EventBus"/> (<see cref="InventoryChangedEvent"/> / <see cref="ItemDroppedEvent"/>).
+    /// constructor by <see cref="GameInstaller"/>. Cross-system reactions flow through the injected
+    /// <see cref="IEventService"/> (<see cref="InventoryChangedEvent"/> / <see cref="ItemDroppedEvent"/>).
     /// </summary>
     public sealed class InventoryService : IInventoryService
     {
         private readonly ISaveService _saveService;
         private readonly ItemDatabase _itemDatabase;
+        private readonly IEventService _eventService;
         private readonly InventorySaveData _currentInventory;
 
-        public InventoryService(ISaveService saveService, ItemDatabase itemDatabase)
+        public InventoryService(ISaveService saveService, ItemDatabase itemDatabase, IEventService eventService)
         {
             _saveService = saveService;
             _itemDatabase = itemDatabase;
+            _eventService = eventService;
             _currentInventory = _saveService.CurrentSaveData.inventoryData;
         }
 
@@ -42,13 +44,13 @@ namespace DumyatRuntime
             if (existingItem != null)
             {
                 existingItem.Quantity += amount;
-                EventBus.Publish(new InventoryChangedEvent(existingItem));
+                _eventService.Publish(new InventoryChangedEvent(existingItem));
             }
             else
             {
                 InventoryItem newItem = new InventoryItem(idToAdd, amount);
                 _currentInventory.items.Add(newItem);
-                EventBus.Publish(new InventoryChangedEvent(newItem));
+                _eventService.Publish(new InventoryChangedEvent(newItem));
             }
 
             Debug.Log($"Inventory Data: Appended {amount}x '{blueprint.DisplayName}'.");
@@ -78,10 +80,10 @@ namespace DumyatRuntime
             ItemData blueprint = _itemDatabase.GetItemByID(idToDrop);
             if (blueprint != null)
             {
-                EventBus.Publish(new ItemDroppedEvent(blueprint, amountToDrop));
+                _eventService.Publish(new ItemDroppedEvent(blueprint, amountToDrop));
             }
 
-            EventBus.Publish(new InventoryChangedEvent(item));
+            _eventService.Publish(new InventoryChangedEvent(item));
             _saveService.SaveAsync();
         }
     }

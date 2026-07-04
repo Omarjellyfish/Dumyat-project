@@ -18,9 +18,14 @@ namespace DumyatRuntime
         [SerializeField] private bool _startOpen = false;
 
         private IInventoryService _inventory;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(IInventoryService inventory) => _inventory = inventory;
+        private void Inject(IInventoryService inventory, IEventService eventService)
+        {
+            _inventory = inventory;
+            _eventService = eventService;
+        }
 
         // Keep track of instantiated slots by item ID to easily update them
         private Dictionary<string, InventorySlotUI> _activeSlots = new Dictionary<string, InventorySlotUI>();
@@ -36,12 +41,12 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            EventBus.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
+            _eventService.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         private void OnDisable()
         {
-            EventBus.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
+            _eventService.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         public void ToggleUI()

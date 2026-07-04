@@ -7,18 +7,20 @@ namespace DumyatRuntime
     /// Plain C# implementation of <see cref="ICraftingService"/>, constructed by Reflex.
     /// Replaces the former <c>CraftingManager</c> singleton: reads/writes the crafting save slice
     /// through <see cref="ISaveService"/> and resolves recipe names against the injected
-    /// <see cref="RecipeDatabase"/>. Publishes <see cref="BlueprintUnlockedEvent"/> via EventBus.
+    /// <see cref="RecipeDatabase"/>. Publishes <see cref="BlueprintUnlockedEvent"/> via <see cref="IEventService"/>.
     /// </summary>
     public sealed class CraftingService : ICraftingService
     {
         private readonly ISaveService _saveService;
         private readonly RecipeDatabase _recipeDatabase;
+        private readonly IEventService _eventService;
         private readonly CraftingSaveData _craftingData;
 
-        public CraftingService(ISaveService saveService, RecipeDatabase recipeDatabase)
+        public CraftingService(ISaveService saveService, RecipeDatabase recipeDatabase, IEventService eventService)
         {
             _saveService = saveService;
             _recipeDatabase = recipeDatabase;
+            _eventService = eventService;
             _craftingData = _saveService.CurrentSaveData.craftingData;
         }
 
@@ -38,7 +40,7 @@ namespace DumyatRuntime
                 _saveService.SaveAsync();
 
                 Debug.Log($"CraftingService: Blueprint Unlocked -> '{recipeName}'");
-                EventBus.Publish(new BlueprintUnlockedEvent(recipeName));
+                _eventService.Publish(new BlueprintUnlockedEvent(recipeName));
             }
         }
 

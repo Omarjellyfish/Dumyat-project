@@ -17,9 +17,14 @@ namespace DumyatRuntime
         [SerializeField] private bool _startOpen = false;
 
         private IInventoryService _inventory;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(IInventoryService inventory) => _inventory = inventory;
+        private void Inject(IInventoryService inventory, IEventService eventService)
+        {
+            _inventory = inventory;
+            _eventService = eventService;
+        }
 
         private VisualElement _root;
         private VisualElement _slotContainer;
@@ -37,7 +42,7 @@ namespace DumyatRuntime
             // The main container in your UI Builder document where slots will be added
             _slotContainer = _root.Q<VisualElement>("SlotContainer");
 
-            EventBus.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
+            _eventService.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
 
             _root.style.display = _startOpen ? DisplayStyle.Flex : DisplayStyle.None;
             
@@ -49,7 +54,7 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
-            EventBus.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
+            _eventService.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         public void ToggleUI()

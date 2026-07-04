@@ -6,9 +6,14 @@ namespace DumyatRuntime
     public class CraftingStation : MonoBehaviour
     {
         private ISoundService _sound;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(ISoundService sound) => _sound = sound;
+        private void Inject(ISoundService sound, IEventService eventService)
+        {
+            _sound = sound;
+            _eventService = eventService;
+        }
 
         [Header("Validation References")]
         [SerializeField] private Rigidbody _rootBody;
@@ -71,7 +76,7 @@ namespace DumyatRuntime
 
                 PlaySpawnAudio();
 
-                EventBus.Publish(new RecipeSelectedEvent(recipe, this));
+                _eventService.Publish(new RecipeSelectedEvent(recipe, this));
             }
             else
             {
@@ -81,7 +86,7 @@ namespace DumyatRuntime
 
         public void CheckBuild()
         {
-            CraftingValidator.ValidateBuild(_rootBody, _recipe);
+            CraftingValidator.ValidateBuild(_rootBody, _recipe, _eventService);
         }
 
         private void PlaySpawnAudio()

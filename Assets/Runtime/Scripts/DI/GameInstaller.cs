@@ -53,6 +53,10 @@ namespace DumyatRuntime
             // Global game-state machine. Eager so it exists for the whole app lifetime.
             containerBuilder.RegisterType(typeof(GameStateService), new[] { typeof(IGameStateService) },
                 Lifetime.Singleton, Resolution.Eager);
+
+            // Event bus for global pub/sub. Eager so it exists for the whole app lifetime.
+            containerBuilder.RegisterType(typeof(EventService), new[] { typeof(IEventService) },
+                Lifetime.Singleton, Resolution.Eager);
         }
     }
 }

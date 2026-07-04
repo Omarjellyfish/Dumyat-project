@@ -5,35 +5,36 @@ using UnityEngine;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Static, thread-safe publish/subscribe hub keyed on <see cref="IGameEvent"/>.
+    /// Instance-based, thread-safe publish/subscribe hub keyed on <see cref="IGameEvent"/>.
+    /// Registered as <see cref="IEventService"/> singleton in the DI container by <c>GameInstaller</c>.
     ///
     /// Handlers for each event type live in a strongly-typed generic channel
     /// (<c>Channel&lt;T&gt;</c>). Because the CLR creates one channel per event type,
     /// locating the handler list for a <see cref="Publish{T}"/> is a direct static-field
-    /// read — no dictionary lookup, no boxing, and no per-handler cast. Publishing also
+    /// read -- no dictionary lookup, no boxing, and no per-handler cast. Publishing also
     /// walks the live handler list with zero per-call allocation: subscription changes
     /// made while an event is being dispatched are buffered and applied once dispatch
     /// unwinds, so the list is never mutated mid-iteration.
     /// </summary>
-    public static class EventBus
+    public sealed class EventService : IEventService
     {
         private static readonly object _lock = new();
         private static int _publishDepth;
 
         // Channels with buffered subscribe/unsubscribe ops, flushed when _publishDepth returns to 0.
         private static readonly List<IChannel> _dirtyChannels = new();
-        // Every channel that has had at least one subscriber — used by Clear() and diagnostics.
+        // Every channel that has had at least one subscriber -- used by Clear() and diagnostics.
         private static readonly List<IChannel> _allChannels = new();
 
         // -------------------------------------------------------------------------
         // Public API
         // -------------------------------------------------------------------------
 
-        public static void Subscribe<T>(Action<T> handler) where T : IGameEvent
+        public void Subscribe<T>(Action<T> handler) where T : IGameEvent
         {
             if (handler == null)
             {
-                Debug.LogWarning("[EventBus] Tried to subscribe a null handler.");
+                Debug.LogWarning("[EventService] Tried to subscribe a null handler.");
                 return;
             }
 
@@ -43,7 +44,7 @@ namespace DumyatRuntime
 
                 if (_publishDepth > 0)
                 {
-                    // A publish is in flight — buffer the change so the live list is not mutated.
+                    // A publish is in flight -- buffer the change so the live list is not mutated.
                     Channel<T>.PendingRemove.Remove(handler); // cancel a queued removal, if any
                     if (!Channel<T>.Handlers.Contains(handler) && !Channel<T>.PendingAdd.Contains(handler))
                     {
@@ -55,7 +56,7 @@ namespace DumyatRuntime
 
                 if (Channel<T>.Handlers.Contains(handler))
                 {
-                    Debug.LogWarning($"[EventBus] Handler already subscribed to {typeof(T).Name}. " +
+                    Debug.LogWarning($"[EventService] Handler already subscribed to {typeof(T).Name}. " +
                                      "Duplicate subscription ignored. If using lambdas, cache them to avoid this.");
                     return;
                 }
@@ -64,11 +65,11 @@ namespace DumyatRuntime
             }
         }
 
-        public static void Unsubscribe<T>(Action<T> handler) where T : IGameEvent
+        public void Unsubscribe<T>(Action<T> handler) where T : IGameEvent
         {
             if (handler == null)
             {
-                Debug.LogWarning("[EventBus] Tried to unsubscribe a null handler.");
+                Debug.LogWarning("[EventService] Tried to unsubscribe a null handler.");
                 return;
             }
 
@@ -76,7 +77,7 @@ namespace DumyatRuntime
             {
                 if (_publishDepth > 0)
                 {
-                    // A publish is in flight — buffer the change.
+                    // A publish is in flight -- buffer the change.
                     Channel<T>.PendingAdd.Remove(handler); // cancel a queued add, if any
                     if (Channel<T>.Handlers.Contains(handler) && !Channel<T>.PendingRemove.Contains(handler))
                     {
@@ -88,13 +89,13 @@ namespace DumyatRuntime
 
                 if (!Channel<T>.Handlers.Remove(handler))
                 {
-                    Debug.LogWarning($"[EventBus] Unsubscribe called for {typeof(T).Name} but handler was not found. " +
+                    Debug.LogWarning($"[EventService] Unsubscribe called for {typeof(T).Name} but handler was not found. " +
                                      "Check for mismatched Subscribe/Unsubscribe calls.");
                 }
             }
         }
 
-        public static void Publish<T>(T eventData) where T : IGameEvent
+        public void Publish<T>(T eventData) where T : IGameEvent
         {
             List<Action<T>> handlers = Channel<T>.Handlers;
             int count;
@@ -109,7 +110,7 @@ namespace DumyatRuntime
             try
             {
                 // While _publishDepth > 0 every subscribe/unsubscribe is buffered (see above),
-                // so this list is frozen for the duration and can be walked directly — no snapshot.
+                // so this list is frozen for the duration and can be walked directly -- no snapshot.
                 for (int i = 0; i < count; i++)
                 {
                     try
@@ -244,7 +245,7 @@ namespace DumyatRuntime
         {
             lock (_lock)
             {
-                var sb = new System.Text.StringBuilder("[EventBus] Active subscribers:\n");
+                var sb = new System.Text.StringBuilder("[EventService] Active subscribers:\n");
                 bool any = false;
                 for (int i = 0; i < _allChannels.Count; i++)
                 {
@@ -256,7 +257,7 @@ namespace DumyatRuntime
 
                 if (!any)
                 {
-                    Debug.Log("[EventBus] No active subscribers.");
+                    Debug.Log("[EventService] No active subscribers.");
                     return;
                 }
 

@@ -16,12 +16,14 @@ namespace DumyatRuntime
 
         private ISoundService _sound;
         private IHapticService _haptics;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(ISoundService sound, IHapticService haptics)
+        private void Inject(ISoundService sound, IHapticService haptics, IEventService eventService)
         {
             _sound = sound;
             _haptics = haptics;
+            _eventService = eventService;
         }
 
         private XRGrabInteractable _grabInteractable;
@@ -168,7 +170,7 @@ namespace DumyatRuntime
                 _settings.nailOutHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
 
             Debug.Log($"[CrowbarTool] Detached '{bodyA.name}' ↔ '{bodyB.name}' at {contact.point}");
-            EventBus.Publish(new AttachmentRemovedEvent(contact.point, bodyA.gameObject, bodyB.gameObject));
+            _eventService.Publish(new AttachmentRemovedEvent(contact.point, bodyA.gameObject, bodyB.gameObject));
         }
 
         private int CountJointsBetween(Rigidbody bodyA, Rigidbody bodyB, FixedJoint excludeJoint)

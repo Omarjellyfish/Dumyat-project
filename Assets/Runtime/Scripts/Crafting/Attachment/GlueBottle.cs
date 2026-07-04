@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -16,6 +17,11 @@ namespace DumyatRuntime
 
         private XRGrabInteractable _grabInteractable;
         private float _lastSqueezeTime;
+
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IEventService eventService) => _eventService = eventService;
 
         private void Awake()
         {
@@ -60,7 +66,7 @@ namespace DumyatRuntime
                         glueBlob.AttachedBodyA = hitBody;
                     }
 
-                    EventBus.Publish(new GlueAppliedEvent(hit.point, hitBody.gameObject));
+                    _eventService.Publish(new GlueAppliedEvent(hit.point, hitBody.gameObject));
                 }
             }
         }

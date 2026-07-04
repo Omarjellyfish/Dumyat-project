@@ -8,18 +8,23 @@ namespace DumyatRuntime
     public class ItemSpawner : MonoBehaviour
     {
         private IInventoryService _inventory;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(IInventoryService inventory) => _inventory = inventory;
+        private void Inject(IInventoryService inventory, IEventService eventService)
+        {
+            _inventory = inventory;
+            _eventService = eventService;
+        }
 
         private void OnEnable()
         {
-            EventBus.Subscribe<ItemDroppedEvent>(HandlePlayerDrop);
+            _eventService.Subscribe<ItemDroppedEvent>(HandlePlayerDrop);
         }
 
         private void OnDisable()
         {
-            EventBus.Unsubscribe<ItemDroppedEvent>(HandlePlayerDrop);
+            _eventService.Unsubscribe<ItemDroppedEvent>(HandlePlayerDrop);
         }
 
         public GameObject SpawnItem(string itemID, Vector3 spawnPosition, Quaternion spawnRotation, int quantity = 1)
