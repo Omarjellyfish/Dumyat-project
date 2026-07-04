@@ -1,6 +1,6 @@
 namespace DumyatRuntime
 {
-    /// <summary>Published by <see cref="PlayerPersistence"/> when a persistence key is unlocked for the first time.</summary>
+    /// <summary>Published by <see cref="PlayerPersistenceService"/> when a persistence key is unlocked for the first time.</summary>
     public readonly struct KeyUnlockedEvent : IGameEvent
     {
         public readonly string Key;

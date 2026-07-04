@@ -2,11 +2,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
     public class SawTip : MonoBehaviour
     {
+        private ISoundService _sound;
+        private IHapticService _haptics;
+        private IFloatingTextService _floatingText;
+
+        [Inject]
+        private void Inject(ISoundService sound, IHapticService haptics, IFloatingTextService floatingText)
+        {
+            _sound = sound;
+            _haptics = haptics;
+            _floatingText = floatingText;
+        }
+
         [SerializeField] private SawBladePoint _bladeTip;
         [SerializeField] private SawBladePoint _bladeMid;
         [SerializeField] private SawBladePoint _bladeBase;
@@ -106,10 +119,10 @@ private FloatingText _activeFloatingText;
 
                 ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
                 
-                SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
+                _sound?.PlayRandomSoundFxAtPosition(
                     _settings.sawStrokeClips, transform, _settings.sfxVolume);
 
-                HapticFeedback.Singleton?.TriggerVibration(
+                _haptics?.TriggerVibration(
                     _settings.sawStrokeHapticProfile, XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
             }
 
@@ -122,10 +135,10 @@ private FloatingText _activeFloatingText;
                     _woodSlicer.PerformCut(_hitPoints, _currentDirection, woodToCut);
                     ShowFloatingText("Cut!");
 
-                    SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
+                    _sound?.PlayRandomSoundFxAtPosition(
                         _settings.cutCompleteClips, transform, _settings.sfxVolume);
 
-                    HapticFeedback.Singleton?.TriggerVibration(
+                    _haptics?.TriggerVibration(
                         _settings.cutCompleteHapticProfile, XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
                 }
 
@@ -189,8 +202,8 @@ private void HideFloatingText()
     if (_activeFloatingText == null)
         return;
 
-    if (FloatingUIManager.Instance != null)
-        FloatingUIManager.Instance.Hide(_activeFloatingText);
+    if (_floatingText != null)
+        _floatingText.Hide(_activeFloatingText);
 
     _activeFloatingText = null;
 }
@@ -206,7 +219,7 @@ private void ShowFloatingText(string text)
     if (!_showFloatingText)
         return;
 
-    if (FloatingUIManager.Instance == null)
+    if (_floatingText == null)
         return;
 
     Vector3 position = _bladeMid != null
@@ -215,7 +228,7 @@ private void ShowFloatingText(string text)
 
     if (_activeFloatingText == null || !_activeFloatingText.gameObject.activeSelf)
     {
-        _activeFloatingText = FloatingUIManager.Instance.Show(position, text);
+        _activeFloatingText = _floatingText.Show(position, text);
         return;
     }
 

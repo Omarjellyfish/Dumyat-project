@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit;
+using Reflex.Attributes;
 
 
 
@@ -11,6 +12,11 @@ namespace DumyatRuntime
     {
         [Header("UI Reference")]
         [SerializeField] private InventoryToolkitUI _inventoryUI;
+
+        private IHapticService _haptics;
+
+        [Inject]
+        private void Inject(IHapticService haptics) => _haptics = haptics;
 
         [Header("Audio Feedback")]
         [SerializeField] private AudioClip _stashSound;
@@ -135,10 +141,7 @@ namespace DumyatRuntime
                 _audioSource.PlayOneShot(_stashSound);
             }
 
-            if (HapticFeedback.Singleton != null)
-            {
-                HapticFeedback.Singleton.TriggerVibration(0.6f, 0.15f, 0.8f, HapticHand.Both);
-            }
+            _haptics?.TriggerVibration(0.6f, 0.15f, 0.8f, HapticHand.Both);
 
             Debug.Log($"InventoryStashZone: Physical item '{pickup.ItemID}' stashed.");
 

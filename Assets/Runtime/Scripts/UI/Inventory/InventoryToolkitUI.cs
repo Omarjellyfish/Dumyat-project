@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -14,6 +15,11 @@ namespace DumyatRuntime
 
         [Header("Settings")]
         [SerializeField] private bool _startOpen = false;
+
+        private IInventoryService _inventory;
+
+        [Inject]
+        private void Inject(IInventoryService inventory) => _inventory = inventory;
 
         private VisualElement _root;
         private VisualElement _slotContainer;
@@ -97,9 +103,9 @@ namespace DumyatRuntime
             _slotContainer.Clear();
             _activeSlots.Clear();
 
-            if (InventoryManager.Singleton == null) return;
-            
-            foreach (var item in InventoryManager.Singleton.CurrentItems)
+            if (_inventory == null) return;
+
+            foreach (var item in _inventory.CurrentItems)
             {
                 UpdateOrSpawnSlot(item);
             }
@@ -141,10 +147,9 @@ namespace DumyatRuntime
                 var dropButton = newSlot.Q<Button>("DropButton");
                 if (dropButton != null)
                 {
-                    dropButton.clicked += () => 
+                    dropButton.clicked += () =>
                     {
-                        if (InventoryManager.Singleton != null)
-                            InventoryManager.Singleton.DropItem(item.ItemID, 1);
+                        _inventory?.DropItem(item.ItemID, 1);
                     };
                 }
 

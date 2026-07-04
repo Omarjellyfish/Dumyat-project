@@ -11,24 +11,11 @@ namespace DumyatRuntime
         Both
     }
 
-    public class HapticFeedback : MonoBehaviour
+    public class HapticFeedback : MonoBehaviour, IHapticService
     {
-        public static HapticFeedback Singleton { get; private set; }
-
         [Header("Haptic Impulse Players")]
         [SerializeField] private HapticImpulsePlayer _leftControllerHaptic;
         [SerializeField] private HapticImpulsePlayer _rightControllerHaptic;
-
-        private void Awake()
-        {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-        }
 
         #region Public API: Impulse
 

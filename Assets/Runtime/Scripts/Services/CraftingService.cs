@@ -3,32 +3,23 @@ using UnityEngine;
 
 namespace DumyatRuntime
 {
-    public class CraftingManager : MonoBehaviour, IManager
+    /// <summary>
+    /// Plain C# implementation of <see cref="ICraftingService"/>, constructed by Reflex.
+    /// Replaces the former <c>CraftingManager</c> singleton: reads/writes the crafting save slice
+    /// through <see cref="ISaveService"/> and resolves recipe names against the injected
+    /// <see cref="RecipeDatabase"/>. Publishes <see cref="BlueprintUnlockedEvent"/> via EventBus.
+    /// </summary>
+    public sealed class CraftingService : ICraftingService
     {
-        public static CraftingManager Singleton { get; private set; }
+        private readonly ISaveService _saveService;
+        private readonly RecipeDatabase _recipeDatabase;
+        private readonly CraftingSaveData _craftingData;
 
-        [SerializeField] private RecipeDatabase _recipeDatabase;
-
-        private CraftingSaveData _craftingData;
-
-        private void Awake()
+        public CraftingService(ISaveService saveService, RecipeDatabase recipeDatabase)
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-
-            if (SaveManager.CurrentSaveData == null)
-            {
-                SaveManager.LoadGame();
-            }
-
-            _craftingData = SaveManager.CurrentSaveData.craftingData;
-            foreach (var item in _craftingData.unlockedBlueprints) {
-                Debug.Log(item);
-            }
+            _saveService = saveService;
+            _recipeDatabase = recipeDatabase;
+            _craftingData = _saveService.CurrentSaveData.craftingData;
         }
 
         public bool IsBlueprintUnlocked(string recipeName)
@@ -44,9 +35,9 @@ namespace DumyatRuntime
             if (!_craftingData.unlockedBlueprints.Contains(recipeName))
             {
                 _craftingData.unlockedBlueprints.Add(recipeName);
-                SaveManager.SaveGameAsync();
+                _saveService.SaveAsync();
 
-                Debug.Log($"CraftingManager: Blueprint Unlocked -> '{recipeName}'");
+                Debug.Log($"CraftingService: Blueprint Unlocked -> '{recipeName}'");
                 EventBus.Publish(new BlueprintUnlockedEvent(recipeName));
             }
         }

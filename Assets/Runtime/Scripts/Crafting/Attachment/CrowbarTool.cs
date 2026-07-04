@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -12,6 +13,16 @@ namespace DumyatRuntime
         // Reusing the hammer settings so you don't have to create a new ScriptableObject
         // You can duplicate the Hammer's SO and tweak the hit velocities/sounds for the crowbar.
         [SerializeField] private NailHammerSettingsSO _settings;
+
+        private ISoundService _sound;
+        private IHapticService _haptics;
+
+        [Inject]
+        private void Inject(ISoundService sound, IHapticService haptics)
+        {
+            _sound = sound;
+            _haptics = haptics;
+        }
 
         private XRGrabInteractable _grabInteractable;
         private Rigidbody _rb;
@@ -75,7 +86,7 @@ namespace DumyatRuntime
             if (speed < _settings.minImpactVelocity) return;
 
             // Optional: Trigger a light haptic tap just for hitting something hard enough
-            HapticFeedback.Singleton?.TriggerVibration(
+            _haptics?.TriggerVibration(
                 _settings.generalImpactHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
 
             Rigidbody plankABody = collision.rigidbody;
@@ -150,10 +161,10 @@ namespace DumyatRuntime
             DestroyClosestNailVisual(bodyA, bodyB, contact.point);
 
             // 4. Feedback & Events
-            SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
+            _sound?.PlayRandomSoundFxAtPosition(
                 _settings.nailOutClips, transform, _settings.sfxVolume);
 
-            HapticFeedback.Singleton?.TriggerVibration(
+            _haptics?.TriggerVibration(
                 _settings.nailOutHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
 
             Debug.Log($"[CrowbarTool] Detached '{bodyA.name}' ↔ '{bodyB.name}' at {contact.point}");

@@ -1,48 +1,36 @@
-using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DumyatRuntime
 {
-    public class InventoryManager : MonoBehaviour
+    /// <summary>
+    /// Plain C# implementation of <see cref="IInventoryService"/>, constructed by Reflex.
+    /// Replaces the former <c>InventoryManager</c> MonoBehaviour-singleton: it holds no scene state,
+    /// so its dependencies (the shared save store and the item database asset) are injected via the
+    /// constructor by <see cref="GameInstaller"/>. Cross-system reactions still flow through
+    /// <see cref="EventBus"/> (<see cref="InventoryChangedEvent"/> / <see cref="ItemDroppedEvent"/>).
+    /// </summary>
+    public sealed class InventoryService : IInventoryService
     {
-        [Header("References")]
-        [Tooltip("Contains all items and their individaul item data,  Assign your central database asset here.")]
-        [SerializeField] private ItemDatabase _itemDatabase;
+        private readonly ISaveService _saveService;
+        private readonly ItemDatabase _itemDatabase;
+        private readonly InventorySaveData _currentInventory;
 
-        [Header("Runtime State")]
-        private InventorySaveData _currentInventory;
-
-        [Header("Global Hooks")]
-        public static InventoryManager Singleton { get; private set; }
+        public InventoryService(ISaveService saveService, ItemDatabase itemDatabase)
+        {
+            _saveService = saveService;
+            _itemDatabase = itemDatabase;
+            _currentInventory = _saveService.CurrentSaveData.inventoryData;
+        }
 
         public IReadOnlyList<InventoryItem> CurrentItems => _currentInventory.items;
         public ItemDatabase ItemDatabase => _itemDatabase;
-
-        private void Awake()
-        {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
-            if (SaveManager.CurrentSaveData == null)
-            {
-                SaveManager.LoadGame();
-            }
-
-            _currentInventory = SaveManager.CurrentSaveData.inventoryData;
-        }
 
         public void AddItemToInventory(string idToAdd, int amount)
         {
             if (_itemDatabase == null)
             {
-                Debug.LogError("InventoryManager: Database reference is unassigned!");
+                Debug.LogError("InventoryService: Database reference is unassigned!");
                 return;
             }
 
@@ -64,7 +52,7 @@ namespace DumyatRuntime
             }
 
             Debug.Log($"Inventory Data: Appended {amount}x '{blueprint.DisplayName}'.");
-            SaveManager.SaveGameAsync();
+            _saveService.SaveAsync();
         }
 
         /// <summary>
@@ -94,7 +82,7 @@ namespace DumyatRuntime
             }
 
             EventBus.Publish(new InventoryChangedEvent(item));
-            SaveManager.SaveGameAsync();
+            _saveService.SaveAsync();
         }
     }
 }

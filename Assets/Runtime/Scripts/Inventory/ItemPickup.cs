@@ -1,4 +1,5 @@
 using UnityEngine;
+using Reflex.Attributes;
 #if XR_INTERACTION_TOOLKIT
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -11,6 +12,18 @@ namespace DumyatRuntime
         [Header("Item Configuration")]
         [SerializeField] private string _itemID;
         [SerializeField] private int _amount = 1;
+
+        private IInventoryService _inventory;
+        private IHapticService _haptics;
+
+        // Injected by Reflex: for scene items automatically, and for runtime-spawned items by
+        // ItemSpawner (which injects the instance against the scene container).
+        [Inject]
+        private void Inject(IInventoryService inventory, IHapticService haptics)
+        {
+            _inventory = inventory;
+            _haptics = haptics;
+        }
 
         public string ItemID
         {
@@ -32,17 +45,18 @@ namespace DumyatRuntime
                 return;
             }
 
-            if (InventoryManager.Singleton != null)
+            if (_inventory == null)
             {
-                InventoryManager.Singleton.AddItemToInventory(_itemID, _amount);
-                
-                if (HapticFeedback.Singleton != null)
-                {
-                    HapticFeedback.Singleton.TriggerVibration(0.4f, 0.1f, 0.5f, HapticHand.Both);
-                }
-
-                Destroy(gameObject);
+                Debug.LogWarning($"ItemPickup: No IInventoryService injected on {gameObject.name}; " +
+                                 "ensure the scene has a ContainerScope, or that ItemSpawner injects spawned items.");
+                return;
             }
+
+            _inventory.AddItemToInventory(_itemID, _amount);
+
+            _haptics?.TriggerVibration(0.4f, 0.1f, 0.5f, HapticHand.Both);
+
+            Destroy(gameObject);
         }
     }
 }

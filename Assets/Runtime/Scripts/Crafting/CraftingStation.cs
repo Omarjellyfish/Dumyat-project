@@ -1,9 +1,15 @@
 using UnityEngine;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
     public class CraftingStation : MonoBehaviour
     {
+        private ISoundService _sound;
+
+        [Inject]
+        private void Inject(ISoundService sound) => _sound = sound;
+
         [Header("Validation References")]
         [SerializeField] private Rigidbody _rootBody;
         [SerializeField] private CraftingRecipe _recipe;
@@ -82,7 +88,7 @@ namespace DumyatRuntime
         {
             if (_spawnPoint == null) return;
 
-            SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
+            _sound?.PlayRandomSoundFxAtPosition(
                 _spawnClips, _spawnPoint, _spawnSfxVolume);
         }
     }

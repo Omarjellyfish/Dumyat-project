@@ -4,10 +4,8 @@ using System.Collections;
 using UnityEngine.Audio;
 namespace DumyatRuntime
 {
-    public class SoundManager : MonoBehaviour, IManager
+    public class SoundManager : MonoBehaviour, ISoundService
     {
-        public static SoundManager Singleton { get; private set; }
-
         [Header("Audio Sources")]
         [SerializeField] private AudioSource _sfxAudioSourcePrefab;
         [SerializeField] private AudioMixerGroup _defaultMixerGroup;
@@ -16,14 +14,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
             _audioPool = new ObjectPool<AudioSource>(
                 createFunc: CreatePooledItem,
                 actionOnGet: OnTakeFromPool,

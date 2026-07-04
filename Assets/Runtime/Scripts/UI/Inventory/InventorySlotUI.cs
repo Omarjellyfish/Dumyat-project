@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -12,6 +13,10 @@ namespace DumyatRuntime
         [SerializeField] private TextMeshProUGUI _nameText;
 
         private string _boundItemID;
+        private IInventoryService _inventory;
+
+        [Inject]
+        private void Inject(IInventoryService inventory) => _inventory = inventory;
         // the UI slot with the item data and quantity
         public void Setup(ItemData itemData, int quantity)
         {
@@ -38,12 +43,9 @@ namespace DumyatRuntime
         public void OnDropButtonClicked()
         {
             if (string.IsNullOrEmpty(_boundItemID)) return;
-            
+
             // Drop 1 item when the button is clicked
-            if (InventoryManager.Singleton != null)
-            {
-                InventoryManager.Singleton.DropItem(_boundItemID, 1);
-            }
+            _inventory?.DropItem(_boundItemID, 1);
         }
     }
 }

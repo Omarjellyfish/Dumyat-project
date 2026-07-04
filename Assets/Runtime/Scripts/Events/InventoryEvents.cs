@@ -1,6 +1,6 @@
 namespace DumyatRuntime
 {
-    /// <summary>Published by <see cref="InventoryManager"/> when an item's quantity is added, removed, or changed.</summary>
+    /// <summary>Published by <see cref="InventoryService"/> when an item's quantity is added, removed, or changed.</summary>
     public readonly struct InventoryChangedEvent : IGameEvent
     {
         public readonly InventoryItem Item;
@@ -11,7 +11,7 @@ namespace DumyatRuntime
         }
     }
 
-    /// <summary>Published by <see cref="InventoryManager"/> when the player drops an item into the world.</summary>
+    /// <summary>Published by <see cref="InventoryService"/> when the player drops an item into the world.</summary>
     public readonly struct ItemDroppedEvent : IGameEvent
     {
         public readonly ItemData Item;

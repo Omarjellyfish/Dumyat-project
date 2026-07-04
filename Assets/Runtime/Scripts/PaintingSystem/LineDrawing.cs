@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -14,6 +15,10 @@ namespace DumyatRuntime
         [SerializeField ] Vector3 offset;
 
         private LineRenderer _lineRenderer;
+        private IFloatingTextService _floatingText;
+
+        [Inject]
+        private void Inject(IFloatingTextService floatingText) => _floatingText = floatingText;
 
         private void Awake()
         {
@@ -47,7 +52,7 @@ namespace DumyatRuntime
         {
             _penTip.FinalizeLine();
             _lineRenderer.enabled = false;
-            FloatingUIManager.Instance.Hide(_distanceText);
+            _floatingText.Hide(_distanceText);
             _distanceText = null;
         }
 
@@ -55,7 +60,7 @@ namespace DumyatRuntime
         {
             _penTip._currentMode = PenMode.LineDrawing;
             _lineRenderer.enabled = true;
-            _distanceText = FloatingUIManager.Instance.Show(transform.position, "0.0 cm");
+            _distanceText = _floatingText.Show(transform.position, "0.0 cm");
         }
 
         public void UpdateLinePositions(Vector3 startWorldPoint, Vector3 currentWorldPoint)

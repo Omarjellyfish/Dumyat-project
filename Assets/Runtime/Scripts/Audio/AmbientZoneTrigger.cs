@@ -1,4 +1,5 @@
 using UnityEngine;
+using Reflex.Attributes;
 namespace DumyatRuntime
 {
     [RequireComponent(typeof(Collider))]
@@ -11,12 +12,15 @@ namespace DumyatRuntime
         [Tooltip("How long it takes to fade into this track upon entering.")]
         [SerializeField] private float fadeDuration = 3.0f;
 
-        private void OnTriggerEnter(Collider other)
-        {   
+        private IWorldAudioService _worldAudio;
 
-            if(other.CompareTag("Player"))
-                WorldAudioManager.Singleton.PlayAmbient(zoneAmbience, fadeDuration);
-             WorldAudioManager.Singleton.DoesExist();
+        [Inject]
+        private void Inject(IWorldAudioService worldAudio) => _worldAudio = worldAudio;
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("Player"))
+                _worldAudio?.PlayAmbient(zoneAmbience, fadeDuration);
         }
     }
 }
