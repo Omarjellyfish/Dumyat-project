@@ -53,7 +53,10 @@ or as scene-bound MonoBehaviours registered as instances.
     singletons). Lives on the **ProjectScope** prefab whose `ContainerScope` is listed in the
     `Resources/ReflexSettings` asset's *RootScopes*.
   - `SceneInstaller` → **scene** container (services needing the active rig / AudioSource pools /
-    coroutines, e.g. `HapticFeedback`). Lives under a per-scene `ContainerScope` GameObject.
+    coroutines, e.g. `HapticFeedback`). To enable DI in a gameplay scene, drop the
+    **`Assets/Runtime/Prefabs/DI/SceneScope.prefab`** (a `ContainerScope` + `SceneInstaller`) into it —
+    the installer takes each scene service from its serialized field, or **auto-discovers it in the
+    scene** if that field is left empty, so most scenes need no manual wiring.
   - Bind with `RegisterType(typeof(Impl), new[]{ typeof(IContract) }, Lifetime.Singleton,
     Resolution.Lazy)`, `RegisterValue(instance_or_SO, new[]{ typeof(IContract) })`, or
     `RegisterFactory<T>(…)`. Use `Resolution.Eager` for a service that must exist / self-subscribe up front.

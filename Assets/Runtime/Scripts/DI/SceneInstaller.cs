@@ -5,13 +5,18 @@ namespace DumyatRuntime
 {
     /// <summary>
     /// Scene-container installer for scene-bound MonoBehaviour services (things that need the active
-    /// rig's references, an AudioSource pool, or coroutines). Place this under the scene's
-    /// <see cref="ContainerScope"/> and assign the in-scene manager instances; they are registered
-    /// against their capability interfaces so scene components can inject them.
+    /// rig's references, an AudioSource pool, or coroutines). Drop the <c>SceneScope</c> prefab into
+    /// any gameplay scene: each service is taken from its serialized field, or — if left empty —
+    /// auto-discovered in the scene, then registered against its capability interface. A scene that
+    /// simply doesn't contain a given manager just won't offer that capability (its consumers are
+    /// injected null and null-guard themselves).
+    ///
+    /// Note: the scene lookup here is deliberate — an installer is the composition root, the one
+    /// sanctioned place to reach across the scene. Regular components must still inject, not Find.
     /// </summary>
     public sealed class SceneInstaller : MonoBehaviour, IInstaller
     {
-        [Header("Scene Services")]
+        [Header("Scene Services (optional — auto-found in the scene if left empty)")]
         [Tooltip("Haptics is scene-scoped: it references this rig's controller impulse players.")]
         [SerializeField] private HapticFeedback _hapticFeedback;
         [SerializeField] private SoundManager _soundManager;
@@ -20,25 +25,22 @@ namespace DumyatRuntime
 
         public void InstallBindings(ContainerBuilder containerBuilder)
         {
-            if (_hapticFeedback != null)
-                containerBuilder.RegisterValue(_hapticFeedback, new[] { typeof(IHapticService) });
-            else
-                Debug.LogWarning("SceneInstaller: HapticFeedback not assigned; IHapticService will be unresolved in this scene.");
+            Register<HapticFeedback, IHapticService>(containerBuilder, _hapticFeedback);
+            Register<SoundManager, ISoundService>(containerBuilder, _soundManager);
+            Register<WorldAudioManager, IWorldAudioService>(containerBuilder, _worldAudioManager);
+            Register<FloatingUIManager, IFloatingTextService>(containerBuilder, _floatingUIManager);
+        }
 
-            if (_soundManager != null)
-                containerBuilder.RegisterValue(_soundManager, new[] { typeof(ISoundService) });
-            else
-                Debug.LogWarning("SceneInstaller: SoundManager not assigned; ISoundService will be unresolved in this scene.");
+        // Registers the serialized instance, or the first one found in the scene, under TContract.
+        private static void Register<TImpl, TContract>(ContainerBuilder builder, TImpl serialized)
+            where TImpl : MonoBehaviour
+        {
+            TImpl impl = serialized != null
+                ? serialized
+                : Object.FindFirstObjectByType<TImpl>(FindObjectsInactive.Include);
 
-            if (_worldAudioManager != null)
-                containerBuilder.RegisterValue(_worldAudioManager, new[] { typeof(IWorldAudioService) });
-            else
-                Debug.LogWarning("SceneInstaller: WorldAudioManager not assigned; IWorldAudioService will be unresolved in this scene.");
-
-            if (_floatingUIManager != null)
-                containerBuilder.RegisterValue(_floatingUIManager, new[] { typeof(IFloatingTextService) });
-            else
-                Debug.LogWarning("SceneInstaller: FloatingUIManager not assigned; IFloatingTextService will be unresolved in this scene.");
+            if (impl != null)
+                builder.RegisterValue(impl, new[] { typeof(TContract) });
         }
     }
 }
