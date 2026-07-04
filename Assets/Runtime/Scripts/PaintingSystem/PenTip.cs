@@ -33,17 +33,22 @@ namespace DumyatRuntime
             if (Physics.Raycast(transform.position, -transform.forward,
                 out RaycastHit hit, _rayDistance, _woodLayer))
             {
+    Debug.Log($"Hit: {hit.collider.name} | Type: {hit.collider.GetType()} | UV0: {hit.textureCoord} | UV2: {hit.textureCoord2}");
+
                 WoodPaintSurface wood = hit.collider.GetComponent<WoodPaintSurface>();
                 if (wood == null) return;
 
                 _currentWood = wood;
+
+                // Use the second UV channel (unique/non-overlapping unwrap),
+                // NOT hit.textureCoord (UV0), which is the trim sheet's overlapping UVs.
+                Vector2 uv = hit.textureCoord2;
 
                 switch (_currentMode)
                 {
                     case PenMode.FreeDraw:
                         if (Time.time - _lastDrawnTime >= _timeInterval)
                         {
-                            Vector2 uv = wood.GetUVFromWorldPoint(hit.point);
                             _paintBrush.PaintAt(wood, uv, _penColor, _brushSize);
                             _lastDrawnTime = Time.time;
                         }
@@ -53,7 +58,7 @@ namespace DumyatRuntime
                         if (!_pointASet)
                         {
                             _pointAWorld = hit.point;
-                            _pointAUV = wood.GetUVFromWorldPoint(hit.point);
+                            _pointAUV = uv;
                             _pointASet = true;
                         }
                         _lineDraw.UpdateLinePositions(_pointAWorld, hit.point);
@@ -73,7 +78,7 @@ namespace DumyatRuntime
             Physics.Raycast(transform.position, -transform.forward,
                 out RaycastHit hit, _rayDistance, _woodLayer);
 
-            Vector2 finalUV = _currentWood.GetUVFromWorldPoint(hit.point);
+            Vector2 finalUV = hit.textureCoord2;
 
             float distance = Vector2.Distance(_pointAUV, finalUV);
             float brushSpacing = _brushSize * 0.5f;
