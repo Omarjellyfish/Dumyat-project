@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -63,6 +66,15 @@ namespace DumyatRuntime
                  "a failing reconnect backs off instead of hammering every frame.")]
         [SerializeField, Min(0f)] private float _reconnectCooldownSeconds = 2f;
 
+        [Header("Debug Log File")]
+        [Tooltip("Write transcripts + status/errors to a UTF-8 text file so the Arabic/Egyptian output " +
+                 "can be reviewed outside the Unity Console (which can't render Arabic). The file is " +
+                 "saved under Application.persistentDataPath and appended to across sessions.")]
+        [SerializeField] private bool _logToFile = true;
+
+        [Tooltip("Name of the debug log file written (UTF-8, appended) under Application.persistentDataPath.")]
+        [SerializeField] private string _logFileName = "stt_debug_log.txt";
+
         private InputSystem_Actions _inputSystem;
         private bool _microphoneToggleApplied;   // tracks the last-applied value of _microphoneEnabled
         private bool _lastMicrophoneEnabled;
@@ -72,6 +84,7 @@ namespace DumyatRuntime
         private string _status = "Idle.";
         private string _lastTranscript = "";
         private string _lastError = "";
+        private string _logFilePath;             // resolved once in Start when _logToFile is on
         private GUIStyle _boxStyle;
         private GUIStyle _labelStyle;
 
@@ -121,11 +134,56 @@ namespace DumyatRuntime
                 Debug.LogWarning("[SttTest] No ElevenLabsScribeClient assigned or found in scene.");
             }
 
+            InitLogFile();
+
             // Apply the initial microphone toggle (opens the session if it starts enabled).
             _lastMicrophoneEnabled = _microphoneEnabled;
             _microphoneToggleApplied = true;
             if (_scribeClient != null) ApplyMicrophoneToggle(_scribeClient);
             else _status = $"{_captureMode}: no STT client.";
+        }
+
+        // --- Debug log file (UTF-8 so Arabic renders in a normal text editor) -------
+
+        // Resolve the log path and write a session header. UTF-8 (via Encoding.UTF8) means the BOM
+        // is emitted only when the file is first created, so any text editor detects the encoding and
+        // renders Arabic/Egyptian transcripts correctly — unlike the Unity Console.
+        private void InitLogFile()
+        {
+            if (!_logToFile) return;
+
+            if (string.IsNullOrWhiteSpace(_logFileName)) _logFileName = "stt_debug_log.txt";
+            try
+            {
+                _logFilePath = Path.Combine(Application.persistentDataPath, _logFileName);
+                File.AppendAllText(_logFilePath,
+                    $"{Environment.NewLine}===== STT session {DateTime.Now:yyyy-MM-dd HH:mm:ss} " +
+                    $"(mode: {_captureMode}) ====={Environment.NewLine}",
+                    Encoding.UTF8);
+                Debug.Log($"[SttTest] Debug log → {_logFilePath}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[SttTest] Could not open debug log file: {ex.Message}");
+                _logFilePath = null;
+            }
+        }
+
+        // Append one timestamped, labelled line. No-op when file logging is off or the file failed
+        // to open, so callers never have to guard.
+        private void WriteLog(string label, string message)
+        {
+            if (!_logToFile || string.IsNullOrEmpty(_logFilePath)) return;
+            try
+            {
+                File.AppendAllText(_logFilePath,
+                    $"[{DateTime.Now:HH:mm:ss}] {label}: {message}{Environment.NewLine}",
+                    Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[SttTest] Failed to write debug log: {ex.Message}");
+            }
         }
 
         private void OnEnable()
@@ -262,6 +320,8 @@ namespace DumyatRuntime
             _lastTranscript = text ?? "";
             _status = $"Transcript received ({_lastTranscript.Length} chars). Session stays open.";
             Debug.Log($"[SttTest] Transcript: \"{_lastTranscript}\"");
+            // Write the actual text to the UTF-8 log — the Console can't render the Arabic result.
+            WriteLog($"TRANSCRIPT ({_captureMode}, {_lastTranscript.Length} chars)", _lastTranscript);
         }
 
         private void HandleFailed(string reason)
@@ -271,6 +331,7 @@ namespace DumyatRuntime
             _lastError = reason;
             _status = $"Failed: {reason}";
             Debug.LogWarning($"[SttTest] STT failed: {reason}");
+            WriteLog("ERROR", reason);
         }
 
         private void OnGUI()
@@ -279,7 +340,7 @@ namespace DumyatRuntime
             _labelStyle ??= new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true, richText = true };
 
             const float w = 480f;
-            GUILayout.BeginArea(new Rect(10, 10, w, 340), _boxStyle);
+            GUILayout.BeginArea(new Rect(10, 10, w, 400), _boxStyle);
 
             string hint = _captureMode == CaptureMode.PushToTalk
                 ? $"hold '{_controlBinding}'"
@@ -308,6 +369,16 @@ namespace DumyatRuntime
             GUILayout.Label($"<b>Transcript:</b> {_lastTranscript}", _labelStyle);
             if (!string.IsNullOrEmpty(_lastError))
                 GUILayout.Label($"<color=#ff8080><b>Error:</b> {_lastError}</color>", _labelStyle);
+
+            // Debug log file: show where transcripts are saved and offer a shortcut to the folder,
+            // since Arabic output has to be read there rather than in the Console.
+            if (_logToFile && !string.IsNullOrEmpty(_logFilePath))
+            {
+                GUILayout.Space(6);
+                GUILayout.Label($"<size=11>Log → {_logFilePath}</size>", _labelStyle);
+                if (GUILayout.Button("Open log folder"))
+                    Application.OpenURL("file://" + Application.persistentDataPath);
+            }
 
             GUILayout.EndArea();
         }
