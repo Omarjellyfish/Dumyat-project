@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -11,6 +12,11 @@ namespace DumyatRuntime
 
         [Header("References")]
         [SerializeField] private GameObject _pauseMenuPanel;
+
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IEventService eventService) => _eventService = eventService;
 
         private bool _isPaused = false;
 
@@ -36,6 +42,7 @@ namespace DumyatRuntime
             _isPaused = true;
             _pauseMenuPanel.SetActive(true);
             Time.timeScale = 0f;
+            _eventService.Publish(new GamePauseToggledEvent(true));
         }
 
         public void Resume()
@@ -43,6 +50,7 @@ namespace DumyatRuntime
             _isPaused = false;
             _pauseMenuPanel.SetActive(false);
             Time.timeScale = 1f;
+            _eventService.Publish(new GamePauseToggledEvent(false));
         }
 
         public void Restart()
