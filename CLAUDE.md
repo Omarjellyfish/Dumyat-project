@@ -32,21 +32,62 @@ Only three assemblies are project code; everything under `Library/PackageCache/`
 The **EzySlice** mesh-slicing library is vendored at `Assets/Runtime/Packages/ezy-slice-master`
 (compiled into `Project.Runtime`, its own `EzySlice` namespace).
 
+`Project.Runtime.asmdef` references the **`Reflex`** assembly (the DI container, GUID
+`1530a967b84cfb44dbdd5e8a1989764f`). Reflex's `autoReferenced` flag only reaches the predefined
+`Assembly-CSharp`, so any project asmdef that uses `Reflex.*` types must add that reference explicitly.
+
 ## Core architecture
 
-### Managers = singletons
-Gameplay managers are MonoBehaviours exposing `public static T Singleton { get; private set; }`, set
-in `Awake` with a destroy-duplicate guard (`GameManager` also calls `DontDestroyOnLoad`). They
-implement the empty `IManager` marker. Access via `GameManager.Singleton`, `CraftingManager.Singleton`,
-etc. **The property is `Singleton`, not `Instance`.** `GameManager` owns a `GameState` enum
-(`MainMenu`/`FreeRoaming`/`Paused`/`InQuest`); entering `Paused` sets `Time.timeScale = 0`.
+### Managers & services = Reflex DI
+Cross-system dependencies are provided by the **Reflex** dependency-injection container
+(`com.gustavopsantos.reflex` 14.3.1), **not** by hand-rolled singletons. Consumers depend on
+capability **interfaces** in [Assets/Runtime/Scripts/Interfaces/](Assets/Runtime/Scripts/Interfaces/)
+(`IInventoryService`, `IHapticService`, `ISoundService`, `ISaveService`, …); concrete
+implementations live as plain C# services in
+[Assets/Runtime/Scripts/Services/](Assets/Runtime/Scripts/Services/) (POCOs, constructor-injected)
+or as scene-bound MonoBehaviours registered as instances.
+
+- **Registration** happens in installers (`IInstaller.InstallBindings(ContainerBuilder)`) in
+  [Assets/Runtime/Scripts/DI/](Assets/Runtime/Scripts/DI/):
+  - `GameInstaller` → **root** container (app-wide services; formerly the `DontDestroyOnLoad`
+    singletons). Lives on the **ProjectScope** prefab whose `ContainerScope` is listed in the
+    `Resources/ReflexSettings` asset's *RootScopes*.
+  - `SceneInstaller` → **scene** container (services needing the active rig / AudioSource pools /
+    coroutines, e.g. `HapticFeedback`). To enable DI in a gameplay scene, drop the
+    **`Assets/Runtime/Prefabs/DI/SceneScope.prefab`** (a `ContainerScope` + `SceneInstaller`) into it —
+    the installer takes each scene service from its serialized field, or **auto-discovers it in the
+    scene** if that field is left empty, so most scenes need no manual wiring.
+  - Bind with `RegisterType(typeof(Impl), new[]{ typeof(IContract) }, Lifetime.Singleton,
+    Resolution.Lazy)`, `RegisterValue(instance_or_SO, new[]{ typeof(IContract) })`, or
+    `RegisterFactory<T>(…)`. Use `Resolution.Eager` for a service that must exist / self-subscribe up front.
+- **Consuming:** MonoBehaviours receive dependencies via **method injection** —
+  `[Inject] private void Inject(IInventoryService inv, IHapticService haptics) { … }` (cache into
+  fields; keep null-guards). Plain C# services use **constructor injection**. Scene MonoBehaviours
+  auto-inject on load (a `ContainerScope` in the scene drives it).
+- **Runtime-spawned prefabs do NOT auto-inject.** Either add `Reflex.Components.GameObjectSelfInjector`
+  to the prefab, or inject manually against the scene container:
+  `GameObjectInjector.InjectRecursive(instance, gameObject.scene.GetSceneContainer())` — see
+  `ItemSpawner.SpawnItem` and `InventoryWorldUI` slot spawning.
+
+The gameplay singletons have all been retired — there are **no `static Singleton`/`Instance`
+accessors and no `IManager` marker** left. Logic-only managers became root POCOs
+(`SaveService`/`ISaveService`, `InventoryService`/`IInventoryService`, `CraftingService`/`ICraftingService`,
+`PlayerPersistenceService`/`IPlayerPersistenceService`, `GameStateService`/`IGameStateService`);
+scene-bound managers stayed MonoBehaviours registered as instances by `SceneInstaller`
+(`HapticFeedback`/`IHapticService`, `SoundManager`/`ISoundService`, `WorldAudioManager`/`IWorldAudioService`,
+`FloatingUIManager`/`IFloatingTextService`). Always inject the interface; never reintroduce a static
+accessor. `GameStateService` owns the `GameState` enum (`MainMenu`/`FreeRoaming`/`Paused`/`InQuest`);
+entering `Paused` sets `Time.timeScale = 0`. Still-static (not yet migrated): `SaveManager` (file I/O
+behind `SaveService`) and the `EventBus`.
 
 ### Save system
-`SaveManager` (a **static** class, not a MonoBehaviour) serializes one aggregate `GameSaveData` to
-`Application.persistentDataPath/dumyat_master_save.json` via `JsonUtility` (async write). `GameSaveData`
-holds per-system save structs (crafting, inventory, quest, persistence). Pattern: a manager reads its
-slice from `SaveManager.CurrentSaveData`, mutates it, then calls `SaveManager.SaveGameAsync()` — see
-`CraftingManager.UnlockBlueprint`.
+`GameSaveData` is one aggregate blob (crafting, inventory, quest, persistence structs) serialized to
+`Application.persistentDataPath/dumyat_master_save.json` via `JsonUtility` (async write). Access it
+through the injected **`ISaveService`** (`CurrentSaveData` / `Load()` / `SaveAsync()`), implemented by
+`SaveService`. Pattern: a service reads its slice from `ISaveService.CurrentSaveData`, mutates it, then
+calls `SaveAsync()` — see `InventoryService`. (`SaveService` currently delegates to the static
+`SaveManager` for file I/O while the remaining save-backed managers are migrated; new code must use
+`ISaveService`, not `SaveManager` directly.)
 
 ### Events — EventBus
 Cross-system communication goes through **`EventBus`**
@@ -67,7 +108,7 @@ Note: XR Interaction Toolkit callbacks (`selectEntered`/`activated` UnityEvents)
 Inspector and are **not** part of EventBus.
 
 ### Event-driven decoupling
-Systems react to each other through EventBus rather than hard references — e.g. `InventoryManager`
+Systems react to each other through EventBus rather than hard references — e.g. `InventoryService`
 publishes `InventoryChangedEvent`/`ItemDroppedEvent` (the inventory UIs and `ItemSpawner` subscribe),
 `GameManager` publishes `GameStateChangedEvent`, `PlayerPersistence` publishes `KeyUnlockedEvent`,
 `CraftingValidator` publishes `CraftingValidatedEvent`. Prefer this over polling or reaching across
@@ -102,29 +143,35 @@ or changing code, prefer the option that keeps pieces decoupled and reusable:
   play a sound, toggle a ray). Compose behaviours by adding multiple small components to a
   GameObject rather than growing one class. If a class starts handling two concerns, split it. Note
   that even the heavier systems here delegate — e.g. `ItemPickup` only resolves an ID and calls into
-  the inventory/haptic singletons; it does not own inventory logic.
+  the injected inventory/haptic services; it does not own inventory logic.
 - **Program to interfaces, not concrete types.** Extend the marker/contract interfaces in
   [Assets/Runtime/Scripts/Interfaces/](Assets/Runtime/Scripts/Interfaces/)
   ([IInteractable](Assets/Runtime/Scripts/Interfaces/IInteractable.cs),
   [IDecoration](Assets/Runtime/Scripts/Interfaces/IDecoration.cs),
-  [IStructuralPiece](Assets/Runtime/Scripts/Interfaces/IStructuralPiece.cs),
-  [IManager](Assets/Runtime/Scripts/Interfaces/IManager.cs)) so systems depend on capabilities, not
-  specific classes. Add a new interface when a new capability is shared by more than one component.
-- **Decouple via events and the singleton API, not hard references.** Cross-system reactions should
-  go through `EventBus` events (see the Events section) or `Manager.Singleton.Method(...)` calls.
-  Avoid wiring direct references between unrelated components
-  or reaching across the scene with `GetComponent`/`Find` chains; a component should only know about
-  its own GameObject and the manager APIs.
+  [IStructuralPiece](Assets/Runtime/Scripts/Interfaces/IStructuralPiece.cs)) and the capability
+  service interfaces (`IInventoryService`, `IHapticService`, …) so systems depend on capabilities,
+  not specific classes. Add a new interface when a new capability is shared by more than one component.
+- **Decouple via Reflex DI and EventBus, not hard references or singletons.** This is the standard
+  and it is **required for new features**:
+  - **Dependencies →** define a capability interface, register the implementation in an installer
+    (`GameInstaller`/`SceneInstaller`), and receive it via `[Inject]` (method injection for
+    MonoBehaviours, constructor injection for POCOs). See "Managers & services = Reflex DI".
+  - **Cross-system reactions →** publish/subscribe a `readonly struct : IGameEvent` through
+    `EventBus` (see the Events section).
+  - **Do not** add new `static Singleton`/`Instance` accessors, reach across the scene with
+    `GetComponent`/`Find` chains, or wire direct references between unrelated components. A component
+    should know only its own GameObject, its injected services, and the events it publishes.
 - **Expose data, not behaviour, to designers via ScriptableObjects.** Put tunable values
   (item stats, haptic profiles) in ScriptableObjects (`HapticProfileSO`, `ItemData`) so the same
   component can be reconfigured without code changes or subclasses.
-- **Keep components self-contained and null-safe.** Resolve dependencies in `Awake`/`Start`,
-  null-check `Singleton` access (the existing code always does — keep it), and fail with a clear
-  `Debug.LogWarning` rather than a `NullReferenceException` so a component dropped into a scene
-  without its dependencies degrades gracefully.
-- **Reuse before you add.** Before writing a new manager, audio call, save field, or interaction,
-  check whether an existing system already covers it (pooled audio via `SoundManager`, persistence
-  via `SaveManager`/`PlayerPersistence`, haptics via `HapticFeedback`). Extend the shared system
+- **Keep components self-contained and null-safe.** Cache injected services in the `[Inject]` method,
+  null-check them before use (injection can be absent if a scene lacks a `ContainerScope`, or a
+  runtime-spawned prefab was not injected), and fail with a clear `Debug.LogWarning` rather than a
+  `NullReferenceException` so a component dropped into a scene without its dependencies degrades
+  gracefully.
+- **Reuse before you add.** Before writing a new service, audio call, save field, or interaction,
+  check whether an existing system already covers it (pooled audio via `ISoundService`, persistence
+  via `ISaveService`/`PlayerPersistence`, haptics via `IHapticService`). Extend the shared system
   rather than duplicating it.
 
 ## Conventions

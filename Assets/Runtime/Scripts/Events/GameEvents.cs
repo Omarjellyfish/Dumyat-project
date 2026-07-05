@@ -1,6 +1,6 @@
 namespace DumyatRuntime
 {
-    /// <summary>Published by <see cref="GameManager"/> whenever the active <see cref="GameState"/> changes.</summary>
+    /// <summary>Published by <see cref="GameStateService"/> whenever the active <see cref="GameState"/> changes.</summary>
     public readonly struct GameStateChangedEvent : IGameEvent
     {
         public readonly GameState NewState;
