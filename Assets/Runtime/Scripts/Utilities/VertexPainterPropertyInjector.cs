@@ -6,6 +6,17 @@ namespace DumyatRuntime
     [ExecuteAlways]
     public class VertexPainterPropertyInjector : MonoBehaviour
     {
+        public enum MaterialCountEnum
+        {
+            Two = 0,
+            Three = 1,
+            Four = 2,
+            Five = 3
+        }
+
+        [Header("Shader Graph Keyword Control")]
+        [SerializeField] private MaterialCountEnum _materialCount = MaterialCountEnum.Two;
+
         [Header("Materials")]
         [SerializeField] private Material _materialA;
         [SerializeField] private Material _materialB;
@@ -18,7 +29,7 @@ namespace DumyatRuntime
 
         private void OnValidate()
         {
-            if (_targetBlendMaterial == null || _materialA == null || _materialB == null || _materialC == null || _materialD == null || _materialE == null) return;
+            if (_targetBlendMaterial == null) return;
             SyncAll();
         }
 
@@ -31,52 +42,62 @@ namespace DumyatRuntime
         {
             if (_targetBlendMaterial == null) return;
 
-            if (_materialA != null)
-            {
-                SyncWithPrefix(_materialA, _targetBlendMaterial, "Mat1_");
-            }
+            // 1. Update the main layout keyword directly
+            ApplyMaterialCountKeyword(_targetBlendMaterial);
 
-            if (_materialB != null)
-            {
-                SyncWithPrefix(_materialB, _targetBlendMaterial, "Mat2_");
-            }
+            // 2. Inject standard properties (Textures, Colors, Floats)
+            if (_materialA != null) SyncWithPrefix(_materialA, _targetBlendMaterial, "Mat1_");
+            if (_materialB != null) SyncWithPrefix(_materialB, _targetBlendMaterial, "Mat2_");
+            if (_materialC != null) SyncWithPrefix(_materialC, _targetBlendMaterial, "Mat3_");
+            if (_materialD != null) SyncWithPrefix(_materialD, _targetBlendMaterial, "Mat4_");
+            if (_materialE != null) SyncWithPrefix(_materialE, _targetBlendMaterial, "Mat5_");
+        }
 
-            if (_materialC != null)
-            {
-                SyncWithPrefix(_materialC, _targetBlendMaterial, "Mat3_");
-            }
+        private void ApplyMaterialCountKeyword(Material target)
+        {
+            string baseKeyword = "_MATERIALCOUNT";
+            
+            // Clean active states for this specific keyword group
+            target.DisableKeyword($"{baseKeyword}_TWO");
+            target.DisableKeyword($"{baseKeyword}_THREE");
+            target.DisableKeyword($"{baseKeyword}_FOUR");
+            target.DisableKeyword($"{baseKeyword}_FIVE");
 
-            if (_materialD != null)
+            // Toggle the exact one selected in your inspector
+            switch (_materialCount)
             {
-                SyncWithPrefix(_materialD, _targetBlendMaterial, "Mat4_");
+                case MaterialCountEnum.Two:
+                    target.SetFloat(baseKeyword, 0f);
+                    target.EnableKeyword($"{baseKeyword}_TWO");
+                    break;
+                case MaterialCountEnum.Three:
+                    target.SetFloat(baseKeyword, 1f);
+                    target.EnableKeyword($"{baseKeyword}_THREE");
+                    break;
+                case MaterialCountEnum.Four:
+                    target.SetFloat(baseKeyword, 2f);
+                    target.EnableKeyword($"{baseKeyword}_FOUR");
+                    break;
+                case MaterialCountEnum.Five:
+                    target.SetFloat(baseKeyword, 3f);
+                    target.EnableKeyword($"{baseKeyword}_FIVE");
+                    break;
             }
-
-            if (_materialE != null)
-            {
-                SyncWithPrefix(_materialE, _targetBlendMaterial, "Mat5_");
-            }
-
-            Debug.Log("<color=cyan>[VertexPainterPropertyInjectorSync]</color> Synced prefixes successfully!");
         }
 
         private void SyncWithPrefix(Material source, Material target, string prefix)
         {
             Shader sourceShader = source.shader;
-            
-            // Unity 6 Native replacement for ShaderUtil.GetPropertyCount
             int propertyCount = sourceShader.GetPropertyCount(); 
 
             for (int i = 0; i < propertyCount; i++)
             {
-                // Unity 6 Native replacement for ShaderUtil.GetPropertyName
                 string sourcePropName = sourceShader.GetPropertyName(i); 
                 string cleanSourceName = sourcePropName.TrimStart('_');
                 string targetPropName = "_" + prefix + cleanSourceName;
 
                 if (target.HasProperty(targetPropName))
                 {
-                    // Unity 6 Native replacement for ShaderUtil.GetPropertyType 
-                    // (returns UnityEngine.Rendering.ShaderPropertyType)
                     ShaderPropertyType type = sourceShader.GetPropertyType(i); 
 
                     switch (type)
@@ -88,10 +109,10 @@ namespace DumyatRuntime
                             target.SetVector(targetPropName, source.GetVector(sourcePropName));
                             break;
                         case ShaderPropertyType.Float:
-                        case ShaderPropertyType.Range: // Natively handled by ShaderPropertyType enum
+                        case ShaderPropertyType.Range:
                             target.SetFloat(targetPropName, source.GetFloat(sourcePropName));
                             break;
-                        case ShaderPropertyType.Texture: // Unity 6 uses ShaderPropertyType.Texture instead of TexEnv
+                        case ShaderPropertyType.Texture: 
                             target.SetTexture(targetPropName, source.GetTexture(sourcePropName));
                             target.SetTextureScale(targetPropName, source.GetTextureScale(sourcePropName));
                             target.SetTextureOffset(targetPropName, source.GetTextureOffset(sourcePropName));
