@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DumyatRuntime
 {
-    /// <summary>Published by <see cref="CraftingManager"/> when a blueprint/recipe is unlocked.</summary>
+    /// <summary>Published by <see cref="CraftingService"/> when a blueprint/recipe is unlocked.</summary>
     public readonly struct BlueprintUnlockedEvent : IGameEvent
     {
         public readonly string RecipeName;

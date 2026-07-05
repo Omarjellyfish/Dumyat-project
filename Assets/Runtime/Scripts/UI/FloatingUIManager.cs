@@ -3,10 +3,8 @@ using UnityEngine;
 
 namespace DumyatRuntime
 {
-    public class FloatingUIManager : MonoBehaviour
+    public class FloatingUIManager : MonoBehaviour, IFloatingTextService
     {
-        public static FloatingUIManager Instance { get; private set; }
-
         [SerializeField] private FloatingText _floatingTextPrefab;
         [SerializeField] private int _initialPoolSize = 5;
 
@@ -16,10 +14,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Instance != null) { Destroy(gameObject); return; }
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
             for (int i = 0; i < _initialPoolSize; i++)
                 CreatePooledInstance();
         }

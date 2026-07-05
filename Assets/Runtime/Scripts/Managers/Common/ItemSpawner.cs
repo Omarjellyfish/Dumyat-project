@@ -1,36 +1,37 @@
 using UnityEngine;
+using Reflex.Attributes;
+using Reflex.Extensions;
+using Reflex.Injectors;
 
 namespace DumyatRuntime
 {
-    public class ItemSpawner : MonoBehaviour, IManager
+    public class ItemSpawner : MonoBehaviour
     {
-        public static ItemSpawner Singleton { get; private set; }
+        private IInventoryService _inventory;
+        private IEventService _eventService;
 
-        private void Awake()
+        [Inject]
+        private void Inject(IInventoryService inventory, IEventService eventService)
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
+            _inventory = inventory;
+            _eventService = eventService;
         }
 
         private void OnEnable()
         {
-            EventBus.Subscribe<ItemDroppedEvent>(HandlePlayerDrop);
+            _eventService.Subscribe<ItemDroppedEvent>(HandlePlayerDrop);
         }
 
         private void OnDisable()
         {
-            EventBus.Unsubscribe<ItemDroppedEvent>(HandlePlayerDrop);
+            _eventService.Unsubscribe<ItemDroppedEvent>(HandlePlayerDrop);
         }
 
         public GameObject SpawnItem(string itemID, Vector3 spawnPosition, Quaternion spawnRotation, int quantity = 1)
         {
-            if (InventoryManager.Singleton.ItemDatabase == null) return null;
+            if (_inventory == null || _inventory.ItemDatabase == null) return null;
 
-            ItemData blueprint = InventoryManager.Singleton.ItemDatabase.GetItemByID(itemID);
+            ItemData blueprint = _inventory.ItemDatabase.GetItemByID(itemID);
 
             if (blueprint == null || blueprint.DropPrefab == null)
             {
@@ -39,6 +40,10 @@ namespace DumyatRuntime
             }
 
             GameObject spawnedInstance = Instantiate(blueprint.DropPrefab, spawnPosition, spawnRotation);
+
+            // Runtime-spawned objects are not auto-injected; inject so the item's ItemPickup receives
+            // its IInventoryService/IHapticService. (Alternative: add GameObjectSelfInjector to the prefab.)
+            GameObjectInjector.InjectRecursive(spawnedInstance, gameObject.scene.GetSceneContainer());
 
             if (spawnedInstance.TryGetComponent<ItemPickup>(out ItemPickup pickup))
             {
