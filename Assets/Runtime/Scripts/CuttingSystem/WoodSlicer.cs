@@ -14,6 +14,9 @@ namespace DumyatRuntime
         [SerializeField] private bool _drawDebug = true;
         [SerializeField] private float _debugRayLength = 0.5f;
 
+        [Header("Generated Pieces")]
+        [SerializeField] private bool _recenterPiecePivot = true;
+
         private Vector3 _averagePosition;
         private Vector3 _averageDirection;
         private int originalWoodLayer;
@@ -54,9 +57,9 @@ namespace DumyatRuntime
 
             _averagePosition = sumOfPosition / hitPoints.Count;
 
-Vector3 bladeLength = _bladeDirectionReference.right.normalized;
-Vector3 bladeHeight = _bladeDirectionReference.up.normalized;
-_averageDirection = Vector3.Cross(bladeLength, bladeHeight).normalized;
+            Vector3 bladeLength = _bladeDirectionReference.right.normalized;
+            Vector3 bladeHeight = _bladeDirectionReference.up.normalized;
+            _averageDirection = Vector3.Cross(bladeLength, bladeHeight).normalized;
 
             if (_averageDirection == Vector3.zero)
             {
@@ -95,16 +98,19 @@ _averageDirection = Vector3.Cross(bladeLength, bladeHeight).normalized;
             GameObject upperPiece = hull.CreateUpperHull(wood, _crossSectionMaterial);
             GameObject lowerPiece = hull.CreateLowerHull(wood, _crossSectionMaterial);
 
-            SetupPiece(upperPiece, originalPaint);
-            SetupPiece(lowerPiece, originalPaint);
+            SetupPiece(upperPiece, wood, originalPaint);
+            SetupPiece(lowerPiece, wood, originalPaint);
 
             Destroy(wood);
         }
 
-        private void SetupPiece(GameObject piece, RenderTexture originalPaint)
+        private void SetupPiece(GameObject piece, GameObject originalWood, RenderTexture originalPaint)
         {
             if (piece == null)
                 return;
+
+            if (_recenterPiecePivot)
+                RecenterMeshPivot(piece);
 
             MeshCollider col = piece.AddComponent<MeshCollider>();
             col.convex = true;
@@ -112,11 +118,60 @@ _averageDirection = Vector3.Cross(bladeLength, bladeHeight).normalized;
             Rigidbody rb = piece.AddComponent<Rigidbody>();
             rb.useGravity = true;
 
-            piece.AddComponent<XRGrabInteractable>();
+            piece.AddComponent<XRGrabInteractable>().attachTransform = null;
             piece.layer = originalWoodLayer;
+
+            AddCutPieceGameplayComponents(piece, originalWood);
 
             WoodPaintSurface woodSurface = piece.AddComponent<WoodPaintSurface>();
             woodSurface.CopyPaintFrom(originalPaint);
+
+            piece.transform.localScale = originalWood.transform.localScale;
+        }
+
+        private void RecenterMeshPivot(GameObject piece)
+        {
+            MeshFilter meshFilter = piece.GetComponent<MeshFilter>();
+            if (meshFilter == null || meshFilter.mesh == null)
+                return;
+
+            Mesh mesh = meshFilter.mesh;
+            Vector3 localCenter = mesh.bounds.center;
+            if (localCenter == Vector3.zero)
+                return;
+
+            Vector3[] vertices = mesh.vertices;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] -= localCenter;
+            }
+
+            mesh.vertices = vertices;
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+
+            piece.transform.position += piece.transform.TransformVector(localCenter);
+        }
+
+        private void AddCutPieceGameplayComponents(GameObject piece, GameObject originalWood)
+        {
+            if (piece.GetComponent<StructuralPiece>() == null)
+                piece.AddComponent<StructuralPiece>();
+
+            if (piece.GetComponent<CollisionAudio>() == null)
+            {
+                CollisionAudio collisionAudio = piece.AddComponent<CollisionAudio>();
+                CollisionAudio originalCollisionAudio = originalWood != null
+                    ? originalWood.GetComponent<CollisionAudio>()
+                    : null;
+
+                if (originalCollisionAudio != null)
+                {
+                    JsonUtility.FromJsonOverwrite(
+                        JsonUtility.ToJson(originalCollisionAudio),
+                        collisionAudio);
+                }
+            }
         }
 
         private void OnDrawGizmos()

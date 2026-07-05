@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3947fd92d9862438fc68bde515f92f, type: 3}
   m_Name: New Nail Hammer Settings
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.NailHammerSettingsSO
-  minImpactVelocity: 2
+  minImpactVelocity: 1
   impactCooldown: 0.3
   raycastDistance: 0.3
   jointBreakForce: Infinity
@@ -23,5 +23,6 @@ MonoBehaviour:
   nailOutClips:
   - {fileID: 8300000, guid: 063b06eeab451844f917ef863f10ecc5, type: 3}
   sfxVolume: 0.8
+  generalImpactHapticProfile: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
   nailInHapticProfile: {fileID: 11400000, guid: c6195deaefbf3444b97f1356db2d847b, type: 2}
   nailOutHapticProfile: {fileID: 11400000, guid: b1d448856e5d78a42b00a44123d83510, type: 2}

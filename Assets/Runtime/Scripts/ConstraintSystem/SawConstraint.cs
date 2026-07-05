@@ -23,11 +23,16 @@ namespace DumyatRuntime
             float strokeAmount = Vector3.Dot(delta, sawingAxisVector);
             Vector3 lockedMovement = sawingAxisVector * strokeAmount;
 
-            // 4. Position = Pure surface hit point + our automatically captured structural offset + physical movement
-            _visualObject.transform.position = _hitPosition + _automaticSnapOffset + lockedMovement;
+            // 4. Anchor position = surface hit point + clearance offset + stroke movement.
+            //    This is where the HANDLE (this transform) would be while constrained - not
+            //    where the mesh should render, since the mesh has its own authored offset.
+            Vector3 anchorPosition = _hitPosition + _automaticSnapOffset + lockedMovement;
 
-            // 5. Retain orientation
-            _visualObject.transform.rotation = _lockedRotation;
+            // 5. Re-apply the mesh's authored local offset on top of the anchor + locked
+            //    rotation, exactly the same way the unconstrained branch does it - otherwise
+            //    the mesh would snap to sit exactly at the anchor with no offset at all.
+            _visualObject.transform.position = anchorPosition + (_lockedRotation * _visualLocalOffsetPosition);
+            _visualObject.transform.rotation = _lockedRotation * _visualLocalOffsetRotation;
         }
     }
 }
