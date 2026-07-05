@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: f8b02f3d4923e624092d22ae2a830f7d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _MATERIALCOUNT_FIVE
   m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
@@ -81,7 +82,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat5_Color_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 47eab36dd0511ae45b786dd9656a1145, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat5_Mask_Map:
@@ -90,7 +91,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _Mat5_Normal_Map:
         m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 2.48, y: 1}
         m_Offset: {x: 0, y: 0}
     - _blending_texture:
         m_Texture: {fileID: 0}
@@ -114,6 +115,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _MATERIALCOUNT: 3
     - _QueueControl: 0
     - _QueueOffset: 0
     - _XRMotionVectorsPass: 1
