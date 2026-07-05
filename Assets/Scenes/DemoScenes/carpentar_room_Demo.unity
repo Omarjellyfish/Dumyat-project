@@ -11878,7 +11878,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &707298971
@@ -12439,6 +12439,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8084599796014531214, guid: 1d290f58a72836f4da9bef17f182730c, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8897305278011414580, guid: 1d290f58a72836f4da9bef17f182730c, type: 3}
       propertyPath: m_Name
       value: plank_2M_1M_A1_2
@@ -12642,7 +12646,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &722621526
@@ -26702,7 +26706,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &1542631771
@@ -31925,7 +31929,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &1837437937
@@ -32877,7 +32881,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7285116417754586498, guid: ce469b790acab3f458a426200315a120, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.723
+      value: -2.413
       objectReference: {fileID: 0}
     - target: {fileID: 7285116417754586498, guid: ce469b790acab3f458a426200315a120, type: 3}
       propertyPath: m_LocalRotation.w
@@ -32979,7 +32983,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!114 &1918370368
