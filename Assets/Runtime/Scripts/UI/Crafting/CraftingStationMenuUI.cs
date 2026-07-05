@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -10,6 +11,10 @@ namespace DumyatRuntime
         [SerializeField] private CraftingStation _station;
 
         private ScrollView _blueprintContainer;
+        private ICraftingService _crafting;
+
+        [Inject]
+        private void Inject(ICraftingService crafting) => _crafting = crafting;
 
         private void OnEnable()
         {
@@ -43,9 +48,9 @@ namespace DumyatRuntime
                 recipesToShow.AddRange(_station.AvailableRecipes);
             }
 
-            if (CraftingManager.Singleton != null)
+            if (_crafting != null)
             {
-                var unlocked = CraftingManager.Singleton.GetUnlockedRecipes();
+                var unlocked = _crafting.GetUnlockedRecipes();
                 foreach (var recipe in unlocked)
                 {
                     if (recipe != null && !recipesToShow.Contains(recipe))
@@ -80,8 +85,8 @@ namespace DumyatRuntime
             var actionButton = new Button();
             actionButton.AddToClassList("bp-action-btn");
 
-            bool isUnlocked = CraftingManager.Singleton != null
-                && CraftingManager.Singleton.IsBlueprintUnlocked(recipe.RecipeName);
+            bool isUnlocked = _crafting != null
+                && _crafting.IsBlueprintUnlocked(recipe.RecipeName);
 
             if (isUnlocked)
             {
@@ -136,9 +141,9 @@ namespace DumyatRuntime
 
         private void OnBuyClicked(CraftingRecipe recipe, Button button)
         {
-            if (CraftingManager.Singleton != null)
+            if (_crafting != null)
             {
-                CraftingManager.Singleton.UnlockBlueprint(recipe.RecipeName);
+                _crafting.UnlockBlueprint(recipe.RecipeName);
             }
 
             button.text = "Select";

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -14,6 +15,16 @@ namespace DumyatRuntime
 
         [Header("Settings")]
         [SerializeField] private bool _startOpen = false;
+
+        private IInventoryService _inventory;
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IInventoryService inventory, IEventService eventService)
+        {
+            _inventory = inventory;
+            _eventService = eventService;
+        }
 
         private VisualElement _root;
         private VisualElement _slotContainer;
@@ -31,7 +42,7 @@ namespace DumyatRuntime
             // The main container in your UI Builder document where slots will be added
             _slotContainer = _root.Q<VisualElement>("SlotContainer");
 
-            InventoryManager.OnInventoryChanged += HandleInventoryChanged;
+            _eventService.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
 
             _root.style.display = _startOpen ? DisplayStyle.Flex : DisplayStyle.None;
             
@@ -43,7 +54,7 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
-            InventoryManager.OnInventoryChanged -= HandleInventoryChanged;
+            _eventService.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         public void ToggleUI()
@@ -74,8 +85,10 @@ namespace DumyatRuntime
             _root.style.display = DisplayStyle.None;
         }
 
-        private void HandleInventoryChanged(InventoryItem updatedItem)
+        private void HandleInventoryChanged(InventoryChangedEvent evt)
         {
+            InventoryItem updatedItem = evt.Item;
+
             if (_root == null || _root.style.display == DisplayStyle.None) return;
 
             if (updatedItem.Quantity <= 0)
@@ -95,9 +108,9 @@ namespace DumyatRuntime
             _slotContainer.Clear();
             _activeSlots.Clear();
 
-            if (InventoryManager.Singleton == null) return;
-            
-            foreach (var item in InventoryManager.Singleton.CurrentItems)
+            if (_inventory == null) return;
+
+            foreach (var item in _inventory.CurrentItems)
             {
                 UpdateOrSpawnSlot(item);
             }
@@ -139,10 +152,9 @@ namespace DumyatRuntime
                 var dropButton = newSlot.Q<Button>("DropButton");
                 if (dropButton != null)
                 {
-                    dropButton.clicked += () => 
+                    dropButton.clicked += () =>
                     {
-                        if (InventoryManager.Singleton != null)
-                            InventoryManager.Singleton.DropItem(item.ItemID, 1);
+                        _inventory?.DropItem(item.ItemID, 1);
                     };
                 }
 
