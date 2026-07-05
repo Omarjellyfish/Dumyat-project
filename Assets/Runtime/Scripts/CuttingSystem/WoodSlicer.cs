@@ -48,6 +48,23 @@ namespace DumyatRuntime
                 return;
             }
 
+            // FIXED: whatever detects the blade touching wood may report the collider
+            // that was actually hit - which could be a CHILD (the "WoodPaint" or
+            // "MeshCollider" sub-object created in SetupPiece), not the wood's real
+            // root. Destroy() only destroys a target and ITS children, never its
+            // parent - so destroying a child left the real root (Rigidbody,
+            // XRGrabInteractable) alive in the scene, usually now missing its mesh.
+            // Always resolve up to the object that actually owns the physics body.
+            Rigidbody rootRb = wood.GetComponentInParent<Rigidbody>();
+            if (rootRb != null)
+            {
+                wood = rootRb.gameObject;
+            }
+            else if (wood.transform.root != wood.transform)
+            {
+                wood = wood.transform.root.gameObject;
+            }
+
             if (_bladeDirectionReference == null)
             {
                 Debug.LogError("WoodSlicer: Blade Direction Reference is not assigned.");

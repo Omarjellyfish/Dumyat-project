@@ -11,7 +11,7 @@ namespace DumyatRuntime
         [SerializeField] private SawBladePoint _bladeMid;
         [SerializeField] private SawBladePoint _bladeBase;
         [SerializeField] private Transform _bladeDirectionReference;
-        [SerializeField] private SurfaceConstraint _surfaceConstraint;
+        [SerializeField] private SawConstraint _surfaceConstraint;
         [SerializeField] private WoodSlicer _woodSlicer;
 
         [Header("Settings")]
@@ -102,6 +102,9 @@ private FloatingText _activeFloatingText;
                 _strokeCount++;
                 AddCurrentHitPoints();
 
+                _surfaceConstraint.SetCutProgress(_strokeCount, _settings.strokesNeededToCut);
+                
+
                 ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
                 
                 SoundManager.Singleton?.PlayRandomSoundFxAtPosition(
@@ -130,6 +133,7 @@ private FloatingText _activeFloatingText;
                 _strokeCount = 0;
                 _hitPoints.Clear();
                 _hitNormals.Clear();
+                _surfaceConstraint.ResetCutProgress();
             }
         }
 
@@ -180,6 +184,7 @@ private FloatingText _activeFloatingText;
             _strokeCount = 0;
             _hitPoints.Clear();
             _hitNormals.Clear();
+            _surfaceConstraint?.ResetCutProgress();
             HideFloatingText();
         }
 private void HideFloatingText()
