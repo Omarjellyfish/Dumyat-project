@@ -48,17 +48,17 @@ namespace DumyatRuntime
                 return;
             }
 
-            // FIXED: whatever detects the blade touching wood may report the collider
-            // that was actually hit - which could be a CHILD (the "WoodPaint" or
-            // "MeshCollider" sub-object created in SetupPiece), not the wood's real
-            // root. Destroy() only destroys a target and ITS children, never its
-            // parent - so destroying a child left the real root (Rigidbody,
-            // XRGrabInteractable) alive in the scene, usually now missing its mesh.
-            // Always resolve up to the object that actually owns the physics body.
-            Rigidbody rootRb = wood.GetComponentInParent<Rigidbody>();
-            if (rootRb != null)
+            // FIXED (again): the previous fix used GetComponentInParent<Rigidbody>(),
+            // but SetupPiece gives the "WoodPaint" CHILD its own kinematic Rigidbody
+            // (specifically so it's excluded from the root's compound collider). That
+            // meant GetComponentInParent<Rigidbody>() found WoodPaint's own Rigidbody
+            // and stopped right there instead of climbing to the real root - so the
+            // bug persisted. Only the true root ever has an XRGrabInteractable (no
+            // child does), so use that instead to reliably find the real wood piece.
+            XRGrabInteractable rootGrab = wood.GetComponentInParent<XRGrabInteractable>();
+            if (rootGrab != null)
             {
-                wood = rootRb.gameObject;
+                wood = rootGrab.gameObject;
             }
             else if (wood.transform.root != wood.transform)
             {
@@ -351,22 +351,13 @@ namespace DumyatRuntime
                 }
             }
 
-            if (piece.GetComponent<WoodSlicer>() == null)
-            {
-                // Without this, cut pieces could never be sliced again - they'd have
-                // no WoodSlicer component at all after the first cut.
-                // NOTE: JsonUtility does not reliably copy UnityEngine.Object references
-                // (Material, Transform) - it was leaving _bladeDirectionReference and
-                // _crossSectionMaterial null on the copy, which silently blocked every
-                // cut after the first one. Assign fields directly instead.
-                WoodSlicer slicer = piece.AddComponent<WoodSlicer>();
-                slicer._crossSectionMaterial = _crossSectionMaterial;
-                slicer._bladeDirectionReference = _bladeDirectionReference;
-                slicer._drawDebug = _drawDebug;
-                slicer._debugRayLength = _debugRayLength;
-                slicer._recenterPiecePivot = _recenterPiecePivot;
-                slicer._paintLayerName = _paintLayerName;
-            }
+            // REMOVED: this used to add a fresh WoodSlicer component onto every cut
+            // piece (copying _crossSectionMaterial, _bladeDirectionReference, etc.).
+            // That was only needed if something called wood.GetComponent<WoodSlicer>()
+            // per-piece to cut it. SawTip actually holds one fixed, manually-assigned
+            // _woodSlicer reference and always calls that same instance for every cut,
+            // regardless of which piece it's cutting - so the copy on each piece was
+            // never used by anything and just added dead components.
         }
 
         private void OnDrawGizmos()

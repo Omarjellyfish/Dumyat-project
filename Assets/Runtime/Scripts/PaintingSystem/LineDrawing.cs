@@ -8,6 +8,7 @@ namespace DumyatRuntime
     {
         [SerializeField] private XRGrabInteractable _grabInteractable;
         [SerializeField] private PenTip _penTip;
+        [SerializeField] private SurfaceConstraint _surfaceConstraint;
         [SerializeField] private Material _lineMaterial;
         [SerializeField] private float _lineWidth = 0.005f;
         private FloatingText _distanceText;
@@ -18,6 +19,10 @@ namespace DumyatRuntime
         private void Awake()
         {
             _grabInteractable = GetComponent<XRGrabInteractable>();
+
+            if (_surfaceConstraint == null)
+                _surfaceConstraint = GetComponent<SurfaceConstraint>();
+
             SetupLineRenderer();
         }
 
@@ -43,16 +48,33 @@ namespace DumyatRuntime
             _lineRenderer.enabled = false;
         }
 
+        private bool _lineActive;
+
         private void EndLineDraw(DeactivateEventArgs args)
         {
+            if (!_lineActive)
+                return; // never actually started a line (pen wasn't constrained) - nothing to finalize
+
+            _lineActive = false;
             _penTip.FinalizeLine();
             _lineRenderer.enabled = false;
-            FloatingUIManager.Instance.Hide(_distanceText);
-            _distanceText = null;
+
+            if (_distanceText != null)
+            {
+                FloatingUIManager.Instance.Hide(_distanceText);
+                _distanceText = null;
+            }
         }
 
         private void StartLineDraw(ActivateEventArgs args)
         {
+            // Only start a line if the pen is actually snapped/constrained to the wood
+            // surface first - pressing the trigger while just floating in the air should
+            // do nothing.
+            if (_surfaceConstraint == null || !_surfaceConstraint.IsConstrained)
+                return;
+
+            _lineActive = true;
             _penTip._currentMode = PenMode.LineDrawing;
             _lineRenderer.enabled = true;
             _distanceText = FloatingUIManager.Instance.Show(transform.position, "0.0 cm");

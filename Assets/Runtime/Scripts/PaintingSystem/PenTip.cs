@@ -15,6 +15,10 @@ namespace DumyatRuntime
         private float _lastDrawnTime;
         [SerializeField] private float _timeInterval = 0.01f;
 
+        [Header("Mode Toggles")]
+        [Tooltip("Temporarily disable free draw entirely while focusing on line drawing.")]
+        [SerializeField] private bool _freeDrawEnabled = true;
+
         [HideInInspector] public PenMode _currentMode;
 
         private Vector3 _pointAWorld;
@@ -33,8 +37,6 @@ namespace DumyatRuntime
             if (Physics.Raycast(transform.position, -transform.forward,
                 out RaycastHit hit, _rayDistance, _woodLayer))
             {
-    Debug.Log($"Hit: {hit.collider.name} | Type: {hit.collider.GetType()} | UV0: {hit.textureCoord} | UV2: {hit.textureCoord2}");
-
                 WoodPaintSurface wood = hit.collider.GetComponent<WoodPaintSurface>();
                 if (wood == null) return;
 
@@ -47,6 +49,9 @@ namespace DumyatRuntime
                 switch (_currentMode)
                 {
                     case PenMode.FreeDraw:
+                        if (!_freeDrawEnabled)
+                            break;
+
                         if (Time.time - _lastDrawnTime >= _timeInterval)
                         {
                             _paintBrush.PaintAt(wood, uv, _penColor, _brushSize);
