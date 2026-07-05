@@ -3,7 +3,7 @@ using UnityEngine.Audio;
 
 namespace DumyatRuntime
 {
-    public class SoundMixerManager : MonoBehaviour, IManager
+    public class SoundMixerManager : MonoBehaviour
     {
         [SerializeField] private AudioMixer audioMixer;
 
