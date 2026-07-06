@@ -3,10 +3,8 @@ using UnityEngine;
 
 namespace DumyatRuntime
 {
-    public class WorldAudioManager : MonoBehaviour,IManager
+    public class WorldAudioManager : MonoBehaviour, IWorldAudioService
     {
-        public static WorldAudioManager Singleton { get; private set; }
-
         [Header("Music Sources (A/B Setup)")]
         [SerializeField] private AudioSource _musicSourceA;
         [SerializeField] private AudioSource _musicSourceB;
@@ -26,14 +24,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
             _activeMusicSource = _musicSourceA;
             _activeAmbientSource = _ambientSourceA;
         }
@@ -70,11 +60,6 @@ namespace DumyatRuntime
 
             _currentAmbientFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
             _activeAmbientSource = fadingInSource;
-        }
-
-        public void DoesExist()
-        {
-            Debug.Log("WorldAudioManager exists and is accessible!");
         }
         #endregion
 

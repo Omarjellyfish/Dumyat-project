@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Reflex.Attributes;
+using Reflex.Extensions;
+using Reflex.Injectors;
 
 namespace DumyatRuntime
 {
@@ -13,6 +16,16 @@ namespace DumyatRuntime
 
         [Header("Settings")]
         [SerializeField] private bool _startOpen = false;
+
+        private IInventoryService _inventory;
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IInventoryService inventory, IEventService eventService)
+        {
+            _inventory = inventory;
+            _eventService = eventService;
+        }
 
         // Keep track of instantiated slots by item ID to easily update them
         private Dictionary<string, InventorySlotUI> _activeSlots = new Dictionary<string, InventorySlotUI>();
@@ -28,12 +41,12 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            EventBus.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
+            _eventService.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         private void OnDisable()
         {
-            EventBus.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
+            _eventService.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
         public void ToggleUI()
@@ -95,9 +108,9 @@ namespace DumyatRuntime
             _activeSlots.Clear();
 
             // Rebuild
-            if (InventoryManager.Singleton == null) return;
-            
-            foreach (var item in InventoryManager.Singleton.CurrentItems)
+            if (_inventory == null) return;
+
+            foreach (var item in _inventory.CurrentItems)
             {
                 UpdateOrSpawnSlot(item);
             }
@@ -115,6 +128,8 @@ namespace DumyatRuntime
                 if (data == null) return;
 
                 InventorySlotUI newSlot = Instantiate(_slotPrefab, _slotContainer);
+                // Runtime-instantiated slot: inject so its drop button can reach IInventoryService.
+                GameObjectInjector.InjectRecursive(newSlot.gameObject, gameObject.scene.GetSceneContainer());
                 newSlot.Setup(data, item.Quantity);
                 _activeSlots.Add(item.ItemID, newSlot);
             }
