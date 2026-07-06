@@ -20,6 +20,15 @@ namespace DumyatRuntime
         [Tooltip("Recipe database, injected into CraftingService.")]
         [SerializeField] private RecipeDatabase _recipeDatabase;
 
+        [Header("Global MonoBehaviour Services (Prefabs)")]
+        [Tooltip("Pooled positional SFX prefab. Will be instantiated on launch.")]
+        [SerializeField] private SoundManager _soundManagerPrefab;
+        [Tooltip("Music & ambient crossfade prefab. Will be instantiated on launch.")]
+        [SerializeField] private WorldAudioManager _worldAudioManagerPrefab;
+        [Tooltip("VR controller haptics prefab. Will be instantiated on launch.")]
+        [SerializeField] private HapticFeedback _hapticFeedbackPrefab;
+        [Tooltip("Audio mixer volume control prefab. Will be instantiated on launch.")]
+        [SerializeField] private SoundMixerManager _soundMixerManagerPrefab;
         public void InstallBindings(ContainerBuilder containerBuilder)
         {
             // Shared save store. Eager so CurrentSaveData is loaded before dependents resolve.
@@ -57,6 +66,45 @@ namespace DumyatRuntime
             // Event bus for global pub/sub. Eager so it exists for the whole app lifetime.
             containerBuilder.RegisterType(typeof(EventService), new[] { typeof(IEventService) },
                 Lifetime.Singleton, Resolution.Eager);
+
+            // Global MonoBehaviour services — registered as values.
+            // Reflex does NOT instantiate the ProjectScope prefab. It only reads from it.
+            // Therefore, we must manually Instantiate these prefabs to create real scene objects.
+            if (_soundManagerPrefab != null)
+            {
+                var instance = Instantiate(_soundManagerPrefab);
+                DontDestroyOnLoad(instance.gameObject);
+                containerBuilder.RegisterValue(instance, new[] { typeof(ISoundService) });
+            }
+            else
+                Debug.LogWarning("GameInstaller: SoundManager prefab is not assigned.");
+
+            if (_worldAudioManagerPrefab != null)
+            {
+                var instance = Instantiate(_worldAudioManagerPrefab);
+                DontDestroyOnLoad(instance.gameObject);
+                containerBuilder.RegisterValue(instance, new[] { typeof(IWorldAudioService) });
+            }
+            else
+                Debug.LogWarning("GameInstaller: WorldAudioManager prefab is not assigned.");
+
+            if (_hapticFeedbackPrefab != null)
+            {
+                var instance = Instantiate(_hapticFeedbackPrefab);
+                DontDestroyOnLoad(instance.gameObject);
+                containerBuilder.RegisterValue(instance, new[] { typeof(IHapticService) });
+            }
+            else
+                Debug.LogWarning("GameInstaller: HapticFeedback prefab is not assigned.");
+
+            if (_soundMixerManagerPrefab != null)
+            {
+                var instance = Instantiate(_soundMixerManagerPrefab);
+                DontDestroyOnLoad(instance.gameObject);
+                containerBuilder.RegisterValue(instance, new[] { typeof(ISoundMixerService) });
+            }
+            else
+                Debug.LogWarning("GameInstaller: SoundMixerManager prefab is not assigned.");
         }
     }
 }
