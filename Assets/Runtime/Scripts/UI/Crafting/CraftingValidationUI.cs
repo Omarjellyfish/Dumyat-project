@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -28,6 +29,11 @@ namespace DumyatRuntime
         private ScrollView _diagnosticScroll;
         private Button _validateButton;
         private Button _resetButton;
+
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IEventService eventService) => _eventService = eventService;
 
         private void Awake()
         {
@@ -59,12 +65,12 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            CraftingValidator.OnValidationComplete += HandleValidationResult;
+            _eventService.Subscribe<CraftingValidatedEvent>(HandleValidationResult);
         }
 
         private void OnDisable()
         {
-            CraftingValidator.OnValidationComplete -= HandleValidationResult;
+            _eventService.Unsubscribe<CraftingValidatedEvent>(HandleValidationResult);
             
             if (_validateButton != null)
                 _validateButton.clicked -= OnValidateClick;
@@ -92,8 +98,10 @@ namespace DumyatRuntime
             ResetUI();
         }
 
-        private void HandleValidationResult(ValidationResult result)
+        private void HandleValidationResult(CraftingValidatedEvent evt)
         {
+            ValidationResult result = evt.Result;
+
             ClearDiagnosticsList();
 
             if (_statusTitle != null)

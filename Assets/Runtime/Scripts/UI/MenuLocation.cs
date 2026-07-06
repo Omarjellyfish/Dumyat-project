@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables; // Required for XRI v3.0+
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -15,6 +16,10 @@ namespace DumyatRuntime
         [SerializeField] private MenuManager _menuManager;
 
         private XRSimpleInteractable _interactable;
+        private IPlayerPersistenceService _persistence;
+
+        [Inject]
+        private void Inject(IPlayerPersistenceService persistence) => _persistence = persistence;
 
         private void Awake()
         {
@@ -38,7 +43,7 @@ namespace DumyatRuntime
 
         public void OnInteract()
         {
-            if (!PlayerPersistence.Singleton.HasKey(_unlockKey))
+            if (_persistence == null || !_persistence.HasKey(_unlockKey))
             {
                 _menuManager.ShowLockedFeedback(this);
                 return;

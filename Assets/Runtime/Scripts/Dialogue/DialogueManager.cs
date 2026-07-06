@@ -1,12 +1,54 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
-    public class DialogueManager : MonoBehaviour
+    public interface IDialogueService
     {
-        public static DialogueManager Instance { get; private set; }
+        bool IsPlaying { get; }
+        void PlayDialogue(SO_DialogueSequence sequence, Transform speaker);
+    }
+
+    public readonly struct DialogueStartedEvent : IGameEvent
+    {
+        public readonly SO_DialogueSequence Sequence;
+        public readonly Transform Speaker;
+
+        public DialogueStartedEvent(SO_DialogueSequence sequence, Transform speaker)
+        {
+            Sequence = sequence;
+            Speaker = speaker;
+        }
+    }
+
+    public readonly struct DialogueLineStartedEvent : IGameEvent
+    {
+        public readonly SO_DialogueSequence Sequence;
+        public readonly SO_DialogueLine Line;
+        public readonly Transform Speaker;
+
+        public DialogueLineStartedEvent(SO_DialogueSequence sequence, SO_DialogueLine line, Transform speaker)
+        {
+            Sequence = sequence;
+            Line = line;
+            Speaker = speaker;
+        }
+    }
+
+    public readonly struct DialogueFinishedEvent : IGameEvent
+    {
+        public readonly SO_DialogueSequence Sequence;
+
+        public DialogueFinishedEvent(SO_DialogueSequence sequence)
+        {
+            Sequence = sequence;
+        }
+    }
+
+    public class DialogueManager : MonoBehaviour, IDialogueService
+    {
         public static event System.Action<SO_DialogueSequence> OnDialogueFinished;
 
         [SerializeField] private AudioSource _audioSource;
@@ -14,18 +56,24 @@ namespace DumyatRuntime
         [SerializeField] private SettingsManager _settingsManager;
         [SerializeField] private MonoBehaviour[] _locomotionComponentsToDisable;
 
+        private IFloatingTextService _floatingTextService;
+        private IEventService _eventService;
         private FloatingText _floatingText;
         private bool _currentlyPlay;
 
-        private void Awake()
+        public bool IsPlaying => _currentlyPlay;
+
+        [Inject]
+        private void Inject(IFloatingTextService floatingTextService, IEventService eventService)
         {
-            if (Instance != null) { Destroy(gameObject); return; }
-            Instance = this;
+            _floatingTextService = floatingTextService;
+            _eventService = eventService;
         }
 
         public void PlayDialogue(SO_DialogueSequence sequence, Transform speaker)
         {
-            if (_currentlyPlay) return;
+            if (_currentlyPlay || sequence == null || speaker == null)
+                return;
 
             if (sequence.Type == DialogueType.Interrupting)
             {
@@ -38,13 +86,15 @@ namespace DumyatRuntime
         private IEnumerator PlaySequence(SO_DialogueSequence sequence, Transform speaker)
         {
             _currentlyPlay = true;
+            _eventService?.Publish(new DialogueStartedEvent(sequence, speaker));
 
             SO_DialogueLine current = sequence.StartingLine;
 
             while (current != null)
             {
                 string textToShow = _settingsManager.GetLanguage() ? current.ArabicText : current.EnglishText;
-                _floatingText = FloatingUIManager.Instance.Show(speaker.position, textToShow);
+                _eventService?.Publish(new DialogueLineStartedEvent(sequence, current, speaker));
+                _floatingText = _floatingTextService?.Show(speaker.position, textToShow);
 
                 _audioSource.clip = current.VoiceClip;
                 _audioSource.Play();
@@ -59,7 +109,7 @@ namespace DumyatRuntime
                     yield return null;
                 }
 
-                FloatingUIManager.Instance.Hide(_floatingText);
+                _floatingTextService?.Hide(_floatingText);
 
                 if (current.HasChoices)
                 {
@@ -79,6 +129,7 @@ namespace DumyatRuntime
             }
 
             OnDialogueFinished?.Invoke(sequence);
+            _eventService?.Publish(new DialogueFinishedEvent(sequence));
             _currentlyPlay = false;
         }
 
