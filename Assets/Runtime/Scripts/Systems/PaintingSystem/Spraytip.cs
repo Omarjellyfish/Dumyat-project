@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -21,6 +22,13 @@ namespace DumyatRuntime
 
         private float _lastDrawnTime;
         private bool _isSpraying;
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IEventService eventService)
+        {
+            _eventService = eventService;
+        }
 
         private void Awake()
         {
@@ -65,6 +73,7 @@ namespace DumyatRuntime
 
                 Vector2 uv = hit.textureCoord2;
                 _paintBrush.PaintAt(wood, uv, _sprayColor, _brushSize);
+                _eventService?.Publish(new PaintAppliedEvent(wood, hit.point, uv, _sprayColor, _brushSize, PenMode.Spray));
                 _lastDrawnTime = Time.time;
             }
         }

@@ -22,6 +22,7 @@ namespace DumyatRuntime
         [SerializeField] private SoundManager _soundManager;
         [SerializeField] private WorldAudioManager _worldAudioManager;
         [SerializeField] private FloatingUIManager _floatingUIManager;
+        [SerializeField] private DialogueManager _dialogueManager;
 
         public void InstallBindings(ContainerBuilder containerBuilder)
         {
@@ -29,6 +30,7 @@ namespace DumyatRuntime
             Register<SoundManager, ISoundService>(containerBuilder, _soundManager);
             Register<WorldAudioManager, IWorldAudioService>(containerBuilder, _worldAudioManager);
             Register<FloatingUIManager, IFloatingTextService>(containerBuilder, _floatingUIManager);
+            Register<DialogueManager, IDialogueService>(containerBuilder, _dialogueManager);
         }
 
         // Registers the serialized instance, or the first one found in the scene, under TContract.

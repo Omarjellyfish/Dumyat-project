@@ -1,4 +1,5 @@
 using UnityEngine;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -26,6 +27,13 @@ namespace DumyatRuntime
         private bool _pointASet = false;
 
         private WoodPaintSurface _currentWood;
+        private IEventService _eventService;
+
+        [Inject]
+        private void Inject(IEventService eventService)
+        {
+            _eventService = eventService;
+        }
 
         private void Start()
         {
@@ -55,6 +63,7 @@ namespace DumyatRuntime
                         if (Time.time - _lastDrawnTime >= _timeInterval)
                         {
                             _paintBrush.PaintAt(wood, uv, _penColor, _brushSize);
+                            _eventService?.Publish(new PaintAppliedEvent(wood, hit.point, uv, _penColor, _brushSize, PenMode.FreeDraw));
                             _lastDrawnTime = Time.time;
                         }
                         break;
@@ -65,6 +74,7 @@ namespace DumyatRuntime
                             _pointAWorld = hit.point;
                             _pointAUV = uv;
                             _pointASet = true;
+                            _eventService?.Publish(new PaintLineStartedEvent(_pointAWorld));
                         }
                         _lineDraw.UpdateLinePositions(_pointAWorld, hit.point);
                         break;
@@ -80,10 +90,15 @@ namespace DumyatRuntime
                 return;
             }
 
-            Physics.Raycast(transform.position, -transform.forward,
-                out RaycastHit hit, _rayDistance, _woodLayer);
+            if (!Physics.Raycast(transform.position, -transform.forward,
+                out RaycastHit hit, _rayDistance, _woodLayer))
+            {
+                ResetLineState();
+                return;
+            }
 
             Vector2 finalUV = hit.textureCoord2;
+            Vector3 finalWorldPoint = hit.point;
 
             float distance = Vector2.Distance(_pointAUV, finalUV);
             float brushSpacing = _brushSize * 0.5f;
@@ -96,6 +111,7 @@ namespace DumyatRuntime
                 _paintBrush.PaintAt(_currentWood, stepUV, _penColor, _brushSizeLine);
             }
 
+            _eventService?.Publish(new PaintLineCompletedEvent(_currentWood, _pointAWorld, finalWorldPoint));
             ResetLineState();
         }
 

@@ -1,9 +1,34 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
+    public readonly struct ToolConstraintActivatedEvent : IGameEvent
+    {
+        public readonly SurfaceConstraint Constraint;
+        public readonly Vector3 HitPosition;
+        public readonly Vector3 HitNormal;
+
+        public ToolConstraintActivatedEvent(SurfaceConstraint constraint, Vector3 hitPosition, Vector3 hitNormal)
+        {
+            Constraint = constraint;
+            HitPosition = hitPosition;
+            HitNormal = hitNormal;
+        }
+    }
+
+    public readonly struct ToolConstraintDeactivatedEvent : IGameEvent
+    {
+        public readonly SurfaceConstraint Constraint;
+
+        public ToolConstraintDeactivatedEvent(SurfaceConstraint constraint)
+        {
+            Constraint = constraint;
+        }
+    }
+
     public abstract class SurfaceConstraint : MonoBehaviour
     {
         [SerializeField] private LayerMask _woodLayer;
@@ -23,12 +48,19 @@ namespace DumyatRuntime
         private Vector3 _handPositionAtSnap;
         protected Vector3 _automaticSnapOffset;
         private bool _isConstrained = false;
+        private IEventService _eventService;
 
         // Captured once at Awake from however _visualObject is already positioned in the editor
         // relative to this transform. This is the offset that must be preserved every frame -
         // otherwise the mesh gets snapped back to sit exactly on the handle.
         protected Vector3 _visualLocalOffsetPosition;
         protected Quaternion _visualLocalOffsetRotation;
+
+        [Inject]
+        private void Inject(IEventService eventService)
+        {
+            _eventService = eventService;
+        }
 
         protected virtual void Awake()
         {
@@ -105,12 +137,14 @@ namespace DumyatRuntime
                 _automaticSnapOffset = avgNormal * _surfaceClearance;
 
                 Debug.Log($"Automatically snapped flush to surface of: {hit.collider.name}");
+                _eventService?.Publish(new ToolConstraintActivatedEvent(this, _hitPosition, _hitNormal));
             }
         }
 
         private void OnDeactivate(DeactivateEventArgs arg0)
         {
             _isConstrained = false;
+            _eventService?.Publish(new ToolConstraintDeactivatedEvent(this));
         }
 
         // NEW: override this in a subclass to change what point the tool snaps to

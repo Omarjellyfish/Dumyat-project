@@ -43,7 +43,7 @@ namespace DumyatRuntime
 
         private bool _hasValidPreviousFrame;
         private int _strokeCount;
-private FloatingText _activeFloatingText;
+        private FloatingText _activeFloatingText;
         private List<Vector3> _hitPoints;
         private List<Vector3> _hitNormals;
 
@@ -116,8 +116,9 @@ private FloatingText _activeFloatingText;
             {
                 _strokeCount++;
                 AddCurrentHitPoints();
+                _surfaceConstraint.SetCutProgress(_strokeCount, _settings.strokesNeededToCut);
 
-                _eventService.Publish(new SawStrokeEvent(_strokeCount, _settings.strokesNeededToCut, _bladeMid.transform.position));
+                _eventService?.Publish(new SawStrokeEvent(_strokeCount, _settings.strokesNeededToCut, _bladeMid.transform.position));
 
                 ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
                 
@@ -201,16 +202,16 @@ private FloatingText _activeFloatingText;
             _surfaceConstraint?.ResetCutProgress();
             HideFloatingText();
         }
-private void HideFloatingText()
-{
-    if (_activeFloatingText == null)
-        return;
+        private void HideFloatingText()
+        {
+            if (_activeFloatingText == null)
+                return;
 
-    if (_floatingText != null)
-        _floatingText.Hide(_activeFloatingText);
+            if (_floatingText != null)
+                _floatingText.Hide(_activeFloatingText);
 
-    _activeFloatingText = null;
-}
+            _activeFloatingText = null;
+        }
         private void ResetStrokeTracking()
         {
             _hasValidPreviousFrame = false;
@@ -218,26 +219,26 @@ private void HideFloatingText()
             _previousDirection = Vector3.zero;
         }
 
-private void ShowFloatingText(string text)
-{
-    if (!_showFloatingText)
-        return;
+        private void ShowFloatingText(string text)
+        {
+            if (!_showFloatingText)
+                return;
 
-    if (_floatingText == null)
-        return;
+            if (_floatingText == null)
+                return;
 
-    Vector3 position = _bladeMid != null
-        ? _bladeMid.transform.position + _floatingTextOffset
-        : transform.position + _floatingTextOffset;
+            Vector3 position = _bladeMid != null
+                ? _bladeMid.transform.position + _floatingTextOffset
+                : transform.position + _floatingTextOffset;
 
-    if (_activeFloatingText == null || !_activeFloatingText.gameObject.activeSelf)
-    {
-        _activeFloatingText = _floatingText.Show(position, text);
-        return;
-    }
+            if (_activeFloatingText == null || !_activeFloatingText.gameObject.activeSelf)
+            {
+                _activeFloatingText = _floatingText.Show(position, text);
+                return;
+            }
 
-    _activeFloatingText.SetPosition(position, Vector3.zero);
-    _activeFloatingText.SetText(text);
-}
+            _activeFloatingText.SetPosition(position, Vector3.zero);
+            _activeFloatingText.SetText(text);
+        }
     }
 }

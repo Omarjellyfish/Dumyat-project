@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using EzySlice;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using Reflex.Attributes;
+using Reflex.Extensions;
+using Reflex.Injectors;
 
 namespace DumyatRuntime
 {
@@ -39,14 +41,7 @@ namespace DumyatRuntime
         public void PerformCut(List<Vector3> hitPoints, Vector3 sawDirection, GameObject wood)
         {
             if (_isSlicing)
-            {
-                // A slice is already in progress on this wood object this frame/pass -
-                // Destroy() is deferred, so without this guard, rapid repeated contact
-                // (e.g. every FixedUpdate while the blade stays touching) would slice
-                // the same still-alive object multiple times and produce overlapping,
-                // broken results instead of one clean cut.
                 return;
-            }
 
             if (wood == null)
             {
@@ -54,22 +49,11 @@ namespace DumyatRuntime
                 return;
             }
 
-            // FIXED (again): the previous fix used GetComponentInParent<Rigidbody>(),
-            // but SetupPiece gives the "WoodPaint" CHILD its own kinematic Rigidbody
-            // (specifically so it's excluded from the root's compound collider). That
-            // meant GetComponentInParent<Rigidbody>() found WoodPaint's own Rigidbody
-            // and stopped right there instead of climbing to the real root - so the
-            // bug persisted. Only the true root ever has an XRGrabInteractable (no
-            // child does), so use that instead to reliably find the real wood piece.
             XRGrabInteractable rootGrab = wood.GetComponentInParent<XRGrabInteractable>();
             if (rootGrab != null)
-            {
                 wood = rootGrab.gameObject;
-            }
             else if (wood.transform.root != wood.transform)
-            {
                 wood = wood.transform.root.gameObject;
-            }
 
             if (_bladeDirectionReference == null)
             {
@@ -85,27 +69,14 @@ namespace DumyatRuntime
 
             _isSlicing = true;
 
-            // FIXED: everything below used to be able to `return` early (invalid
-            // direction, failed hull) WITHOUT resetting _isSlicing, and the success
-            // path never reset it either. Once true, it stayed true forever on this
-            // instance, so the `if (_isSlicing) return;` guard up top would silently
-            // block every future call - which is why only the very first cut ever
-            // worked, on any wood, including re-cutting a piece. Wrapping the body
-            // in try/finally guarantees the flag always gets cleared no matter which
-            // path we leave through (including thrown exceptions).
             try
             {
-                // The root "wood" object no longer carries a mesh directly - it lives on
-                // the WoodPaint child. Find it so EzySlice actually has geometry to cut.
                 MeshFilter meshSourceFilter = wood.GetComponentInChildren<MeshFilter>();
                 GameObject meshSource = meshSourceFilter != null ? meshSourceFilter.gameObject : wood;
 
                 Vector3 sumOfPosition = Vector3.zero;
-
                 for (int i = 0; i < hitPoints.Count; i++)
-                {
                     sumOfPosition += hitPoints[i];
-                }
 
                 _averagePosition = sumOfPosition / hitPoints.Count;
 
@@ -150,58 +121,16 @@ namespace DumyatRuntime
                 GameObject upperPiece = hull.CreateUpperHull(meshSource, _crossSectionMaterial);
                 GameObject lowerPiece = hull.CreateLowerHull(meshSource, _crossSectionMaterial);
 
-                // Destroy the old parent right away, now that the hull/pieces have been
-                // created. Destroy() is deferred until end of frame, so "wood" and its
-                // children stay fully readable for the rest of this function either way -
-                // but doing it here means the parent is guaranteed to go away even if
-                // SetupPiece throws or fails partway through below.
-                Destroy(wood);
-
                 SetupPiece(upperPiece, wood, originalPaint);
                 SetupPiece(lowerPiece, wood, originalPaint);
+
+                _eventService?.Publish(new WoodCutEvent(_averagePosition, wood, upperPiece, lowerPiece));
+                Destroy(wood);
             }
             finally
             {
                 _isSlicing = false;
             }
-
-            _lastCutPosition = _averagePosition;
-            _lastCutNormal = _averageDirection;
-            _lastBladeForward = bladeLength;
-            _lastBladeUp = bladeHeight;
-            _lastSawDirection = sawDirection;
-            _hasDebugCut = true;
-
-            Debug.Log(
-                $"CUT DEBUG | hit count: {hitPoints.Count} | " +
-                $"cut pos: {_averagePosition} | " +
-                $"cut normal: {_averageDirection} | " +
-                $"blade forward: {bladeLength} | " +
-                $"blade up: {bladeHeight} | " +
-                $"old saw direction: {sawDirection}"
-            );
-
-            SlicedHull hull = wood.Slice(_averagePosition, _averageDirection);
-            originalWoodLayer = wood.layer;
-
-            if (hull == null)
-            {
-                Debug.LogWarning("Slice failed - no valid hull returned.");
-                return;
-            }
-
-            WoodPaintSurface originalSurface = wood.GetComponent<WoodPaintSurface>();
-            RenderTexture originalPaint = originalSurface?.PaintTexture;
-
-            GameObject upperPiece = hull.CreateUpperHull(wood, _crossSectionMaterial);
-            GameObject lowerPiece = hull.CreateLowerHull(wood, _crossSectionMaterial);
-
-            SetupPiece(upperPiece, wood, originalPaint);
-            SetupPiece(lowerPiece, wood, originalPaint);
-
-            _eventService.Publish(new WoodCutEvent(_averagePosition, wood, upperPiece, lowerPiece));
-
-            Destroy(wood);
         }
 
         private void SetupPiece(GameObject piece, GameObject originalWood, RenderTexture originalPaint)
@@ -284,6 +213,7 @@ namespace DumyatRuntime
             AddCutPieceGameplayComponents(piece, originalWood);
 
             piece.transform.localScale = originalWood.transform.localScale;
+            GameObjectInjector.InjectRecursive(piece, gameObject.scene.GetSceneContainer());
         }
 
         // Packs the mesh into a 2x3 grid of non-overlapping UV cells, one cell per

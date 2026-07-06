@@ -63,7 +63,7 @@ namespace DumyatRuntime
             _lineActive = false;
             _penTip.FinalizeLine();
             _lineRenderer.enabled = false;
-            _floatingText.Hide(_distanceText);
+            _floatingText?.Hide(_distanceText);
             _distanceText = null;
         }
 
@@ -78,7 +78,7 @@ namespace DumyatRuntime
             _lineActive = true;
             _penTip._currentMode = PenMode.LineDrawing;
             _lineRenderer.enabled = true;
-            _distanceText = _floatingText.Show(transform.position, "0.0 cm");
+            _distanceText = _floatingText?.Show(transform.position, "0.0 cm");
         }
 
         public void UpdateLinePositions(Vector3 startWorldPoint, Vector3 currentWorldPoint)
@@ -88,6 +88,9 @@ namespace DumyatRuntime
 
             Vector3 midpoint = (startWorldPoint + currentWorldPoint) / 2f;
             float distanceCm = Vector3.Distance(startWorldPoint, currentWorldPoint) * 100f;
+
+            if (_distanceText == null)
+                return;
 
             _distanceText.SetPosition(midpoint ,offset);
             _distanceText.SetText($"{distanceCm:F1} cm");
