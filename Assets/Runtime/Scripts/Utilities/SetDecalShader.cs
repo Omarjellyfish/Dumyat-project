@@ -6,16 +6,23 @@ namespace DumyatRuntime
     [RequireComponent(typeof(Renderer))]
     public class SetDecalShader : MonoBehaviour
     {
+        [SerializeField] private Texture2D _texture;
+        [SerializeField] private Color color = Color.red; 
+        [SerializeField] private bool _invertTexture = false;
+
         [Tooltip("1 = Red, 2 = Green, 3 = Blue, 4 = Alpha")]
         [Range(1, 4)]
-        [SerializeField] private int channelNumber = 3; // Default to 3 (Blue)
-        
-        [SerializeField] private Color color = Color.red; 
+        [SerializeField] private int channelNumber = 3;
 
         private Renderer _renderer;
         private MaterialPropertyBlock _propBlock;
 
-        // OnValidate runs automatically in the editor whenever you change a value in the Inspector
+        // Cached Shader Property IDs for optimized performance
+        private static readonly int ChannelNumberID = Shader.PropertyToID("_Channel_Number");
+        private static readonly int ColorID = Shader.PropertyToID("_Color");
+        private static readonly int PackedDecalTextureID = Shader.PropertyToID("_Packed_Decal_Texture");
+        private static readonly int InvertTextureID = Shader.PropertyToID("_Invert_Mask");
+
         private void OnValidate()
         {
             UpdateProperties();
@@ -31,20 +38,14 @@ namespace DumyatRuntime
             if (_renderer == null) _renderer = GetComponent<Renderer>();
             if (_propBlock == null) _propBlock = new MaterialPropertyBlock();
 
-            // Fetch existing block data
             _renderer.GetPropertyBlock(_propBlock);
             
-            // Subtract 1 so that:
-            // Slider 1 -> Shader 0 (Red)
-            // Slider 2 -> Shader 1 (Green)
-            // Slider 3 -> Shader 2 (Blue)
-            // Slider 4 -> Shader 3 (Alpha)
-            _propBlock.SetFloat("_Channel_Number", channelNumber - 1);
-
-            // Inject the color
-            _propBlock.SetColor("_Color", color); 
+            // Map 1-4 slider to 0-3 index logic
+            _propBlock.SetFloat(ChannelNumberID, channelNumber - 1);
+            _propBlock.SetColor(ColorID, color); 
+            _propBlock.SetTexture(PackedDecalTextureID, _texture);
+            _propBlock.SetFloat(InvertTextureID, _invertTexture ? 1.0f : 0.0f);
             
-            // Apply it back to the renderer
             _renderer.SetPropertyBlock(_propBlock);
         }
     }
