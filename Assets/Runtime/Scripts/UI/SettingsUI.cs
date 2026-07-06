@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -12,14 +13,18 @@ namespace DumyatRuntime
         [SerializeField] private Slider _masterVolumeSlider;
         [SerializeField] private Slider _voiceVolumeSlider;
         [SerializeField] private Slider _ambientVolumeSlider;
-        [SerializeField] private SoundMixerManager soundManager;
         [SerializeField] private SettingsManager _settingsManager;
+
+        private ISoundMixerService _soundMixerService;
+
+        [Inject]
+        private void Inject(ISoundMixerService soundMixerService) => _soundMixerService = soundMixerService;
 
         private void Start()
         {
-            _masterVolumeSlider.value = soundManager.GetSavedMasterVolume();
-            _voiceVolumeSlider.value = soundManager.GetSavedMusicVolume();
-            _ambientVolumeSlider.value = soundManager.GetSavedSoundFXVolume();
+            _masterVolumeSlider.value = _soundMixerService.GetSavedMasterVolume();
+            _voiceVolumeSlider.value = _soundMixerService.GetSavedMusicVolume();
+            _ambientVolumeSlider.value = _soundMixerService.GetSavedSoundFXVolume();
 
             _subtitlesToggle.onValueChanged.AddListener(OnSubtitlesChanged);
             _masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
@@ -42,18 +47,18 @@ namespace DumyatRuntime
 
         private void OnMasterVolumeChanged(float _value)
         {
-            soundManager.SetMasterVolume(_value);
+            _soundMixerService.SetMasterVolume(_value);
         }
 
         private void OnVoiceVolumeChanged(float _value)
         {
-            soundManager.SetMusicVolume(_value);
+            _soundMixerService.SetMusicVolume(_value);
 
         }
 
         private void OnAmbientVolumeChanged(float _value)
         {
-            soundManager.SetSoundFXVolume(_value);
+            _soundMixerService.SetSoundFXVolume(_value);
         }
     }
 }
