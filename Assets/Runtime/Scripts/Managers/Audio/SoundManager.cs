@@ -12,17 +12,28 @@ namespace DumyatRuntime
 
         private IObjectPool<AudioSource> _audioPool;
 
-        private void Awake()
+        /// <summary>
+        /// Lazy-initialized pool. Guarantees the pool exists regardless of Unity's
+        /// Awake execution order (Reflex's ContainerScope runs before child Awake).
+        /// </summary>
+        private IObjectPool<AudioSource> AudioPool
         {
-            _audioPool = new ObjectPool<AudioSource>(
-                createFunc: CreatePooledItem,
-                actionOnGet: OnTakeFromPool,
-                actionOnRelease: OnReturnedToPool,
-                actionOnDestroy: OnDestroyPoolObject,
-                collectionCheck: false,
-                defaultCapacity: 10,
-                maxSize: 30
-            );
+            get
+            {
+                if (_audioPool == null)
+                {
+                    _audioPool = new ObjectPool<AudioSource>(
+                        createFunc: CreatePooledItem,
+                        actionOnGet: OnTakeFromPool,
+                        actionOnRelease: OnReturnedToPool,
+                        actionOnDestroy: OnDestroyPoolObject,
+                        collectionCheck: false,
+                        defaultCapacity: 10,
+                        maxSize: 30
+                    );
+                }
+                return _audioPool;
+            }
         }
 
         #region Pooling Logic
@@ -53,7 +64,7 @@ namespace DumyatRuntime
         {
             if (clip == null) return;
 
-            AudioSource source = _audioPool.Get();
+            AudioSource source = AudioPool.Get();
 
             source.transform.position = targetTransform.position;
             source.clip = clip;
@@ -79,7 +90,7 @@ namespace DumyatRuntime
         public void PlayLoopingSoundFxAtPosition(AudioClip clip, Transform targetTransform, float volume)
         {
             if (clip == null) return;
-            AudioSource source = _audioPool.Get();
+            AudioSource source = AudioPool.Get();
             source.transform.position = targetTransform.position;
             source.clip = clip;
             source.volume = volume;
@@ -102,7 +113,7 @@ namespace DumyatRuntime
             {
                 source.Stop();
                 source.clip = null;
-                _audioPool.Release(source);
+                AudioPool.Release(source);
             }
         }
     }
