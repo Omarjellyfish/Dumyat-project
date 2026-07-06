@@ -56,7 +56,7 @@ Transform:
   m_GameObject: {fileID: 1113192637302730966}
   serializedVersion: 2
   m_LocalRotation: {x: -0.012057966, y: -0.707004, z: -0.012058182, w: 0.70700395}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.071, y: 0.049, z: -0.031}
   m_LocalScale: {x: 1.6666663, y: 1.6666663, z: 1.6666666}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -88,7 +88,7 @@ Transform:
   m_GameObject: {fileID: 6313818859153764295}
   serializedVersion: 2
   m_LocalRotation: {x: -0.27128068, y: 0.6854935, z: 0.30967405, w: 0.600506}
-  m_LocalPosition: {x: -0.65858054, y: -0.051818274, z: 0}
+  m_LocalPosition: {x: -0.619, y: -0.023, z: -0.006}
   m_LocalScale: {x: 1.6666659, y: 1.6666662, z: 1.6666662}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -108,9 +108,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SawBladePoint
   _woodLayer:
     serializedVersion: 2
-    m_Bits: 1077936128
-  _rayDistance: 0.07
-  _showDebugRayInGame: 0
+    m_Bits: 1073741824
+  _rayDistance: 0.11
+  _showDebugRayInGame: 1
   _debugRayWidth: 0.005
   _isTouchingWood: 0
   _hitPoint: {x: 0, y: 0, z: 0}
@@ -239,6 +239,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: UnityEngine.Animator, UnityEngine
+        m_MethodName: Play
+        m_Mode: 5
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: SawGrab
+          m_BoolArgument: 1
+        m_CallState: 2
   m_SelectExited:
     m_PersistentCalls:
       m_Calls:
@@ -252,6 +264,18 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: UnityEngine.Animator, UnityEngine
+        m_MethodName: Play
+        m_Mode: 5
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: Blend Tree
           m_BoolArgument: 0
         m_CallState: 2
   m_FirstFocusEntered:
@@ -348,10 +372,13 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1077936128
   _visualObject: {fileID: 6023583057333272983}
-  _detectionDistance: 0.09
+  _detectionDistance: 0.2
   _sideRayOffset: 0.14
-  _surfaceClearance: 0.0045
+  _surfaceClearance: 0.07
   _bladeLengthAxis: 1
+  _zAxisCorrectionDegrees: -3
+  _maxCutDepth: 0.03
+  _depthLerpSpeed: 6
 --- !u!114 &3786575737844547267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -369,6 +396,7 @@ MonoBehaviour:
   _drawDebug: 1
   _debugRayLength: 1.43
   _recenterPiecePivot: 1
+  _paintLayerName: Wood Layer
 --- !u!1 &7944233382007621818
 GameObject:
   m_ObjectHideFlags: 0
@@ -395,7 +423,7 @@ Transform:
   m_GameObject: {fileID: 7944233382007621818}
   serializedVersion: 2
   m_LocalRotation: {x: -0.31950226, y: 0.657859, z: 0.36472028, w: 0.57629764}
-  m_LocalPosition: {x: -0.42714533, y: -0.095869474, z: 0.0006667771}
+  m_LocalPosition: {x: -0.388, y: -0.067, z: -0.005}
   m_LocalScale: {x: 1.6666659, y: 1.6666662, z: 1.6666662}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -415,9 +443,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SawBladePoint
   _woodLayer:
     serializedVersion: 2
-    m_Bits: 1077936128
-  _rayDistance: 0.07
-  _showDebugRayInGame: 0
+    m_Bits: 1073741824
+  _rayDistance: 0.11
+  _showDebugRayInGame: 1
   _debugRayWidth: 0.005
   _isTouchingWood: 0
   _hitPoint: {x: 0, y: 0, z: 0}
@@ -449,7 +477,7 @@ Transform:
   m_GameObject: {fileID: 8517169107659299165}
   serializedVersion: 2
   m_LocalRotation: {x: -0.20628987, y: 0.7143851, z: 0.23548535, w: 0.6258156}
-  m_LocalPosition: {x: -1.0360808, y: 0.036884535, z: 0.002100467}
+  m_LocalPosition: {x: -0.997, y: 0.066, z: -0.004}
   m_LocalScale: {x: 1.6666659, y: 1.6666663, z: 1.6666659}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -469,9 +497,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SawBladePoint
   _woodLayer:
     serializedVersion: 2
-    m_Bits: 1077936128
-  _rayDistance: 0.07
-  _showDebugRayInGame: 0
+    m_Bits: 1073741824
+  _rayDistance: 0.11
+  _showDebugRayInGame: 1
   _debugRayWidth: 0.005
   _isTouchingWood: 0
   _hitPoint: {x: 0, y: 0, z: 0}
@@ -499,11 +527,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.44
+      value: 0.4526
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.02
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalPosition.z
@@ -511,7 +539,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.9939719
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalRotation.x
@@ -519,11 +547,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0.0000000018626454
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0.10963531
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -535,7 +563,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: 12.589
       objectReference: {fileID: 0}
     - target: {fileID: 2128555852973695546, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_Name
