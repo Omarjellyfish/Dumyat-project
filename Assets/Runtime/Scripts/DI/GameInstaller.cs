@@ -29,6 +29,10 @@ namespace DumyatRuntime
         [SerializeField] private HapticFeedback _hapticFeedbackPrefab;
         [Tooltip("Audio mixer volume control prefab. Will be instantiated on launch.")]
         [SerializeField] private SoundMixerManager _soundMixerManagerPrefab;
+
+        [Header("Other Global Prefabs (No DI)")]
+        [Tooltip("Standard Unity/XR prefabs (EventSystem, XR UI Toolkit) to spawn globally. These don't get DI registered, they just live forever.")]
+        [SerializeField] private GameObject[] _otherGlobalPrefabs;
         public void InstallBindings(ContainerBuilder containerBuilder)
         {
             // Shared save store. Eager so CurrentSaveData is loaded before dependents resolve.
@@ -105,6 +109,19 @@ namespace DumyatRuntime
             }
             else
                 Debug.LogWarning("GameInstaller: SoundMixerManager prefab is not assigned.");
+
+            // Standard prefabs (UI Toolkit, EventSystem, etc.) that just need to exist globally
+            if (_otherGlobalPrefabs != null)
+            {
+                foreach (var prefab in _otherGlobalPrefabs)
+                {
+                    if (prefab != null)
+                    {
+                        var instance = Instantiate(prefab);
+                        DontDestroyOnLoad(instance);
+                    }
+                }
+            }
         }
     }
 }
