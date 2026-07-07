@@ -8,14 +8,14 @@ using UnityEngine;
 namespace DumyatEditor
 {
     /// <summary>
-    /// Custom inspector for <see cref="ElevenLabsScribeClient"/> that renders the
+    /// Custom inspector for <see cref="VoiceCaptureController"/> that renders the
     /// <c>_microphoneDevice</c> field as a live dropdown of the microphones currently connected to
     /// the system. The list refreshes in real time (<see cref="RequiresConstantRepaint"/>) so
     /// connecting or disconnecting a microphone updates the choices immediately. Empty selection
-    /// ("Default") means the client uses the first connected device at capture time.
+    /// ("Default") means the controller uses the first connected device at capture time.
     /// </summary>
-    [CustomEditor(typeof(ElevenLabsScribeClient))]
-    public class ElevenLabsScribeClientEditor : Editor
+    [CustomEditor(typeof(VoiceCaptureController))]
+    public class VoiceCaptureControllerEditor : Editor
     {
         private const string DeviceFieldName = "_microphoneDevice";
         private const string DefaultLabel = "Default (first connected device)";

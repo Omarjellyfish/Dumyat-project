@@ -7,9 +7,11 @@ namespace DumyatRuntime
 {
     /// <summary>
     /// Singleton client that converts text to speech using the ElevenLabs REST API.
-    /// Uses <c>eleven_multilingual_v2</c> (required for Arabic) and delivers the resulting
-    /// <see cref="AudioClip"/> through a callback. Errors (bad key, quota exceeded, bad voice ID)
-    /// are logged with the HTTP status code and forwarded to the failure callback.
+    /// The model ID defaults to the one configured on <see cref="ElevenLabsConfig"/>
+    /// (<c>eleven_multilingual_v2</c> out of the box — required for Arabic), but callers may pass an
+    /// explicit model. The resulting <see cref="AudioClip"/> is delivered through a callback. Errors
+    /// (bad key, quota exceeded, bad voice ID) are logged with the HTTP status code and forwarded to
+    /// the failure callback.
     /// </summary>
     public class ElevenLabsClient : MonoBehaviour, IManager
     {
@@ -17,17 +19,33 @@ namespace DumyatRuntime
 
         private const string EndpointFormat = "https://api.elevenlabs.io/v1/text-to-speech/{0}";
         private const string DefaultConfigResourcePath = "AI/Secrets/ElevenLabsConfig";
-        private const string DefaultModelId = "eleven_multilingual_v2";
 
         [Header("Configuration")]
         [Tooltip("ElevenLabs credentials/voice. If left empty it is loaded from Resources/AI/Secrets/ElevenLabsConfig.")]
         [SerializeField] private ElevenLabsConfig _config;
 
-        [Header("Voice")]
-        [Tooltip("Speaking speed. 1 = normal, < 1 = slower, > 1 = faster. Clamped to ElevenLabs range 0.25–4.")]
-        [SerializeField, Range(0.25f, 4f)] private float _speed = 1f;
-        [Tooltip("Tone / style exaggeration. 0 = neutral, 1 = highly expressive. Only affects v2 models.")]
+        // ElevenLabs REJECTS a speed outside this range with HTTP 400 (invalid_voice_settings),
+        // which silently kills TTS. Keep the slider AND the runtime clamp pinned to it.
+        private const float MinSpeed = 0.7f;
+        private const float MaxSpeed = 1.2f;
+
+        [Header("Voice Settings")]
+        [Tooltip("Speaking speed. 1 = normal, < 1 = slower, > 1 = faster. ElevenLabs only accepts " +
+                 "0.7–1.2; values outside this are rejected (HTTP 400), so the range is enforced here.")]
+        [SerializeField, Range(MinSpeed, MaxSpeed)] private float _speed = 1f;
+        [Tooltip("Stability. Lower = more variable/expressive, higher = more stable/consistent.")]
+        [SerializeField, Range(0f, 1f)] private float _stability = 0.5f;
+        [Tooltip("Similarity boost. How closely the output matches the original voice.")]
+        [SerializeField, Range(0f, 1f)] private float _similarityBoost = 0.75f;
+        [Tooltip("Style exaggeration. 0 = neutral, 1 = highly expressive. Over ~0.5 may add instability. " +
+                 "Only affects v2 models.")]
         [SerializeField, Range(0f, 1f)] private float _style = 0f;
+        [Tooltip("Language override (ISO 639-1 code, e.g. 'ar' for Arabic, 'en' for English). Forces the " +
+                 "spoken language instead of letting the model auto-detect from the text. Leave BLANK " +
+                 "to auto-detect. Only some models honour it; an empty value is omitted from the request.")]
+        [SerializeField] private string _languageOverride = "";
+        [Tooltip("Speaker boost. Boosts similarity to the original speaker (slightly higher latency).")]
+        [SerializeField] private bool _useSpeakerBoost = true;
 
         [Header("Reliability")]
         [Tooltip("Seconds to wait for the audio response before treating the request as failed.")]
@@ -82,7 +100,8 @@ namespace DumyatRuntime
                 return;
             }
 
-            Speak(text, _config.VoiceId, DefaultModelId, onSuccess, onFailure);
+            // Empty model → resolved from the ElevenLabsConfig SO in the overload below.
+            Speak(text, _config.VoiceId, null, onSuccess, onFailure);
         }
 
         /// <summary>
@@ -115,9 +134,15 @@ namespace DumyatRuntime
                 return;
             }
 
-            string model = string.IsNullOrWhiteSpace(modelId) ? DefaultModelId : modelId;
+            // An explicit modelId wins; otherwise fall back to the ElevenLabsConfig SO's TTS model.
+            string model = string.IsNullOrWhiteSpace(modelId) ? ResolveDefaultModel() : modelId;
             StartCoroutine(SpeakRoutine(text, voiceId, model, onSuccess, onFailure));
         }
+
+        // The default TTS model comes from the ElevenLabsConfig SO (or its built-in default when no
+        // config is assigned), so designers can change it without touching code.
+        private string ResolveDefaultModel() =>
+            _config != null ? _config.TtsModelId : ElevenLabsConfig.DefaultTtsModelId;
 
         private IEnumerator SpeakRoutine(string text, string voiceId, string modelId,
             Action<AudioClip> onSuccess, Action<string> onFailure)
@@ -161,19 +186,60 @@ namespace DumyatRuntime
 
         private string BuildRequestJson(string text, string modelId)
         {
-            var payload = new ElevenLabsTtsRequest
+            // Built by hand rather than via JsonUtility on purpose: JsonUtility widens `float` fields
+            // to double when serializing, so a boundary speed like 1.2f is emitted as
+            // "1.2000000476837158" — just OVER ElevenLabs' 1.2 max — and the whole request is rejected
+            // (400 invalid_voice_settings). Formatting the numbers ourselves at fixed precision keeps
+            // them exactly within the accepted bounds. It also lets us omit language_code cleanly when
+            // no override is set (ElevenLabs rejects an empty language_code).
+            string language = string.IsNullOrWhiteSpace(_languageOverride) ? null : _languageOverride.Trim();
+
+            var sb = new System.Text.StringBuilder(256);
+            sb.Append('{');
+            sb.Append("\"text\":\"").Append(JsonEscape(text)).Append('"');
+            sb.Append(",\"model_id\":\"").Append(JsonEscape(modelId)).Append('"');
+            if (language != null)
+                sb.Append(",\"language_code\":\"").Append(JsonEscape(language)).Append('"');
+            sb.Append(",\"voice_settings\":{")
+              .Append("\"stability\":").Append(Num(Mathf.Clamp01(_stability)))
+              .Append(",\"similarity_boost\":").Append(Num(Mathf.Clamp01(_similarityBoost)))
+              .Append(",\"style\":").Append(Num(Mathf.Clamp01(_style)))
+              .Append(",\"speed\":").Append(Num(Mathf.Clamp(_speed, MinSpeed, MaxSpeed)))
+              .Append(",\"use_speaker_boost\":").Append(_useSpeakerBoost ? "true" : "false")
+              .Append('}');
+            sb.Append('}');
+            return sb.ToString();
+        }
+
+        // Fixed-precision, culture-invariant number (e.g. "1.2", "0.51") so voice-settings values land
+        // exactly on ElevenLabs' accepted bounds instead of being widened to a longer decimal.
+        private static string Num(float v) =>
+            v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
+        // Minimal JSON string escaper for the text/model/language fields — the LLM's Arabic line may
+        // contain quotes, backslashes or control characters. Arabic letters pass through as UTF-8.
+        private static string JsonEscape(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return string.Empty;
+            var sb = new System.Text.StringBuilder(s.Length + 8);
+            foreach (char c in s)
             {
-                text = text,
-                model_id = modelId,
-                voice_settings = new ElevenLabsVoiceSettings
+                switch (c)
                 {
-                    stability = 0.5f,
-                    similarity_boost = 0.75f,
-                    style = _style,
-                    speed = _speed,
+                    case '"': sb.Append("\\\""); break;
+                    case '\\': sb.Append("\\\\"); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
+                    default:
+                        if (c < 0x20) sb.Append("\\u").Append(((int)c).ToString("x4"));
+                        else sb.Append(c);
+                        break;
                 }
-            };
-            return JsonUtility.ToJson(payload);
+            }
+            return sb.ToString();
         }
 
         private static void LogHttpError(UnityWebRequest request)
@@ -181,6 +247,7 @@ namespace DumyatRuntime
             long code = request.responseCode;
             string hint = code switch
             {
+                400 => "bad request — invalid model_id, invalid voice_settings (e.g. speed must be 0.7–1.2), or malformed body",
                 401 => "invalid or missing API key",
                 402 => "payment required — account out of credits or subscription inactive",
                 422 => "invalid voice ID or malformed request body",
@@ -188,7 +255,27 @@ namespace DumyatRuntime
                 _   => request.error
             };
 
-            Debug.LogWarning($"ElevenLabsClient: HTTP {code} — {hint}");
+            // ElevenLabs returns a JSON error body ("model_not_found", "invalid_voice_settings", …)
+            // that pinpoints the cause. The success handler is a DownloadHandlerAudioClip, whose
+            // text/data accessors throw when the payload isn't audio, so read it defensively.
+            string body = TryReadBody(request);
+            string detail = string.IsNullOrEmpty(body) ? "" : $" | body: {body}";
+            Debug.LogWarning($"ElevenLabsClient: HTTP {code} — {hint}{detail}");
+        }
+
+        private static string TryReadBody(UnityWebRequest request)
+        {
+            try
+            {
+                byte[] raw = request.downloadHandler?.data;
+                if (raw != null && raw.Length > 0)
+                    return System.Text.Encoding.UTF8.GetString(raw);
+            }
+            catch
+            {
+                // DownloadHandlerAudioClip refuses to expose a non-audio error payload; ignore.
+            }
+            return null;
         }
     }
 }

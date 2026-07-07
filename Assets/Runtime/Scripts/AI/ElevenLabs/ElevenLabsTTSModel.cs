@@ -13,8 +13,10 @@ namespace DumyatRuntime
         // eleven_flash_v2_5 is preferred for LOW LATENCY in live, conversational haggling. Trade-off
         // vs eleven_multilingual_v2: flash responds faster and costs less but is slightly less
         // expressive. Both support Arabic. Switch to multilingual_v2 if voices sound flat in tests.
+        // Leave BLANK to inherit the TTS model configured on the shared ElevenLabsConfig SO.
         [Header("Model")]
-        [Tooltip("ElevenLabs model. flash_v2_5 = low latency (preferred); multilingual_v2 = higher quality.")]
+        [Tooltip("ElevenLabs model override for this pool entry. flash_v2_5 = low latency (preferred); " +
+                 "multilingual_v2 = higher quality. Leave blank to inherit the ElevenLabsConfig SO's model.")]
         [SerializeField] private string _modelId = "eleven_flash_v2_5";
 
         [Tooltip("Selection priority within TTSManager; higher = preferred.")]

@@ -462,7 +462,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 382fb7ecaebd2654abfa1b5b4c509f25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ElevenLabsTTSModel
-  _modelId: eleven_flash_v2_5
+  _modelId: 
   _priority: 0
 --- !u!114 &475607734
 MonoBehaviour:
@@ -478,7 +478,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ElevenLabsClient
   _config: {fileID: 11400000, guid: 1edf6ecdfae13a3429dcc1bfe76d83d6, type: 2}
   _speed: 1
-  _style: 0
+  _stability: 0.35
+  _similarityBoost: 0.75
+  _style: 0.15
+  _languageOverride: ar
+  _useSpeakerBoost: 1
   _timeoutSeconds: 30
   _fallbackMessage: Text-to-speech is unavailable right now.
 --- !u!114 &475607735
@@ -543,6 +547,7 @@ GameObject:
   - component: {fileID: 1145581061}
   - component: {fileID: 1145581060}
   - component: {fileID: 1145581059}
+  - component: {fileID: 1145581063}
   m_Layer: 0
   m_Name: Negotiation
   m_TagString: Untagged
@@ -688,8 +693,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.NegotiationFlowController
   _systemConfig: {fileID: 11400000, guid: 7b808f96b67623f4baf156551506bf90, type: 2}
   _fallbackAudioSource: {fileID: 1145581059}
+  _agent: {fileID: 0}
+  _voiceCapture: {fileID: 1145581063}
+  _fishInventorySource: {fileID: 0}
   _debugFish:
     fishType: Bouri
+    fishTypeArabic: 
     fairMarketValue: 120
     weight: 1.5
 --- !u!114 &1145581062
@@ -704,6 +713,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 164ae0f35b84eff438f19db83895b3ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantNegotiationLLM
+--- !u!114 &1145581063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1145581057}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5dbfba1b6d60064cb0dbb5d406e1e2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.VoiceCaptureController
+  _scribeClient: {fileID: 1507805455}
+  _microphoneDevice: 
+  _captureMode: 0
+  _autoReArm: 1
+  _controlBinding: PushToTalk
+  _pttReleaseTailSeconds: 0.35
+  _vadAmplitudeThreshold: 0.02
+  _vadSilenceSeconds: 1.2
+  _reconnectCooldownSeconds: 2
+  _logToFile: 1
+  _logFileName: stt_debug_log.txt
 --- !u!1 &1258428915
 GameObject:
   m_ObjectHideFlags: 0
@@ -1000,13 +1032,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1451360110}
   - component: {fileID: 1451360109}
+  - component: {fileID: 1451360111}
   m_Layer: 0
   m_Name: == TEST DRIVER ==
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1451360109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1022,6 +1055,8 @@ MonoBehaviour:
   _spawner: {fileID: 312599905}
   _merchant: {fileID: 1912522836}
   _grantConsentOnPlay: 1
+  _disableVoiceHarness: 1
+  _ensureFishInventory: 1
   _startNegotiationOnPlay: 1
   _startDelaySeconds: 0.75
 --- !u!4 &1451360110
@@ -1039,6 +1074,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1451360111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451360108}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4041c425e5b4b554f826538efddc12e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.RandomFishInventoryTestDriver
+  _species:
+  - fishType: Bouri
+    fishTypeArabic: "\u0628\u0648\u0631\u064A"
+    minPricePerKg: 55
+    maxPricePerKg: 90
+    minWeight: 0.4
+    maxWeight: 2.5
+  - fishType: Denis
+    fishTypeArabic: "\u062F\u0646\u064A\u0633"
+    minPricePerKg: 120
+    maxPricePerKg: 200
+    minWeight: 0.3
+    maxWeight: 1.8
+  - fishType: Qaroos
+    fishTypeArabic: "\u0642\u0627\u0631\u0648\u0635"
+    minPricePerKg: 130
+    maxPricePerKg: 220
+    minWeight: 0.5
+    maxWeight: 3
+  - fishType: Wagar
+    fishTypeArabic: "\u0648\u0642\u0627\u0631"
+    minPricePerKg: 150
+    maxPricePerKg: 260
+    minWeight: 0.8
+    maxWeight: 4.5
+  - fishType: Balamida
+    fishTypeArabic: "\u0628\u0644\u0627\u0645\u064A\u0637\u0629"
+    minPricePerKg: 45
+    maxPricePerKg: 80
+    minWeight: 0.6
+    maxWeight: 3
+  - fishType: Subaity
+    fishTypeArabic: "\u0633\u0628\u064A\u0637\u064A"
+    minPricePerKg: 90
+    maxPricePerKg: 160
+    minWeight: 0.3
+    maxWeight: 1.5
+  _roundValue: 1
 --- !u!1 &1458502332
 GameObject:
   m_ObjectHideFlags: 0
@@ -1212,15 +1297,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ElevenLabsScribeClient
   _config: {fileID: 11400000, guid: 1edf6ecdfae13a3429dcc1bfe76d83d6, type: 2}
-  _languageCode: ara
-  _microphoneDevice: 
   _autoStart: 0
   _silenceThresholdSeconds: 1.2
   _silenceAmplitudeThreshold: 0.02
-  _playbackSource: {fileID: 0}
-  _playbackOnMicDisable: 1
   _connectionTimeoutSeconds: 5
-  _responseTimeoutSeconds: 5
+  _responseTimeoutSeconds: 15
   _verboseLogging: 1
   _priority: 0
 --- !u!114 &1507805456
@@ -1235,6 +1316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d178938250078924fbd6da98f1d4da43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.STTManager
+  _languageCode: ar
 --- !u!1 &1894208016
 GameObject:
   m_ObjectHideFlags: 0
@@ -1246,8 +1328,9 @@ GameObject:
   - component: {fileID: 1894208017}
   - component: {fileID: 1894208019}
   - component: {fileID: 1894208018}
+  - component: {fileID: 1894208020}
   m_Layer: 0
-  m_Name: LLM (Gemini)
+  m_Name: LLM
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1281,7 +1364,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.GeminiClient
   _config: {fileID: 11400000, guid: 4d8832d058057cc489c87f63a820506b, type: 2}
-  _priority: 0
+  _priority: 1
   _timeoutSeconds: 20
   _maxRetries: 1
   _retryDelaySeconds: 0.5
@@ -1298,6 +1381,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c2af10f52f6abc419ba6f7662a0ac19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.LLMManager
+--- !u!114 &1894208020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1894208016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32e8a7fe42327a54d9f02581c2636da0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.GroqClient
+  _config: {fileID: 11400000, guid: ac434d4eef77698449883184df1ccb0b, type: 2}
+  _priority: 10
+  _timeoutSeconds: 20
+  _maxRetries: 1
+  _retryDelaySeconds: 0.5
+  _fallbackMessage: Sorry, I can't respond right now. Please try again in a moment.
 --- !u!1 &1912522835
 GameObject:
   m_ObjectHideFlags: 0
@@ -1458,7 +1559,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1944448083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1473,13 +1574,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SttVoiceTestHarness
   _grantConsentOnPlay: 1
   _disableMerchantTest: 1
-  _scribeClient: {fileID: 0}
+  _scribeClient: {fileID: 1507805455}
+  _voiceCapture: {fileID: 0}
   _microphoneEnabled: 0
   _captureMode: 1
   _controlBinding: <Keyboard> Space
+  _pttReleaseTailSeconds: 0.35
   _vadAmplitudeThreshold: 0.094
   _vadSilenceSeconds: 1.2
   _reconnectCooldownSeconds: 2
+  _logToFile: 1
+  _logFileName: stt_debug_log.txt
 --- !u!4 &1944448084
 Transform:
   m_ObjectHideFlags: 0

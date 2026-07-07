@@ -24,6 +24,17 @@ namespace DumyatRuntime
         /// <summary>Whether this merchant can currently be picked to approach the player.</summary>
         public bool IsAvailable => _isAvailable;
 
+        private int _conversationCount;
+
+        /// <summary>
+        /// True until the first negotiation with this merchant has been registered. The opening line
+        /// ALWAYS greets on the first conversation; afterwards a greeting is only sometimes used.
+        /// </summary>
+        public bool IsFirstConversation => _conversationCount == 0;
+
+        /// <summary>Records that a negotiation has started with this merchant (call once per opening).</summary>
+        public void RegisterConversation() => _conversationCount++;
+
         /// <summary>
         /// Raised when a negotiation with this merchant ends, carrying the final outcome.
         /// The spawner subscribes to this to release its state lock and start the cooldown.

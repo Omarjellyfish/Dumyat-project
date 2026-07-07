@@ -14,6 +14,13 @@ namespace DumyatRuntime
         public string fishType;
 
         /// <summary>
+        /// The species name in Egyptian Arabic (e.g. "بوري", "دنيس"). Given to the merchant LLM so it
+        /// speaks the exact local fish name instead of mistranslating the transliterated
+        /// <see cref="fishType"/>. Optional — falls back to <see cref="fishType"/> when empty.
+        /// </summary>
+        public string fishTypeArabic;
+
+        /// <summary>
         /// Fair market value of this fish, in game currency. All merchant offers
         /// are computed relative to this value via the merchant's offer multipliers.
         /// </summary>

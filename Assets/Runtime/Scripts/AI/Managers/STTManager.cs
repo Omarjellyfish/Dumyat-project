@@ -15,6 +15,22 @@ namespace DumyatRuntime
     /// </summary>
     public class STTManager : AIModelManager<STTManager, ISTTModel>
     {
+        // LOCALE — CRITICAL (see docs/MERCHANT_CONTEXT.md): the player speaks Egyptian Arabic, not MSA.
+        // Set this to the code that best recognises Egyptian dialect for your account and TEST it on
+        // real dialect audio; empty lets the STT provider auto-detect. Owned here (manager level) so it
+        // is provider-agnostic — the active model reads it when opening a session.
+        [Header("Locale")]
+        [Tooltip("STT language_code applied to the active model. MUST be configured/tested for Egyptian " +
+                 "Arabic, not generic Arabic/MSA (see docs/MERCHANT_CONTEXT.md). Empty = auto-detect.")]
+        [SerializeField] private string _languageCode = "";
+
+        /// <summary>Language code for the active STT model; empty = auto-detect. Applied on next session open.</summary>
+        public string LanguageCode
+        {
+            get => _languageCode;
+            set => _languageCode = value ?? string.Empty;
+        }
+
         /// <summary>Relayed from the active model: fires once with the final transcript.</summary>
         public event Action<string> OnTranscriptionComplete;
 

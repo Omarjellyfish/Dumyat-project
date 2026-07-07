@@ -11,8 +11,11 @@ namespace DumyatRuntime
     {
         /// <summary>
         /// Generates a completion for <paramref name="prompt"/>. Returns the raw text, or null on
-        /// failure so the manager can fall back to the next model in the pool.
+        /// failure so the manager can fall back to the next model in the pool. When
+        /// <paramref name="jsonObject"/> is true, the provider is asked to return a single strict
+        /// JSON object (structured-output mode) — the prompt must still describe the schema and
+        /// mention JSON.
         /// </summary>
-        Task<string> GenerateTextAsync(string prompt);
+        Task<string> GenerateTextAsync(string prompt, bool jsonObject = false);
     }
 }

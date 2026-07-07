@@ -12,6 +12,14 @@ namespace DumyatRuntime
     public class GeminiRequest
     {
         public List<GeminiContent> contents = new List<GeminiContent>();
+        public GeminiGenerationConfig generationConfig = new GeminiGenerationConfig();
+    }
+
+    [Serializable]
+    public class GeminiGenerationConfig
+    {
+        // "text/plain" (default) or "application/json" to force a single structured JSON object.
+        public string responseMimeType = "text/plain";
     }
 
     [Serializable]

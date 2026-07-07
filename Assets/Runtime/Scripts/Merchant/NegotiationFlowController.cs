@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -35,6 +36,15 @@ namespace DumyatRuntime
         // Stop looping the recover-and-relisten path forever if every attempt keeps failing.
         private const int MaxConsecutiveRecoveries = 3;
 
+        // Cap on SILENT re-listens while waiting for the player (blank captures / transient STT
+        // glitches) before we quietly hand off. This only guards against noise/echo/glitch loops —
+        // genuine silence produces no STT events at all, so the merchant simply stays quiet.
+        private const int MaxSilentRetries = 8;
+
+        // Greeting policy: the FIRST conversation with a merchant always opens with an Egyptian-style
+        // greeting; on later conversations a greeting is used only this fraction of the time.
+        private const float GreetingChanceAfterFirst = 0.4f;
+
         public static NegotiationFlowController Singleton { get; private set; }
 
         [Header("Config")]
@@ -44,8 +54,25 @@ namespace DumyatRuntime
         [Tooltip("AudioSource used for merchant speech when the merchant GameObject has none of its own.")]
         [SerializeField] private AudioSource _fallbackAudioSource;
 
+        [Header("Behavior Graph")]
+        [Tooltip("Optional Unity Behavior agent that runs the negotiation as a visual Behavior graph. " +
+                 "When assigned (with a graph), BeginNegotiation drives the graph and the graph's " +
+                 "Action/Condition nodes call the Bt_* step methods on this controller. When empty, " +
+                 "the legacy coded flow runs instead — so the game still works before the graph is wired.")]
+        [SerializeField] private Unity.Behavior.BehaviorGraphAgent _agent;
+
+        [Header("Voice Capture")]
+        [Tooltip("Shared controller used to listen for the player (capture mode, VAD tuning, file " +
+                 "logging, etc.). Auto-resolved from the scene or created if left empty.")]
+        [SerializeField] private VoiceCaptureController _voiceCapture;
+
+        [Header("Fish Inventory")]
+        [Tooltip("Optional: a component implementing IFishInventory that supplies the fish to sell. " +
+                 "If empty, one is searched for in the scene; otherwise the debug fish below is used.")]
+        [SerializeField] private MonoBehaviour _fishInventorySource;
+
         [Header("Stubs (temporary)")]
-        [Tooltip("STUB fish used until the inventory system provides the caught fish to sell. " +
+        [Tooltip("STUB fish used when no IFishInventory is available. " +
                  "Set fishType/fairMarketValue/weight to exercise the flow in-editor.")]
         [SerializeField] private FishData _debugFish = new FishData();
 
@@ -53,9 +80,40 @@ namespace DumyatRuntime
         private NegotiationState _state;
         private MerchantNPC _activeMerchant;
         private AudioSource _activeAudioSource;
+        private IFishInventory _fishInventory;
         private bool _busy;
         private bool _subscribed;
         private int _consecutiveRecoveries;
+        private int _silentRetries;   // blank captures / transient STT glitches while WAITING for the player
+
+        // --- Behavior-graph step state (used only on the BT path; see the Bt_* methods) ---
+        private string _pendingLine;                  // merchant line waiting to be spoken by a node
+        private bool _lineFinished;                   // set true when the current TTS line finishes/fails
+        private bool _transcriptReady;                // set true when a player transcript has arrived
+        private bool _captureFailed;                  // set true when STT capture failed
+        private string _lastTranscript = "";          // the most recent player transcript
+        private MerchantTurnResult _lastResult;       // the most recent validated LLM turn result
+
+        /// <summary>True when the negotiation is driven by a Unity Behavior graph (else the legacy flow).</summary>
+        public bool UseBehaviorGraph => _agent != null && _agent.Graph != null;
+
+        /// <summary>The merchant this negotiation is with (set before the graph starts). For nodes.</summary>
+        public MerchantNPC ActiveMerchant => _activeMerchant;
+
+        /// <summary>Set by a turn result / recovery when the negotiation should stop looping. For the graph.</summary>
+        public bool IsTerminal { get; private set; }
+
+        /// <summary>The resolved outcome once <see cref="IsTerminal"/> is set. For the graph / resolve node.</summary>
+        public NegotiationPhase Outcome { get; private set; }
+
+        /// <summary>True when the current merchant TTS line has finished (or failed). Polled by a node.</summary>
+        public bool LineFinished => _lineFinished;
+
+        /// <summary>True once a player transcript has arrived for the current listen. Polled by a node.</summary>
+        public bool TranscriptReady => _transcriptReady;
+
+        /// <summary>True when the current listen failed (STT/capture error). Polled by a node.</summary>
+        public bool CaptureFailed => _captureFailed;
 
         /// <summary>True while a negotiation (AI or scripted-fallback handoff) is in progress.</summary>
         public bool IsNegotiating => _busy;
@@ -100,11 +158,29 @@ namespace DumyatRuntime
 
             _activeMerchant = merchant;
             _consecutiveRecoveries = 0;
+            _silentRetries = 0;
+            ResetStepState();
 
             if (merchant.Config == null)
             {
                 Debug.LogWarning($"{LogPrefix} Merchant '{merchant.name}' has no MerchantConfig; aborting.");
                 Cleanup(NegotiationPhase.Declined);
+                return;
+            }
+
+            // Prefer the merchant's own AudioSource (spatial VR audio); fall back to the shared one.
+            _activeAudioSource = merchant.GetComponent<AudioSource>();
+            if (_activeAudioSource == null) _activeAudioSource = _fallbackAudioSource;
+
+            // BEHAVIOR-GRAPH PATH: hand control to the Behavior graph, whose nodes call the Bt_* steps
+            // below. Fish resolution, consent gating, opening, the turn loop and recovery all live in
+            // the graph now. (Falls through to the legacy coded flow when no graph is assigned.)
+            if (UseBehaviorGraph)
+            {
+                _busy = true;
+                Subscribe();
+                _agent.Restart();   // run the graph from the root; nodes call the Bt_* steps below
+                Debug.Log($"{LogPrefix} Begin BT negotiation with '{NameOf(merchant)}'.");
                 return;
             }
 
@@ -115,10 +191,6 @@ namespace DumyatRuntime
                 Cleanup(NegotiationPhase.Declined);
                 return;
             }
-
-            // Prefer the merchant's own AudioSource (spatial VR audio); fall back to the shared one.
-            _activeAudioSource = merchant.GetComponent<AudioSource>();
-            if (_activeAudioSource == null) _activeAudioSource = _fallbackAudioSource;
 
             // POINT 1: consent + connectivity gate for the whole AI path.
             if (ConsentManager.Singleton == null || !ConsentManager.Singleton.IsVoiceModeAvailable())
@@ -137,6 +209,7 @@ namespace DumyatRuntime
             };
             _busy = true;
             Subscribe();
+            _voiceCapture?.OpenSession();   // warm the STT session while the opening line is generated
 
             Debug.Log($"{LogPrefix} Begin AI negotiation with '{NameOf(merchant)}' over {fish.fishType}.");
             RunOpeningFlow(merchant, fish);
@@ -150,10 +223,10 @@ namespace DumyatRuntime
             {
                 // POINT 2: deterministic opening offer + deception roll; the LLM only PHRASES it.
                 bool isDeceptive = _calculator.RollDeception(merchant.Config);
-                float opening = _calculator.GenerateOpeningOffer(merchant.Config, fish, isDeceptive);
+                float opening = Mathf.Round(_calculator.GenerateOpeningOffer(merchant.Config, fish, isDeceptive));
                 _state.currentOffer = opening;
                 _state.offerHistory.Add(opening);
-                Debug.Log($"{LogPrefix} Opening offer {opening:0.#} for {fish.fishType} (deceptive={isDeceptive}).");
+                Debug.Log($"{LogPrefix} Opening offer {opening:0} EGP for {fish.fishType} (deceptive={isDeceptive}).");
 
                 if (MerchantNegotiationLLM.Singleton == null)
                 {
@@ -163,7 +236,7 @@ namespace DumyatRuntime
                 }
 
                 MerchantTurnResult opener =
-                    await MerchantNegotiationLLM.Singleton.GenerateOpeningLine(_state, isDeceptive);
+                    await MerchantNegotiationLLM.Singleton.GenerateOpeningLine(_state, isDeceptive, DecideOpeningGreeting(merchant));
 
                 if (!_busy) return; // negotiation ended while awaiting
 
@@ -193,15 +266,16 @@ namespace DumyatRuntime
         {
             if (!_busy) return;
 
-            if (STTManager.Singleton == null || !STTManager.Singleton.HasAvailableModel)
+            EnsureVoiceCapture();
+            if (_voiceCapture == null)
             {
-                Debug.LogWarning($"{LogPrefix} No STT model available; cannot listen — scripted fallback.");
+                Debug.LogWarning($"{LogPrefix} No voice capture available; cannot listen — scripted fallback.");
                 ConnectivityLossRecovery();
                 return;
             }
 
             Debug.Log($"{LogPrefix} Listening for player response...");
-            STTManager.Singleton.StartListening();
+            _voiceCapture.BeginCapture();   // turn-based: captures one utterance, then stops
         }
 
         // --- Player turn (point 5) -------------------------------------------------
@@ -209,6 +283,27 @@ namespace DumyatRuntime
         private async void HandleTranscriptionComplete(string text)
         {
             if (!_busy) return;
+
+            _lastTranscript = text ?? "";
+
+            // BT path: just surface the transcript; the ListenForPlayer node polls TranscriptReady and
+            // the ProcessPlayerTurn node runs the LLM. The legacy async flow below is skipped.
+            if (UseBehaviorGraph)
+            {
+                Debug.Log($"{LogPrefix} Player said: \"{_lastTranscript}\"");
+                _transcriptReady = true;
+                return;
+            }
+
+            // Blank / no-speech capture (mic committing silence, or the tail of the merchant's own TTS
+            // bleeding into the mic). The player has NOT said anything, so stay SILENT and just keep
+            // listening — the merchant must never speak before the player actually says something.
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                WaitSilentlyForPlayer("empty transcript");
+                return;
+            }
+            _silentRetries = 0;   // real speech arrived — reset the silent-wait counter
 
             try
             {
@@ -264,10 +359,24 @@ namespace DumyatRuntime
 
             Debug.LogWarning($"{LogPrefix} STT failed: {reason}");
 
+            // BT path: flag the failure; the ListenForPlayer node reacts (recovery/scripted fallback
+            // are graph branches). The legacy recovery below is skipped.
+            if (UseBehaviorGraph)
+            {
+                _captureFailed = true;
+                return;
+            }
+
             if (IsConnectivityLost())
-                ConnectivityLossRecovery();   // point 6
-            else
-                RecoverWithFallbackLine();    // point 5
+            {
+                ConnectivityLossRecovery();   // point 6: genuinely offline / consent lost
+                return;
+            }
+
+            // Transient capture glitch while WAITING for the player (STT timeout, session blip, TTS
+            // echo). Do NOT speak — stay silent and re-listen. The merchant only ever talks in
+            // response to actual player speech, never a "say that again" before they've spoken.
+            WaitSilentlyForPlayer(reason);
         }
 
         // Applies the LLM's action to game state IMMEDIATELY, then plays the merchant's line in
@@ -332,6 +441,31 @@ namespace DumyatRuntime
             PlayMerchantLine(FallbackArabic, BeginListening);
         }
 
+        // While WAITING for the player (blank capture or transient STT glitch): stay SILENT and
+        // re-listen after a short backoff, so the merchant never prompts before the player has spoken.
+        // The backoff avoids tight-looping on a hard failure; after too many silent retries we quietly
+        // hand off (scripted fallback) — never a spoken line.
+        private void WaitSilentlyForPlayer(string why)
+        {
+            if (!_busy) return;
+
+            _silentRetries++;
+            if (_silentRetries > MaxSilentRetries)
+            {
+                Debug.LogWarning($"{LogPrefix} Still no player speech after {_silentRetries} silent retries " +
+                                 $"({why}) — quiet scripted fallback.");
+                ConnectivityLossRecovery();
+                return;
+            }
+
+            Debug.Log($"{LogPrefix} No player speech yet ({why}); staying silent, re-listening ({_silentRetries}).");
+            CancelInvoke(nameof(ReListen));
+            Invoke(nameof(ReListen), 0.4f);
+        }
+
+        // Invoke target (Invoke needs a parameterless instance method).
+        private void ReListen() => BeginListening();
+
         // Point 6: connectivity/voice lost mid-negotiation. End the AI flow and hand to the scripted
         // fallback so the player is never stuck waiting on a dead connection.
         private void ConnectivityLossRecovery()
@@ -385,7 +519,9 @@ namespace DumyatRuntime
             MerchantNPC merchant = _activeMerchant;
             if (merchant == null) return; // already cleaned up
 
+            CancelInvoke(nameof(ReListen));   // drop any pending silent re-listen
             Unsubscribe();
+            _voiceCapture?.CloseSession();
             _activeMerchant = null;
             _state = null;
             _activeAudioSource = null;
@@ -421,18 +557,265 @@ namespace DumyatRuntime
                 });
         }
 
+        // --- Behavior-graph steps (called by the custom nodes in Merchant/Behavior) ----------------
+        //
+        // Each Bt_* method is one node's payload. Async steps return a Task the node polls; TTS/STT
+        // steps flip a flag (LineFinished / TranscriptReady / CaptureFailed) the node polls. The graph
+        // owns the sequencing, the loop and the branches — these just do one step of work each.
+
+        /// <summary>True while the negotiation should keep looping (busy and not yet terminal).</summary>
+        public bool NegotiationOngoing => _busy && !IsTerminal;
+
+        private void ResetStepState()
+        {
+            IsTerminal = false;
+            Outcome = NegotiationPhase.Declined;
+            _pendingLine = null;
+            _lineFinished = false;
+            _transcriptReady = false;
+            _captureFailed = false;
+            _lastTranscript = "";
+            _lastResult = null;
+        }
+
+        private void SetTerminal(NegotiationPhase phase)
+        {
+            IsTerminal = true;
+            Outcome = phase;
+        }
+
+        /// <summary>Condition: is voice mode (mic + internet consent + connectivity) available?</summary>
+        public bool Bt_ConsentAvailable() =>
+            ConsentManager.Singleton != null && ConsentManager.Singleton.IsVoiceModeAvailable();
+
+        /// <summary>Setup step: resolve the fish, build the negotiation state, warm the STT session.</summary>
+        public bool Bt_Setup()
+        {
+            if (_activeMerchant == null || _activeMerchant.Config == null) return false;
+
+            FishData fish = ResolveFishToSell();
+            if (fish == null)
+            {
+                Debug.LogWarning($"{LogPrefix} No fish to sell; BT setup failed for '{NameOf(_activeMerchant)}'.");
+                return false;
+            }
+
+            _state = new NegotiationState
+            {
+                currentMerchant = _activeMerchant.Config,
+                fishBeingSold = fish,
+                state = NegotiationPhase.Approaching,
+                turnCount = 0
+            };
+            _voiceCapture?.OpenSession();
+            Debug.Log($"{LogPrefix} BT setup for '{NameOf(_activeMerchant)}' over {fish.fishType}.");
+            return true;
+        }
+
+        /// <summary>Opening step: deterministic offer + deception roll, then LLM phrasing. Stores the line.</summary>
+        public async Task<bool> Bt_RunOpeningAsync()
+        {
+            try
+            {
+                if (_state == null || MerchantNegotiationLLM.Singleton == null) return false;
+
+                bool isDeceptive = _calculator.RollDeception(_activeMerchant.Config);
+                float opening = Mathf.Round(_calculator.GenerateOpeningOffer(_activeMerchant.Config, _state.fishBeingSold, isDeceptive));
+                _state.currentOffer = opening;
+                _state.offerHistory.Add(opening);
+                Debug.Log($"{LogPrefix} Opening offer {opening:0} EGP for {_state.fishBeingSold.fishType} (deceptive={isDeceptive}).");
+
+                MerchantTurnResult opener = await MerchantNegotiationLLM.Singleton.GenerateOpeningLine(
+                    _state, isDeceptive, DecideOpeningGreeting(_activeMerchant));
+                if (!_busy || opener == null) return false;
+
+                _state.state = NegotiationPhase.Negotiating;
+                ShowSubtitle(opener.SpeechTranslationEnglish, opener.MerchantSpeech);
+                _pendingLine = opener.MerchantSpeech;
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"{LogPrefix} BT opening step error: {e}");
+                return false;
+            }
+        }
+
+        /// <summary>Speak step: start TTS of the pending line. <see cref="LineFinished"/> flips when done.</summary>
+        public void Bt_PlayPendingLine()
+        {
+            if (string.IsNullOrEmpty(_pendingLine))
+            {
+                _lineFinished = true;   // nothing queued to say — treat as immediately finished
+                return;
+            }
+            _lineFinished = false;
+            string line = _pendingLine;
+            _pendingLine = null;
+            PlayMerchantLine(line, () => _lineFinished = true);
+        }
+
+        /// <summary>Listen step: arm capture. TranscriptReady/CaptureFailed flip when the utterance resolves.</summary>
+        public void Bt_BeginListen()
+        {
+            _transcriptReady = false;
+            _captureFailed = false;
+            _lastTranscript = "";
+            BeginListening();
+        }
+
+        /// <summary>Turn step: run the player's utterance through the LLM. Stores the validated result.</summary>
+        public async Task<bool> Bt_ProcessTurnAsync()
+        {
+            try
+            {
+                _lastResult = null;
+                if (_state == null || MerchantNegotiationLLM.Singleton == null) return false;
+
+                ShowThinkingCue();
+                bool isDeceptive = _calculator.RollDeception(_state.currentMerchant);
+                MerchantTurnResult result =
+                    await MerchantNegotiationLLM.Singleton.ProcessPlayerTurn(_state, _lastTranscript, isDeceptive);
+                HideThinkingCue();
+
+                if (!_busy || result == null) return false;
+
+                _consecutiveRecoveries = 0;   // a clean turn resets the recovery counter
+                _lastResult = result;
+                return true;
+            }
+            catch (Exception e)
+            {
+                HideThinkingCue();
+                Debug.LogError($"{LogPrefix} BT process-turn error: {e}");
+                return false;
+            }
+        }
+
+        /// <summary>Apply step: apply the stored turn result; queues the next line, sets terminal on Accept/Walk.</summary>
+        public void Bt_ApplyResult()
+        {
+            if (_lastResult == null) return;   // nothing to apply
+            MerchantTurnResult result = _lastResult;
+            _lastResult = null;
+
+            _state.turnCount++;
+            Debug.Log($"{LogPrefix} Turn {_state.turnCount}: action={result.Action}" +
+                      (result.HasNewOffer ? $", newOffer={result.NewOfferAmount:0.#}" : "."));
+            ShowSubtitle(result.SpeechTranslationEnglish, result.MerchantSpeech);
+            _pendingLine = result.MerchantSpeech;
+
+            switch (result.Action)
+            {
+                case MerchantAction.RaiseOffer:
+                    _state.currentOffer = result.NewOfferAmount;
+                    _state.offerHistory.Add(_state.currentOffer);
+                    _state.state = NegotiationPhase.Negotiating;
+                    break;
+                case MerchantAction.HoldFirm:
+                case MerchantAction.ClarifyRequest:
+                    _state.state = NegotiationPhase.Negotiating;
+                    break;
+                case MerchantAction.Accept:
+                    _state.currentOffer = result.NewOfferAmount;
+                    _state.offerHistory.Add(_state.currentOffer);
+                    _state.state = NegotiationPhase.Accepted;
+                    SetTerminal(NegotiationPhase.Accepted);
+                    break;
+                case MerchantAction.WalkAway:
+                    _state.state = NegotiationPhase.WalkedAway;
+                    SetTerminal(NegotiationPhase.WalkedAway);
+                    break;
+            }
+        }
+
+        /// <summary>Recovery step: queue a generic "say that again" line, or give up (terminal) past the limit.</summary>
+        public void Bt_RecoverTurn()
+        {
+            _consecutiveRecoveries++;
+            if (_consecutiveRecoveries > MaxConsecutiveRecoveries || IsConnectivityLost())
+            {
+                Debug.LogWarning($"{LogPrefix} Recovery exhausted/connectivity lost — ending negotiation.");
+                SetTerminal(NegotiationPhase.Declined);
+                _pendingLine = null;
+                return;
+            }
+            Debug.LogWarning($"{LogPrefix} Recoverable failure — queueing fallback line (attempt {_consecutiveRecoveries}).");
+            ShowSubtitle(FallbackEnglish, FallbackArabic);
+            _pendingLine = FallbackArabic;
+        }
+
+        /// <summary>Resolve step: record the outcome and tear down (notifies the spawner).</summary>
+        public void Bt_Resolve() => EndWithStat(Outcome);
+
+        /// <summary>Fallback step: hand to the scripted fallback + tear down (early-failure branch).</summary>
+        public void Bt_ScriptedFallback() =>
+            TriggerScriptedFallback(_activeMerchant, _state != null ? _state.fishBeingSold : null);
+
         // --- Helpers / stubs -------------------------------------------------------
+
+        // Decides whether the merchant's opening line should include a greeting, and records that a
+        // conversation has started. First conversation with this merchant: always greet (Egyptian
+        // style). Afterwards: greet only GreetingChanceAfterFirst of the time.
+        private bool DecideOpeningGreeting(MerchantNPC merchant)
+        {
+            if (merchant == null) return true;
+
+            bool greet = merchant.IsFirstConversation
+                         || UnityEngine.Random.value < GreetingChanceAfterFirst;
+            merchant.RegisterConversation();
+            return greet;
+        }
 
         private FishData ResolveFishToSell()
         {
-            // STUB: until the inventory provides the caught fish, use a debug fish from the Inspector.
-            // TODO: query the player's inventory (e.g. InventorySystem.GetFishItems()) and map to FishData.
+            // Prefer an IFishInventory (real inventory later, random test provider now); fall back to
+            // the Inspector debug fish so the flow is still exercisable without one.
+            IFishInventory inventory = ResolveFishInventory();
+            if (inventory != null && inventory.HasFish
+                && inventory.TryGetFishToSell(out FishData fish)
+                && fish != null && !string.IsNullOrWhiteSpace(fish.fishType))
+                return fish;
+
             if (_debugFish == null || string.IsNullOrWhiteSpace(_debugFish.fishType))
             {
-                Debug.LogWarning($"{LogPrefix} Debug fish is unset and inventory is not wired yet.");
+                Debug.LogWarning($"{LogPrefix} No fish inventory available and debug fish is unset.");
                 return null;
             }
             return _debugFish;
+        }
+
+        // Resolves an IFishInventory: the serialized reference, else any component in the scene that
+        // implements it. Cached after the first successful resolve.
+        private IFishInventory ResolveFishInventory()
+        {
+            if (_fishInventory != null) return _fishInventory;
+
+            if (_fishInventorySource is IFishInventory fromField)
+            {
+                _fishInventory = fromField;
+                return _fishInventory;
+            }
+
+            foreach (MonoBehaviour mb in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            {
+                if (mb is IFishInventory inv)
+                {
+                    _fishInventory = inv;
+                    return _fishInventory;
+                }
+            }
+            return null;
+        }
+
+        // Resolves (or creates) the shared voice-capture controller and puts it in turn-based mode.
+        private void EnsureVoiceCapture()
+        {
+            if (_voiceCapture == null)
+                _voiceCapture = FindFirstObjectByType<VoiceCaptureController>();
+            if (_voiceCapture == null)
+                _voiceCapture = gameObject.AddComponent<VoiceCaptureController>();
+            _voiceCapture.AutoReArm = false;   // negotiation is turn-based: one utterance per BeginCapture
         }
 
         private bool IsConnectivityLost()
@@ -444,19 +827,21 @@ namespace DumyatRuntime
 
         private void Subscribe()
         {
-            if (_subscribed || STTManager.Singleton == null) return;
-            STTManager.Singleton.OnTranscriptionComplete += HandleTranscriptionComplete;
-            STTManager.Singleton.OnTranscriptionFailed += HandleTranscriptionFailed;
+            if (_subscribed) return;
+            EnsureVoiceCapture();
+            if (_voiceCapture == null) return;
+            _voiceCapture.OnTranscription += HandleTranscriptionComplete;
+            _voiceCapture.OnCaptureFailed += HandleTranscriptionFailed;
             _subscribed = true;
         }
 
         private void Unsubscribe()
         {
             if (!_subscribed) return;
-            if (STTManager.Singleton != null)
+            if (_voiceCapture != null)
             {
-                STTManager.Singleton.OnTranscriptionComplete -= HandleTranscriptionComplete;
-                STTManager.Singleton.OnTranscriptionFailed -= HandleTranscriptionFailed;
+                _voiceCapture.OnTranscription -= HandleTranscriptionComplete;
+                _voiceCapture.OnCaptureFailed -= HandleTranscriptionFailed;
             }
             _subscribed = false;
         }
@@ -465,6 +850,9 @@ namespace DumyatRuntime
         {
             // STUB: UI team hooks subtitle display here. Called immediately, independent of audio.
             Debug.Log($"{LogPrefix} [Subtitle] {english}  |  (AR) {arabic}");
+            // Also record the merchant's Arabic line to the shared UTF-8 log so the whole conversation
+            // (merchant + player transcripts) is reviewable outside the Unity Console.
+            _voiceCapture?.AppendLog("MERCHANT", $"{arabic}  |  (EN) {english}");
         }
 
         private void ShowThinkingCue()

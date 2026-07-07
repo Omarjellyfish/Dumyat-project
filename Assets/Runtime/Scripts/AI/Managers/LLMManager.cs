@@ -15,11 +15,11 @@ namespace DumyatRuntime
         /// Generates text for <paramref name="prompt"/>, trying each available model in priority
         /// order until one succeeds. Returns null if every model is unavailable or fails.
         /// </summary>
-        public async Task<string> GenerateTextAsync(string prompt)
+        public async Task<string> GenerateTextAsync(string prompt, bool jsonObject = false)
         {
             foreach (ILLMModel model in AvailableModels())
             {
-                string result = await model.GenerateTextAsync(prompt);
+                string result = await model.GenerateTextAsync(prompt, jsonObject);
                 if (!string.IsNullOrEmpty(result)) return result;
                 Debug.LogWarning($"LLMManager: model '{model.ModelName}' returned no result; trying next.");
             }

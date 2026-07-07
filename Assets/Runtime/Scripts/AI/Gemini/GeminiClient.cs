@@ -58,10 +58,10 @@ namespace DumyatRuntime
         /// Awaitable text generation for <see cref="LLMManager"/>: bridges the callback-based
         /// <see cref="SendPrompt"/> to a Task, yielding null on failure so the manager can fall back.
         /// </summary>
-        public Task<string> GenerateTextAsync(string prompt)
+        public Task<string> GenerateTextAsync(string prompt, bool jsonObject = false)
         {
             var tcs = new TaskCompletionSource<string>();
-            SendPrompt(prompt, reply => tcs.TrySetResult(reply), _ => tcs.TrySetResult(null));
+            SendPrompt(prompt, jsonObject, reply => tcs.TrySetResult(reply), _ => tcs.TrySetResult(null));
             return tcs.Task;
         }
 
@@ -92,6 +92,14 @@ namespace DumyatRuntime
 
         /// <inheritdoc/>
         public void SendPrompt(string prompt, Action<string> onSuccess, Action<string> onFailure = null)
+            => SendPrompt(prompt, jsonObject: false, onSuccess, onFailure);
+
+        /// <summary>
+        /// As <see cref="SendPrompt(string,Action{string},Action{string})"/>, but when
+        /// <paramref name="jsonObject"/> is true asks Gemini to return a single JSON object
+        /// (<c>responseMimeType = application/json</c>).
+        /// </summary>
+        public void SendPrompt(string prompt, bool jsonObject, Action<string> onSuccess, Action<string> onFailure = null)
         {
             if (string.IsNullOrWhiteSpace(prompt))
             {
@@ -107,13 +115,13 @@ namespace DumyatRuntime
                 return;
             }
 
-            StartCoroutine(SendPromptRoutine(prompt, onSuccess, onFailure));
+            StartCoroutine(SendPromptRoutine(prompt, jsonObject, onSuccess, onFailure));
         }
 
-        private IEnumerator SendPromptRoutine(string prompt, Action<string> onSuccess, Action<string> onFailure)
+        private IEnumerator SendPromptRoutine(string prompt, bool jsonObject, Action<string> onSuccess, Action<string> onFailure)
         {
             string url = string.Format(EndpointFormat, _config.ModelName);
-            byte[] body = Encoding.UTF8.GetBytes(BuildRequestJson(prompt));
+            byte[] body = Encoding.UTF8.GetBytes(BuildRequestJson(prompt, jsonObject));
             int totalAttempts = _maxRetries + 1;
 
             for (int attempt = 1; attempt <= totalAttempts; attempt++)
@@ -155,12 +163,13 @@ namespace DumyatRuntime
             onFailure?.Invoke(_fallbackMessage);
         }
 
-        private static string BuildRequestJson(string prompt)
+        private static string BuildRequestJson(string prompt, bool jsonObject)
         {
             GeminiRequest payload = new GeminiRequest();
             GeminiContent content = new GeminiContent();
             content.parts.Add(new GeminiPart { text = prompt });
             payload.contents.Add(content);
+            payload.generationConfig.responseMimeType = jsonObject ? "application/json" : "text/plain";
             return JsonUtility.ToJson(payload);
         }
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -19,8 +18,7 @@ namespace DumyatRuntime
     ///
     /// The MICROPHONE is a separate toggle (<see cref="SetMicrophoneEnabled"/> /
     /// <see cref="MicrophoneEnabled"/>). Enabling it captures + streams one utterance; disabling it
-    /// commits the utterance for transcription and plays the captured audio back locally (so you can
-    /// judge recording quality). The session stays open the whole time.
+    /// commits the utterance for transcription. The session stays open the whole time.
     ///
     /// GATING: capture only ever starts when <see cref="ConsentManager.IsVoiceModeAvailable"/> is
     /// true, and the whole session is torn down if consent is revoked mid-session. The negotiation
@@ -32,13 +30,12 @@ namespace DumyatRuntime
     /// TRANSPORT: System.Net.WebSockets.ClientWebSocket (built into .NET — no extra package).
     /// Works in the Editor, on Mono/IL2CPP Standalone and Android. It does NOT work on WebGL.
     /// </summary>
-    public class ElevenLabsScribeClient : MonoBehaviour, IManager, ISTTModel
+    public class ElevenLabsScribeClient : MonoBehaviour, IManager, ISTTModel, IVoiceCaptureSource
     {
         public static ElevenLabsScribeClient Singleton { get; private set; }
 
         // --- ElevenLabs Scribe v2 Realtime protocol constants ----------------------
         private const string Endpoint = "wss://api.elevenlabs.io/v1/speech-to-text/realtime";
-        private const string ModelId = "scribe_v2_realtime";
         private const int RequiredSampleRate = 16000;   // matches audio_format=pcm_16000
 
         // Server message_type values we react to.
@@ -53,18 +50,6 @@ namespace DumyatRuntime
         [Tooltip("ElevenLabs credentials. If empty it is loaded from Resources/AI/Secrets/ElevenLabsConfig.")]
         [SerializeField] private ElevenLabsConfig _config;
 
-        // LOCALE — CRITICAL (see docs/MERCHANT_CONTEXT.md): the player speaks Egyptian Arabic,
-        // not MSA. Set this to the code that best recognises Egyptian dialect for your account and
-        // TEST it on real dialect audio; leaving it empty lets Scribe auto-detect the language.
-        [Tooltip("Scribe language_code. MUST be configured/tested for Egyptian Arabic, not " +
-                 "generic Arabic/MSA (see docs/MERCHANT_CONTEXT.md). Empty = auto-detect.")]
-        [SerializeField] private string _languageCode = "";
-
-        [Header("Microphone Device")]
-        [Tooltip("Preferred microphone. Empty = system default (first connected device). The Inspector " +
-                 "shows a live list that updates as microphones are connected/disconnected.")]
-        [SerializeField] private string _microphoneDevice = "";
-
         [Header("Capture Mode")]
         [Tooltip("If true, automatically enables the microphone whenever voice mode becomes available " +
                  "(otherwise call SetMicrophoneEnabled() — push-to-talk / manual).")]
@@ -75,13 +60,6 @@ namespace DumyatRuntime
         [SerializeField, Min(0.1f)] private float _silenceThresholdSeconds = 1.2f;
         [Tooltip("Peak sample amplitude (0-1) below which audio is considered silence.")]
         [SerializeField, Range(0f, 0.5f)] private float _silenceAmplitudeThreshold = 0.02f;
-
-        [Header("Playback")]
-        [Tooltip("AudioSource used to play the captured utterance back when the mic is disabled. " +
-                 "Created automatically if left empty.")]
-        [SerializeField] private AudioSource _playbackSource;
-        [Tooltip("Play the recorded utterance locally when the microphone is disabled.")]
-        [SerializeField] private bool _playbackOnMicDisable = true;
 
         [Header("Reliability")]
         [Tooltip("Seconds to wait for the WebSocket to connect before failing.")]
@@ -186,6 +164,9 @@ namespace DumyatRuntime
         private int _sessionEpoch;
 
         // --- Microphone / utterance state (main-thread only) ---
+        // Preferred device, set via the MicrophoneDevice property by the VoiceCaptureController
+        // (which now owns the Inspector field). Empty = system default.
+        private string _microphoneDevice = string.Empty;
         private string _micDevice;
         private AudioClip _micClip;
         private float[] _readBuffer;
@@ -195,7 +176,6 @@ namespace DumyatRuntime
         private float _lastVoiceTime;
         private int _captureSampleRate;
         private int _streamedSampleCount;   // samples streamed to the server for the current utterance
-        private readonly List<float> _recordedSamples = new List<float>();
 
         // --- Per-utterance finalization / timeout state (main-thread only) ---
         private bool _awaitingFinal;
@@ -291,8 +271,8 @@ namespace DumyatRuntime
 
         /// <summary>
         /// Toggles the microphone. Enabling auto-opens the session (if needed) and begins capturing
-        /// one utterance; disabling commits the utterance for transcription, plays the captured audio
-        /// back locally, and LEAVES THE SESSION OPEN for the next utterance.
+        /// one utterance; disabling commits the utterance for transcription and LEAVES THE SESSION
+        /// OPEN for the next utterance.
         /// </summary>
         public void SetMicrophoneEnabled(bool enabled)
         {
@@ -322,7 +302,6 @@ namespace DumyatRuntime
             _lastVoiceTime = Time.unscaledTime;
             _awaitingFinal = false;
             _streamedSampleCount = 0;
-            _recordedSamples.Clear();
             _captureSampleRate = _micClip.frequency;
             MicrophoneEnabled = true;
 
@@ -344,9 +323,9 @@ namespace DumyatRuntime
             FinalizeUtterance(keepMicOpen: false);
         }
 
-        // Commits the current utterance (if any audio was streamed) and plays the capture back.
-        // In voice-activity mode this fires on silence and leaves the mic OPEN (armed) for the next
-        // utterance; on explicit mic-off the mic is already stopped.
+        // Commits the current utterance (if any audio was streamed). In voice-activity mode this fires
+        // on silence and leaves the mic OPEN (armed) for the next utterance; on explicit mic-off the
+        // mic is already stopped.
         private void FinalizeUtterance(bool keepMicOpen)
         {
             int rate = _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate;
@@ -373,9 +352,6 @@ namespace DumyatRuntime
 
             _speechStarted = false;
             _streamedSampleCount = 0;
-
-            if (_playbackOnMicDisable) PlayRecordedAudio();
-            _recordedSamples.Clear();
         }
 
         // --- ISTTModel compatibility (delegate to the mic toggle) ------------------
@@ -496,14 +472,12 @@ namespace DumyatRuntime
             bool voiced = peak >= _silenceAmplitudeThreshold;
             bool sendChunk = !AutoStopOnSilence || _speechStarted || voiced;
 
-            // Stream AND record only what passes the gate, so the local playback track mirrors
-            // exactly what the STT model receives — no leading/idle silence, just the utterance.
+            // Stream only what passes the gate — no leading/idle silence, just the utterance.
             // (Skip while awaiting the final result after a commit.)
             if (!_awaitingFinal && sendChunk)
             {
                 EnqueueAudioChunk(FloatsToPcm16(chunk), commit: false);
                 _streamedSampleCount += chunk.Length;
-                _recordedSamples.AddRange(chunk);
             }
 
             // Voice-activity segmentation: capture "starts" on the first voiced chunk and "stops"
@@ -522,32 +496,6 @@ namespace DumyatRuntime
                 Log($"Silence for {_silenceThresholdSeconds}s after speech — committing (mic stays open).");
                 FinalizeUtterance(keepMicOpen: true);
             }
-        }
-
-        // --- Local playback of the captured utterance ------------------------------
-
-        private void PlayRecordedAudio()
-        {
-            if (_recordedSamples.Count == 0)
-            {
-                Log("No recorded audio to play back.");
-                return;
-            }
-
-            if (_playbackSource == null)
-            {
-                _playbackSource = GetComponent<AudioSource>();
-                if (_playbackSource == null) _playbackSource = gameObject.AddComponent<AudioSource>();
-                _playbackSource.playOnAwake = false;
-            }
-
-            int rate = _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate;
-            var clip = AudioClip.Create("STT_Recording", _recordedSamples.Count, 1, rate, false);
-            clip.SetData(_recordedSamples.ToArray(), 0);
-            _playbackSource.clip = clip;
-            _playbackSource.Play();
-            Log($"Playing back recorded audio ({_recordedSamples.Count} samples @ {rate} Hz, " +
-                $"{_recordedSamples.Count / (float)rate:F2}s).");
         }
 
         private static byte[] FloatsToPcm16(float[] samples)
@@ -637,12 +585,18 @@ namespace DumyatRuntime
 
         private string BuildConnectUrl()
         {
+            // Model ID comes from the ElevenLabsConfig SO (falls back to the default if unconfigured).
+            string modelId = _config != null ? _config.SttModelId : ElevenLabsConfig.DefaultSttModelId;
+
+            // Language code is a manager-level setting now (STTManager), not per-client.
+            string languageCode = STTManager.Singleton != null ? STTManager.Singleton.LanguageCode : null;
+
             var sb = new StringBuilder(Endpoint);
-            sb.Append("?model_id=").Append(ModelId);
+            sb.Append("?model_id=").Append(modelId);
             sb.Append("&audio_format=pcm_16000");
             sb.Append("&commit_strategy=manual");
-            if (!string.IsNullOrWhiteSpace(_languageCode))
-                sb.Append("&language_code=").Append(Uri.EscapeDataString(_languageCode));
+            if (!string.IsNullOrWhiteSpace(languageCode))
+                sb.Append("&language_code=").Append(Uri.EscapeDataString(languageCode));
             return sb.ToString();
         }
 
@@ -704,6 +658,12 @@ namespace DumyatRuntime
             try { msg = JsonUtility.FromJson<ScribeServerMessage>(json); }
             catch { return; }
             if (msg == null || string.IsNullOrEmpty(msg.message_type)) return;
+
+            // Diagnostic: surface every inbound message (type + any text/error) when verbose logging is
+            // on, so a stuck utterance (e.g. only partials, no committed_transcript) is visible.
+            Log($"◄ server '{msg.message_type}'" +
+                (string.IsNullOrEmpty(msg.text) ? "" : $" text=\"{msg.text}\"") +
+                (string.IsNullOrEmpty(msg.error) ? "" : $" error=\"{msg.error}\""));
 
             switch (msg.message_type)
             {
