@@ -5370,7 +5370,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &208860352
 Transform:
   m_ObjectHideFlags: 0
@@ -5601,8 +5601,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle:
-  - {fileID: 726995770}
-  playerTag: Player
+  - {fileID: 1383601577}
+  targetTag: MainCamera
 --- !u!65 &236416817
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5618,7 +5618,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -6151,7 +6151,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle:
   - {fileID: 726995770}
-  playerTag: Player
+  targetTag: MainCamera
 --- !u!65 &242087692
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6167,7 +6167,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -7275,6 +7275,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 220952032819303264, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
+      propertyPath: objectToRotate
+      value: 
+      objectReference: {fileID: 1707165069}
     - target: {fileID: 2065323000237329680, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -7285,7 +7289,7 @@ PrefabInstance:
       objectReference: {fileID: 268434292}
     - target: {fileID: 2358456480314995479, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_VersionIndex
-      value: 4549
+      value: 4564
       objectReference: {fileID: 0}
     - target: {fileID: 2358456480314995479, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Positions.Array.data[0].x
@@ -7566,6 +7570,10 @@ PrefabInstance:
     - target: {fileID: 7512224400666506752, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Center.z
       value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7512224400666506752, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8995674411931745625, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Name
@@ -13411,6 +13419,184 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 518800090}
   m_CullTransparentMesh: 1
+--- !u!43 &530012032
+Mesh:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: pb_Mesh-289036
+  serializedVersion: 12
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 36
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 24
+    localAABB:
+      m_Center: {x: 1.75, y: 1.75, z: 2}
+      m_Extent: {x: 3.75, y: 2.5, z: 2}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes: 
+  m_RootBoneNameHash: 0
+  m_BonesAABB: []
+  m_VariableBoneCountWeights:
+    m_Data: 
+  m_MeshCompression: 0
+  m_IsReadable: 1
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
+  m_VertexData:
+    serializedVersion: 3
+    m_VertexCount: 24
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 12
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 24
+      format: 0
+      dimension: 4
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 40
+      format: 0
+      dimension: 2
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 1152
+    _typelessdata: 000000c0ffff3fbf0000804000000000000000000000803f000080bf0000000000000000000080bf0000f040000080c00000b040ffff3fbf0000804000000000000000000000803f000080bf0000000000000000000080bf00000000000080c0000000c0000088400000804000000000000000000000803f000080bf0000000000000000000080bf0000f0400000803f0000b040000088400000804000000000000000000000803f000080bf0000000000000000000080bf000000000000803f0000b040ffff3fbf000080400000803f000000000000000000000000000000000000803f000080bf00008040000080c00000b040ffff3fbf000000000000803f000000000000000000000000000000000000803f000080bf00000000000080c00000b04000008840000080400000803f000000000000000000000000000000000000803f000080bf000080400000803f0000b04000008840000000000000803f000000000000000000000000000000000000803f000080bf000000000000803f0000b040ffff3fbf000000000000000000000000000080bf0000803f0000000000000000000080bf0000f040000080c0000000c0ffff3fbf000000000000000000000000000080bf0000803f0000000000000000000080bf00000000000080c00000b04000008840000000000000000000000000000080bf0000803f0000000000000000000080bf0000f0400000803f000000c000008840000000000000000000000000000080bf0000803f0000000000000000000080bf000000000000803f000000c0ffff3fbf00000000000080bf00000000000000000000000000000000000080bf000080bf00008040000080c0000000c0ffff3fbf00008040000080bf00000000000000000000000000000000000080bf000080bf00000000000080c0000000c00000884000000000000080bf00000000000000000000000000000000000080bf000080bf000080400000803f000000c00000884000008040000080bf00000000000000000000000000000000000080bf000080bf000000000000803f000000c00000884000008040000000000000803f000000000000803f0000000000000000000080bf000000000000803f0000b0400000884000008040000000000000803f000000000000803f0000000000000000000080bf0000f0400000803f000000c00000884000000000000000000000803f000000000000803f0000000000000000000080bf00000000000040c00000b0400000884000000000000000000000803f000000000000803f0000000000000000000080bf0000f040000040c0000000c0ffff3fbf0000000000000000000080bf00000000000080bf0000000000000000000080bf0000f040000040c00000b040ffff3fbf0000000000000000000080bf00000000000080bf0000000000000000000080bf00000000000040c0000000c0ffff3fbf0000804000000000000080bf00000000000080bf0000000000000000000080bf0000f0400000803f0000b040ffff3fbf0000804000000000000080bf00000000000080bf0000000000000000000080bf000000000000803f
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: 1.75, y: 1.75, z: 2}
+    m_Extent: {x: 3.75, y: 2.5, z: 2}
+  m_MeshUsageFlags: 0
+  m_CookingOptions: 30
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
+  m_MeshOptimizationFlags: 1
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
 --- !u!43 &536098636
 Mesh:
   m_ObjectHideFlags: 0
@@ -17316,7 +17502,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &726995771
 Transform:
   m_ObjectHideFlags: 0
@@ -26043,6 +26229,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: XR Device Simulator
       objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -29617,7 +29807,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle:
   - {fileID: 726995770}
-  playerTag: Player
+  targetTag: MainCamera
 --- !u!65 &1065281443
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -29633,7 +29823,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -31282,184 +31472,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3882282834097656955, guid: 00b918a9b34951a4ca4f7f8b196544b3, type: 3}
   m_PrefabInstance: {fileID: 1111850870}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &1128004315
-Mesh:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-289036
-  serializedVersion: 12
-  m_SubMeshes:
-  - serializedVersion: 2
-    firstByte: 0
-    indexCount: 36
-    topology: 0
-    baseVertex: 0
-    firstVertex: 0
-    vertexCount: 24
-    localAABB:
-      m_Center: {x: 1.75, y: 1.75, z: 2}
-      m_Extent: {x: 3.75, y: 2.5, z: 2}
-  m_Shapes:
-    vertices: []
-    shapes: []
-    channels: []
-    fullWeights: []
-  m_BindPose: []
-  m_BoneNameHashes: 
-  m_RootBoneNameHash: 0
-  m_BonesAABB: []
-  m_VariableBoneCountWeights:
-    m_Data: 
-  m_MeshCompression: 0
-  m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
-  m_IndexFormat: 0
-  m_IndexBuffer: 000001000200010003000200040005000600050007000600080009000a0009000b000a000c000d000e000d000f000e00100011001200110013001200140015001600150017001600
-  m_VertexData:
-    serializedVersion: 3
-    m_VertexCount: 24
-    m_Channels:
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 12
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 24
-      format: 0
-      dimension: 4
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 40
-      format: 0
-      dimension: 2
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    m_DataSize: 1152
-    _typelessdata: 000000c0ffff3fbf0000804000000000000000000000803f000080bf0000000000000000000080bf0000f040000080c00000b040ffff3fbf0000804000000000000000000000803f000080bf0000000000000000000080bf00000000000080c0000000c0000088400000804000000000000000000000803f000080bf0000000000000000000080bf0000f0400000803f0000b040000088400000804000000000000000000000803f000080bf0000000000000000000080bf000000000000803f0000b040ffff3fbf000080400000803f000000000000000000000000000000000000803f000080bf00008040000080c00000b040ffff3fbf000000000000803f000000000000000000000000000000000000803f000080bf00000000000080c00000b04000008840000080400000803f000000000000000000000000000000000000803f000080bf000080400000803f0000b04000008840000000000000803f000000000000000000000000000000000000803f000080bf000000000000803f0000b040ffff3fbf000000000000000000000000000080bf0000803f0000000000000000000080bf0000f040000080c0000000c0ffff3fbf000000000000000000000000000080bf0000803f0000000000000000000080bf00000000000080c00000b04000008840000000000000000000000000000080bf0000803f0000000000000000000080bf0000f0400000803f000000c000008840000000000000000000000000000080bf0000803f0000000000000000000080bf000000000000803f000000c0ffff3fbf00000000000080bf00000000000000000000000000000000000080bf000080bf00008040000080c0000000c0ffff3fbf00008040000080bf00000000000000000000000000000000000080bf000080bf00000000000080c0000000c00000884000000000000080bf00000000000000000000000000000000000080bf000080bf000080400000803f000000c00000884000008040000080bf00000000000000000000000000000000000080bf000080bf000000000000803f000000c00000884000008040000000000000803f000000000000803f0000000000000000000080bf000000000000803f0000b0400000884000008040000000000000803f000000000000803f0000000000000000000080bf0000f0400000803f000000c00000884000000000000000000000803f000000000000803f0000000000000000000080bf00000000000040c00000b0400000884000000000000000000000803f000000000000803f0000000000000000000080bf0000f040000040c0000000c0ffff3fbf0000000000000000000080bf00000000000080bf0000000000000000000080bf0000f040000040c00000b040ffff3fbf0000000000000000000080bf00000000000080bf0000000000000000000080bf00000000000040c0000000c0ffff3fbf0000804000000000000080bf00000000000080bf0000000000000000000080bf0000f0400000803f0000b040ffff3fbf0000804000000000000080bf00000000000080bf0000000000000000000080bf000000000000803f
-  m_CompressedMesh:
-    m_Vertices:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UV:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Normals:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Tangents:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Weights:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_NormalSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_TangentSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_FloatColors:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_BoneIndices:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Triangles:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UVInfo: 0
-  m_LocalAABB:
-    m_Center: {x: 1.75, y: 1.75, z: 2}
-    m_Extent: {x: 3.75, y: 2.5, z: 2}
-  m_MeshUsageFlags: 0
-  m_CookingOptions: 30
-  m_BakedConvexCollisionMesh: 
-  m_BakedTriangleCollisionMesh: 
-  'm_MeshMetrics[0]': 1
-  'm_MeshMetrics[1]': 1
-  m_MeshOptimizationFlags: 1
-  m_StreamData:
-    serializedVersion: 2
-    offset: 0
-    size: 0
-    path: 
-  m_MeshLodInfo:
-    serializedVersion: 2
-    m_LodSelectionCurve:
-      serializedVersion: 1
-      m_LodSlope: 0
-      m_LodBias: 0
-    m_NumLevels: 1
-    m_SubMeshes:
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
 --- !u!1 &1130966636
 GameObject:
   m_ObjectHideFlags: 0
@@ -32008,7 +32020,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1157388603
 Transform:
   m_ObjectHideFlags: 0
@@ -32037,7 +32049,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5557786963654372972, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 11.500001
+      value: 1.000041
       objectReference: {fileID: 0}
     - target: {fileID: 5557786963654372972, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
       propertyPath: m_LocalPosition.y
@@ -32045,7 +32057,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5557786963654372972, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 51.09
+      value: 9.089989
       objectReference: {fileID: 0}
     - target: {fileID: 5557786963654372972, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
       propertyPath: m_LocalRotation.w
@@ -32079,6 +32091,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: XR Origin (XR Rig) With Performance Monitor
       objectReference: {fileID: 0}
+    - target: {fileID: 8352772705956795355, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 8975283296502209427, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
       propertyPath: m_RenderPostProcessing
       value: 1
@@ -32087,6 +32103,12 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 64732628704994589, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1672998994}
+    - targetCorrespondingSourceObject: {fileID: 64732628704994589, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1672998993}
     - targetCorrespondingSourceObject: {fileID: 8586557298969564906, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
@@ -32305,7 +32327,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle:
   - {fileID: 726995770}
-  playerTag: Player
+  targetTag: MainCamera
 --- !u!65 &1217043565
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -32321,7 +32343,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -36106,7 +36128,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1383601578
 Transform:
   m_ObjectHideFlags: 0
@@ -38375,7 +38397,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle:
   - {fileID: 726995770}
-  playerTag: Player
+  targetTag: MainCamera
 --- !u!65 &1579017608
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -38391,7 +38413,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -40265,6 +40287,59 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7291944130162731977, guid: 1095cff70a304714fadf786453eaa340, type: 3}
   m_PrefabInstance: {fileID: 1671050823}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1672998987 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 64732628704994589, guid: 3d8ff7759400cac4580f907383934ff6, type: 3}
+  m_PrefabInstance: {fileID: 1167423792}
+  m_PrefabAsset: {fileID: 0}
+--- !u!54 &1672998993
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1672998987}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!135 &1672998994
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1672998987}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.15
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!43 &1677828463
 Mesh:
   m_ObjectHideFlags: 0
@@ -41020,7 +41095,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle: []
-  playerTag: Player
+  targetTag: MainCamera
 --- !u!23 &1705253433
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -41341,7 +41416,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -41438,13 +41513,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1707165067}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.38104117, y: -0.23782964, z: 0.10209965, w: 0.8875925}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0.35355338, y: 0.61237246, z: -0.35355347, w: 0.61237246}
+  m_LocalPosition: {x: 0.0000011920928, y: 17.5, z: 33.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 46.467, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 60, y: 90, z: 0}
 --- !u!114 &1707165070
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46333,7 +46408,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle:
   - {fileID: 726995770}
-  playerTag: Player
+  targetTag: MainCamera
 --- !u!65 &1893024002
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -46349,7 +46424,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -49029,8 +49104,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle:
-  - {fileID: 726995770}
-  playerTag: Player
+  - {fileID: 208860351}
+  targetTag: MainCamera
 --- !u!65 &2000109771
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -49046,7 +49121,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -49907,6 +49982,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 220952032819303264, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
+      propertyPath: objectToRotate
+      value: 
+      objectReference: {fileID: 1707165069}
     - target: {fileID: 2065323000237329680, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -49917,7 +49996,7 @@ PrefabInstance:
       objectReference: {fileID: 477259212}
     - target: {fileID: 2358456480314995479, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_VersionIndex
-      value: 4003
+      value: 4018
       objectReference: {fileID: 0}
     - target: {fileID: 2358456480314995479, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Positions.Array.data[0].x
@@ -50138,6 +50217,10 @@ PrefabInstance:
     - target: {fileID: 7512224400666506752, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Center.z
       value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7512224400666506752, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8995674411931745625, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Name
@@ -52391,8 +52474,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
   objectsToToggle:
-  - {fileID: 726995770}
-  playerTag: Player
+  - {fileID: 1157388602}
+  targetTag: MainCamera
 --- !u!65 &2110129393
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -52408,7 +52491,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -55351,17 +55434,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 220952032819303264, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
+      propertyPath: objectToRotate
+      value: 
+      objectReference: {fileID: 1707165069}
     - target: {fileID: 2065323000237329680, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 1128004315}
+      objectReference: {fileID: 530012032}
     - target: {fileID: 2358456480314995479, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 1128004315}
+      objectReference: {fileID: 530012032}
     - target: {fileID: 2358456480314995479, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_VersionIndex
-      value: 3704
+      value: 3719
       objectReference: {fileID: 0}
     - target: {fileID: 3081599162248883673, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: 'objectsToToggle.Array.data[0]'
@@ -55406,6 +55493,10 @@ PrefabInstance:
     - target: {fileID: 5470301408380643254, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7512224400666506752, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8995674411931745625, guid: feb98ac05df315047a2ba52ef62bb456, type: 3}
       propertyPath: m_Name

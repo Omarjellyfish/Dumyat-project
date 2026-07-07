@@ -1,50 +1,68 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DumyatRuntime
+public class ZoneTriggerHandler : MonoBehaviour
 {
-    public class ZoneTriggerHandler : MonoBehaviour
+    [Header("Target Objects")]
+    [SerializeField] private List<GameObject> objectsToToggle = new List<GameObject>();
+
+    [Header("Collision Settings")]
+    [Tooltip("Matches the tag on your XR Origin's Main Camera")]
+    [SerializeField] private string targetTag = "MainCamera";
+
+    void Start()
     {
-        [Header("Target Objects")]
-        [SerializeField] private List<GameObject> objectsToToggle = new List<GameObject>();
-
-        [Header("Collision Settings")]
-        [Tooltip("Specify the tag of your VR player object (e.g., 'Player')")]
-        [SerializeField] private string playerTag = "Player";
-
-        private void OnEnable()
+        SetObjectsState(false); // Ensure objects are disabled when the script is enabled
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        // 1. This tells us if ANY physics collision is happening
+        Debug.Log("Something entered the trigger zone: " + other.name); 
+        
+        if (other.CompareTag(targetTag))
         {
-            // Ensure all objects are inactive at the start
+            // 2. This tells us if the tag check actually passed
+            Debug.Log("Success! MainCamera detected. Toggling objects ON."); 
+            SetObjectsState(true);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag(targetTag))
+        {
+            Debug.Log("MainCamera left. Toggling objects OFF.");
             SetObjectsState(false);
         }
+    }   
 
-        // Triggered when the player enters the zone
-        private void OnTriggerEnter(Collider other)
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag(targetTag))
         {
-            if (other.CompareTag(playerTag))
-            {
-                SetObjectsState(true);
-            }
+            Debug.Log("MainCamera is still in the trigger zone.");
         }
+    }
 
-        // Triggered when the player leaves the zone
-        private void OnTriggerExit(Collider other)
-        {
-            if (other.CompareTag(playerTag))
-            {
-                SetObjectsState(false);
-            }
-        }
+    [ContextMenu("Enable Objects")]
+    private void enableObjects()
+    {
+        SetObjectsState(true);
+    }
 
-        // Helper method to loop through the list and change active state
-        private void SetObjectsState(bool state)
+    [ContextMenu("Disable Objects")]
+    private void disableObjects()
+    {
+        SetObjectsState(false);
+    }
+
+    private void SetObjectsState(bool state)
+    {
+        foreach (GameObject obj in objectsToToggle)
         {
-            foreach (GameObject obj in objectsToToggle)
+            if (obj != null)
             {
-                if (obj != null)
-                {
-                    obj.SetActive(state);
-                }
+                obj.SetActive(state);
             }
         }
     }

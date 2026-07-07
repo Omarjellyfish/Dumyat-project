@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 2358456480314995479}
   - component: {fileID: 5712605695069776789}
   - component: {fileID: 1986538383230332492}
+  - component: {fileID: 220952032819303264}
   - component: {fileID: 2065323000237329680}
   - component: {fileID: 7512224400666506752}
-  - component: {fileID: 3081599162248883673}
   m_Layer: 0
   m_Name: Trigger Sky Shader Rotation
   m_TagString: Untagged
@@ -249,7 +249,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 0}
-  m_VersionIndex: 3701
+  m_VersionIndex: 3704
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
@@ -327,6 +327,22 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &220952032819303264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8995674411931745625}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0c933a22f41acf4aa98eb85bdbde578, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneRotationHandler
+  objectToRotate: {fileID: 0}
+  rotationAxis: {x: -1, y: 0, z: 0}
+  speed: 25
+  targetTag: MainCamera
 --- !u!33 &2065323000237329680
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -356,18 +372,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 7.5, y: 5, z: 4}
   m_Center: {x: 1.75, y: 1.75, z: 2}
---- !u!114 &3081599162248883673
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8995674411931745625}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0a2a220d4442f84468206848013eeb0a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ZoneTriggerHandler
-  objectsToToggle:
-  - {fileID: 0}
-  playerTag: Player
