@@ -243,6 +243,17 @@ namespace DumyatRuntime
                 return;
             }
 
+            // Push-to-talk: the idle session can be dropped by the server between utterances
+            // (~15s idle close). If the player presses the button during that window, reopen the
+            // session so the press recovers instead of being silently ignored.
+            if (_pttHeld && _armed && !_source.IsSessionOpen
+                && Time.unscaledTime >= _reconnectAllowedTime)
+            {
+                _reconnectAllowedTime = Time.unscaledTime + _reconnectCooldownSeconds;
+                _status = "Session dropped — reconnecting for push-to-talk…";
+                _source.OpenSession();
+            }
+
             // Push-to-talk drives capture only while armed and the session is open.
             bool held = _pttHeld && _armed && _source.IsSessionOpen;
             bool capturing = _source.MicrophoneEnabled;

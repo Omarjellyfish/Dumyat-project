@@ -9,9 +9,11 @@ namespace DumyatRuntime
     /// <summary>
     /// The dialogue action the LLM declares for a turn. Overlaps with the deterministic
     /// <see cref="NegotiationOutcome"/> (Accept/RaiseOffer/HoldFirm/WalkAway) but adds
-    /// <see cref="ClarifyRequest"/> for when the player's speech was unclear. NOTE: deception
-    /// is NOT in here — whether the merchant lowballs is decided deterministically by
-    /// <see cref="PriceNegotiationCalculator"/> and passed in; the LLM only colours the tone.
+    /// <see cref="ClarifyRequest"/> for when the player's speech was unclear and
+    /// <see cref="PlayerDeclined"/> for when the player clearly refuses to sell / ends the
+    /// conversation. NOTE: deception is NOT in here — whether the merchant lowballs is decided
+    /// deterministically by <see cref="PriceNegotiationCalculator"/> and passed in; the LLM only
+    /// colours the tone.
     /// </summary>
     public enum MerchantAction
     {
@@ -19,7 +21,14 @@ namespace DumyatRuntime
         HoldFirm,
         Accept,
         WalkAway,
-        ClarifyRequest
+        ClarifyRequest,
+
+        /// <summary>
+        /// The PLAYER clearly refused to sell or ended the conversation; the merchant speaks a
+        /// short good-natured farewell and the negotiation resolves as
+        /// <see cref="NegotiationPhase.Declined"/>.
+        /// </summary>
+        PlayerDeclined
     }
 
     /// <summary>
@@ -63,14 +72,27 @@ namespace DumyatRuntime
         // An offer this far above fair value is treated as the model hallucinating, not haggling.
         private const float HardOfferCapMultiplier = 2f;
 
+        // Fallback description of the speech engine for the prompt when the TTS pool can't be
+        // queried (manager missing / nothing available). Kept generic but truthful.
+        private const string FallbackTtsDescription = "a native Egyptian-Arabic ElevenLabs text-to-speech voice";
+
         // The Egyptian-Arabic constraint from docs/MERCHANT_CONTEXT.md. It MUST appear in EVERY
         // prompt (LLMs drift toward MSA by default), so it lives here and is injected each turn.
-        private const string DialectInstruction =
+        // Built per call (not a const) so the prompt names the EXACT TTS engine that will speak
+        // the reply — resolved live from TTSManager (e.g. "ElevenLabs TTS (eleven_multilingual_v2)").
+        private static string BuildDialectInstruction()
+        {
+            string ttsName = TTSManager.Singleton != null ? TTSManager.Singleton.ActiveModelName : null;
+            string ttsDescription = string.IsNullOrEmpty(ttsName)
+                ? FallbackTtsDescription
+                : $"a NATIVE Egyptian-Arabic text-to-speech engine, specifically \"{ttsName}\"";
+
+            return
             "Respond only in Egyptian Arabic dialect (اللهجة المصرية العامية), not Modern Standard " +
             "Arabic. Speak like a real Damietta / El Borg fish-market vendor: warm, quick, casual " +
             "street banter (e.g. 'يا ريس', 'يا معلم', 'والله العظيم'), never formal or written Arabic.\n" +
             "CRITICAL OUTPUT FORMAT — your \"merchantSpeech\" is NOT read by a human. It is fed DIRECTLY, " +
-            "character for character, into a NATIVE Egyptian-Arabic text-to-speech voice (ElevenLabs). " +
+            $"character for character, into {ttsDescription}. " +
             "Because a TTS engine speaks it literally:\n" +
             "1) Write EVERY word of merchantSpeech in ARABIC SCRIPT ONLY — Arabic letters exclusively. " +
             "NEVER use Latin/English letters or romanized transliteration: write 'يا ريس' NOT 'ya riis', " +
@@ -91,6 +113,7 @@ namespace DumyatRuntime
             "PRIORITY: merchantSpeech must be FLAWLESS Egyptian Arabic script (it is spoken aloud). The " +
             "\"speechTranslationEnglish\" field is ONLY subtitles — minor English mistakes there are " +
             "tolerated, so put your effort into getting the Arabic 100% right first.";
+        }
 
         /// <summary>
         /// Fired when a turn cannot produce a valid result after the retry. The argument is a
@@ -230,7 +253,7 @@ namespace DumyatRuntime
             sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
             sb.AppendLine("You ONLY buy and haggle over THIS one fish. Nothing else is for sale and the player cannot buy anything from you. " +
                           "If they say anything off-topic, steer them back to selling this fish (use ClarifyRequest).");
-            sb.AppendLine(DialectInstruction);
+            sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
 
             if (!simplified)
@@ -260,19 +283,66 @@ namespace DumyatRuntime
             sb.AppendLine($"- ONLY once the fisherman has told you the fish, refer to it by its correct " +
                           $"Egyptian name: {DescribeFish(fish)}");
             sb.AppendLine();
+            float ceiling = NegotiationCeiling(state);
+            bool atCeiling = state.currentOffer >= ceiling;
+
             sb.AppendLine("YOUR PRICING (all amounts are in Egyptian Pounds, whole numbers only):");
             sb.AppendLine($"- The price you are currently offering to pay: {EGP(state.currentOffer)}");
+            sb.AppendLine($"- The ABSOLUTE MAXIMUM you will EVER pay for this fish: {EGP(ceiling)}. This is your " +
+                          "hard ceiling for this whole negotiation — private, never reveal it, NEVER offer above it.");
             sb.AppendLine($"- Fair market value (your private reference — do NOT reveal this number to the player): {EGP(fish.fairMarketValue)}");
             sb.AppendLine($"- Turn number: {state.turnCount}");
             sb.AppendLine($"- Your patience remaining (counter-offers left before you walk away): {patienceRemaining}");
             sb.AppendLine($"- Player just said (transcribed Egyptian speech): \"{playerSaid}\"");
             sb.AppendLine();
 
+            float raiseCap = RaiseCap(state);
+
+            sb.AppendLine("HOW YOU HAGGLE (offers move in ONE direction only — UP, and only a little at a time):");
+            sb.AppendLine("- You are the BUYER: you start low and can be argued UPWARD toward your maximum. You " +
+                          "NEVER lower an offer you have already made — a RaiseOffer's newOfferAmount MUST be " +
+                          $"HIGHER than your current {EGP(state.currentOffer)} and NEVER above your maximum {EGP(ceiling)}.");
+            sb.AppendLine($"- Concede GRADUALLY: if you raise THIS TURN, newOfferAmount must be between " +
+                          $"{EGP(state.currentOffer + 1f)} and {EGP(raiseCap)}. Never jump straight to your " +
+                          "maximum — small, believable market steps, and you do NOT have to reach your maximum.");
+            sb.AppendLine("- If the player has only just told you what fish they have and no price talk has " +
+                          $"happened yet, QUOTE your current offer {EGP(state.currentOffer)} in your speech " +
+                          "(action HoldFirm) — the haggle is just beginning.");
+            if (state.turnsHeldAtMax >= NegotiationState.MaxTurnsHeldAtMax)
+                sb.AppendLine($"- FINAL TURN — YOUR PATIENCE FOR DEFENDING YOUR MAXIMUM IS SPENT: you already " +
+                              $"refused to go above your maximum {state.turnsHeldAtMax} times and the player is " +
+                              "still pushing. Unless they clearly accept RIGHT NOW, choose WalkAway with ONE " +
+                              "short, firm but polite rejection line that ENDS the deal (my final word, no deal, " +
+                              "good luck elsewhere). Do NOT HoldFirm again. Do NOT RaiseOffer.");
+            else if (atCeiling)
+                sb.AppendLine("- YOU ARE AT YOUR MAXIMUM RIGHT NOW: do NOT use RaiseOffer again this negotiation. Either " +
+                              "HoldFirm (insist this is your final price), Accept, or WalkAway if the player keeps pushing.");
+            else
+                sb.AppendLine("- If the player demands MORE than your maximum, do not exceed it: HoldFirm near your " +
+                              "ceiling (make clear you're near your limit) or WalkAway when your patience runs out.");
+            sb.AppendLine("- Accept when the player's ask is at/below your current offer, or when a deal at or " +
+                          "below your maximum feels won. \"newOfferAmount\" for Accept is the agreed price.");
+            sb.AppendLine();
+
+            sb.AppendLine("CLOSING THE DEAL — Accept and PlayerDeclined END the sale, so be VERY strict:");
+            sb.AppendLine($"- Accept ONLY when the player EXPLICITLY agrees to sell at your CURRENT offer with " +
+                          $"clear deal words ('اتفقنا', 'خلاص موافق', 'ماشي خدها') and NO new number attached. " +
+                          $"Then newOfferAmount = {EGP(state.currentOffer)}. If they mention ANY other price or " +
+                          "condition, that is haggling — NOT acceptance.");
+            sb.AppendLine("- PlayerDeclined ONLY when the player clearly refuses to SELL AT ALL or ends the " +
+                          "conversation ('مش هبيع خلاص', 'مع السلامة', 'هدور على غيرك'). Saying no to YOUR " +
+                          "PRICE ('لا ده قليل', 'مش كفاية', 'بتهزر؟') is NOT declining — that is normal " +
+                          "haggling: answer with HoldFirm or a gradual RaiseOffer.");
+            sb.AppendLine("- DEFAULT WHEN UNSURE: keep negotiating (HoldFirm / RaiseOffer / ClarifyRequest). " +
+                          "Ending the sale by mistake ruins the game round; treat Accept and PlayerDeclined as " +
+                          "rare, definitive endings you only pick on unmistakable words.");
+            sb.AppendLine();
+
             sb.AppendLine("Return your reply as exactly one valid json object and nothing else. Schema:");
             sb.AppendLine("{");
             sb.AppendLine("  \"merchantSpeech\": \"<what you say out loud, in Egyptian dialect>\",");
             sb.AppendLine("  \"speechTranslationEnglish\": \"<English translation of merchantSpeech, for subtitles>\",");
-            sb.AppendLine("  \"action\": \"RaiseOffer\" | \"HoldFirm\" | \"Accept\" | \"WalkAway\" | \"ClarifyRequest\",");
+            sb.AppendLine("  \"action\": \"RaiseOffer\" | \"HoldFirm\" | \"Accept\" | \"WalkAway\" | \"ClarifyRequest\" | \"PlayerDeclined\",");
             sb.AppendLine("  \"newOfferAmount\": <number, REQUIRED only when action is RaiseOffer or Accept; omit otherwise>");
             sb.AppendLine("}");
             sb.AppendLine();
@@ -284,6 +354,9 @@ namespace DumyatRuntime
             sb.AppendLine("- Output ONLY the JSON object. No markdown, no code fences, no text before or after it.");
             sb.AppendLine("- NEVER break character. NEVER mention being an AI, a model, or a game.");
             sb.AppendLine("- ONLY discuss this fish sale. If the player goes off-topic, redirect in character via ClarifyRequest.");
+            sb.AppendLine($"- RaiseOffer: newOfferAmount MUST be STRICTLY HIGHER than {EGP(state.currentOffer)} " +
+                          $"and AT MOST {EGP(raiseCap)} this turn. Never lower a standing offer; never exceed " +
+                          "your maximum; never jump more than this turn's cap.");
             sb.AppendLine("- Keep merchantSpeech to one or two short, natural market-style sentences.");
             sb.AppendLine("- Every price is in Egyptian Pounds (بالجنيه المصري) and MUST be a WHOLE number — " +
                           "never decimals, fractions or piastres (say 'تسعين جنيه', never 'تسعين جنيه ونص'). " +
@@ -308,7 +381,7 @@ namespace DumyatRuntime
             sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
             sb.AppendLine("You ONLY buy and haggle over THIS one fish. Nothing else is for sale and the player cannot buy anything from you. " +
                           "If they say anything off-topic, steer them back to selling this fish (use ClarifyRequest).");
-            sb.AppendLine(DialectInstruction);
+            sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
 
             if (!simplified)
@@ -369,6 +442,23 @@ namespace DumyatRuntime
         // Formats a price as a whole number of Egyptian Pounds — the game only deals in integer EGP,
         // so the model is never shown (or asked to produce) a fractional/decimal price.
         private static string EGP(float v) => $"{Mathf.RoundToInt(v)} EGP";
+
+        // The most this merchant will pay THIS negotiation: the deterministic deception-based
+        // ceiling set at the opening, falling back to the archetype ceiling for state built by
+        // older callers that never set maxOffer.
+        private static float NegotiationCeiling(NegotiationState state) =>
+            state.maxOffer > 0f
+                ? state.maxOffer
+                : state.fishBeingSold.fairMarketValue * state.currentMerchant.MaxOfferMultiplier;
+
+        // The highest a RaiseOffer may go THIS turn: current offer + the per-negotiation step,
+        // never past the ceiling. No step configured (older callers) => only the ceiling applies.
+        private static float RaiseCap(NegotiationState state)
+        {
+            float ceiling = NegotiationCeiling(state);
+            if (state.maxRaisePerTurn <= 0f) return Mathf.Round(ceiling);
+            return Mathf.Round(Mathf.Min(ceiling, state.currentOffer + state.maxRaisePerTurn));
+        }
 
         // True if the string contains any ASCII Latin letter (A–Z / a–z). Used to reject romanized /
         // transliterated Arabic in the spoken line — the native-Arabic TTS voice cannot pronounce
@@ -446,6 +536,18 @@ namespace DumyatRuntime
                 return false;
             }
 
+            // Once the merchant has exhausted its patience defending the ceiling, the turn MUST
+            // close the negotiation one way or another (Accept / WalkAway / PlayerDeclined, with
+            // ClarifyRequest still allowed for genuinely garbled speech). Holding firm yet again
+            // is rejected so a stubborn player can't stall the haggle at the ceiling forever.
+            if (state.turnsHeldAtMax >= NegotiationState.MaxTurnsHeldAtMax
+                && (action == MerchantAction.HoldFirm || action == MerchantAction.RaiseOffer))
+            {
+                Debug.LogWarning($"MerchantNegotiationLLM: '{action}' not allowed after holding the max " +
+                                 $"offer {state.turnsHeldAtMax} turns — merchant must close; rejecting turn.");
+                return false;
+            }
+
             var parsed = new MerchantTurnResult
             {
                 // Guarantee the TTS never receives vowelization: strip any tashkeel/harakat the model
@@ -461,7 +563,7 @@ namespace DumyatRuntime
             if (parsed.HasNewOffer)
             {
                 float fair = state.fishBeingSold.fairMarketValue;
-                float ceiling = fair * state.currentMerchant.MaxOfferMultiplier;
+                float ceiling = NegotiationCeiling(state);
                 float hardCap = fair * HardOfferCapMultiplier;
 
                 if (dto.newOfferAmount <= 0f || dto.newOfferAmount > hardCap)
@@ -472,10 +574,33 @@ namespace DumyatRuntime
                     return false;
                 }
 
-                // In-range but above what this merchant would ever pay: clamp to the real ceiling
-                // so the game logic is never asked to honour a too-generous promise. Prices are whole
-                // Egyptian Pounds, so round to an integer (the model is told to send whole numbers).
+                // In-range but above what this merchant will pay THIS negotiation: clamp to the
+                // deterministic ceiling so the game never honours a too-generous promise. Prices are
+                // whole Egyptian Pounds, so round to an integer.
                 parsed.NewOfferAmount = Mathf.Round(Mathf.Min(dto.newOfferAmount, ceiling));
+
+                // Offers are MONOTONIC: a merchant never walks an offer back down. A "raise" that
+                // (after clamping) isn't strictly above the standing offer means the model tried to
+                // lower the price or exceed its ceiling while already at it — reject so the retry
+                // re-asserts the rules instead of letting the spoken number contradict game state.
+                if (action == MerchantAction.RaiseOffer && parsed.NewOfferAmount <= state.currentOffer)
+                {
+                    Debug.LogWarning($"MerchantNegotiationLLM: RaiseOffer {dto.newOfferAmount} does not move " +
+                                     $"above the current offer {state.currentOffer} (ceiling {ceiling}); rejecting turn.");
+                    return false;
+                }
+
+                // Raises are also GRADUAL: a single concession may not cover more than the
+                // per-negotiation step (a fraction of the opening→ceiling gap), so the merchant
+                // climbs to its maximum over several turns instead of jumping there. Rejected (not
+                // clamped) so the spoken number never contradicts the applied one.
+                if (action == MerchantAction.RaiseOffer && parsed.NewOfferAmount > RaiseCap(state))
+                {
+                    Debug.LogWarning($"MerchantNegotiationLLM: RaiseOffer {dto.newOfferAmount} exceeds this " +
+                                     $"turn's cap {RaiseCap(state)} (current {state.currentOffer} + step " +
+                                     $"{state.maxRaisePerTurn}); rejecting turn.");
+                    return false;
+                }
             }
 
             result = parsed;

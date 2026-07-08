@@ -42,6 +42,13 @@ namespace DumyatRuntime
         public event Action<MerchantNPC, NegotiationPhase> OnNegotiationEnded;
 
         /// <summary>
+        /// Raised when this merchant is told to begin an approach/negotiation (see
+        /// <see cref="BeginApproach"/>). Cosmetic listeners (animation, VFX) subscribe to this —
+        /// e.g. <see cref="MerchantAnimationDriver"/> plays the greeting wave.
+        /// </summary>
+        public event Action<MerchantNPC> OnApproachStarted;
+
+        /// <summary>
         /// The ElevenLabs voice ID assigned to THIS merchant for its lifetime, so its voice never
         /// changes between TTS lines. Sourced from <see cref="MerchantConfig.VoiceId"/> when that
         /// per-archetype override is set; otherwise drawn from the shared VoicePool by
@@ -69,12 +76,14 @@ namespace DumyatRuntime
 
         /// <summary>
         /// Called by the spawner to tell this merchant to begin approaching/greeting the
-        /// player. STUB: real approach + negotiation behaviour lands in the next step.
+        /// player. Notifies cosmetic listeners via <see cref="OnApproachStarted"/> (the
+        /// negotiation itself is driven by <see cref="NegotiationFlowController"/>).
         /// </summary>
         public void BeginApproach()
         {
             string who = _config != null ? _config.MerchantName : name;
-            Debug.Log($"MerchantNPC: '{who}' begins approaching the player. (negotiation logic pending)");
+            Debug.Log($"MerchantNPC: '{who}' begins approaching the player.");
+            OnApproachStarted?.Invoke(this);
         }
 
         /// <summary>

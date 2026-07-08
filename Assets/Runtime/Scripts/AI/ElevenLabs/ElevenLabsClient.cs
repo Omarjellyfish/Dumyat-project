@@ -144,6 +144,13 @@ namespace DumyatRuntime
         private string ResolveDefaultModel() =>
             _config != null ? _config.TtsModelId : ElevenLabsConfig.DefaultTtsModelId;
 
+        /// <summary>
+        /// The TTS model ID a synthesis call will use when no explicit override is passed — the
+        /// ElevenLabsConfig SO's model, or the built-in default. Exposed so pool entries
+        /// (<see cref="ElevenLabsTTSModel"/>) can report the model they will EFFECTIVELY use.
+        /// </summary>
+        public string EffectiveTtsModelId => ResolveDefaultModel();
+
         private IEnumerator SpeakRoutine(string text, string voiceId, string modelId,
             Action<AudioClip> onSuccess, Action<string> onFailure)
         {

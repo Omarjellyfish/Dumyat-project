@@ -20,6 +20,21 @@ namespace DumyatRuntime
         [SerializeField] private AudioSource _fallbackAudioSource;
 
         /// <summary>
+        /// Name of the model that will speak the next line — the highest-priority AVAILABLE model
+        /// in the pool — or null when none is available. Used e.g. by the negotiation LLM prompt
+        /// to tell the language model exactly which TTS engine will read its output aloud.
+        /// </summary>
+        public string ActiveModelName
+        {
+            get
+            {
+                foreach (ITTSModel model in AvailableModels())
+                    return model.ModelName;
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Synthesises <paramref name="text"/> with <paramref name="voiceId"/> and plays it through
         /// <paramref name="targetSource"/> (or the fallback source). <paramref name="onComplete"/>
         /// fires when playback finishes; <paramref name="onError"/> fires only if EVERY model fails.

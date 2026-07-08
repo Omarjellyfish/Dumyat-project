@@ -193,13 +193,53 @@ namespace DumyatRuntime
             }
 
             // POINT 1: consent + connectivity gate for the whole AI path.
-            if (ConsentManager.Singleton == null || !ConsentManager.Singleton.IsVoiceModeAvailable())
+            if (ConsentManager.Singleton == null)
             {
-                Debug.Log($"{LogPrefix} Voice mode unavailable — scripted fallback for '{NameOf(merchant)}'.");
+                Debug.Log($"{LogPrefix} No ConsentManager — scripted fallback for '{NameOf(merchant)}'.");
                 TriggerScriptedFallback(merchant, fish);
                 return;
             }
 
+            if (ConsentManager.Singleton.IsVoiceModeAvailable())
+            {
+                StartAiNegotiation(merchant, fish);
+                return;
+            }
+
+            // Voice unavailable. If the player has simply never been ASKED, this first approach is
+            // the natural moment to ask: show the consent prompt (ConsentPromptUI) and continue on
+            // whichever path their answer allows. Only a real decline / missing connectivity falls
+            // back to scripted dialogue.
+            ConsentState consent = ConsentManager.Singleton.GetConsentStatus();
+            bool neverAsked = consent.MicConsent == ConsentStatus.NotAsked
+                              || consent.InternetConsent == ConsentStatus.NotAsked;
+            if (neverAsked)
+            {
+                Debug.Log($"{LogPrefix} Consent not asked yet — prompting before negotiating with '{NameOf(merchant)}'.");
+                ConsentManager.Singleton.RequestConsent((mic, internet) =>
+                {
+                    if (_activeMerchant != merchant) return; // torn down while the prompt was up
+
+                    if (ConsentManager.Singleton != null && ConsentManager.Singleton.IsVoiceModeAvailable())
+                    {
+                        StartAiNegotiation(merchant, fish);
+                    }
+                    else
+                    {
+                        Debug.Log($"{LogPrefix} Consent declined/unavailable — scripted fallback for '{NameOf(merchant)}'.");
+                        TriggerScriptedFallback(merchant, fish);
+                    }
+                });
+                return;
+            }
+
+            Debug.Log($"{LogPrefix} Voice mode unavailable — scripted fallback for '{NameOf(merchant)}'.");
+            TriggerScriptedFallback(merchant, fish);
+        }
+
+        // Kicks off the actual AI negotiation once the fish and consent are both settled.
+        private void StartAiNegotiation(MerchantNPC merchant, FishData fish)
+        {
             _state = new NegotiationState
             {
                 currentMerchant = merchant.Config,
@@ -222,11 +262,17 @@ namespace DumyatRuntime
             try
             {
                 // POINT 2: deterministic opening offer + deception roll; the LLM only PHRASES it.
+                // The SAME roll fixes the whole negotiation envelope: opening offer, hard ceiling
+                // (maxOffer) and the tone used on every later turn.
                 bool isDeceptive = _calculator.RollDeception(merchant.Config);
                 float opening = Mathf.Round(_calculator.GenerateOpeningOffer(merchant.Config, fish, isDeceptive));
                 _state.currentOffer = opening;
                 _state.offerHistory.Add(opening);
-                Debug.Log($"{LogPrefix} Opening offer {opening:0} EGP for {fish.fishType} (deceptive={isDeceptive}).");
+                _state.isDeceptive = isDeceptive;
+                _state.maxOffer = Mathf.Round(_calculator.GenerateMaxOffer(merchant.Config, fish, isDeceptive, opening));
+                _state.maxRaisePerTurn = _calculator.GenerateMaxRaiseStep(opening, _state.maxOffer);
+                Debug.Log($"{LogPrefix} Opening offer {opening:0} EGP (ceiling {_state.maxOffer:0}, " +
+                          $"raise step ≤{_state.maxRaisePerTurn:0}) for {fish.fishType} (deceptive={isDeceptive}).");
 
                 if (MerchantNegotiationLLM.Singleton == null)
                 {
@@ -318,9 +364,10 @@ namespace DumyatRuntime
                     return;
                 }
 
-                bool isDeceptive = _calculator.RollDeception(_state.currentMerchant);
+                // Tone follows the OPENING roll for the whole negotiation, matching the fixed
+                // offer envelope — not re-rolled per turn.
                 MerchantTurnResult result =
-                    await MerchantNegotiationLLM.Singleton.ProcessPlayerTurn(_state, text, isDeceptive);
+                    await MerchantNegotiationLLM.Singleton.ProcessPlayerTurn(_state, text, _state.isDeceptive);
 
                 HideThinkingCue();
 
@@ -402,6 +449,11 @@ namespace DumyatRuntime
 
                 case MerchantAction.HoldFirm:
                 case MerchantAction.ClarifyRequest:
+                    // Holding firm while ALREADY at the ceiling burns the merchant's hold-at-max
+                    // patience; once spent, the LLM layer forces the next turn to close the deal.
+                    if (result.Action == MerchantAction.HoldFirm
+                        && _state.maxOffer > 0f && _state.currentOffer >= _state.maxOffer)
+                        _state.turnsHeldAtMax++;
                     _state.state = NegotiationPhase.Negotiating;
                     PlayMerchantLine(result.MerchantSpeech, BeginListening);
                     break;
@@ -416,6 +468,12 @@ namespace DumyatRuntime
                 case MerchantAction.WalkAway:
                     _state.state = NegotiationPhase.WalkedAway;
                     PlayMerchantLine(result.MerchantSpeech, () => EndWithStat(NegotiationPhase.WalkedAway));
+                    break;
+
+                case MerchantAction.PlayerDeclined:
+                    // The player refused the sale: farewell line, then resolve as Declined.
+                    _state.state = NegotiationPhase.Declined;
+                    PlayMerchantLine(result.MerchantSpeech, () => EndWithStat(NegotiationPhase.Declined));
                     break;
             }
         }
@@ -623,7 +681,11 @@ namespace DumyatRuntime
                 float opening = Mathf.Round(_calculator.GenerateOpeningOffer(_activeMerchant.Config, _state.fishBeingSold, isDeceptive));
                 _state.currentOffer = opening;
                 _state.offerHistory.Add(opening);
-                Debug.Log($"{LogPrefix} Opening offer {opening:0} EGP for {_state.fishBeingSold.fishType} (deceptive={isDeceptive}).");
+                _state.isDeceptive = isDeceptive;
+                _state.maxOffer = Mathf.Round(_calculator.GenerateMaxOffer(_activeMerchant.Config, _state.fishBeingSold, isDeceptive, opening));
+                _state.maxRaisePerTurn = _calculator.GenerateMaxRaiseStep(opening, _state.maxOffer);
+                Debug.Log($"{LogPrefix} Opening offer {opening:0} EGP (ceiling {_state.maxOffer:0}, " +
+                          $"raise step ≤{_state.maxRaisePerTurn:0}) for {_state.fishBeingSold.fishType} (deceptive={isDeceptive}).");
 
                 MerchantTurnResult opener = await MerchantNegotiationLLM.Singleton.GenerateOpeningLine(
                     _state, isDeceptive, DecideOpeningGreeting(_activeMerchant));
@@ -673,9 +735,9 @@ namespace DumyatRuntime
                 if (_state == null || MerchantNegotiationLLM.Singleton == null) return false;
 
                 ShowThinkingCue();
-                bool isDeceptive = _calculator.RollDeception(_state.currentMerchant);
+                // Tone follows the OPENING roll (fixed offer envelope), not a per-turn re-roll.
                 MerchantTurnResult result =
-                    await MerchantNegotiationLLM.Singleton.ProcessPlayerTurn(_state, _lastTranscript, isDeceptive);
+                    await MerchantNegotiationLLM.Singleton.ProcessPlayerTurn(_state, _lastTranscript, _state.isDeceptive);
                 HideThinkingCue();
 
                 if (!_busy || result == null) return false;
@@ -714,6 +776,10 @@ namespace DumyatRuntime
                     break;
                 case MerchantAction.HoldFirm:
                 case MerchantAction.ClarifyRequest:
+                    // Holding firm at the ceiling burns hold-at-max patience (see ApplyTurnResult).
+                    if (result.Action == MerchantAction.HoldFirm
+                        && _state.maxOffer > 0f && _state.currentOffer >= _state.maxOffer)
+                        _state.turnsHeldAtMax++;
                     _state.state = NegotiationPhase.Negotiating;
                     break;
                 case MerchantAction.Accept:
@@ -725,6 +791,10 @@ namespace DumyatRuntime
                 case MerchantAction.WalkAway:
                     _state.state = NegotiationPhase.WalkedAway;
                     SetTerminal(NegotiationPhase.WalkedAway);
+                    break;
+                case MerchantAction.PlayerDeclined:
+                    _state.state = NegotiationPhase.Declined;
+                    SetTerminal(NegotiationPhase.Declined);
                     break;
             }
         }

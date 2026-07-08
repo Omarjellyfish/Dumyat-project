@@ -22,7 +22,21 @@ namespace DumyatRuntime
         [Tooltip("Selection priority within TTSManager; higher = preferred.")]
         [SerializeField] private int _priority = 0;
 
-        public string ModelName => $"ElevenLabs TTS ({_modelId})";
+        public string ModelName => $"ElevenLabs TTS ({EffectiveModelId})";
+
+        // The model actually used at synthesis time: the override when set, otherwise the shared
+        // ElevenLabsConfig's model (mirrors ElevenLabsClient's own resolution). Keeps ModelName
+        // truthful when the override field is left blank.
+        private string EffectiveModelId
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(_modelId)) return _modelId;
+                return ElevenLabsClient.Singleton != null
+                    ? ElevenLabsClient.Singleton.EffectiveTtsModelId
+                    : ElevenLabsConfig.DefaultTtsModelId;
+            }
+        }
 
         // The REST client validates the API key per request and routes failures to onError, so
         // "available" just means the client exists and has a key configured.

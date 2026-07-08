@@ -48,6 +48,21 @@ namespace DumyatRuntime
         /// </summary>
         private const float AcceptGapFraction = 0.05f;
 
+        /// <summary>
+        /// How far (0-1) a DECEPTIVE merchant's negotiation ceiling may reach from
+        /// <see cref="DeceptiveOfferCeiling"/> toward the archetype's honest maximum. 0.5 means a
+        /// deceptive ceiling lands somewhere in the lower half of that range, so a lowballed
+        /// negotiation can never be haggled all the way up to what an honest one would pay.
+        /// </summary>
+        private const float DeceptiveCeilingBlend = 0.5f;
+
+        /// <summary>
+        /// Fraction of the opening→ceiling gap a single RaiseOffer may cover. 0.35 means the
+        /// merchant needs roughly three concessions to travel the whole envelope, so a big gap is
+        /// climbed gradually instead of in one jump.
+        /// </summary>
+        private const float RaiseStepFraction = 0.35f;
+
         // Optional global guard-rails on the final offer. See note on _systemConfig.
         private readonly MerchantSystemConfig _systemConfig;
 
@@ -105,6 +120,42 @@ namespace DumyatRuntime
 
             float offer = fish.fairMarketValue * multiplier;
             return ClampToGuardRails(offer, fish.fairMarketValue);
+        }
+
+        /// <summary>
+        /// The ABSOLUTE ceiling the merchant will pay for this fish THIS negotiation — decided once
+        /// at the opening from the SAME deception roll as the opening offer, and enforced against
+        /// every subsequent offer (offers only move UP toward it, never past it). An honest merchant
+        /// will go to the archetype's full <see cref="MerchantConfig.MaxOfferMultiplier"/>; a
+        /// deceptive one caps meaningfully lower (see <see cref="DeceptiveCeilingBlend"/>). Never
+        /// below <paramref name="openingOffer"/>, so the envelope is always valid.
+        /// </summary>
+        public float GenerateMaxOffer(MerchantConfig merchant, FishData fish, bool deceiving, float openingOffer)
+        {
+            if (merchant == null || fish == null)
+            {
+                Debug.LogWarning("PriceNegotiationCalculator: null merchant or fish in GenerateMaxOffer.");
+                return openingOffer;
+            }
+
+            float multiplier = deceiving
+                ? RandomInRange(DeceptiveOfferCeiling,
+                    Mathf.Lerp(DeceptiveOfferCeiling, merchant.MaxOfferMultiplier, DeceptiveCeilingBlend))
+                : merchant.MaxOfferMultiplier;
+
+            float max = ClampToGuardRails(fish.fairMarketValue * multiplier, fish.fairMarketValue);
+            return Mathf.Max(max, openingOffer);
+        }
+
+        /// <summary>
+        /// The most a single RaiseOffer may add on top of the standing offer, for this
+        /// negotiation's opening→ceiling envelope: a <see cref="RaiseStepFraction"/> of the gap,
+        /// never less than 1 EGP (so tiny envelopes can still move). The LLM is told this cap each
+        /// turn and any raise beyond it is rejected — the climb to the ceiling is always gradual.
+        /// </summary>
+        public float GenerateMaxRaiseStep(float openingOffer, float maxOffer)
+        {
+            return Mathf.Max(1f, Mathf.Round((maxOffer - openingOffer) * RaiseStepFraction));
         }
 
         /// <summary>

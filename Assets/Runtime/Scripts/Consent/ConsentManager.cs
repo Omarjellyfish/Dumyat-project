@@ -85,17 +85,35 @@ namespace DumyatRuntime
         }
 
         /// <summary>
+        /// Raised when the consent prompt should be shown to the player. The consent UI
+        /// (<see cref="ConsentPromptUI"/>) subscribes to this and MUST answer by calling
+        /// <see cref="SubmitConsentResult"/> with the player's choices — that completes any
+        /// pending <see cref="RequestConsent"/> callback. Event-based so this manager stays
+        /// decoupled from whichever UI implementation is in the scene.
+        /// </summary>
+        public event Action OnConsentUIRequested;
+
+        /// <summary>
         /// Begins the consent flow: shows the consent UI and, once the player responds,
         /// persists the result, fires <see cref="OnConsentChanged"/>, and invokes
         /// <paramref name="onComplete"/> with the final mic and internet statuses.
         ///
-        /// The UI is stubbed for now: <see cref="ShowConsentUI"/> is called here, and the
-        /// UI is expected to call <see cref="SubmitConsentResult"/> when the player chooses.
+        /// If no UI is subscribed to <see cref="OnConsentUIRequested"/>, the request completes
+        /// IMMEDIATELY with the current (unchanged) statuses so a caller awaiting the result is
+        /// never left hanging on a prompt that can't appear.
         /// </summary>
         public void RequestConsent(Action<ConsentStatus, ConsentStatus> onComplete)
         {
+            if (OnConsentUIRequested == null)
+            {
+                Debug.LogWarning("ConsentManager: consent requested but no consent UI is listening " +
+                                 "(add a ConsentPromptUI to the scene); completing with current statuses.");
+                onComplete?.Invoke(micConsentGranted, internetConsentGranted);
+                return;
+            }
+
             _pendingRequestCallback = onComplete;
-            ShowConsentUI();
+            OnConsentUIRequested.Invoke();
         }
 
         /// <summary>
@@ -132,6 +150,22 @@ namespace DumyatRuntime
         }
 
         /// <summary>
+        /// Wipes the persisted consent so the player counts as never asked — the prompt will
+        /// show again on the next session start. Static so editor tooling can call it without
+        /// a scene instance; if a live instance exists its in-memory state is reset too (and
+        /// <see cref="OnConsentChanged"/> fires), so the change applies immediately in Play mode.
+        /// </summary>
+        public static void ClearPersistedConsent()
+        {
+            PlayerPrefs.DeleteKey(MIC_CONSENT_KEY);
+            PlayerPrefs.DeleteKey(INTERNET_CONSENT_KEY);
+            PlayerPrefs.Save();
+
+            if (Singleton != null)
+                Singleton.ApplyConsent(ConsentStatus.NotAsked, ConsentStatus.NotAsked);
+        }
+
+        /// <summary>
         /// True only when BOTH microphone and internet consent are
         /// <see cref="ConsentStatus.Granted"/> AND the device currently reports a
         /// reachable network. This is a live check (reachability can change at runtime),
@@ -146,16 +180,6 @@ namespace DumyatRuntime
             bool networkReachable = Application.internetReachability != NetworkReachability.NotReachable;
 
             return bothGranted && networkReachable;
-        }
-
-        /// <summary>
-        /// Placeholder for the real consent UI. Wire the actual prompt here later; it must
-        /// ultimately call <see cref="SubmitConsentResult"/> with the player's choices.
-        /// </summary>
-        private void ShowConsentUI()
-        {
-            Debug.LogWarning("ConsentManager: ShowConsentUI() is a stub — no UI wired yet. " +
-                             "Call SubmitConsentResult(mic, internet) to complete the flow.");
         }
 
         // Shared apply path for both UI results and programmatic updates: writes the
