@@ -4,31 +4,42 @@ namespace DumyatRuntime
 {
     public class HookingFish : MonoBehaviour
     {
-        [SerializeField] private HingeJoint hingeJoint;
+        private bool isFishHooked = false;
 
         private void OnTriggerEnter(Collider collision)
         {
-            if (!collision.CompareTag("Fish"))
-                return;
-
-            if (hingeJoint.connectedBody != null)
-                return;
+            if (isFishHooked) return;
+            if (!collision.CompareTag("Fish")) return;
 
             Fish fish = collision.GetComponent<Fish>();
             Rigidbody fishBody = collision.attachedRigidbody;
+            Rigidbody hookColliderRigidbody = GetComponentInParent<Rigidbody>();
 
-            hingeJoint.connectedBody = fishBody;
-            hingeJoint.autoConfigureConnectedAnchor = false;
+            if (fish == null || fishBody == null || hookColliderRigidbody == null)
+                return;
 
-            // Convert mouth's world position into fish rigidbody's LOCAL space
-            Transform mouth = fish != null ? fish.MouthPoint : fishBody.transform;
-            hingeJoint.connectedAnchor = fishBody.transform.InverseTransformPoint(mouth.position);
+            // Transform mouth = fish.MouthPoint != null ? fish.MouthPoint : fishBody.transform;
 
-            fishBody.useGravity = true;
-            fishBody.isKinematic = false;
+            fishBody.linearVelocity = Vector3.zero;
+            fishBody.angularVelocity = Vector3.zero;
 
-            fish?.OnCaught();
+            FixedJoint joint = fish.gameObject.AddComponent<FixedJoint>();
+            joint.connectedBody = hookColliderRigidbody;
+            joint.autoConfigureConnectedAnchor = false;
+            fish.StopAnimation();
 
+            // anchor: local to the fish (this object the joint sits on)
+            // joint.anchor = fishBody.transform.InverseTransformPoint(mouth.position);
+
+            // connectedAnchor: local to the hook, i.e. where on the hook the mouth should sit
+            // joint.connectedAnchor = hookColliderRigidbody.transform.InverseTransformPoint(mouth.position);
+
+            joint.breakForce = Mathf.Infinity;
+            joint.breakTorque = Mathf.Infinity;
+
+            isFishHooked = true;
+
+            fish.OnCaught();
             Debug.Log("Fish hooked");
         }
     }

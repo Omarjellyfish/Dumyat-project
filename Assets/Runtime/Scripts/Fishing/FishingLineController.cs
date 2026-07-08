@@ -24,12 +24,12 @@ namespace DumyatRuntime
         //Mass of what the rope is carrying
         private float loadMass = 100f;
         //How fast we can add more/less rope
-        float winchSpeed = 2f;
+        float winchSpeed = 1f;
 
         private List<RopeSegment> ropeSegments = new List<RopeSegment>();
         private float ropeSegmentLenght = 0.1f;
         private int segmentCount = 20;
-        private float lineWidth = 0.01f;
+        private float lineWidth = 0.005f;
         [SerializeField] private int startSegmentCount = 10;
 
         [SerializeField] private GameObject reelPivot;
@@ -37,10 +37,12 @@ namespace DumyatRuntime
 
         //The joint we use to approximate the rope
         SpringJoint springJoint;
+        private bool isFreeCasting;
+
 
         void Start()
         {
-            springJoint = whatTheRopeIsConnectedTo.GetComponent<SpringJoint>();
+            springJoint = whatIsHangingFromTheRope.GetComponent<SpringJoint>();
 
             whatIsHangingFromTheRope.position = whatTheRopeIsConnectedTo.position;
 
@@ -81,21 +83,27 @@ namespace DumyatRuntime
         private void InitRope()
         {
             float dist = ropeLength;
-
             int tempSegmentCount = (int)(dist * 2f) + startSegmentCount;
+            tempSegmentCount = Mathf.Max(tempSegmentCount, 1);
 
             if (tempSegmentCount > ropeSegments.Count)
             {
-                Vector3 ropeStartPoint = ropeSegments[ropeSegments.Count - 1].posNow;
-                segmentCount = tempSegmentCount;
-                ropeStartPoint.y += ropeSegmentLenght;
-                ropeSegments.Add(new RopeSegment(ropeStartPoint));
+                while (ropeSegments.Count < tempSegmentCount)
+                {
+                    Vector3 ropeStartPoint = ropeSegments[ropeSegments.Count - 1].posNow;
+                    ropeStartPoint.y += ropeSegmentLenght;
+                    ropeSegments.Add(new RopeSegment(ropeStartPoint));
+                }
             }
             else if (tempSegmentCount < ropeSegments.Count)
             {
-                segmentCount = tempSegmentCount;
-                ropeSegments.RemoveAt(ropeSegments.Count - 1);
+                while (ropeSegments.Count > tempSegmentCount && ropeSegments.Count > 1)
+                {
+                    ropeSegments.RemoveAt(ropeSegments.Count - 1);
+                }
             }
+
+            segmentCount = ropeSegments.Count; // always mirrors the real list size now
         }
 
         private void Simulation()
@@ -181,14 +189,15 @@ namespace DumyatRuntime
             lineRenderer.startWidth = lineWidth;
             lineRenderer.endWidth = lineWidth;
 
-            Vector3[] ropePositions = new Vector3[segmentCount];
+            int count = ropeSegments.Count;
+            Vector3[] ropePositions = new Vector3[count];
 
-            for (int i = 0; i < ropeSegments.Count; i++)
+            for (int i = 0; i < count; i++)
             {
                 ropePositions[i] = ropeSegments[i].posNow;
             }
 
-            lineRenderer.positionCount = ropePositions.Length;
+            lineRenderer.positionCount = count;
             lineRenderer.SetPositions(ropePositions);
         }
 
@@ -239,6 +248,9 @@ namespace DumyatRuntime
         //Add more/less rope
         private void UpdateWinch()
         {
+            if (isFreeCasting)
+                return;
+
             bool hasChangedRope = false;
 
             float currentZRotation = reelPivot.transform.localEulerAngles.z;
@@ -288,19 +300,48 @@ namespace DumyatRuntime
                 this.posOld = pos;
             }
         }
-        public void SetCastingLength(float length)
-        {
-            ropeLength = Mathf.Clamp(
-                length,
-                minRopeLength,
-                maxRopeLength);
+        // public void SetCastingLength(float length)
+        // {
+        //     ropeLength = Mathf.Clamp(
+        //         length,
+        //         0f,
+        //         maxRopeLength);
 
-            UpdateSpring();
-        }
+        //     InitRope();
+
+        //     UpdateSpring();
+        // }
 
         public float GetMaxLength()
         {
             return maxRopeLength;
+        }
+        public void EnterFreeCast()
+        {
+            isFreeCasting = true;
+
+            if (springJoint != null)
+            {
+                // Neutralize the joint instead of disabling it —
+                // SpringJoint has no .enabled, so we just remove its pull.
+                springJoint.spring = 0f;
+                springJoint.damper = 0f;
+                springJoint.maxDistance = maxRopeLength * 10f; // plenty of slack
+            }
+        }
+
+        public void SettleCastAtCurrentDistance()
+        {
+            isFreeCasting = false;
+
+            float landedDistance = Vector3.Distance(
+                whatTheRopeIsConnectedTo.position,
+                whatIsHangingFromTheRope.position);
+
+            ropeLength = Mathf.Clamp(landedDistance, 0f, maxRopeLength);
+
+            InitRope();
+            UpdateSpring(); // restores real spring/damper/maxDistance values
         }
     }
 }

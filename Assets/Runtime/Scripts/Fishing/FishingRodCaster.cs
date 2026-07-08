@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR;
 
 namespace DumyatRuntime
 {
@@ -12,6 +13,11 @@ namespace DumyatRuntime
         [Header("Casting")]
         public float castMultiplier = 1.5f;
         public float minimumCastVelocity = 1f;
+        public LayerMask waterLayer;          // set this to your water surface layer
+        public float settleVelocityThreshold = 0.2f;
+        public float maxFlightTime = 5f;
+
+        private float castTimer;
 
         private bool isHoldingCast;
         private bool isCasting;
@@ -19,7 +25,8 @@ namespace DumyatRuntime
         private Vector3 previousTipPosition;
 
         private float bestSpeed;
-        private Vector3 bestDirection;
+
+        private bool previousPrimaryButtonState;
 
         private void Start()
         {
@@ -29,7 +36,6 @@ namespace DumyatRuntime
         private void Update()
         {
             TrackRodVelocity();
-
             HandleCasting();
         }
 
@@ -47,7 +53,6 @@ namespace DumyatRuntime
                 if (forwardSpeed > bestSpeed)
                 {
                     bestSpeed = forwardSpeed;
-                    bestDirection = rodTip.forward;
                 }
             }
 
@@ -56,16 +61,29 @@ namespace DumyatRuntime
 
         private void HandleCasting()
         {
-            // Replace this with XR input later
-            if (Input.GetKeyDown(KeyCode.Mouse0))
+            InputDevice rightHand =
+                InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+
+            bool primaryButtonPressed = false;
+
+            if (rightHand.isValid)
+            {
+                rightHand.TryGetFeatureValue(
+                    CommonUsages.primaryButton,
+                    out primaryButtonPressed);
+            }
+
+            if (primaryButtonPressed && !previousPrimaryButtonState)
             {
                 BeginCast();
             }
 
-            if (Input.GetKeyUp(KeyCode.Mouse0))
+            if (!primaryButtonPressed && previousPrimaryButtonState)
             {
                 ReleaseCast();
             }
+
+            previousPrimaryButtonState = primaryButtonPressed;
 
             if (isCasting)
             {
@@ -75,10 +93,10 @@ namespace DumyatRuntime
 
         private void BeginCast()
         {
+            if (isCasting)
+                return;
             isHoldingCast = true;
-
             bestSpeed = 0f;
-            bestDirection = rodTip.forward;
         }
 
         private void ReleaseCast()
@@ -89,24 +107,36 @@ namespace DumyatRuntime
                 return;
 
             isCasting = true;
+            castTimer = 0f;
 
-            hookRb.AddForce(
-                bestDirection * bestSpeed * castMultiplier,
-                ForceMode.VelocityChange);
+            fishingLine.EnterFreeCast();
+
+            // Set velocity directly for a punchy, predictable throw —
+            // AddForce(VelocityChange) works too, but this reads more clearly
+            // and isn't affected by residual velocity.
+            hookRb.linearVelocity = rodTip.right * bestSpeed * castMultiplier;
+            hookRb.angularVelocity = Vector3.zero;
+
+            bestSpeed = 0f;
         }
+
 
         private void UpdateLineLength()
         {
-            float currentDistance =
-                Vector3.Distance(
-                    rodTip.position,
-                    hookRb.position);
+            castTimer += Time.deltaTime;
 
-            fishingLine.SetCastingLength(currentDistance);
+            bool hitWater = false;
+            // Prefer a real collision check against your water volume:
+            if (Physics.CheckSphere(hookRb.position, 0.05f, waterLayer))
+                hitWater = true;
 
-            if (currentDistance >= fishingLine.GetMaxLength() - 0.1f)
+            // Fallback: hook has basically stopped moving (e.g. no water layer set yet)
+            bool settled = hookRb.linearVelocity.magnitude < settleVelocityThreshold;
+
+            if (hitWater || settled || castTimer > maxFlightTime)
             {
                 isCasting = false;
+                fishingLine.SettleCastAtCurrentDistance();
             }
         }
     }

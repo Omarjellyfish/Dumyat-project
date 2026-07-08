@@ -13,6 +13,16 @@ namespace DumyatRuntime
 
         public Transform MouthPoint => mouthPoint;
 
+        private void Start()
+        {
+            Animator fishAnimator = GetComponentInChildren<Animator>();
+            fishAnimator.SetBool("IsHooked", false);
+        }
+        public void StopAnimation()
+        {
+            Animator fishAnimator = GetComponentInChildren<Animator>();
+            fishAnimator.SetBool("IsHooked", true);
+        }
         public void Initialize(FishData fishData)
         {
             data = fishData;
