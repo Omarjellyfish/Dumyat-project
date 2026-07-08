@@ -21,12 +21,14 @@ namespace DumyatRuntime
         [SerializeField] private string _personality;
 
         [Header("Offer Economics")]
-        [Tooltip("Lowest opening offer as a multiplier of the fish's fair market value " +
-                 "(e.g. 0.5 = offers half of fair value).")]
+        [Tooltip("DEPRECATED — no longer affects price. Pricing is now driven purely by fish data " +
+                 "(fractions of the fish's fair market value in PriceNegotiationCalculator). This " +
+                 "merchant archetype only influences the deception roll and patience now.")]
         [SerializeField] private float _minOfferMultiplier = 0.5f;
 
-        [Tooltip("Highest the merchant is willing to go, as a multiplier of the fish's " +
-                 "fair market value (e.g. 0.9 = caps out at 90% of fair value).")]
+        [Tooltip("DEPRECATED — no longer affects price. Pricing is now driven purely by fish data " +
+                 "(fractions of the fish's fair market value in PriceNegotiationCalculator). This " +
+                 "merchant archetype only influences the deception roll and patience now.")]
         [SerializeField] private float _maxOfferMultiplier = 0.9f;
 
         [Header("Behaviour")]
@@ -39,14 +41,14 @@ namespace DumyatRuntime
                  "away from the negotiation.")]
         [SerializeField] private int _patienceLevel = 3;
 
-        [Header("Voice (optional override)")]
-        // OPTIONAL per-archetype override. Leave EMPTY (the normal path) to have MerchantSpawner
-        // assign a voice from the shared VoicePool at spawn. If set, this exact voice is always
-        // used for this archetype.
+        [Header("Voice (archetype fallback)")]
+        // FALLBACK voice for any NPC using this config that does NOT set its own voice. Each NPC's
+        // voice is normally assigned PER INSTANCE on its MerchantNPC component (MerchantNPC._voiceId);
+        // this value is only used when that per-NPC field is empty. There is no shared voice pool.
         // IMPORTANT: any value here MUST be a verified Egyptian Arabic voice (اللهجة المصرية), not
         // generic "Arabic", Gulf, Levantine, Maghrebi or MSA. See docs/MERCHANT_CONTEXT.md.
-        [Tooltip("OPTIONAL ElevenLabs voice override. Empty = assigned from the VoicePool at spawn. " +
-                 "Any value MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.")]
+        [Tooltip("FALLBACK ElevenLabs voice, used only when an NPC using this config leaves its own " +
+                 "MerchantNPC 'Voice Id' empty. MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.")]
         [SerializeField] private string _voiceId;
 
         /// <summary>Display name of the merchant, used in subtitles and UI.</summary>
@@ -58,10 +60,10 @@ namespace DumyatRuntime
         /// </summary>
         public string Personality => _personality;
 
-        /// <summary>Lowest opening offer as a multiplier of fair fish value.</summary>
+        /// <summary>DEPRECATED — no longer used for pricing (fish-data driven now). Kept for API stability.</summary>
         public float MinOfferMultiplier => _minOfferMultiplier;
 
-        /// <summary>Maximum offer the merchant will reach, as a multiplier of fair fish value.</summary>
+        /// <summary>DEPRECATED — no longer used for pricing (fish-data driven now). Kept for API stability.</summary>
         public float MaxOfferMultiplier => _maxOfferMultiplier;
 
         /// <summary>Chance (0-1) the merchant lowballs / deceives on a given offer.</summary>
@@ -71,9 +73,9 @@ namespace DumyatRuntime
         public int PatienceLevel => _patienceLevel;
 
         /// <summary>
-        /// Optional per-archetype ElevenLabs voice override. Empty means the merchant draws a voice
-        /// from the shared <see cref="VoicePool"/> at spawn (see MerchantNPC.AssignedVoiceId). Any
-        /// value MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.
+        /// Fallback ElevenLabs voice for NPCs using this config that don't set their own
+        /// <c>MerchantNPC._voiceId</c> (each NPC owns its voice — there is no shared pool). Any value
+        /// MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.
         /// </summary>
         public string VoiceId => _voiceId;
     }

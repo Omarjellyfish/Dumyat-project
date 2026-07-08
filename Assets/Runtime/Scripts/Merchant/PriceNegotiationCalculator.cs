@@ -35,12 +35,32 @@ namespace DumyatRuntime
     public class PriceNegotiationCalculator
     {
         // --- Tuning constants (safe to tweak during playtesting) -------------------
+        //
+        // PRICING IS DRIVEN BY FISH DATA (the fish's fairMarketValue), NOT by merchant archetype
+        // multipliers. The merchant archetype only affects the DECEPTION ROLL and PATIENCE now; the
+        // opening offer and the negotiation ceiling are both fractions of the fish's fair value below.
+        // The deception roll picks which band (honest vs deceptive) those fractions come from.
 
-        /// <summary>Upper bound on a DECEPTIVE opening offer multiplier (kept below 1.0).</summary>
-        private const float DeceptiveOfferCeiling = 0.8f;
+        /// <summary>HONEST opening offer as a fraction of the fish's fair market value: [min, max].</summary>
+        private const float HonestOpeningMin = 0.65f;
+        private const float HonestOpeningMax = 0.80f;
 
-        /// <summary>Lower bound on an HONEST opening offer multiplier.</summary>
-        private const float HonestOfferFloor = 0.85f;
+        /// <summary>DECEPTIVE (lowball) opening offer as a fraction of fair value: [min, max].</summary>
+        private const float DeceptiveOpeningMin = 0.40f;
+        private const float DeceptiveOpeningMax = 0.60f;
+
+        /// <summary>
+        /// HONEST negotiation ceiling as a fraction of fair value: an honest merchant can be argued
+        /// all the way up to the fish's FULL fair market value (1.0).
+        /// </summary>
+        private const float HonestMaxFraction = 1.0f;
+
+        /// <summary>
+        /// DECEPTIVE negotiation ceiling as a fraction of fair value: [min, max]. A lowballed
+        /// negotiation can never be haggled up to full fair value — it caps meaningfully below it.
+        /// </summary>
+        private const float DeceptiveMaxMin = 0.75f;
+        private const float DeceptiveMaxMax = 0.90f;
 
         /// <summary>
         /// If the player's demand is within this fraction of the merchant's standing
@@ -49,33 +69,27 @@ namespace DumyatRuntime
         private const float AcceptGapFraction = 0.05f;
 
         /// <summary>
-        /// How far (0-1) a DECEPTIVE merchant's negotiation ceiling may reach from
-        /// <see cref="DeceptiveOfferCeiling"/> toward the archetype's honest maximum. 0.5 means a
-        /// deceptive ceiling lands somewhere in the lower half of that range, so a lowballed
-        /// negotiation can never be haggled all the way up to what an honest one would pay.
-        /// </summary>
-        private const float DeceptiveCeilingBlend = 0.5f;
-
-        /// <summary>
         /// Fraction of the opening→ceiling gap a single RaiseOffer may cover. 0.35 means the
         /// merchant needs roughly three concessions to travel the whole envelope, so a big gap is
         /// climbed gradually instead of in one jump.
         /// </summary>
         private const float RaiseStepFraction = 0.35f;
 
-        // Optional global guard-rails on the final offer. See note on _systemConfig.
-        private readonly MerchantSystemConfig _systemConfig;
+        /// <summary>
+        /// Hard cap on how far, PER KILOGRAM, the merchant's negotiation ceiling may sit above its
+        /// opening offer. The whole opening→max climb can never exceed this many EGP for each kilo of
+        /// fish, so a heavy/valuable catch still can't be argued up by an unbounded amount.
+        /// </summary>
+        private const float MaxEnvelopePerKg = 100f;
 
         /// <param name="systemConfig">
-        /// Global config supplying the offer guard-rail multipliers
-        /// (<see cref="MerchantSystemConfig.BasePriceRangeMin"/>/<c>Max</c>). May be null,
-        /// in which case no clamp is applied. These should be set WIDE (e.g. 0.4–1.2) — they
-        /// are a safety net against misconfigured merchants, NOT a tight price band, or they
-        /// will clamp away intended lowballing.
+        /// No longer used. Pricing is now purely fish-data driven (fractions of the fish's fair
+        /// market value), so the old fair-price guard-rail multipliers are not applied — with typical
+        /// values they would clamp away the intended lowballing. Kept on the signature for API stability.
         /// </param>
         public PriceNegotiationCalculator(MerchantSystemConfig systemConfig = null)
         {
-            _systemConfig = systemConfig;
+            // systemConfig intentionally ignored — see the param note above.
         }
 
         /// <summary>
@@ -100,50 +114,61 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Produces the merchant's first offer for a fish with a caller-supplied deception
-        /// decision: a deceiving merchant lowballs (multiplier in
-        /// [minOfferMultiplier, <see cref="DeceptiveOfferCeiling"/>]); an honest one offers
-        /// fairly (multiplier in [<see cref="HonestOfferFloor"/>, maxOfferMultiplier]). The
-        /// result is clamped to the global guard-rails when a system config is present.
+        /// Produces the merchant's first offer for a fish with a caller-supplied deception decision.
+        /// The offer is purely FISH-DATA driven: a fraction of the fish's <see cref="FishData.fairMarketValue"/>
+        /// — an honest merchant opens in [<see cref="HonestOpeningMin"/>, <see cref="HonestOpeningMax"/>],
+        /// a deceiving one lowballs in [<see cref="DeceptiveOpeningMin"/>, <see cref="DeceptiveOpeningMax"/>].
+        /// The merchant archetype does NOT influence the amount (only the deception roll). Clamped to
+        /// the global guard-rails when a system config is present. <paramref name="merchant"/> is kept
+        /// on the signature for API stability but is unused here.
         /// </summary>
         public float GenerateOpeningOffer(MerchantConfig merchant, FishData fish, bool deceiving)
         {
-            if (merchant == null || fish == null)
+            if (fish == null)
             {
-                Debug.LogWarning("PriceNegotiationCalculator: null merchant or fish in GenerateOpeningOffer.");
+                Debug.LogWarning("PriceNegotiationCalculator: null fish in GenerateOpeningOffer.");
                 return 0f;
             }
 
-            float multiplier = deceiving
-                ? RandomInRange(merchant.MinOfferMultiplier, DeceptiveOfferCeiling)
-                : RandomInRange(HonestOfferFloor, merchant.MaxOfferMultiplier);
+            float fraction = deceiving
+                ? RandomInRange(DeceptiveOpeningMin, DeceptiveOpeningMax)
+                : RandomInRange(HonestOpeningMin, HonestOpeningMax);
 
-            float offer = fish.fairMarketValue * multiplier;
-            return ClampToGuardRails(offer, fish.fairMarketValue);
+            return fish.fairMarketValue * fraction;
         }
 
         /// <summary>
-        /// The ABSOLUTE ceiling the merchant will pay for this fish THIS negotiation — decided once
-        /// at the opening from the SAME deception roll as the opening offer, and enforced against
-        /// every subsequent offer (offers only move UP toward it, never past it). An honest merchant
-        /// will go to the archetype's full <see cref="MerchantConfig.MaxOfferMultiplier"/>; a
-        /// deceptive one caps meaningfully lower (see <see cref="DeceptiveCeilingBlend"/>). Never
-        /// below <paramref name="openingOffer"/>, so the envelope is always valid.
+        /// The ABSOLUTE ceiling the merchant will pay for this fish THIS negotiation — decided once at
+        /// the opening from the SAME deception roll as the opening offer, and enforced against every
+        /// subsequent offer (offers only move UP toward it, never past it). Purely FISH-DATA driven: a
+        /// fraction of the fish's fair value — an HONEST merchant can be argued all the way up to the
+        /// fish's FULL fair value (<see cref="HonestMaxFraction"/> = 1.0); a DECEPTIVE one caps below
+        /// it (<see cref="DeceptiveMaxMin"/>..<see cref="DeceptiveMaxMax"/>). The merchant archetype
+        /// does NOT influence the amount. Never below <paramref name="openingOffer"/>, so the envelope
+        /// is always valid. <paramref name="merchant"/> is kept for API stability but is unused here.
         /// </summary>
         public float GenerateMaxOffer(MerchantConfig merchant, FishData fish, bool deceiving, float openingOffer)
         {
-            if (merchant == null || fish == null)
+            if (fish == null)
             {
-                Debug.LogWarning("PriceNegotiationCalculator: null merchant or fish in GenerateMaxOffer.");
+                Debug.LogWarning("PriceNegotiationCalculator: null fish in GenerateMaxOffer.");
                 return openingOffer;
             }
 
-            float multiplier = deceiving
-                ? RandomInRange(DeceptiveOfferCeiling,
-                    Mathf.Lerp(DeceptiveOfferCeiling, merchant.MaxOfferMultiplier, DeceptiveCeilingBlend))
-                : merchant.MaxOfferMultiplier;
+            float fraction = deceiving
+                ? RandomInRange(DeceptiveMaxMin, DeceptiveMaxMax)
+                : HonestMaxFraction;
 
-            float max = ClampToGuardRails(fish.fairMarketValue * multiplier, fish.fairMarketValue);
+            float max = fish.fairMarketValue * fraction;
+
+            // Cap the opening→max climb at MaxEnvelopePerKg per kilo, so a heavy or high-value catch
+            // can't be haggled up by more than a bounded amount. Uses the honest caught weight.
+            if (fish.weight > 0f)
+            {
+                float envelopeCap = openingOffer + MaxEnvelopePerKg * fish.weight;
+                max = Mathf.Min(max, envelopeCap);
+            }
+
             return Mathf.Max(max, openingOffer);
         }
 
@@ -166,9 +191,9 @@ namespace DumyatRuntime
         /// Rules, in order:
         /// 1. Player asking for ≤ the standing offer → <see cref="NegotiationOutcome.Accept"/>.
         /// 2. Turns taken ≥ patience → <see cref="NegotiationOutcome.WalkAway"/>.
-        /// 3. Demand above the merchant's ceiling (fair × maxOfferMultiplier) → walk away if
-        ///    patience is nearly spent, else hold firm — so low-patience merchants bail faster
-        ///    on repeated high demands.
+        /// 3. Demand above the negotiation ceiling (state.maxOffer, else the fish's full fair value)
+        ///    → walk away if patience is nearly spent, else hold firm — so low-patience merchants bail
+        ///    faster on repeated high demands.
         /// 4. Demand within reach: accept if it's within <see cref="AcceptGapFraction"/> of the
         ///    standing offer; otherwise raise — unless a deception roll makes the merchant hold
         ///    firm, so more deceptive merchants resist raising more often.
@@ -183,7 +208,9 @@ namespace DumyatRuntime
 
             MerchantConfig merchant = state.currentMerchant;
             float standingOffer = state.currentOffer;
-            float ceiling = state.fishBeingSold.fairMarketValue * merchant.MaxOfferMultiplier;
+            // Fish-data driven ceiling: the negotiation's actual max (set at the opening), else the
+            // fish's full fair market value. Merchant multipliers no longer influence price.
+            float ceiling = state.maxOffer > 0f ? state.maxOffer : state.fishBeingSold.fairMarketValue;
 
             // 1. Player wants no more than already offered — easy yes.
             if (playerCounterOffer <= standingOffer)
@@ -242,20 +269,10 @@ namespace DumyatRuntime
         // --- Helpers ---------------------------------------------------------------
 
         // Random.Range(float,float) does not guarantee behaviour when min > max, so order
-        // the bounds first (a misconfigured merchant could invert them).
+        // the bounds first (a misconfigured range could invert them).
         private static float RandomInRange(float a, float b)
         {
             return a <= b ? Random.Range(a, b) : Random.Range(b, a);
-        }
-
-        private float ClampToGuardRails(float offer, float fairMarketValue)
-        {
-            if (_systemConfig == null) return offer;
-
-            float min = fairMarketValue * _systemConfig.BasePriceRangeMin;
-            float max = fairMarketValue * _systemConfig.BasePriceRangeMax;
-            if (min > max) (min, max) = (max, min);
-            return Mathf.Clamp(offer, min, max);
         }
     }
 }
@@ -269,31 +286,34 @@ namespace DumyatRuntime
 // reproducible numbers.
 //
 // Setup (authored in the Inspector as ScriptableObjects):
-//   fish.fairMarketValue = 100
-//   systemConfig.BasePriceRangeMin = 0.4, BasePriceRangeMax = 1.2   // WIDE guard-rails
+//   fish.fairMarketValue = 100,  fish.weight = 2   // pricing is FISH-DATA driven now
 //
-//   deceptive : DeceptionRate = 1.0, MinOfferMultiplier = 0.5, MaxOfferMultiplier = 0.8, PatienceLevel = 2
-//   honest    : DeceptionRate = 0.0, MinOfferMultiplier = 0.6, MaxOfferMultiplier = 0.95, PatienceLevel = 5
+//   deceptive : DeceptionRate = 1.0, PatienceLevel = 2   // Min/MaxOfferMultiplier no longer used
+//   honest    : DeceptionRate = 0.0, PatienceLevel = 5
 //
-//   var calc = new PriceNegotiationCalculator(systemConfig);
+//   var calc = new PriceNegotiationCalculator();   // systemConfig no longer needed
 //
-// 1) Opening offers:
-//   calc.GenerateOpeningOffer(deceptive, fish);  // deceiving => multiplier in [0.5, 0.8]  => ~50–80
-//   calc.GenerateOpeningOffer(honest,    fish);  // honest    => multiplier in [0.85, 0.95] => ~85–95
-//   => Deceptive merchant reliably opens lower than the honest one. Guard-rails (40–120)
-//      never bite here, which is correct — they only catch misconfigured extremes.
+// 1) Opening offers (fractions of the FISH's fair value; merchant archetype does NOT change these):
+//   calc.GenerateOpeningOffer(m, fish, deceiving:true );  // => fair * [0.40, 0.60] => ~40–60
+//   calc.GenerateOpeningOffer(m, fish, deceiving:false);  // => fair * [0.65, 0.80] => ~65–80
+//   => Deceptive opens lower than honest. No guard-rail clamp — the fractions ARE the bounds.
 //
-// 2) Counter-offer evaluation (deceptive merchant, standing offer 60, ceiling = 100*0.8 = 80):
-//   state = { currentMerchant=deceptive, fishBeingSold=fish, currentOffer=60, turnCount=0 }
-//   EvaluateCounterOffer(state, 58);  // <= standing offer        => Accept
-//   EvaluateCounterOffer(state, 62);  // within 5% of 60 (<=63)   => Accept
-//   EvaluateCounterOffer(state, 75);  // in reach, deceptive roll => HoldFirm (DeceptionRate 1.0 always holds)
-//   EvaluateCounterOffer(state, 95);  // above ceiling 80, turn 0 => HoldFirm
+//   Max offer (ceiling), also fish-driven:
+//   calc.GenerateMaxOffer(m, fish, deceiving:false, opening);  // honest => fair * 1.0 = 100 (full fair value!)
+//   calc.GenerateMaxOffer(m, fish, deceiving:true,  opening);  // deceptive => fair * [0.75, 0.90] => ~75–90
+//   (both also capped so max <= opening + 100/kg * weight)
+//
+// 2) Counter-offer evaluation (deceptive merchant, standing offer 50, ceiling = state.maxOffer = 85):
+//   state = { currentMerchant=deceptive, fishBeingSold=fish, currentOffer=50, maxOffer=85, turnCount=0 }
+//   EvaluateCounterOffer(state, 48);  // <= standing offer        => Accept
+//   EvaluateCounterOffer(state, 52);  // within 5% of 50 (<=52.5) => Accept
+//   EvaluateCounterOffer(state, 70);  // in reach, deceptive roll => HoldFirm (DeceptionRate 1.0 always holds)
+//   EvaluateCounterOffer(state, 95);  // above ceiling 85, turn 0 => HoldFirm
 //   state.turnCount = 2;              // == PatienceLevel
-//   EvaluateCounterOffer(state, 75);  // patience exhausted       => WalkAway
+//   EvaluateCounterOffer(state, 70);  // patience exhausted       => WalkAway
 //
-//    Same calls on the HONEST merchant (ceiling = 100*0.95 = 95, PatienceLevel 5):
-//   EvaluateCounterOffer(state, 75);  // in reach, DeceptionRate 0 => RaiseOffer (honest moves up)
+//    HONEST merchant (maxOffer = 100 = full fair value, PatienceLevel 5):
+//   EvaluateCounterOffer(state, 70);  // in reach, DeceptionRate 0 => RaiseOffer (honest moves up)
 //   => Honest raises where the deceptive one holds firm: the deception rate is doing its job.
 //
 // 3) Success rate:

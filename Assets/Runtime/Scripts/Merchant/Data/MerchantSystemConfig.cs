@@ -20,12 +20,12 @@ namespace DumyatRuntime
         [SerializeField] private List<MerchantConfig> _merchantConfigs = new List<MerchantConfig>();
 
         [Header("Fair Price Range")]
-        [Tooltip("Lower bound of the fair-price multiplier applied to a fish's fair " +
-                 "market value, to add per-sale variation.")]
+        [Tooltip("DEPRECATED — no longer applied. Pricing is fish-data driven now (fractions of the " +
+                 "fish's fair market value); this guard-rail clamp was removed.")]
         [SerializeField] private float _basePriceRangeMin = 0.9f;
 
-        [Tooltip("Upper bound of the fair-price multiplier applied to a fish's fair " +
-                 "market value, to add per-sale variation.")]
+        [Tooltip("DEPRECATED — no longer applied. Pricing is fish-data driven now (fractions of the " +
+                 "fish's fair market value); this guard-rail clamp was removed.")]
         [SerializeField] private float _basePriceRangeMax = 1.1f;
 
         [Header("Timing")]

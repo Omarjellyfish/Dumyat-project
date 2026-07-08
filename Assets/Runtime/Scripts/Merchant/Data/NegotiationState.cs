@@ -53,6 +53,27 @@ namespace DumyatRuntime
         /// <summary>The fish item being sold in this negotiation.</summary>
         public FishData fishBeingSold;
 
+        /// <summary>
+        /// The fish species the fisherman has EXPLICITLY named so far (empty until they actually say
+        /// it). Accumulated from the LLM's per-turn report and never inferred from weight/catalog, so
+        /// the merchant can be hard-blocked from pricing a fish it was never told. Also the value saved
+        /// for the fish-sell process / inventory validation.
+        /// </summary>
+        public string disclosedFishType;
+
+        /// <summary>
+        /// The weight (kg) the fisherman has EXPLICITLY stated so far (0 until they actually say it).
+        /// Paired with <see cref="disclosedFishType"/> to gate pricing and to save the deal's fish data.
+        /// </summary>
+        public float disclosedWeightKg;
+
+        /// <summary>
+        /// The market catalog (every species the inventory can produce, with weight bands) so the
+        /// merchant can ask what the fisherman brought, only acknowledge real species, and reject
+        /// out-of-band weights — instead of assuming the fish. May be null/empty if no catalog exists.
+        /// </summary>
+        public List<FishCatalogEntry> fishCatalog;
+
         /// <summary>The merchant's current standing offer, in game currency.</summary>
         public float currentOffer;
 
@@ -87,6 +108,13 @@ namespace DumyatRuntime
         public List<float> offerHistory = new List<float>();
 
         /// <summary>
+        /// Ordered history of every price the PLAYER (seller) has asked for this negotiation (oldest
+        /// first), as reported by the LLM each turn. Lets the merchant notice when the fisherman
+        /// RAISES their asking price mid-haggle (e.g. 150 then 190) and push back / hold firmer.
+        /// </summary>
+        public List<float> playerAskHistory = new List<float>();
+
+        /// <summary>
         /// Ordered transcript of the spoken exchange so far (oldest first): the merchant's opening
         /// line, then alternating player/merchant lines. Replayed into every LLM prompt so the
         /// merchant "remembers" what the player already said and what was already offered.
@@ -98,14 +126,25 @@ namespace DumyatRuntime
 
         /// <summary>
         /// How many turns the merchant has HELD FIRM while its offer already sat at
-        /// <see cref="maxOffer"/>. Once it reaches <see cref="MaxTurnsHeldAtMax"/>, the merchant's
-        /// patience for defending the ceiling is spent: the LLM is instructed (and validation
-        /// enforces) that the next turn must close — accept, or reject the player and walk away.
+        /// <see cref="maxOffer"/>. Drives a two-stage close-out so the player is never cut off
+        /// abruptly: while below <see cref="HoldsBeforeUltimatum"/> the merchant just keeps holding
+        /// firm (the player may keep trying); at <see cref="HoldsBeforeUltimatum"/> it issues a STRICT
+        /// ultimatum ("this is final — accept or decline NOW"); only once it reaches
+        /// <see cref="HoldsBeforeWalkAway"/> (the player still won't decide) does it walk away.
         /// </summary>
         public int turnsHeldAtMax;
 
-        /// <summary>Held-at-max turns tolerated before the merchant must reject and walk away.</summary>
-        public const int MaxTurnsHeldAtMax = 2;
+        /// <summary>
+        /// Held-at-max turns before the merchant stops just holding and issues its STRICT
+        /// accept-or-decline ULTIMATUM (still not walking away — the player gets this turn to decide).
+        /// </summary>
+        public const int HoldsBeforeUltimatum = 2;
+
+        /// <summary>
+        /// Held-at-max turns after which the merchant finally WALKS AWAY — i.e. the player kept
+        /// haggling even after the ultimatum instead of accepting or declining.
+        /// </summary>
+        public const int HoldsBeforeWalkAway = 3;
 
         /// <summary>Current phase of the negotiation.</summary>
         public NegotiationPhase state = NegotiationPhase.Approaching;

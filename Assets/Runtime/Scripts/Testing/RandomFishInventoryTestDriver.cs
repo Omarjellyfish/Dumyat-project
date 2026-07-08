@@ -58,6 +58,38 @@ namespace DumyatRuntime
         public bool HasFish => _species != null && _species.Count > 0;
 
         /// <inheritdoc/>
+        public IReadOnlyList<FishCatalogEntry> Catalog
+        {
+            get
+            {
+                var catalog = new List<FishCatalogEntry>();
+                if (_species == null) return catalog;
+                foreach (FishSpecies s in _species)
+                {
+                    if (s == null || string.IsNullOrWhiteSpace(s.fishType)) continue;
+                    catalog.Add(new FishCatalogEntry
+                    {
+                        fishType = s.fishType,
+                        fishTypeArabic = s.fishTypeArabic,
+                        minWeight = s.minWeight,
+                        maxWeight = s.maxWeight
+                    });
+                }
+                return catalog;
+            }
+        }
+
+        /// <inheritdoc/>
+        // Test provider rolls a fresh random fish per sale and holds no persistent stock, so there is
+        // nothing to remove — just log the sale so the seam is observable in the Console.
+        public void MarkFishSold(FishData fish)
+        {
+            if (fish == null) return;
+            Debug.Log($"[FishInventory] Fish SOLD (test provider, nothing to remove): " +
+                      $"{fish.fishType} {fish.weight:0.##}kg.");
+        }
+
+        /// <inheritdoc/>
         public bool TryGetFishToSell(out FishData fish)
         {
             fish = null;

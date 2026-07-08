@@ -207,7 +207,7 @@ Transform:
   m_GameObject: {fileID: 66555505}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.9, z: -7.7}
+  m_LocalPosition: {x: 0, y: 1.9, z: -7.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -321,7 +321,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantSpawner
   _systemConfig: {fileID: 11400000, guid: 7b808f96b67623f4baf156551506bf90, type: 2}
   _approachOrder: 0
-  _voicePool: {fileID: 11400000, guid: f000cdeef0daee04cb832f485d539c1f, type: 2}
   _merchants:
   - {fileID: 4982099727541735516}
   _playerTag: Player
@@ -808,7 +807,7 @@ MonoBehaviour:
   _autoReArm: 1
   _controlBinding: PushToTalk
   _pttReleaseTailSeconds: 0.35
-  _vadAmplitudeThreshold: 0.02
+  _vadAmplitudeThreshold: 0.1
   _vadSilenceSeconds: 1.2
   _reconnectCooldownSeconds: 2
   _logToFile: 1
@@ -1123,6 +1122,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantNPC
   _config: {fileID: 11400000, guid: 6b333e2628ec3cd4683aadcf222fa9ad, type: 2}
+  _voiceId: 
   _isAvailable: 1
 --- !u!1 &1399472607
 GameObject:
@@ -1162,7 +1162,7 @@ MonoBehaviour:
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
-  FollowOffset: {x: 0, y: 0.9, z: 0.3}
+  FollowOffset: {x: 0, y: 0.9, z: 0.4}
 --- !u!114 &1399472610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1215,7 +1215,7 @@ Transform:
   m_GameObject: {fileID: 1399472607}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.9, z: -7.7}
+  m_LocalPosition: {x: 0, y: 1.9, z: -7.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1377,18 +1377,6 @@ MonoBehaviour:
     maxPricePerKg: 200
     minWeight: 0.3
     maxWeight: 1.8
-  - fishType: Qaroos
-    fishTypeArabic: "\u0642\u0627\u0631\u0648\u0635"
-    minPricePerKg: 130
-    maxPricePerKg: 220
-    minWeight: 0.5
-    maxWeight: 3
-  - fishType: Wagar
-    fishTypeArabic: "\u0648\u0642\u0627\u0631"
-    minPricePerKg: 150
-    maxPricePerKg: 260
-    minWeight: 0.8
-    maxWeight: 4.5
   - fishType: Balamida
     fishTypeArabic: "\u0628\u0644\u0627\u0645\u064A\u0637\u0629"
     minPricePerKg: 45
@@ -1581,6 +1569,8 @@ MonoBehaviour:
   _connectionTimeoutSeconds: 5
   _responseTimeoutSeconds: 15
   _verboseLogging: 1
+  _dumpSttAudio: 1
+  _sttAudioFolderName: STT_Audio
   _priority: 0
 --- !u!114 &1507805456
 MonoBehaviour:
@@ -1711,7 +1701,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.GeminiClient
   _config: {fileID: 11400000, guid: 4d8832d058057cc489c87f63a820506b, type: 2}
-  _priority: 1
+  _priority: 10
   _timeoutSeconds: 20
   _maxRetries: 1
   _retryDelaySeconds: 0.5
@@ -1741,7 +1731,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.GroqClient
   _config: {fileID: 11400000, guid: ac434d4eef77698449883184df1ccb0b, type: 2}
-  _priority: 10
+  _priority: 1
   _timeoutSeconds: 20
   _maxRetries: 1
   _retryDelaySeconds: 0.5
@@ -1777,6 +1767,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantNPC
   _config: {fileID: 11400000, guid: 60c89643934b67644a7f88ae3aa8200e, type: 2}
+  _voiceId: 
   _isAvailable: 1
 --- !u!82 &1912522837
 AudioSource:
@@ -2127,6 +2118,19 @@ MonoBehaviour:
   _maxWeight: 70
   _attackSpeed: 14
   _releaseSpeed: 8
+  _enableBlink: 1
+  _leftBlinkBlendShape: eyeBlinkLeft
+  _rightBlinkBlendShape: eyeBlinkRight
+  _blinkBlendShapeCandidates:
+  - eyesClosed
+  - eyeBlink
+  - blink
+  _minBlinkInterval: 2.5
+  _maxBlinkInterval: 6
+  _blinkCloseTime: 0.06
+  _blinkOpenTime: 0.12
+  _blinkClosedWeight: 100
+  _blinkOnlyWhileSpeaking: 0
 --- !u!114 &4982099727541735511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2158,7 +2162,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantProximityTrigger
   _playerTag: Player
   _spawner: {fileID: 0}
-  _reApproachCooldown: 8
   _facePlayerOnApproach: 1
 --- !u!135 &4982099727541735513
 SphereCollider:
@@ -2179,7 +2182,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 6
+  m_Radius: 8
   m_Center: {x: 0, y: 1, z: 0}
 --- !u!54 &4982099727541735514
 Rigidbody:
@@ -2318,6 +2321,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantNPC
   _config: {fileID: 11400000, guid: 60c89643934b67644a7f88ae3aa8200e, type: 2}
+  _voiceId: 
   _isAvailable: 1
 --- !u!114 &4982099727541735519
 MonoBehaviour:

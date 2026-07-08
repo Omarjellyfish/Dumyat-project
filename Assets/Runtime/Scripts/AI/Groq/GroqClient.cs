@@ -33,10 +33,18 @@ namespace DumyatRuntime
         [Header("Reliability")]
         [Tooltip("Seconds to wait for a response before the request is treated as a failure.")]
         [SerializeField, Min(1)] private int _timeoutSeconds = 20;
-        [Tooltip("Extra attempts made after the first one fails (1 = one retry).")]
+        [Tooltip("Extra attempts made after the first one fails (1 = one retry). A floor is applied in " +
+                 "code so transient rate-limit/overload errors get several retries regardless.")]
         [SerializeField, Min(0)] private int _maxRetries = 1;
-        [Tooltip("Seconds to wait between a failed attempt and the next retry.")]
+        [Tooltip("Base delay before the first retry; later retries back off exponentially from this.")]
         [SerializeField, Min(0f)] private float _retryDelaySeconds = 0.5f;
+
+        // Even if the Inspector leaves _maxRetries low, transient 429/503s (rate-limit / overloaded)
+        // usually clear within a few seconds — so make at least this many total attempts on a
+        // RETRYABLE failure. Non-retryable errors (bad key/request) still fail fast (see the loop).
+        private const int MinAttemptsOnRetryable = 4;
+        // Cap the exponential backoff so a bad patch can't stall a turn for too long.
+        private const float MaxRetryBackoffSeconds = 4f;
         [Tooltip("Message handed to the failure callback once all attempts are exhausted.")]
         [SerializeField, TextArea] private string _fallbackMessage =
             "Sorry, I can't respond right now. Please try again in a moment.";
@@ -122,10 +130,13 @@ namespace DumyatRuntime
         private IEnumerator SendPromptRoutine(string prompt, bool jsonObject, Action<string> onSuccess, Action<string> onFailure)
         {
             byte[] body = Encoding.UTF8.GetBytes(BuildRequestJson(prompt, jsonObject));
-            int totalAttempts = _maxRetries + 1;
+            int totalAttempts = Mathf.Max(_maxRetries + 1, MinAttemptsOnRetryable);
 
             for (int attempt = 1; attempt <= totalAttempts; attempt++)
             {
+                bool retryable = true;   // connection/timeout errors are retryable by default
+                long status = 0;
+
                 using (UnityWebRequest request = new UnityWebRequest(Endpoint, UnityWebRequest.kHttpVerbPOST))
                 {
                     request.uploadHandler = new UploadHandlerRaw(body);
@@ -135,6 +146,7 @@ namespace DumyatRuntime
                     request.timeout = _timeoutSeconds; // counts connection errors AND timeouts as failures
 
                     yield return request.SendWebRequest();
+                    status = request.responseCode;
 
                     if (request.result == UnityWebRequest.Result.Success)
                     {
@@ -145,22 +157,50 @@ namespace DumyatRuntime
                         }
 
                         Debug.LogWarning($"GroqClient: Attempt {attempt}/{totalAttempts} succeeded " +
-                            "but returned no usable text.");
+                            $"(HTTP {status}) but returned no usable text.");
                     }
                     else
                     {
+                        retryable = IsRetryableStatus(status);
                         Debug.LogWarning($"GroqClient: Attempt {attempt}/{totalAttempts} failed " +
-                            $"({request.result}): {request.error}. Response: {request.downloadHandler?.text}");
+                            $"({request.result}, HTTP {status}): {request.error}. Response: {request.downloadHandler?.text}");
                     }
                 }
 
-                // Back off briefly before retrying (skip the wait after the final attempt).
-                if (attempt < totalAttempts && _retryDelaySeconds > 0f)
-                    yield return new WaitForSeconds(_retryDelaySeconds);
+                // A non-retryable HTTP error (bad key, malformed request, quota exhausted) will not fix
+                // itself on retry — stop hammering it and fall through to the next provider quickly.
+                if (!retryable)
+                {
+                    Debug.LogWarning($"GroqClient: HTTP {status} is not retryable; giving up on this provider.");
+                    break;
+                }
+
+                // Exponential backoff (capped, with jitter) so a transient 429/503 gets a widening gap
+                // between retries instead of being hammered every half second.
+                if (attempt < totalAttempts)
+                    yield return new WaitForSeconds(BackoffSeconds(attempt));
             }
 
             Debug.LogError("GroqClient: All attempts failed; delivering fallback message.");
             onFailure?.Invoke(_fallbackMessage);
+        }
+
+        // HTTP statuses worth retrying: connection/timeout (no HTTP response => status 0), request
+        // timeout, rate-limit, and any 5xx server-side error (500/502/503/504 "overloaded"). Any other
+        // 4xx is a client/config error (bad key, bad request) that a retry cannot fix.
+        private static bool IsRetryableStatus(long status)
+        {
+            if (status == 0 || status == 408 || status == 429) return true;
+            return status >= 500 && status <= 599;
+        }
+
+        // Exponential backoff from _retryDelaySeconds, capped at MaxRetryBackoffSeconds, plus a little
+        // jitter so parallel providers/turns don't all retry on the same beat.
+        private float BackoffSeconds(int attempt)
+        {
+            float baseDelay = Mathf.Max(0f, _retryDelaySeconds);
+            float delay = Mathf.Min(baseDelay * Mathf.Pow(2f, attempt - 1), MaxRetryBackoffSeconds);
+            return delay + UnityEngine.Random.Range(0f, 0.25f);
         }
 
         private string BuildRequestJson(string prompt, bool jsonObject)

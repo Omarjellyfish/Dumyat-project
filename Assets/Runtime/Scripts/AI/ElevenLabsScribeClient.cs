@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -70,6 +72,14 @@ namespace DumyatRuntime
         [Header("Debug")]
         [Tooltip("Log the full session/utterance lifecycle to the Console for testing.")]
         [SerializeField] private bool _verboseLogging = false;
+
+        [Tooltip("Write each committed utterance's audio (exactly the PCM streamed to the STT server, " +
+                 "after silence-gating) to a .wav file so mis-transcriptions can be reviewed. Saved under " +
+                 "Application.persistentDataPath/<folder>.")]
+        [SerializeField] private bool _dumpSttAudio = true;
+
+        [Tooltip("Sub-folder (under Application.persistentDataPath) for the dumped STT .wav files.")]
+        [SerializeField] private string _sttAudioFolderName = "STT_Audio";
 
         private const string LogPrefix = "[Scribe STT]";
 
@@ -180,6 +190,11 @@ namespace DumyatRuntime
         // --- Per-utterance finalization / timeout state (main-thread only) ---
         private bool _awaitingFinal;
         private float _commitSentTime;
+
+        // Accumulates exactly the 16-bit PCM streamed to the server for the current utterance (only the
+        // gated audio that actually gets sent), so a committed utterance can be written to a .wav for
+        // debugging what the STT engine actually heard. Reset when the mic is (re)enabled.
+        private readonly List<byte> _utterancePcm = new List<byte>();
 
         private void Awake()
         {
@@ -302,6 +317,7 @@ namespace DumyatRuntime
             _lastVoiceTime = Time.unscaledTime;
             _awaitingFinal = false;
             _streamedSampleCount = 0;
+            _utterancePcm.Clear();
             _captureSampleRate = _micClip.frequency;
             MicrophoneEnabled = true;
 
@@ -344,6 +360,8 @@ namespace DumyatRuntime
                 _commitSentTime = Time.unscaledTime;
                 Log($"Utterance committed ({streamedSeconds:F2}s streamed), awaiting transcript. " +
                     (keepMicOpen ? "Mic stays OPEN (armed for next utterance)." : "Mic stopped. Session OPEN."));
+                // Persist exactly what we sent to STT, so a wrong transcript can be listened back.
+                DumpUtteranceAudio(rate);
             }
             else if (!keepMicOpen)
             {
@@ -352,6 +370,61 @@ namespace DumyatRuntime
 
             _speechStarted = false;
             _streamedSampleCount = 0;
+            _utterancePcm.Clear();
+        }
+
+        // Writes the current utterance's streamed PCM to a 16-bit mono WAV under
+        // Application.persistentDataPath/<_sttAudioFolderName> (on Windows that resolves to
+        // ...\AppData\LocalLow\<company>\<product>\STT_Audio). Best-effort: never throws into the flow.
+        private void DumpUtteranceAudio(int sampleRate)
+        {
+            if (!_dumpSttAudio || _utterancePcm.Count == 0) return;
+
+            try
+            {
+                string folder = Path.Combine(Application.persistentDataPath,
+                    string.IsNullOrWhiteSpace(_sttAudioFolderName) ? "STT_Audio" : _sttAudioFolderName);
+                Directory.CreateDirectory(folder);
+
+                string fileName = $"stt_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.wav";
+                string path = Path.Combine(folder, fileName);
+                File.WriteAllBytes(path, BuildWav(_utterancePcm.ToArray(), sampleRate));
+                Log($"STT audio dumped → {path}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"{LogPrefix} Could not write STT audio dump: {ex.Message}");
+            }
+        }
+
+        // Wraps raw 16-bit mono little-endian PCM in a canonical 44-byte WAV/PCM header.
+        private static byte[] BuildWav(byte[] pcm, int sampleRate)
+        {
+            const short channels = 1;
+            const short bitsPerSample = 16;
+            int byteRate = sampleRate * channels * bitsPerSample / 8;
+            short blockAlign = (short)(channels * bitsPerSample / 8);
+
+            using (var ms = new MemoryStream(44 + pcm.Length))
+            using (var w = new BinaryWriter(ms, Encoding.UTF8))
+            {
+                w.Write(Encoding.ASCII.GetBytes("RIFF"));
+                w.Write(36 + pcm.Length);                    // ChunkSize
+                w.Write(Encoding.ASCII.GetBytes("WAVE"));
+                w.Write(Encoding.ASCII.GetBytes("fmt "));
+                w.Write(16);                                 // Subchunk1Size (PCM)
+                w.Write((short)1);                           // AudioFormat = PCM
+                w.Write(channels);
+                w.Write(sampleRate);
+                w.Write(byteRate);
+                w.Write(blockAlign);
+                w.Write(bitsPerSample);
+                w.Write(Encoding.ASCII.GetBytes("data"));
+                w.Write(pcm.Length);                         // Subchunk2Size
+                w.Write(pcm);
+                w.Flush();
+                return ms.ToArray();
+            }
         }
 
         // --- ISTTModel compatibility (delegate to the mic toggle) ------------------
@@ -476,8 +549,11 @@ namespace DumyatRuntime
             // (Skip while awaiting the final result after a commit.)
             if (!_awaitingFinal && sendChunk)
             {
-                EnqueueAudioChunk(FloatsToPcm16(chunk), commit: false);
+                byte[] pcm = FloatsToPcm16(chunk);
+                EnqueueAudioChunk(pcm, commit: false);
                 _streamedSampleCount += chunk.Length;
+                // Keep a copy of EXACTLY what we send, for the optional .wav debug dump.
+                if (_dumpSttAudio) _utterancePcm.AddRange(pcm);
             }
 
             // Voice-activity segmentation: capture "starts" on the first voiced chunk and "stops"

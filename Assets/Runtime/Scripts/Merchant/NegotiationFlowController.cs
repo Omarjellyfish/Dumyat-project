@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -244,6 +245,7 @@ namespace DumyatRuntime
             {
                 currentMerchant = merchant.Config,
                 fishBeingSold = fish,
+                fishCatalog = ResolveFishCatalog(),
                 state = NegotiationPhase.Approaching,
                 turnCount = 0
             };
@@ -441,7 +443,9 @@ namespace DumyatRuntime
             switch (result.Action)
             {
                 case MerchantAction.RaiseOffer:
-                    _state.currentOffer = result.NewOfferAmount;
+                    // Ratchet: the offer can only ever go UP. Guard against any lower value slipping
+                    // through so a raise never silently reduces the standing offer.
+                    _state.currentOffer = Mathf.Max(_state.currentOffer, result.NewOfferAmount);
                     _state.offerHistory.Add(_state.currentOffer);
                     _state.state = NegotiationPhase.Negotiating;
                     PlayMerchantLine(result.MerchantSpeech, BeginListening);
@@ -552,20 +556,40 @@ namespace DumyatRuntime
         {
             if (_activeMerchant == null) return; // already resolved
 
-            float fair = _state != null && _state.fishBeingSold != null ? _state.fishBeingSold.fairMarketValue : 0f;
+            FishData fish = _state != null ? _state.fishBeingSold : null;
+            float fair = fish != null ? fish.fairMarketValue : 0f;
+            float finalPrice = _state != null ? _state.currentOffer : 0f;
 
-            // Success rate only means something for an accepted sale; a walk-away scores 0 (no sale).
-            float successRate = phase == NegotiationPhase.Accepted
-                ? _calculator.CalculateSuccessRate(_state.currentOffer, fair)
-                : 0f;
+            // A sale only completes on Accept. Capture WHICH fish (type + weight) sold and for HOW MUCH,
+            // then hand it to PlayerStats (which persists it and fires OnSaleRecorded) and tell the
+            // inventory to consume that fish — the fish-sell process + inventory-validation seam.
+            if (phase == NegotiationPhase.Accepted && fish != null)
+            {
+                var record = new FishSaleRecord
+                {
+                    fishType = fish.fishType,
+                    fishTypeArabic = fish.fishTypeArabic,
+                    weight = fish.weight,
+                    agreedPrice = Mathf.Round(finalPrice),
+                    fairMarketValue = fair,
+                    successRate = _calculator.CalculateSuccessRate(finalPrice, fair)
+                };
 
-            if (PlayerStats.Singleton != null)
-                PlayerStats.Singleton.RecordSale(successRate);
+                if (PlayerStats.Singleton != null)
+                    PlayerStats.Singleton.RecordSale(record);
+                else
+                    Debug.LogWarning($"{LogPrefix} PlayerStats missing; sale of {record.fishType} not recorded.");
+
+                // Remove/consume the sold fish from the inventory (no-op for the random test provider).
+                ResolveFishInventory()?.MarkFishSold(fish);
+
+                Debug.Log($"{LogPrefix} SOLD {fish.fishType} ({fish.fishTypeArabic}) {fish.weight:0.##}kg for " +
+                          $"{record.agreedPrice:0} EGP — success {record.successRate:0.#}.");
+            }
             else
-                Debug.LogWarning($"{LogPrefix} PlayerStats missing; success {successRate:0.#} not recorded.");
-
-            Debug.Log($"{LogPrefix} Resolved {phase} — final price {(_state != null ? _state.currentOffer : 0f):0.#}, " +
-                      $"success {successRate:0.#}.");
+            {
+                Debug.Log($"{LogPrefix} Resolved {phase} — no sale (last talked price {finalPrice:0.#}).");
+            }
 
             Cleanup(phase);
         }
@@ -662,6 +686,7 @@ namespace DumyatRuntime
             {
                 currentMerchant = _activeMerchant.Config,
                 fishBeingSold = fish,
+                fishCatalog = ResolveFishCatalog(),
                 state = NegotiationPhase.Approaching,
                 turnCount = 0
             };
@@ -770,7 +795,8 @@ namespace DumyatRuntime
             switch (result.Action)
             {
                 case MerchantAction.RaiseOffer:
-                    _state.currentOffer = result.NewOfferAmount;
+                    // Ratchet: the offer can only ever go UP (see ApplyTurnResult).
+                    _state.currentOffer = Mathf.Max(_state.currentOffer, result.NewOfferAmount);
                     _state.offerHistory.Add(_state.currentOffer);
                     _state.state = NegotiationPhase.Negotiating;
                     break;
@@ -853,6 +879,14 @@ namespace DumyatRuntime
                 return null;
             }
             return _debugFish;
+        }
+
+        // The market catalog from the resolved inventory (species + weight bands), copied so the
+        // negotiation state owns it. Null when no inventory / catalog is available (debug-fish path).
+        private List<FishCatalogEntry> ResolveFishCatalog()
+        {
+            IReadOnlyList<FishCatalogEntry> catalog = ResolveFishInventory()?.Catalog;
+            return catalog != null && catalog.Count > 0 ? new List<FishCatalogEntry>(catalog) : null;
         }
 
         // Resolves an IFishInventory: the serialized reference, else any component in the scene that

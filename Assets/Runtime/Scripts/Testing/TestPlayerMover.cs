@@ -29,6 +29,18 @@ namespace DumyatRuntime
             _body = GetComponent<Rigidbody>();
         }
 
+        private void OnEnable()
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        private void OnDisable()
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
         private void FixedUpdate()
         {
             Vector3 input = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));

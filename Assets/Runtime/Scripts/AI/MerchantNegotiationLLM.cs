@@ -43,6 +43,26 @@ namespace DumyatRuntime
         public MerchantAction Action;
         public float NewOfferAmount;
 
+        /// <summary>
+        /// The price the fisherman (seller) is currently asking, as reported by the model this turn
+        /// (0 = none/unclear). Recorded into the negotiation's ask history so the merchant can notice
+        /// a raised ask on later turns.
+        /// </summary>
+        public float PlayerAskedPrice;
+
+        /// <summary>
+        /// The fish species the model understood the fisherman to have EXPLICITLY named (empty if they
+        /// have not named one yet). Used to hard-gate pricing (the merchant may not price a fish it was
+        /// never told) and to persist the deal's fish data. NEVER inferred from weight/catalog.
+        /// </summary>
+        public string UnderstoodFishType;
+
+        /// <summary>
+        /// The weight (kg) the model understood the fisherman to have EXPLICITLY stated (0 if not stated
+        /// yet). Paired with <see cref="UnderstoodFishType"/> for the pricing gate and the saved record.
+        /// </summary>
+        public float UnderstoodWeightKg;
+
         /// <summary>True when <see cref="NewOfferAmount"/> is meaningful for this action.</summary>
         public bool HasNewOffer => Action == MerchantAction.RaiseOffer || Action == MerchantAction.Accept;
     }
@@ -71,6 +91,30 @@ namespace DumyatRuntime
 
         // An offer this far above fair value is treated as the model hallucinating, not haggling.
         private const float HardOfferCapMultiplier = 2f;
+
+        // Deterministic lines used ONLY when a turn is coerced to a different action than the model
+        // spoke (a last-resort fallback after the corrected retry still produced an illegal offer). The
+        // model's own line would contradict the coerced action (e.g. promise a raise on a HoldFirm — the
+        // exact "HoldFirm but the price went up" bug), so we replace it with a matching line. Plain
+        // colloquial Egyptian, no diacritics, numbers spelled out — safe to feed straight to the TTS.
+        private const string CoercedHoldArabic = "لا يا ريس، ده اخر سعر عندي ومش هقدر ازود اكتر من كده.";
+        private const string CoercedHoldEnglish = "No sir, that's my final price — I can't go any higher than this.";
+        private const string CoercedUltimatumArabic = "يا ريس، ده اخر سعر ونهائي، يا تقبل يا نسيبها، قرر دلوقتي.";
+        private const string CoercedUltimatumEnglish = "Sir, this is my final, last price — take it or leave it, decide now.";
+        private const string CoercedWalkAwayArabic = "خلاص يا ريس، مفيش اتفاق النهاردة، ربنا يوفقك في السوق.";
+        private const string CoercedWalkAwayEnglish = "That's it, sir — no deal today, good luck in the market.";
+        private const string CoercedBargainAcceptArabic = "ماشي يا ريس، اتفقنا خلاص، هدهالك بالسعر اللي انت طالبه.";
+        private const string CoercedBargainAcceptEnglish = "Alright sir, deal — I'll take it at the price you asked.";
+
+        // Scripted clarify lines used when the merchant tried to price the fish before the fisherman
+        // told it what it needs. The merchant must know BOTH the species AND the weight before any
+        // price talk; if it quotes early we coerce the turn to ASK for whatever is still missing.
+        private const string CoercedAskFishArabic = "استنى يا ريس، وقلي الاول بتبيع سمك ايه بالظبط؟ لازم اعرف نوعه قبل ما اسعر.";
+        private const string CoercedAskFishEnglish = "Hold on sir — first tell me exactly what fish you're selling? I need the type before I price it.";
+        private const string CoercedAskWeightArabic = "وكام كيلو يا ريس تقريبا؟ لازم اعرف وزنها الاول عشان اقولك على سعر.";
+        private const string CoercedAskWeightEnglish = "And how many kilos roughly, sir? I need the weight first before I can quote a price.";
+        private const string CoercedAskBothArabic = "قلي الاول بتبيع سمك ايه وكام كيلو، وبعد كده نتكلم في الفلوس.";
+        private const string CoercedAskBothEnglish = "First tell me what fish you're selling and how many kilos — then we'll talk money.";
 
         // Fallback description of the speech engine for the prompt when the TTS pool can't be
         // queried (manager missing / nothing available). Kept generic but truthful.
@@ -158,25 +202,58 @@ namespace DumyatRuntime
                 return null;
             }
 
-            // Attempt 1: full prompt.
+            // Attempt 1: full prompt, STRICT — an offer-rule violation is REJECTED (not coerced) so the
+            // model's spoken line always matches what the game applies. On failure we retry with the
+            // exact reason, giving the model a chance to produce a clean, in-character line itself.
             string reply = await SendPromptAsync(BuildPrompt(state, playerSpeechText, isDeceptive, simplified: false));
-            if (TryParseAndValidate(reply, state, out MerchantTurnResult result))
+            if (TryParseAndValidate(reply, state, allowCoercion: false, out MerchantTurnResult result, out string rejectionReason))
             {
-                RecordExchange(state, playerSpeechText, result.MerchantSpeech);
+                CommitTurn(state, playerSpeechText, result);
                 return result;
             }
 
-            // Attempt 2: simplified prompt — strips flavour, re-asserts the JSON-only contract.
-            Debug.LogWarning("MerchantNegotiationLLM: first attempt invalid; retrying with simplified prompt.");
-            reply = await SendPromptAsync(BuildPrompt(state, playerSpeechText, isDeceptive, simplified: true));
-            if (TryParseAndValidate(reply, state, out result))
+            // Attempt 2: simplified + corrected prompt (feeds back WHY attempt 1 was rejected), and this
+            // time COERCION is allowed — if the model STILL proposes an illegal offer, we coerce it to a
+            // legal action AND swap in a matching deterministic line, so the turn never dead-ends into a
+            // "say that again" AND a coerced HoldFirm/WalkAway never contradicts its own speech.
+            Debug.LogWarning($"MerchantNegotiationLLM: first attempt invalid ({rejectionReason}); " +
+                             "retrying with a corrected prompt.");
+            // Keep the personality on the retry (retries are now mostly OFFER corrections, where an
+            // in-character line matters); the correction hint is what steers the fix.
+            reply = await SendPromptAsync(BuildPrompt(state, playerSpeechText, isDeceptive, simplified: false, correctionHint: rejectionReason));
+            if (TryParseAndValidate(reply, state, allowCoercion: true, out result, out _))
             {
-                RecordExchange(state, playerSpeechText, result.MerchantSpeech);
+                CommitTurn(state, playerSpeechText, result);
                 return result;
             }
 
             FailTurn("LLM returned no valid structured response after retry.");
             return null;
+        }
+
+        // Records the exchange into the transcript AND appends the player's reported ask (if any) to
+        // the running ask history, so later turns can notice a raised ask.
+        private static void CommitTurn(NegotiationState state, string playerSpeechText, MerchantTurnResult result)
+        {
+            RecordExchange(state, playerSpeechText, result.MerchantSpeech);
+
+            // Accumulate what the fisherman has disclosed so later turns can't "forget" the fish/weight
+            // (and so the sale can be saved). Once known it stays known — a blank later report never clears it.
+            if (!string.IsNullOrWhiteSpace(result.UnderstoodFishType))
+                state.disclosedFishType = result.UnderstoodFishType;
+            if (result.UnderstoodWeightKg > 0f)
+                state.disclosedWeightKg = result.UnderstoodWeightKg;
+
+            if (result.PlayerAskedPrice > 0f)
+            {
+                if (state.playerAskHistory == null) state.playerAskHistory = new List<float>();
+                float ask = Mathf.Round(result.PlayerAskedPrice);
+                // The model reports the STANDING ask each turn; only record it when it actually changes
+                // so the history stays a clean list of distinct asks (e.g. 150, 190 — not 150,150,190).
+                int count = state.playerAskHistory.Count;
+                if (count == 0 || state.playerAskHistory[count - 1] != ask)
+                    state.playerAskHistory.Add(ask);
+            }
         }
 
         /// <summary>
@@ -206,7 +283,7 @@ namespace DumyatRuntime
             }
 
             string reply = await SendPromptAsync(BuildOpeningPrompt(state, isDeceptive, withGreeting, simplified: false));
-            if (TryParseAndValidate(reply, state, out MerchantTurnResult result))
+            if (TryParseAndValidate(reply, state, allowCoercion: true, out MerchantTurnResult result, out _))
             {
                 RecordExchange(state, null, result.MerchantSpeech); // opening: merchant speaks first
                 return result;
@@ -214,7 +291,7 @@ namespace DumyatRuntime
 
             Debug.LogWarning("MerchantNegotiationLLM: opening line invalid; retrying with simplified prompt.");
             reply = await SendPromptAsync(BuildOpeningPrompt(state, isDeceptive, withGreeting, simplified: true));
-            if (TryParseAndValidate(reply, state, out result))
+            if (TryParseAndValidate(reply, state, allowCoercion: true, out result, out _))
             {
                 RecordExchange(state, null, result.MerchantSpeech); // opening: merchant speaks first
                 return result;
@@ -240,7 +317,8 @@ namespace DumyatRuntime
 
         // --- Prompt construction ---------------------------------------------------
 
-        private string BuildPrompt(NegotiationState state, string playerSpeechText, bool isDeceptive, bool simplified)
+        private string BuildPrompt(NegotiationState state, string playerSpeechText, bool isDeceptive, bool simplified,
+            string correctionHint = null)
         {
             MerchantConfig merchant = state.currentMerchant;
             FishData fish = state.fishBeingSold;
@@ -248,6 +326,19 @@ namespace DumyatRuntime
             string playerSaid = string.IsNullOrWhiteSpace(playerSpeechText) ? "(unclear / no speech)" : playerSpeechText;
 
             var sb = new StringBuilder();
+
+            // Retry correction: the previous reply was rejected for breaking a game rule (almost always
+            // an illegal offer). Lead with it so the model fixes THAT specific mistake instead of
+            // repeating it — this is what stops a merchant stuck at its ceiling from failing every turn.
+            if (!string.IsNullOrWhiteSpace(correctionHint))
+            {
+                sb.AppendLine("!!! YOUR PREVIOUS REPLY WAS REJECTED — DO NOT REPEAT THAT MISTAKE.");
+                sb.AppendLine($"Reason: {correctionHint}");
+                sb.AppendLine("Pick an action that obeys the pricing rules below. If you cannot legally raise " +
+                              "your offer, then HoldFirm, Accept, or WalkAway instead — never propose a number " +
+                              "you are told you may not.");
+                sb.AppendLine();
+            }
 
             sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
             sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
@@ -274,14 +365,44 @@ namespace DumyatRuntime
             // and the player have already said and offered, instead of treating each turn as new.
             AppendTranscript(sb, state);
 
+            string catalogText = BuildFishCatalog(state);
+
+            bool fishDisclosed = !string.IsNullOrWhiteSpace(state.disclosedFishType);
+            bool weightDisclosed = state.disclosedWeightKg > 0f;
+
             sb.AppendLine("WHAT YOU KNOW:");
-            sb.AppendLine("- You do NOT automatically know what fish this is or how much it weighs. You only " +
-                          "learn that from what the fisherman tells you in the conversation above. If they " +
-                          "have NOT yet told you what they caught and roughly how much it weighs, ASK them " +
-                          "for it (ClarifyRequest) before quoting any price — never invent a fish or a weight " +
-                          "they did not say.");
-            sb.AppendLine($"- ONLY once the fisherman has told you the fish, refer to it by its correct " +
-                          $"Egyptian name: {DescribeFish(fish)}");
+            sb.AppendLine("- You do NOT automatically know what fish this is or how much it weighs. NEVER assume, " +
+                          "guess or name a fish yourself. You learn the fish AND its weight ONLY from what the " +
+                          "fisherman tells you in the conversation above. Until they have clearly told you BOTH " +
+                          "(a) which fish they caught AND (b) roughly how much it weighs, ASK for whatever is " +
+                          "still missing (ClarifyRequest) before quoting any price — never invent a fish or a " +
+                          "weight they did not say.");
+            sb.AppendLine("- CRITICAL: a WEIGHT tells you NOTHING about the species — many different fish weigh the " +
+                          "same. Knowing how many kilos it is does NOT let you name the fish. If the fisherman gave " +
+                          "you a weight but has NOT named the fish, you STILL do not know the fish: you MUST ask which " +
+                          "fish it is (ClarifyRequest). Likewise if they named the fish but not the weight, ask the weight.");
+            sb.AppendLine("- SO FAR THE FISHERMAN HAS EXPLICITLY TOLD YOU:");
+            sb.AppendLine($"    • Fish type: {(fishDisclosed ? state.disclosedFishType : "NOT told yet — you do NOT know the fish; do not price it, ASK.")}");
+            sb.AppendLine($"    • Weight: {(weightDisclosed ? state.disclosedWeightKg.ToString("0.##") + " kg" : "NOT told yet — you do NOT know the weight; do not price it, ASK.")}");
+            if (catalogText != null)
+            {
+                sb.AppendLine("- This market ONLY buys the following fish. The list is what you are WILLING to buy — it " +
+                              "is NOT a hint about which fish the fisherman brought; never guess their fish from it or " +
+                              "from the weight. Acknowledge a fish ONLY once THEY name it AND it is on this list; if " +
+                              "they name anything else, tell them (in character) you don't deal that fish here and ask " +
+                              "for one you do (ClarifyRequest) — never price an unknown fish:");
+                sb.Append(catalogText);
+                sb.AppendLine("- WEIGHT LIMITS ARE STRICT: you can only buy a fish whose weight is WITHIN the band " +
+                              "shown for the species the fisherman named. If their stated weight is BELOW the " +
+                              "minimum or ABOVE the maximum for that fish, you CANNOT buy it — say so plainly (too " +
+                              "small / too big for you to take) and do not quote a price (ClarifyRequest, or " +
+                              "WalkAway if they insist).");
+            }
+            else
+            {
+                sb.AppendLine($"- ONLY once the fisherman has told you the fish, refer to it by its correct " +
+                              $"Egyptian name: {DescribeFish(fish)}");
+            }
             sb.AppendLine();
             float ceiling = NegotiationCeiling(state);
             bool atCeiling = state.currentOffer >= ceiling;
@@ -294,6 +415,9 @@ namespace DumyatRuntime
             sb.AppendLine($"- Turn number: {state.turnCount}");
             sb.AppendLine($"- Your patience remaining (counter-offers left before you walk away): {patienceRemaining}");
             sb.AppendLine($"- Player just said (transcribed Egyptian speech): \"{playerSaid}\"");
+
+            // Ask history: let the merchant notice a seller who RAISES their own asking price mid-haggle.
+            AppendAskHistory(sb, state);
             sb.AppendLine();
 
             float raiseCap = RaiseCap(state);
@@ -302,33 +426,61 @@ namespace DumyatRuntime
             sb.AppendLine("- You are the BUYER: you start low and can be argued UPWARD toward your maximum. You " +
                           "NEVER lower an offer you have already made — a RaiseOffer's newOfferAmount MUST be " +
                           $"HIGHER than your current {EGP(state.currentOffer)} and NEVER above your maximum {EGP(ceiling)}.");
+            sb.AppendLine($"- YOUR OFFER IS A RATCHET — it only ever goes UP or stays the SAME, never down. You have " +
+                          $"already offered {EGP(state.currentOffer)}; every price you now SAY OUT LOUD must be " +
+                          $"{EGP(state.currentOffer)} OR MORE. Never speak, hint at, or 'go back to' any number " +
+                          $"below {EGP(state.currentOffer)} — you cannot un-offer money you already put on the table. " +
+                          "If you are not raising, hold at exactly your current offer.");
+            sb.AppendLine("- NEVER PAY MORE THAN THE FISHERMAN ASKS. You are buying — paying above their price " +
+                          "is throwing money away. Look at the price the fisherman is asking for RIGHT NOW:\n" +
+                          "   • If their asked price is AT OR BELOW your current offer → Accept at THEIR price " +
+                          "(BARGAIN ACCEPT below), do not counter higher.\n" +
+                          "   • If their asked price is ABOVE your current offer but AT OR BELOW your maximum → " +
+                          "you can afford it: either Accept AT their asked price, or try to pay LESS by holding " +
+                          "firm / raising to a number STRICTLY BELOW what they asked. A RaiseOffer must NEVER " +
+                          "meet or exceed the price they asked — if you'd match it, just Accept at their price " +
+                          "instead.\n" +
+                          "   • If their asked price is ABOVE your maximum → you cannot reach it: HoldFirm near " +
+                          "your maximum or WalkAway. Never exceed your maximum to chase their number.");
             sb.AppendLine($"- Concede GRADUALLY: if you raise THIS TURN, newOfferAmount must be between " +
                           $"{EGP(state.currentOffer + 1f)} and {EGP(raiseCap)}. Never jump straight to your " +
                           "maximum — small, believable market steps, and you do NOT have to reach your maximum.");
             sb.AppendLine("- If the player has only just told you what fish they have and no price talk has " +
                           $"happened yet, QUOTE your current offer {EGP(state.currentOffer)} in your speech " +
                           "(action HoldFirm) — the haggle is just beginning.");
-            if (state.turnsHeldAtMax >= NegotiationState.MaxTurnsHeldAtMax)
-                sb.AppendLine($"- FINAL TURN — YOUR PATIENCE FOR DEFENDING YOUR MAXIMUM IS SPENT: you already " +
-                              $"refused to go above your maximum {state.turnsHeldAtMax} times and the player is " +
-                              "still pushing. Unless they clearly accept RIGHT NOW, choose WalkAway with ONE " +
-                              "short, firm but polite rejection line that ENDS the deal (my final word, no deal, " +
-                              "good luck elsewhere). Do NOT HoldFirm again. Do NOT RaiseOffer.");
+            if (state.turnsHeldAtMax >= NegotiationState.HoldsBeforeWalkAway)
+                sb.AppendLine($"- WALK AWAY NOW: you already gave the player your final ultimatum and they STILL " +
+                              "will not decide — they keep haggling instead of accepting or declining. You are done: " +
+                              "choose WalkAway with ONE short, firm but polite line that ENDS the deal (my final word, " +
+                              "no deal, good luck elsewhere). Do NOT HoldFirm again. Do NOT RaiseOffer.");
+            else if (state.turnsHeldAtMax >= NegotiationState.HoldsBeforeUltimatum)
+                sb.AppendLine($"- ULTIMATUM TURN — you have defended your maximum {EGP(state.currentOffer)} several " +
+                              "times and will NOT haggle any longer. Do NOT RaiseOffer. Choose HoldFirm, but make it a " +
+                              "STRICT, final ULTIMATUM: tell the player plainly this is your absolute final price and " +
+                              "they must DECIDE RIGHT NOW — either accept it ('قول اتفقنا وخدها') or the deal is off. " +
+                              "Make clear you will not go higher and won't keep haggling. Do NOT walk away yet — give " +
+                              "them THIS turn to decide (Accept if they agree).");
             else if (atCeiling)
-                sb.AppendLine("- YOU ARE AT YOUR MAXIMUM RIGHT NOW: do NOT use RaiseOffer again this negotiation. Either " +
-                              "HoldFirm (insist this is your final price), Accept, or WalkAway if the player keeps pushing.");
+                sb.AppendLine("- YOU ARE AT YOUR MAXIMUM RIGHT NOW: do NOT use RaiseOffer again. HoldFirm (firmly urge " +
+                              "them to take this good price), Accept if they agree, or WalkAway if they are being " +
+                              "unreasonable. The player may keep trying — keep holding firm for now.");
             else
                 sb.AppendLine("- If the player demands MORE than your maximum, do not exceed it: HoldFirm near your " +
                               "ceiling (make clear you're near your limit) or WalkAway when your patience runs out.");
-            sb.AppendLine("- Accept when the player's ask is at/below your current offer, or when a deal at or " +
-                          "below your maximum feels won. \"newOfferAmount\" for Accept is the agreed price.");
+            sb.AppendLine($"- BARGAIN ACCEPT (snap it up): you are the BUYER, so if the fisherman ASKS FOR a " +
+                          $"price that is AT OR BELOW your current offer of {EGP(state.currentOffer)}, you " +
+                          "IMMEDIATELY Accept at THEIR price — never turn down paying less. This counts as " +
+                          "acceptance, NOT haggling: do NOT hold firm or try to renegotiate a cheaper deal " +
+                          "you were already handed. Warmly close it and reassure them it's a good deal so " +
+                          "they don't back out. \"newOfferAmount\" = the fisherman's asked price.");
             sb.AppendLine();
 
             sb.AppendLine("CLOSING THE DEAL — Accept and PlayerDeclined END the sale, so be VERY strict:");
-            sb.AppendLine($"- Accept ONLY when the player EXPLICITLY agrees to sell at your CURRENT offer with " +
-                          $"clear deal words ('اتفقنا', 'خلاص موافق', 'ماشي خدها') and NO new number attached. " +
-                          $"Then newOfferAmount = {EGP(state.currentOffer)}. If they mention ANY other price or " +
-                          "condition, that is haggling — NOT acceptance.");
+            sb.AppendLine($"- AGREEMENT ACCEPT: the fisherman EXPLICITLY agrees to sell at your CURRENT offer " +
+                          $"with clear deal words ('اتفقنا', 'خلاص موافق', 'ماشي خدها') and NO new number " +
+                          $"attached. Then newOfferAmount = {EGP(state.currentOffer)}. A price ABOVE your " +
+                          $"current offer of {EGP(state.currentOffer)} is haggling — NOT acceptance (but a " +
+                          "price at/below it is the BARGAIN ACCEPT above — take it).");
             sb.AppendLine("- PlayerDeclined ONLY when the player clearly refuses to SELL AT ALL or ends the " +
                           "conversation ('مش هبيع خلاص', 'مع السلامة', 'هدور على غيرك'). Saying no to YOUR " +
                           "PRICE ('لا ده قليل', 'مش كفاية', 'بتهزر؟') is NOT declining — that is normal " +
@@ -343,6 +495,15 @@ namespace DumyatRuntime
             sb.AppendLine("  \"merchantSpeech\": \"<what you say out loud, in Egyptian dialect>\",");
             sb.AppendLine("  \"speechTranslationEnglish\": \"<English translation of merchantSpeech, for subtitles>\",");
             sb.AppendLine("  \"action\": \"RaiseOffer\" | \"HoldFirm\" | \"Accept\" | \"WalkAway\" | \"ClarifyRequest\" | \"PlayerDeclined\",");
+            sb.AppendLine("  \"playerAskedPrice\": <number — the price in EGP the fisherman is CURRENTLY asking " +
+                          "you to pay (the most recent price they named or insisted on, even if a few turns " +
+                          "back and still standing). Whole number. Use 0 if they have not named any price yet " +
+                          "or it is unclear. This is the SELLER's price, NOT your offer>,");
+            sb.AppendLine("  \"understoodFishType\": \"<the fish species the fisherman has EXPLICITLY named so far, " +
+                          "in Arabic. EMPTY STRING if they have not named a fish yet. NEVER guess it from the weight " +
+                          "or the catalog — only fill this when they actually said which fish it is>\",");
+            sb.AppendLine("  \"understoodWeightKg\": <number — the weight in kg the fisherman has EXPLICITLY stated. " +
+                          "0 if they have not stated a weight yet>,");
             sb.AppendLine("  \"newOfferAmount\": <number, REQUIRED only when action is RaiseOffer or Accept; omit otherwise>");
             sb.AppendLine("}");
             sb.AppendLine();
@@ -354,9 +515,20 @@ namespace DumyatRuntime
             sb.AppendLine("- Output ONLY the JSON object. No markdown, no code fences, no text before or after it.");
             sb.AppendLine("- NEVER break character. NEVER mention being an AI, a model, or a game.");
             sb.AppendLine("- ONLY discuss this fish sale. If the player goes off-topic, redirect in character via ClarifyRequest.");
+            sb.AppendLine("- NEVER quote, offer, raise, or accept ANY price until the fisherman has EXPLICITLY told you " +
+                          "BOTH which fish it is AND its weight. A weight alone does NOT identify the fish — never " +
+                          "guess the species from the weight or the catalog. If either is still missing, use " +
+                          "ClarifyRequest and ask for the missing one — do NOT put a number on an unknown fish.");
             sb.AppendLine($"- RaiseOffer: newOfferAmount MUST be STRICTLY HIGHER than {EGP(state.currentOffer)} " +
                           $"and AT MOST {EGP(raiseCap)} this turn. Never lower a standing offer; never exceed " +
                           "your maximum; never jump more than this turn's cap.");
+            sb.AppendLine($"- THE SPOKEN PRICE IS BINDING AND NEVER DROPS: the number in merchantSpeech must NEVER " +
+                          $"be below your current offer {EGP(state.currentOffer)}. On HoldFirm, if you name a price " +
+                          $"it must be EXACTLY {EGP(state.currentOffer)}; on RaiseOffer, speak EXACTLY your new " +
+                          "(higher) newOfferAmount. Saying a smaller number than you already offered is forbidden.");
+            sb.AppendLine("- NEVER offer or agree to MORE than the fisherman just asked for. If a raise would " +
+                          "meet or beat their asked price, Accept at their asked price instead — you are the " +
+                          "buyer and must never volunteer to pay more than you were asked.");
             sb.AppendLine("- Keep merchantSpeech to one or two short, natural market-style sentences.");
             sb.AppendLine("- Every price is in Egyptian Pounds (بالجنيه المصري) and MUST be a WHOLE number — " +
                           "never decimals, fractions or piastres (say 'تسعين جنيه', never 'تسعين جنيه ونص'). " +
@@ -401,7 +573,7 @@ namespace DumyatRuntime
                           "and they haven't told you. Do NOT name any fish, any weight, or any price yet.");
             sb.AppendLine(withGreeting
                 ? "Open with a warm Egyptian market-style greeting (a friendly call like 'يا ريس' / " +
-                  "'اهلا يا معلم'), then ask the fisherman what they've got for you today and roughly how " +
+                  "'اهلا يا معلم' / 'يا باشا' / يا غالي'), then ask the fisherman what they've got for you today and roughly how " +
                   "much it weighs. One or two short, natural market sentences."
                 : "Do NOT greet — you already know this fisherman and have dealt with them before. Skip any " +
                   "salutation and go straight to asking what they've brought you today and roughly how much " +
@@ -439,17 +611,37 @@ namespace DumyatRuntime
                    "use this EXACT Arabic name for the fish; do not translate or rename it";
         }
 
+        // Renders the market catalog (every species the inventory can produce + its weight band) as a
+        // bullet list for the prompt, so the merchant only ever acknowledges a real species and can
+        // reject an out-of-band weight instead of assuming the fish. Returns null when no catalog is
+        // available (e.g. the debug-fish path), in which case the caller falls back to naming the fish.
+        private static string BuildFishCatalog(NegotiationState state)
+        {
+            var catalog = state.fishCatalog;
+            if (catalog == null || catalog.Count == 0) return null;
+
+            var sb = new StringBuilder();
+            foreach (FishCatalogEntry e in catalog)
+            {
+                if (e == null) continue;
+                string name = !string.IsNullOrWhiteSpace(e.fishTypeArabic) ? e.fishTypeArabic : e.fishType;
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                sb.AppendLine($"    • {name} — only if it weighs between {e.minWeight:0.##} and {e.maxWeight:0.##} kg");
+            }
+            return sb.Length == 0 ? null : sb.ToString();
+        }
+
         // Formats a price as a whole number of Egyptian Pounds — the game only deals in integer EGP,
         // so the model is never shown (or asked to produce) a fractional/decimal price.
         private static string EGP(float v) => $"{Mathf.RoundToInt(v)} EGP";
 
         // The most this merchant will pay THIS negotiation: the deterministic deception-based
-        // ceiling set at the opening, falling back to the archetype ceiling for state built by
-        // older callers that never set maxOffer.
+        // ceiling set at the opening, falling back to the fish's FULL fair market value for state
+        // built by older callers that never set maxOffer (pricing is fish-data driven).
         private static float NegotiationCeiling(NegotiationState state) =>
             state.maxOffer > 0f
                 ? state.maxOffer
-                : state.fishBeingSold.fairMarketValue * state.currentMerchant.MaxOfferMultiplier;
+                : state.fishBeingSold.fairMarketValue;
 
         // The highest a RaiseOffer may go THIS turn: current offer + the per-negotiation step,
         // never past the ceiling. No step configured (older callers) => only the ceiling applies.
@@ -491,13 +683,23 @@ namespace DumyatRuntime
 
         // --- Strict parsing + validation -------------------------------------------
 
-        private bool TryParseAndValidate(string reply, NegotiationState state, out MerchantTurnResult result)
+        // <paramref name="rejectionReason"/> is set to a short, model-facing explanation on every failure
+        // path so the retry prompt can tell the model exactly what to fix (see ProcessPlayerTurn).
+        // When <paramref name="allowCoercion"/> is false (the first, STRICT attempt) an illegal offer is
+        // REJECTED so the retry can produce a clean line whose spoken number matches what the game will
+        // apply. When true (the final attempt) an illegal offer is COERCED to a legal action AND its
+        // spoken line is swapped for a matching deterministic one, so the turn never dead-ends and a
+        // coerced HoldFirm/WalkAway never contradicts its own speech.
+        private bool TryParseAndValidate(string reply, NegotiationState state, bool allowCoercion,
+            out MerchantTurnResult result, out string rejectionReason)
         {
             result = null;
+            rejectionReason = null;
 
             string json = ExtractJsonObject(reply);
             if (json == null)
             {
+                rejectionReason = "Your reply was not a single valid JSON object. Output ONLY the JSON.";
                 Debug.LogWarning("MerchantNegotiationLLM: no JSON object found in reply.");
                 return false;
             }
@@ -506,12 +708,14 @@ namespace DumyatRuntime
             try { dto = JsonUtility.FromJson<MerchantTurnDto>(json); }
             catch (Exception e)
             {
+                rejectionReason = "Your JSON was malformed. Output ONLY one valid JSON object matching the schema.";
                 Debug.LogWarning($"MerchantNegotiationLLM: JSON parse failed: {e.Message}");
                 return false;
             }
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.action) || string.IsNullOrWhiteSpace(dto.merchantSpeech))
             {
+                rejectionReason = "You omitted a required field. Both \"action\" and \"merchantSpeech\" are required.";
                 Debug.LogWarning("MerchantNegotiationLLM: missing required fields (action/merchantSpeech).");
                 return false;
             }
@@ -522,6 +726,7 @@ namespace DumyatRuntime
             // allowed to contain Latin.
             if (ContainsLatinLetters(dto.merchantSpeech))
             {
+                rejectionReason = "merchantSpeech contained Latin letters. Write it in Arabic script ONLY.";
                 Debug.LogWarning($"MerchantNegotiationLLM: merchantSpeech contains Latin letters (not pure " +
                                  $"Arabic): \"{dto.merchantSpeech}\" — rejecting turn.");
                 return false;
@@ -532,19 +737,9 @@ namespace DumyatRuntime
             if (!Enum.TryParse(dto.action, ignoreCase: true, out MerchantAction action)
                 || !Enum.IsDefined(typeof(MerchantAction), action))
             {
+                rejectionReason = $"\"{dto.action}\" is not a valid action. Use exactly one of: " +
+                                  "RaiseOffer, HoldFirm, Accept, WalkAway, ClarifyRequest, PlayerDeclined.";
                 Debug.LogWarning($"MerchantNegotiationLLM: unknown action '{dto.action}'.");
-                return false;
-            }
-
-            // Once the merchant has exhausted its patience defending the ceiling, the turn MUST
-            // close the negotiation one way or another (Accept / WalkAway / PlayerDeclined, with
-            // ClarifyRequest still allowed for genuinely garbled speech). Holding firm yet again
-            // is rejected so a stubborn player can't stall the haggle at the ceiling forever.
-            if (state.turnsHeldAtMax >= NegotiationState.MaxTurnsHeldAtMax
-                && (action == MerchantAction.HoldFirm || action == MerchantAction.RaiseOffer))
-            {
-                Debug.LogWarning($"MerchantNegotiationLLM: '{action}' not allowed after holding the max " +
-                                 $"offer {state.turnsHeldAtMax} turns — merchant must close; rejecting turn.");
                 return false;
             }
 
@@ -556,55 +751,199 @@ namespace DumyatRuntime
                 MerchantSpeech = StripArabicDiacritics(dto.merchantSpeech),
                 SpeechTranslationEnglish = dto.speechTranslationEnglish,
                 Action = action,
-                NewOfferAmount = 0f
+                NewOfferAmount = 0f,
+                PlayerAskedPrice = Mathf.Max(0f, dto.playerAskedPrice),
+                UnderstoodFishType = string.IsNullOrWhiteSpace(dto.understoodFishType) ? null : dto.understoodFishType.Trim(),
+                UnderstoodWeightKg = Mathf.Max(0f, dto.understoodWeightKg)
             };
 
-            // Validate/clamp the offer only when the action actually carries one.
+            // CLOSE-OUT STAGE: the merchant has held its maximum long enough to have already issued its
+            // strict ultimatum, and the player STILL won't accept or decline. This turn must WALK AWAY.
+            if (state.turnsHeldAtMax >= NegotiationState.HoldsBeforeWalkAway
+                && (action == MerchantAction.HoldFirm || action == MerchantAction.RaiseOffer))
+            {
+                if (!allowCoercion)
+                {
+                    rejectionReason = "You already gave your final ultimatum and the player STILL will not " +
+                                      "decide. This turn you MUST WalkAway (unless they just clearly accepted).";
+                    Debug.LogWarning($"MerchantNegotiationLLM: '{action}' not allowed after the ultimatum " +
+                                     $"(held {state.turnsHeldAtMax} turns) — must close; rejecting turn.");
+                    return false;
+                }
+                Debug.Log($"MerchantNegotiationLLM: held at max {state.turnsHeldAtMax} turns past the " +
+                          $"ultimatum; coercing '{action}' to WalkAway.");
+                CoerceLine(parsed, MerchantAction.WalkAway, CoercedWalkAwayArabic, CoercedWalkAwayEnglish);
+                result = parsed;
+                return true;
+            }
+
+            // FISH-KNOWLEDGE GATE: the merchant must NOT put a price on the fish until the fisherman has
+            // EXPLICITLY told it BOTH the species AND the weight. The species is NEVER inferred from the
+            // weight or the catalog. Knowledge is accumulated across turns (state.disclosed*) so a later
+            // turn can't "forget" it. A priced action (RaiseOffer/Accept) while either is still unknown
+            // is illegal — reject on the strict attempt, or coerce to ASK for whatever is missing.
+            if (parsed.HasNewOffer)
+            {
+                string knownFish = !string.IsNullOrWhiteSpace(parsed.UnderstoodFishType)
+                    ? parsed.UnderstoodFishType : state.disclosedFishType;
+                float knownWeight = parsed.UnderstoodWeightKg > 0f ? parsed.UnderstoodWeightKg : state.disclosedWeightKg;
+                bool fishKnown = !string.IsNullOrWhiteSpace(knownFish);
+                bool weightKnown = knownWeight > 0f;
+
+                if (!fishKnown || !weightKnown)
+                {
+                    if (!allowCoercion)
+                    {
+                        rejectionReason = BuildMissingInfoReason(fishKnown, weightKnown);
+                        Debug.LogWarning($"MerchantNegotiationLLM: '{parsed.Action}' before the fisherman told " +
+                                         $"you the fish/weight (fishKnown={fishKnown}, weightKnown={weightKnown}); rejecting.");
+                        return false;
+                    }
+                    Debug.Log($"MerchantNegotiationLLM: priced action '{parsed.Action}' with fish/weight still " +
+                              $"unknown (fish={fishKnown}, weight={weightKnown}); coercing to a clarify that asks for it.");
+                    if (!fishKnown && !weightKnown)
+                        CoerceLine(parsed, MerchantAction.ClarifyRequest, CoercedAskBothArabic, CoercedAskBothEnglish);
+                    else if (!fishKnown)
+                        CoerceLine(parsed, MerchantAction.ClarifyRequest, CoercedAskFishArabic, CoercedAskFishEnglish);
+                    else
+                        CoerceLine(parsed, MerchantAction.ClarifyRequest, CoercedAskWeightArabic, CoercedAskWeightEnglish);
+                    result = parsed;
+                    return true;
+                }
+            }
+
+            // Validate the offer only when the action actually carries one.
             if (parsed.HasNewOffer)
             {
                 float fair = state.fishBeingSold.fairMarketValue;
                 float ceiling = NegotiationCeiling(state);
                 float hardCap = fair * HardOfferCapMultiplier;
+                float ask = parsed.PlayerAskedPrice;   // 0 = unknown
 
                 if (dto.newOfferAmount <= 0f || dto.newOfferAmount > hardCap)
                 {
-                    // Negative or wildly out of range => don't trust the model; treat as failure.
+                    // Negative or wildly out of range => a hallucination we can't trust; always retry.
+                    rejectionReason = $"newOfferAmount {dto.newOfferAmount:0} is out of range. It must be a " +
+                                      $"positive whole number no higher than {EGP(hardCap)}.";
                     Debug.LogWarning($"MerchantNegotiationLLM: offer {dto.newOfferAmount} out of sane bounds " +
                                      $"(0..{hardCap}); rejecting turn.");
                     return false;
                 }
 
-                // In-range but above what this merchant will pay THIS negotiation: clamp to the
-                // deterministic ceiling so the game never honours a too-generous promise. Prices are
-                // whole Egyptian Pounds, so round to an integer.
-                parsed.NewOfferAmount = Mathf.Round(Mathf.Min(dto.newOfferAmount, ceiling));
-
-                // Offers are MONOTONIC: a merchant never walks an offer back down. A "raise" that
-                // (after clamping) isn't strictly above the standing offer means the model tried to
-                // lower the price or exceed its ceiling while already at it — reject so the retry
-                // re-asserts the rules instead of letting the spoken number contradict game state.
-                if (action == MerchantAction.RaiseOffer && parsed.NewOfferAmount <= state.currentOffer)
+                if (action == MerchantAction.Accept)
                 {
-                    Debug.LogWarning($"MerchantNegotiationLLM: RaiseOffer {dto.newOfferAmount} does not move " +
-                                     $"above the current offer {state.currentOffer} (ceiling {ceiling}); rejecting turn.");
-                    return false;
+                    // Accept CLOSES the sale. Never honour more than the ceiling, nor more than the ask
+                    // (a buyer never pays above what it was asked). Accepting AT or below that is fine.
+                    float acceptCap = Mathf.Round(ask > 0f ? Mathf.Min(ceiling, ask) : ceiling);
+                    float spoken = Mathf.Round(dto.newOfferAmount);
+                    if (spoken <= acceptCap)
+                    {
+                        parsed.NewOfferAmount = spoken;   // spoken == applied
+                    }
+                    else if (!allowCoercion)
+                    {
+                        rejectionReason = $"You cannot Accept at {EGP(spoken)} — that is above " +
+                                          (ask > 0f ? $"the fisherman's ask of {EGP(ask)}"
+                                                    : $"your maximum {EGP(ceiling)}") +
+                                          $". Accept only at {EGP(acceptCap)} or less.";
+                        Debug.LogWarning($"MerchantNegotiationLLM: Accept {spoken} exceeds cap {acceptCap}; rejecting.");
+                        return false;
+                    }
+                    else
+                    {
+                        // Coerce: close at the legal price and use a line that just confirms the deal.
+                        Debug.Log($"MerchantNegotiationLLM: Accept {spoken} exceeds cap {acceptCap}; " +
+                                  "coercing to Accept at the cap with a matching line.");
+                        parsed.NewOfferAmount = acceptCap;
+                        CoerceLine(parsed, MerchantAction.Accept, CoercedBargainAcceptArabic, CoercedBargainAcceptEnglish);
+                    }
                 }
-
-                // Raises are also GRADUAL: a single concession may not cover more than the
-                // per-negotiation step (a fraction of the opening→ceiling gap), so the merchant
-                // climbs to its maximum over several turns instead of jumping there. Rejected (not
-                // clamped) so the spoken number never contradicts the applied one.
-                if (action == MerchantAction.RaiseOffer && parsed.NewOfferAmount > RaiseCap(state))
+                else // RaiseOffer
                 {
-                    Debug.LogWarning($"MerchantNegotiationLLM: RaiseOffer {dto.newOfferAmount} exceeds this " +
-                                     $"turn's cap {RaiseCap(state)} (current {state.currentOffer} + step " +
-                                     $"{state.maxRaisePerTurn}); rejecting turn.");
-                    return false;
+                    // Highest a raise may legally reach THIS turn: never above the ceiling, this turn's
+                    // gradual step cap, or the fisherman's ask (a buyer never offers above what's asked).
+                    float raiseCap = RaiseCap(state);
+                    float maxThisTurn = Mathf.Round(Mathf.Min(Mathf.Min(ceiling, raiseCap), ask > 0f ? ask : ceiling));
+                    float spoken = Mathf.Round(dto.newOfferAmount);
+
+                    if (spoken > state.currentOffer && spoken <= maxThisTurn)
+                    {
+                        parsed.NewOfferAmount = spoken;   // legal raise, trusted exactly (speech == applied)
+                    }
+                    else if (!allowCoercion)
+                    {
+                        rejectionReason = BuildRaiseRejectionReason(state, ceiling, maxThisTurn, ask);
+                        Debug.LogWarning($"MerchantNegotiationLLM: RaiseOffer {spoken} illegal (current " +
+                                         $"{state.currentOffer}, maxThisTurn {maxThisTurn}, ask {ask}); rejecting.");
+                        return false;
+                    }
+                    else if (ask > 0f && Mathf.Round(Mathf.Min(ask, ceiling)) <= state.currentOffer)
+                    {
+                        // The fisherman is asking AT/BELOW the standing offer — a bargain. Close at the ask.
+                        float dealPrice = Mathf.Round(Mathf.Min(ask, ceiling));
+                        Debug.Log($"MerchantNegotiationLLM: player asks {ask} <= current {state.currentOffer}; " +
+                                  "coercing RaiseOffer to bargain Accept.");
+                        parsed.NewOfferAmount = dealPrice;
+                        CoerceLine(parsed, MerchantAction.Accept, CoercedBargainAcceptArabic, CoercedBargainAcceptEnglish);
+                    }
+                    else
+                    {
+                        // No legal raise left (at ceiling / above the ask): hold firm. Use the ultimatum
+                        // line once patience for defending the max is nearly spent, else the plain hold line.
+                        bool ultimatum = state.turnsHeldAtMax >= NegotiationState.HoldsBeforeUltimatum;
+                        Debug.Log($"MerchantNegotiationLLM: RaiseOffer {spoken} has no legal room (ceiling " +
+                                  $"{ceiling}, ask {ask}); coercing to HoldFirm ({(ultimatum ? "ultimatum" : "plain")}).");
+                        CoerceLine(parsed, MerchantAction.HoldFirm,
+                            ultimatum ? CoercedUltimatumArabic : CoercedHoldArabic,
+                            ultimatum ? CoercedUltimatumEnglish : CoercedHoldEnglish);
+                    }
                 }
             }
 
             result = parsed;
             return true;
+        }
+
+        // Switches a turn to a coerced action and replaces its spoken line with a matching deterministic
+        // one, so the merchant never SAYS something its (game-applied) action contradicts. Clears the
+        // offer amount for actions that don't carry one.
+        private static void CoerceLine(MerchantTurnResult r, MerchantAction action, string arabic, string english)
+        {
+            r.Action = action;
+            r.MerchantSpeech = arabic;
+            r.SpeechTranslationEnglish = english;
+            if (action != MerchantAction.RaiseOffer && action != MerchantAction.Accept)
+                r.NewOfferAmount = 0f;
+        }
+
+        // Model-facing reason a priced action was rejected before the fisherman disclosed the fish
+        // and/or weight, so the corrective retry asks for the missing piece instead of guessing.
+        private static string BuildMissingInfoReason(bool fishKnown, bool weightKnown)
+        {
+            if (!fishKnown && !weightKnown)
+                return "You quoted a price before the fisherman told you WHAT FISH it is or HOW MUCH it weighs. " +
+                       "You do not know either — you may NOT guess the fish from its weight or the catalog. Use " +
+                       "ClarifyRequest and ask them for BOTH the fish type and the weight before any price.";
+            if (!fishKnown)
+                return "You quoted a price without the fisherman ever naming the FISH. A weight does NOT tell you " +
+                       "the species and you may NOT guess it from the catalog. Use ClarifyRequest and ask which " +
+                       "fish they brought before pricing.";
+            return "You quoted a price without the fisherman stating the WEIGHT. Use ClarifyRequest and ask how " +
+                   "many kilos it is before pricing.";
+        }
+
+        // A precise, model-facing reason a RaiseOffer was rejected, so the corrective retry can fix it.
+        private static string BuildRaiseRejectionReason(NegotiationState state, float ceiling, float maxThisTurn, float ask)
+        {
+            if (ask > 0f && Mathf.Round(Mathf.Min(ask, ceiling)) <= state.currentOffer)
+                return $"The fisherman is asking {EGP(ask)}, at or below your current offer of " +
+                       $"{EGP(state.currentOffer)} — that is a bargain. ACCEPT at {EGP(Mathf.Min(ask, ceiling))}, do NOT raise.";
+            if (maxThisTurn <= state.currentOffer)
+                return $"You cannot raise any further: you are at your maximum {EGP(ceiling)}" +
+                       (ask > 0f ? $" and must never offer above the fisherman's ask of {EGP(ask)}" : "") +
+                       ". This turn HoldFirm, Accept, or WalkAway — do not RaiseOffer.";
+            return $"A RaiseOffer this turn must be a whole number STRICTLY ABOVE {EGP(state.currentOffer)} and " +
+                   $"AT MOST {EGP(maxThisTurn)} (never above your maximum, this turn's step, or the fisherman's ask).";
         }
 
         // Pulls the first {...} object out of a reply, tolerating ```json fences or stray prose
@@ -647,6 +986,49 @@ namespace DumyatRuntime
             sb.AppendLine();
         }
 
+        // Surfaces the LOWEST price the seller has offered so far so the merchant reacts correctly and
+        // ONE-DIRECTIONALLY. You are the BUYER: a seller LOWERING their price is good — never bring up an
+        // earlier higher number when they come down. Only pushing their ask back UP (above a lower price
+        // they already offered) is unreasonable and worth calling out.
+        private static void AppendAskHistory(StringBuilder sb, NegotiationState state)
+        {
+            var asks = state.playerAskHistory;
+            if (asks == null || asks.Count == 0) return;
+
+            float lowest = float.MaxValue;
+            float latest = 0f;
+            foreach (float a in asks)
+            {
+                if (a <= 0f) continue;
+                if (a < lowest) lowest = a;
+                latest = a; // asks are in chronological order; keep the last positive one
+            }
+            if (lowest == float.MaxValue) return;
+
+            sb.AppendLine($"- ASK HISTORY — the LOWEST price the fisherman has already offered to sell this fish for " +
+                          $"is {EGP(lowest)} (their most recent stated ask was {EGP(latest)}).");
+
+            if (latest > lowest)
+            {
+                // They already came DOWN and then went back UP — a raised ask. Call it out FORCEFULLY;
+                // this is exactly the case the player wants flagged.
+                sb.AppendLine($"  ⚠ THE FISHERMAN IS RAISING THEIR ASK: they already agreed to go as low as " +
+                              $"{EGP(lowest)}, but are now asking {EGP(latest)} — MORE than before. You are the " +
+                              $"BUYER: you MUST call this out plainly in merchantSpeech — remind them they already " +
+                              $"said {EGP(lowest)} and refuse to pay more than {EGP(lowest)}. Do NOT accept or move " +
+                              $"toward the higher {EGP(latest)}; HoldFirm at {EGP(lowest)} or below. Never reward a " +
+                              "seller for pushing their price back up.");
+            }
+            else
+            {
+                sb.AppendLine($"  You are the BUYER, so a seller LOWERING their price is GOOD: if they ask {EGP(lowest)} " +
+                              "or LESS, welcome it and close cheaply — do NOT criticise them for coming down and do NOT " +
+                              "bring up any earlier higher price. BUT if their CURRENT words try to RAISE the ask ABOVE " +
+                              $"{EGP(lowest)} after already offering {EGP(lowest)}, you MUST call it out — remind them " +
+                              $"they already said {EGP(lowest)} and refuse to pay more than that.");
+            }
+        }
+
         // Records one exchange into the transcript AFTER it validates: the player's line (null/blank
         // on the opening turn, where the merchant speaks first) then the merchant's spoken reply.
         private static void RecordExchange(NegotiationState state, string playerText, string merchantText)
@@ -669,6 +1051,21 @@ namespace DumyatRuntime
             public string speechTranslationEnglish;
             public string action;
             public float newOfferAmount;
+
+            /// <summary>
+            /// The price the fisherman (SELLER) is currently asking, as reported by the model. Used to
+            /// deterministically stop the merchant paying more than it was asked (0 = none/unclear).
+            /// </summary>
+            public float playerAskedPrice;
+
+            /// <summary>
+            /// The fish species the fisherman has EXPLICITLY named (empty if not named yet). NEVER
+            /// inferred from the weight or the catalog. Gates pricing and is saved for the sale.
+            /// </summary>
+            public string understoodFishType;
+
+            /// <summary>The weight (kg) the fisherman has EXPLICITLY stated (0 if not stated yet).</summary>
+            public float understoodWeightKg;
         }
     }
 }

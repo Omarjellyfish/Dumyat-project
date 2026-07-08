@@ -12,9 +12,13 @@ namespace DumyatRuntime
     /// to the player and the negotiation starts on arrival; without one it starts immediately in
     /// place (legacy behaviour). Either way the request routes through
     /// <see cref="MerchantSpawner.PlayerInitiatesWithMerchant"/> so the spawner's one-at-a-time
-    /// lock, fish check and cooldown still apply. Attempts re-arm on a local cooldown via
-    /// OnTriggerStay, so a player who stays in range can be approached again after a finished
-    /// negotiation without having to leave and come back.
+    /// lock and fish check still apply.
+    ///
+    /// ONE CONVERSATION PER VISIT: the merchant engages the player exactly once per time they are in
+    /// range. After a negotiation ends, it will NOT start another while the player stays in range —
+    /// the player must LEAVE the range and come back to talk again. OnTriggerStay only keeps RE-TRYING
+    /// the single engagement until it actually starts (e.g. when the spawner/mover was momentarily
+    /// busy at the moment of entry); it never starts a second one.
     /// </summary>
     [RequireComponent(typeof(MerchantNPC))]
     public class MerchantProximityTrigger : MonoBehaviour
@@ -25,17 +29,16 @@ namespace DumyatRuntime
         [Tooltip("Spawner that owns the negotiation lock. Auto-resolved from the scene when empty.")]
         [SerializeField] private MerchantSpawner _spawner;
 
-        [Tooltip("Seconds between approach attempts while the player stays in range. Keep it at or " +
-                 "above the spawner's cooldown so retries aren't pointlessly rejected.")]
-        [SerializeField, Min(1f)] private float _reApproachCooldown = 8f;
-
         [Tooltip("Legacy mode only (no MerchantApproachMover): rotate the merchant to face the " +
                  "player when they come into range.")]
         [SerializeField] private bool _facePlayerOnApproach = true;
 
         private MerchantNPC _merchant;
         private MerchantApproachMover _mover;
-        private float _nextAttemptTime;
+
+        // True once the merchant has engaged the player during the CURRENT time-in-range. Blocks any
+        // further engagement until the player leaves and re-enters (reset in OnTriggerExit).
+        private bool _engagedThisVisit;
 
         private void Awake()
         {
@@ -48,21 +51,39 @@ namespace DumyatRuntime
                                  "approaches will do nothing.");
         }
 
-        private void OnTriggerEnter(Collider other) => TryEngage(other);
+        private void OnTriggerEnter(Collider other)
+        {
+            if (!other.CompareTag(_playerTag)) return;
+            // Fresh entry into range: allow exactly one engagement this visit.
+            _engagedThisVisit = false;
+            TryEngage(other);
+        }
 
-        // Re-attempt while the player lingers in range (they may never re-enter after a finished
-        // negotiation). The local cooldown keeps this from spamming the spawner every physics tick.
-        private void OnTriggerStay(Collider other) => TryEngage(other);
+        // Keep RE-TRYING the single engagement only until it actually starts — the spawner or mover may
+        // have been busy at the instant of entry. Once engaged, this is a no-op until the player leaves.
+        private void OnTriggerStay(Collider other)
+        {
+            if (_engagedThisVisit) return;
+            TryEngage(other);
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (!other.CompareTag(_playerTag)) return;
+            // Player left the range: re-arm so a later re-entry can start a new conversation.
+            _engagedThisVisit = false;
+        }
 
         private void TryEngage(Collider other)
         {
             if (!other.CompareTag(_playerTag)) return;
             if (_spawner == null || _merchant == null) return;
-            if (Time.time < _nextAttemptTime) return;
-            if (_spawner.IsNegotiationActive) return;
+            if (_engagedThisVisit) return;                 // already had this visit's one conversation
+            if (_spawner.IsNegotiationActive) return;      // busy now — OnTriggerStay retries later
             if (_mover != null && _mover.IsBusy) return;
 
-            _nextAttemptTime = Time.time + _reApproachCooldown;
+            // Mark engaged BEFORE starting so nothing can slip a second conversation in this visit.
+            _engagedThisVisit = true;
 
             if (_mover != null)
             {

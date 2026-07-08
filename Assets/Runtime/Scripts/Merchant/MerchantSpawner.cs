@@ -32,10 +32,6 @@ namespace DumyatRuntime
         [Tooltip("How auto-approaching merchants are chosen from the roster.")]
         [SerializeField] private ApproachOrder _approachOrder = ApproachOrder.Random;
 
-        [Tooltip("Pool of Egyptian-Arabic voices. Each merchant is assigned one at spawn (unique " +
-                 "while voices remain). Merchants with a MerchantConfig.VoiceId override keep it.")]
-        [SerializeField] private VoicePool _voicePool;
-
         [Header("Scene References")]
         [Tooltip("Merchant NPCs already placed in the market scene. The spawner picks from these.")]
         [SerializeField] private List<MerchantNPC> _merchants = new List<MerchantNPC>();
@@ -54,6 +50,10 @@ namespace DumyatRuntime
         // --- State lock: only ONE merchant may approach/negotiate at any time. ---
         private MerchantNPC _activeMerchant;
         private bool _playerInMarket;
+        // True once a merchant has engaged the player during the CURRENT market visit. Once set, no new
+        // AUTO-approach starts until the player leaves and re-enters — a conversation never restarts on
+        // its own while the player lingers. Reset on a fresh market entry (OnTriggerEnter).
+        private bool _approachedThisVisit;
         private int _sequentialIndex;
         private MerchantNPC _lastApproached;
         private Coroutine _cooldownRoutine;
@@ -67,7 +67,6 @@ namespace DumyatRuntime
         private void Start()
         {
             ValidateRosterAgainstConfig();
-            AssignVoicesToMerchants();
         }
 
         // --- Roster validation (point 1) -------------------------------------------
@@ -120,36 +119,6 @@ namespace DumyatRuntime
             return false;
         }
 
-        // --- Voice assignment ------------------------------------------------------
-
-        // Assigns each merchant a voice from the pool, unique while voices remain (Fisher-Yates
-        // shuffle; wraps only if there are more merchants than voices). Merchants whose
-        // MerchantConfig sets a VoiceId override keep it (MerchantNPC.AssignVoice no-ops then).
-        private void AssignVoicesToMerchants()
-        {
-            if (_voicePool == null || _voicePool.Count == 0)
-            {
-                Debug.LogWarning("MerchantSpawner: no VoicePool assigned; merchants rely on " +
-                                 "MerchantConfig.VoiceId overrides only.");
-                return;
-            }
-
-            var ids = new List<string>(_voicePool.VoiceIds);
-            for (int i = ids.Count - 1; i > 0; i--)
-            {
-                int j = Random.Range(0, i + 1);
-                (ids[i], ids[j]) = (ids[j], ids[i]);
-            }
-
-            int next = 0;
-            foreach (MerchantNPC merchant in _merchants)
-            {
-                if (merchant == null) continue;
-                merchant.AssignVoice(ids[next % ids.Count]);
-                next++;
-            }
-        }
-
         // --- Market entry/exit detection (point 3) ---------------------------------
 
         private void OnTriggerEnter(Collider other)
@@ -157,6 +126,7 @@ namespace DumyatRuntime
             if (!other.CompareTag(_playerTag)) return;
 
             _playerInMarket = true;
+            _approachedThisVisit = false;   // fresh visit: allow one approach again
             TryStartAutoApproach();
         }
 
@@ -176,6 +146,7 @@ namespace DumyatRuntime
         {
             if (IsNegotiationActive) return;       // state lock: one at a time
             if (!_playerInMarket) return;
+            if (_approachedThisVisit) return;      // one conversation per visit — wait for a re-entry
             if (!PlayerHasFish()) return;
 
             MerchantNPC next = PickNextMerchant();
@@ -227,6 +198,7 @@ namespace DumyatRuntime
         private void BeginNegotiationWith(MerchantNPC merchant)
         {
             _activeMerchant = merchant;          // engages the state lock
+            _approachedThisVisit = true;         // this visit's conversation is used up until re-entry
             _lastApproached = merchant;
             merchant.OnNegotiationEnded += HandleNegotiationEnded;
             merchant.BeginApproach();
@@ -258,9 +230,11 @@ namespace DumyatRuntime
             }
 
             Debug.Log($"MerchantSpawner: negotiation with '{NameOf(merchant)}' ended ({outcome}). " +
-                      $"Cooling down before next approach.");
+                      $"No new approach until the player leaves the market and returns.");
 
-            // Point 6: wait the configured cooldown before the next merchant approaches.
+            // A conversation is one-per-visit: we do NOT auto-start another while the player lingers.
+            // The cooldown pass still runs, but TryStartAutoApproach is gated by _approachedThisVisit,
+            // so the next approach only happens after the player leaves and re-enters (OnTriggerEnter).
             if (_cooldownRoutine != null) StopCoroutine(_cooldownRoutine);
             _cooldownRoutine = StartCoroutine(CooldownThenAutoApproach());
         }
