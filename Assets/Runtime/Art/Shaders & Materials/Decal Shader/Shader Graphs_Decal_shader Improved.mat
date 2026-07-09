@@ -46,6 +46,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 551f79fc2cfcbec41a052270dd3b6043, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Packed_Decal_Texture:
+        m_Texture: {fileID: 2800000, guid: e76d077cb338d2447bb722d250abaa74, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _packed_scratches_decal_masks_Walls_A2:
         m_Texture: {fileID: 2800000, guid: e76d077cb338d2447bb722d250abaa74, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -73,6 +77,7 @@ Material:
     - _Cull: 2
     - _DstBlend: 10
     - _DstBlendAlpha: 10
+    - _Invert_Mask: 1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -85,6 +90,6 @@ Material:
     - _ZWrite: 0
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.8396226, g: 0, b: 0, a: 0}
+    - _Color: {r: 0.24528301, g: 0.20710216, b: 0.20710216, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
