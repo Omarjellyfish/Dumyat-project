@@ -30,24 +30,17 @@ namespace DumyatRuntime
             CurrentProgress = 0f;
 
             // 1. Broadcast that loading is starting
-            // UI should listen to this to fade screen to black
+            // Listeners (UI, Audio, CarTransitionHandler) react to this
             _eventService.Publish(new SceneLoadBeginEvent { TargetSceneName = targetSceneName });
 
             // 2. Wait a moment for systems (Audio/Haptics/UI) to finish their fade out
             await Task.Delay(1000);
 
-            // 3. Load the intermediate VR loading environment (e.g. "Car")
-            if (!string.IsNullOrEmpty(loadingSceneName))
-            {
-                // Destroys the old scene instantly and puts player in the car
-                await LoadSceneTask(loadingSceneName, LoadSceneMode.Single);
-            }
-
-            // 4. Force a deep memory cleanup (crucial before loading huge scenes)
+            // 3. Force a deep memory cleanup (crucial before loading huge scenes)
             await UnloadAssetsTask();
             GC.Collect();
 
-            // 5. Start loading the target scene in the background
+            // 4. Start loading the target scene in the background
             _currentLoadOp = SceneManager.LoadSceneAsync(targetSceneName, LoadSceneMode.Single);
             _currentLoadOp.allowSceneActivation = false; // Hold it at 90%
 
@@ -61,8 +54,7 @@ namespace DumyatRuntime
             CurrentProgress = 1f;
             _eventService.Publish(new SceneLoadProgressEvent { Progress = 1f });
 
-            // Note: In a full game, you might wait for the player to press "Exit Car" here.
-            // For now, we will automatically transition after a short delay so you can test it.
+            // 5. Brief delay before activating (gives the player a moment in the loading environment)
             await Task.Delay(2000);
 
             AllowSceneActivation(targetSceneName);
@@ -72,7 +64,6 @@ namespace DumyatRuntime
         {
             if (_currentLoadOp != null)
             {
-                // This triggers the final transition from the Car to the Target Scene
                 _currentLoadOp.allowSceneActivation = true;
 
                 while (!_currentLoadOp.isDone)
