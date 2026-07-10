@@ -69,6 +69,20 @@ namespace DumyatRuntime
         [Tooltip("Seconds to wait for the final transcript after committing before failing (session stays open).")]
         [SerializeField, Min(1f)] private float _responseTimeoutSeconds = 5f;
 
+        [Header("Transcript Settling")]
+        [Tooltip("Quiet period: after a committed transcript arrives, wait this long for the server to send " +
+                 "a REFINED version of the same utterance (Scribe re-emits the segment as it improves, e.g. " +
+                 "as committed_transcript_with_timestamps). Each refinement restarts this window, so it is " +
+                 "the gap BETWEEN refinements that must fit here — not the total. Too small and the last, " +
+                 "best revision is cut off. 0 = fire the first transcript immediately (old behaviour).")]
+        [SerializeField, Min(0f)] private float _transcriptSettleSeconds = 1f;
+
+        [Tooltip("Hard cap on the total settle wait, measured from the FIRST committed transcript, so a " +
+                 "server that keeps dribbling refinements can never stall the negotiation turn. When a " +
+                 "transcript is emitted because it hit this cap, a warning is logged — that means refinements " +
+                 "were still arriving and this value is too low.")]
+        [SerializeField, Min(0.1f)] private float _transcriptSettleMaxSeconds = 3f;
+
         [Header("Debug")]
         [Tooltip("Log the full session/utterance lifecycle to the Console for testing.")]
         [SerializeField] private bool _verboseLogging = false;
@@ -83,7 +97,10 @@ namespace DumyatRuntime
 
         private const string LogPrefix = "[Scribe STT]";
 
-        /// <summary>Fires once with the final transcribed utterance text. Session stays open after.</summary>
+        /// <summary>
+        /// Fires once per utterance with the final transcribed text, after the server has stopped
+        /// refining it (see the Transcript Settling fields). Session stays open after.
+        /// </summary>
         public event Action<string> OnTranscriptionComplete;
 
         /// <summary>
@@ -190,6 +207,20 @@ namespace DumyatRuntime
         // --- Per-utterance finalization / timeout state (main-thread only) ---
         private bool _awaitingFinal;
         private float _commitSentTime;
+
+        // --- Transcript settling (main-thread only) ---
+        // Scribe does not always send its BEST transcript first: the initial committed_transcript can be
+        // a fast pass that the server then re-emits, refined, for the same committed audio (typically as
+        // committed_transcript_with_timestamps). Firing the first one we see throws that improvement away.
+        // So the first committed transcript only ARMS a short settle window: every later transcript for
+        // the same utterance supersedes it and restarts the window, and we emit the last (best) one when
+        // the window expires or the hard cap is hit.
+        private bool _settling;
+        private string _settledTranscript;
+        private float _settleDeadline;   // unscaled time at which the current best is emitted
+        private float _settleHardStop;   // unscaled time past which no further refinement is awaited
+        private float _settleStartTime;  // unscaled time the FIRST transcript for this utterance arrived
+        private int _settleRevisions;    // how many refinements superseded the first transcript
 
         // Accumulates exactly the 16-bit PCM streamed to the server for the current utterance (only the
         // gated audio that actually gets sent), so a committed utterance can be written to a .wav for
@@ -356,6 +387,7 @@ namespace DumyatRuntime
             {
                 // Commit=true finalizes THIS utterance; the socket stays open for the next one.
                 EnqueueAudioChunk(Array.Empty<byte>(), commit: true);
+                ClearSettling();   // fresh utterance — no transcript held yet
                 _awaitingFinal = true;
                 _commitSentTime = Time.unscaledTime;
                 Log($"Utterance committed ({streamedSeconds:F2}s streamed), awaiting transcript. " +
@@ -454,9 +486,16 @@ namespace DumyatRuntime
                 CaptureAndStreamAudio();
             }
 
+            // A transcript is in hand and the server has stopped improving it (or hit the hard cap) —
+            // emit the refined result. Checked before the timeout below, which only guards the case
+            // where NOTHING came back at all.
+            if (_settling && Time.unscaledTime >= _settleDeadline)
+            {
+                EmitSettledTranscript();
+            }
             // Utterance-level timeout: the socket is alive but no transcript came back. Surface it
             // but KEEP THE SESSION OPEN so the next utterance can proceed.
-            if (_awaitingFinal && Time.unscaledTime - _commitSentTime > _responseTimeoutSeconds)
+            else if (_awaitingFinal && !_settling && Time.unscaledTime - _commitSentTime > _responseTimeoutSeconds)
             {
                 _awaitingFinal = false;
                 Debug.LogWarning("ElevenLabsScribeClient: Timed out waiting for transcription response.");
@@ -750,8 +789,10 @@ namespace DumyatRuntime
 
                 case MsgCommittedTranscript:
                 case MsgCommittedTranscriptTimestamps:
+                    // Do NOT complete here: later messages for the same utterance carry the server's
+                    // refined transcript. OfferTranscript keeps the newest and completes once it settles.
                     string text = msg.text;
-                    PostToMainThread(() => { if (epoch == _sessionEpoch) CompleteTranscription(text); });
+                    PostToMainThread(() => { if (epoch == _sessionEpoch) OfferTranscript(text); });
                     break;
 
                 default:
@@ -766,15 +807,86 @@ namespace DumyatRuntime
 
         // --- Completion / failure (main thread) ------------------------------------
 
-        // A transcript arrived. Fire it and KEEP THE SESSION OPEN for the next utterance.
-        private void CompleteTranscription(string text)
+        // A committed transcript for the current utterance arrived. Rather than firing it straight away,
+        // hold it as the best-so-far and wait out a short settle window: Scribe keeps refining the same
+        // committed audio and re-emits it, so the LAST transcript we receive is the most accurate one.
+        // Each refinement restarts the window, bounded by _transcriptSettleMaxSeconds from the first.
+        private void OfferTranscript(string text)
         {
-            if (!_awaitingFinal) return;   // stray/duplicate — ignore
+            if (!_awaitingFinal) return;   // stray/duplicate outside an utterance — ignore
+
+            string incoming = text ?? string.Empty;
+
+            // Never let a blank refinement erase a real transcript we already hold.
+            if (_settling && string.IsNullOrWhiteSpace(incoming) && !string.IsNullOrWhiteSpace(_settledTranscript))
+            {
+                Log("Ignoring an empty refinement — keeping the transcript already received.");
+                return;
+            }
+
+            float now = Time.unscaledTime;
+
+            if (!_settling)
+            {
+                _settling = true;
+                _settleRevisions = 0;
+                _settleStartTime = now;
+                _settleHardStop = now + _transcriptSettleMaxSeconds;
+                Log($"Transcript RECEIVED ({incoming.Length} chars): \"{incoming}\" — " +
+                    $"waiting up to {_transcriptSettleSeconds:F2}s for a refined version.");
+            }
+            else if (incoming == _settledTranscript)
+            {
+                // Identical text (Scribe re-sends the same string as the _with_timestamps variant).
+                // Nothing improved, so it must not buy the server another settle window.
+                Log("Duplicate transcript — no change, still settling.");
+                return;
+            }
+            else
+            {
+                _settleRevisions++;
+                Log($"Transcript REFINED (#{_settleRevisions} at +{now - _settleStartTime:F2}s, " +
+                    $"{incoming.Length} chars): \"{incoming}\".");
+            }
+
+            _settledTranscript = incoming;
+            // Restart the window so a stream of refinements is absorbed, but never past the hard stop.
+            _settleDeadline = Mathf.Min(now + _transcriptSettleSeconds, _settleHardStop);
+        }
+
+        // The settle window expired (or the session is ending): fire the best transcript we hold and KEEP
+        // THE SESSION OPEN for the next utterance. Returns true when a transcript was emitted.
+        private bool EmitSettledTranscript()
+        {
+            if (!_settling) return false;
+
+            string result = _settledTranscript ?? string.Empty;
+            float waited = Time.unscaledTime - _settleStartTime;
+            // We stopped because the CAP ran out, not because the server went quiet — so a better
+            // transcript may well have been on its way. Say so loudly; the fix is a bigger cap.
+            bool truncated = _settleRevisions > 0 && Time.unscaledTime >= _settleHardStop;
+
+            _settling = false;
+            _settledTranscript = null;
             _awaitingFinal = false;
 
-            string result = text ?? string.Empty;
-            Log($"Transcript RECEIVED ({result.Length} chars): \"{result}\". Session stays OPEN.");
+            if (truncated)
+                Debug.LogWarning($"{LogPrefix} Transcript settling hit the {_transcriptSettleMaxSeconds:F1}s cap " +
+                                 $"with {_settleRevisions} refinement(s) still arriving — the server had not " +
+                                 "finished improving it. Raise Transcript Settle Max Seconds.");
+
+            Log($"Transcript SETTLED after {_settleRevisions} refinement(s) in {waited:F2}s " +
+                $"({result.Length} chars): \"{result}\". Session stays OPEN.");
             OnTranscriptionComplete?.Invoke(result);
+            return true;
+        }
+
+        // Drops any in-flight settle without emitting (session teardown).
+        private void ClearSettling()
+        {
+            _settling = false;
+            _settledTranscript = null;
+            _settleRevisions = 0;
         }
 
         // Pre-session validation failure (consent/config/mic). Nothing to tear down.
@@ -788,6 +900,12 @@ namespace DumyatRuntime
         // the pending state so the next utterance can proceed on the same connection.
         private void FailUtterance(string reason)
         {
+            // A late per-utterance error must not throw away a transcript the server already gave us.
+            if (EmitSettledTranscript())
+            {
+                Debug.LogWarning($"ElevenLabsScribeClient: {reason} (a transcript had already arrived — using it).");
+                return;
+            }
             _awaitingFinal = false;
             Debug.LogWarning($"ElevenLabsScribeClient: {reason}");
             OnTranscriptionFailed?.Invoke(reason);
@@ -798,8 +916,13 @@ namespace DumyatRuntime
         {
             bool notify = _awaitingFinal || MicrophoneEnabled || _connecting || _socketOpen;
             Debug.LogWarning($"ElevenLabsScribeClient: {reason}");
+
+            // The socket dying mid-settle still leaves us holding a valid transcript — deliver it
+            // instead of failing the turn, then tear the session down quietly.
+            bool delivered = EmitSettledTranscript();
+
             TeardownSocket();
-            if (notify) OnTranscriptionFailed?.Invoke(reason);
+            if (notify && !delivered) OnTranscriptionFailed?.Invoke(reason);
         }
 
         // Tears down mic + socket without firing events. Safe to call repeatedly. Bumping the epoch
@@ -812,6 +935,7 @@ namespace DumyatRuntime
             _socketOpen = false;
             _connecting = false;
             _awaitingFinal = false;
+            ClearSettling();
             CurrentInputLevel = 0f;
 
             StopMicrophone();

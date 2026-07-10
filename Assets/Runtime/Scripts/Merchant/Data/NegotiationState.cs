@@ -146,6 +146,28 @@ namespace DumyatRuntime
         /// </summary>
         public const int HoldsBeforeWalkAway = 3;
 
+        /// <summary>
+        /// True for the ONE turn that follows the merchant asking the player to confirm they really want
+        /// to call the sale off (see <see cref="MerchantAction.ConfirmDecline"/>). It switches how the
+        /// model's rejection score is read — "are they withdrawing?" becomes "did they answer yes?" — and
+        /// a decline is only ever APPLIED while it is set, so the player can never lose a sale to a single
+        /// mis-heard sentence. On the confirming turn the rejection takes effect immediately. Cleared
+        /// again as soon as the player says anything that resumes the haggle.
+        ///
+        /// The merchant cannot ask twice in a row: <see cref="MerchantAction.ConfirmDecline"/> is only
+        /// produced while this is clear, and producing it sets it.
+        /// </summary>
+        public bool awaitingDeclineConfirmation;
+
+        /// <summary>
+        /// True once the merchant has spent a turn TELLING the player it is about to leave. A
+        /// <see cref="MerchantAction.WalkAway"/> is never applied while this is false — it is coerced
+        /// into that warning turn instead — so the player is never dropped mid-haggle without notice.
+        /// Set by the hold-at-max ULTIMATUM turn (see <see cref="HoldsBeforeUltimatum"/>) or by the
+        /// coerced warning when the merchant tries to leave on exhausted patience.
+        /// </summary>
+        public bool walkAwayWarningGiven;
+
         /// <summary>Current phase of the negotiation.</summary>
         public NegotiationPhase state = NegotiationPhase.Approaching;
     }

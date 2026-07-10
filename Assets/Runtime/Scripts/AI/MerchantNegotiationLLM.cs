@@ -24,11 +24,20 @@ namespace DumyatRuntime
         ClarifyRequest,
 
         /// <summary>
-        /// The PLAYER clearly refused to sell or ended the conversation; the merchant speaks a
-        /// short good-natured farewell and the negotiation resolves as
-        /// <see cref="NegotiationPhase.Declined"/>.
+        /// The PLAYER clearly refused to sell or ended the conversation, AND has already confirmed it
+        /// when asked. The merchant speaks a short good-natured farewell and the negotiation resolves
+        /// as <see cref="NegotiationPhase.Declined"/>. A decline is NEVER applied without a preceding
+        /// <see cref="ConfirmDecline"/> turn — the validator coerces an unconfirmed one.
         /// </summary>
-        PlayerDeclined
+        PlayerDeclined,
+
+        /// <summary>
+        /// The player just stated they no longer want to sell. Before the sale is thrown away the
+        /// merchant asks them to CONFIRM ("are you sure you don't want to sell at all?") and keeps the
+        /// negotiation open for exactly one more turn. The next turn resolves it: an unmistakable yes
+        /// becomes <see cref="PlayerDeclined"/>; anything else resumes haggling.
+        /// </summary>
+        ConfirmDecline
     }
 
     /// <summary>
@@ -63,6 +72,22 @@ namespace DumyatRuntime
         /// </summary>
         public float UnderstoodWeightKg;
 
+        /// <summary>
+        /// True when this turn is the merchant's spoken WARNING that it is about to walk away. Recorded
+        /// on <see cref="NegotiationState.walkAwayWarningGiven"/> so a later
+        /// <see cref="MerchantAction.WalkAway"/> is allowed to actually end the negotiation.
+        /// </summary>
+        public bool IsFinalWarning;
+
+        /// <summary>
+        /// 0–100: how clearly the model judges the player to be ENDING the sale — before the merchant has
+        /// asked, how clearly they want out at all; once asked, how clearly they answered YES. A
+        /// MEASUREMENT the model reports, never a decision it acts on: the game thresholds it (see
+        /// <see cref="MerchantNegotiationLLM.WithdrawalScoreThreshold"/> /
+        /// <see cref="MerchantNegotiationLLM.DeclineConfirmedScoreThreshold"/>) and coerces the action.
+        /// </summary>
+        public float RejectionScore;
+
         /// <summary>True when <see cref="NewOfferAmount"/> is meaningful for this action.</summary>
         public bool HasNewOffer => Action == MerchantAction.RaiseOffer || Action == MerchantAction.Accept;
     }
@@ -92,6 +117,25 @@ namespace DumyatRuntime
         // An offer this far above fair value is treated as the model hallucinating, not haggling.
         private const float HardOfferCapMultiplier = 2f;
 
+        // --- Withdrawal thresholds (see MerchantTurnResult.RejectionScore) ---------
+        //
+        // The model MEASURES how clearly the player is ending the sale; these constants are where the
+        // game DECIDES. Two different bars, because the two questions carry different risk:
+
+        /// <summary>
+        /// Score at or above which an unprompted statement counts as the player wanting out, and the
+        /// merchant must stop and ask them to confirm. Set high: mistaking ordinary price-refusal for a
+        /// withdrawal interrupts a healthy haggle.
+        /// </summary>
+        public const float WithdrawalScoreThreshold = 70f;
+
+        /// <summary>
+        /// Score at or above which the player's ANSWER to "are you sure?" counts as yes, and the
+        /// rejection is applied immediately. Set lower: they have already said it once and been asked
+        /// point-blank, so the bar for the confirming word is not the bar for the first statement.
+        /// </summary>
+        public const float DeclineConfirmedScoreThreshold = 55f;
+
         // Deterministic lines used ONLY when a turn is coerced to a different action than the model
         // spoke (a last-resort fallback after the corrected retry still produced an illegal offer). The
         // model's own line would contradict the coerced action (e.g. promise a raise on a HoldFirm — the
@@ -105,6 +149,29 @@ namespace DumyatRuntime
         private const string CoercedWalkAwayEnglish = "That's it, sir — no deal today, good luck in the market.";
         private const string CoercedBargainAcceptArabic = "ماشي يا ريس، اتفقنا خلاص، هدهالك بالسعر اللي انت طالبه.";
         private const string CoercedBargainAcceptEnglish = "Alright sir, deal — I'll take it at the price you asked.";
+
+        // Scripted line used when the player calls the sale off but has not been asked to confirm yet.
+        // Ending a negotiation is destructive and a mis-transcription must never trigger it, so an
+        // unconfirmed PlayerDeclined is always coerced into this one-turn confirmation question.
+        private const string CoercedConfirmDeclineArabic =
+            "استنى يا ريس، انت متاكد انك مش عايز تبيعلي خالص؟ قولي اه ولا لا.";
+        private const string CoercedConfirmDeclineEnglish =
+            "Hold on, sir — are you sure you don't want to sell to me at all? Tell me yes or no.";
+
+        // Scripted farewell for the coerced decline: the merchant has already spent its one confirmation
+        // and must not ask again, so the withdrawal it was told about is simply applied.
+        private const string CoercedDeclineFarewellArabic =
+            "ماشي يا ريس، زي ما تحب، مفيش بيع النهاردة، ربنا يوفقك.";
+        private const string CoercedDeclineFarewellEnglish =
+            "As you wish, sir — no sale today. Good luck to you.";
+
+        // Scripted WARNING spoken when the merchant tries to walk away without having told the player it
+        // is leaving. It announces the departure plainly and gives them one turn to decide; only then may
+        // a WalkAway actually end the negotiation.
+        private const string CoercedFinalWarningArabic =
+            "بص يا ريس، صبري خلص وانا همشي، دي اخر فرصة، يا نتفق دلوقتي يا كل واحد يروح في حاله.";
+        private const string CoercedFinalWarningEnglish =
+            "Look sir, my patience is finished and I'm about to leave. This is your last chance — we agree now, or we each go our own way.";
 
         // Scripted clarify lines used when the merchant tried to price the fish before the fisherman
         // told it what it needs. The merchant must know BOTH the species AND the weight before any
@@ -236,6 +303,23 @@ namespace DumyatRuntime
         private static void CommitTurn(NegotiationState state, string playerSpeechText, MerchantTurnResult result)
         {
             RecordExchange(state, playerSpeechText, result.MerchantSpeech);
+
+            // Decline bookkeeping. Asking "are you sure?" arms the ONE turn on which the rejection score is
+            // read as a yes/no answer; any other action means the player carried on haggling, so disarm.
+            // The merchant can never ask twice in a row: ConfirmDecline is only ever produced while this
+            // flag is CLEAR, and producing it sets the flag.
+            if (result.Action == MerchantAction.ConfirmDecline)
+                state.awaitingDeclineConfirmation = true;
+            else if (result.Action != MerchantAction.PlayerDeclined)
+                state.awaitingDeclineConfirmation = false;
+
+            // The merchant has now TOLD the player it is about to leave — either the coerced warning
+            // above, or the hold-at-max ULTIMATUM turn (turnsHeldAtMax is still the pre-turn value here,
+            // the same one BuildPrompt used to demand the ultimatum). Only after this may a WalkAway end
+            // the negotiation. Once warned, it stays warned for the rest of the haggle.
+            if (result.Action == MerchantAction.HoldFirm
+                && (result.IsFinalWarning || state.turnsHeldAtMax >= NegotiationState.HoldsBeforeUltimatum))
+                state.walkAwayWarningGiven = true;
 
             // Accumulate what the fisherman has disclosed so later turns can't "forget" the fish/weight
             // (and so the sale can be saved). Once known it stays known — a blank later report never clears it.
@@ -462,11 +546,12 @@ namespace DumyatRuntime
                               "them THIS turn to decide (Accept if they agree).");
             else if (atCeiling)
                 sb.AppendLine("- YOU ARE AT YOUR MAXIMUM RIGHT NOW: do NOT use RaiseOffer again. HoldFirm (firmly urge " +
-                              "them to take this good price), Accept if they agree, or WalkAway if they are being " +
-                              "unreasonable. The player may keep trying — keep holding firm for now.");
+                              "them to take this good price) or Accept if they agree. The player may keep trying — " +
+                              "keep holding firm for now, and never leave without first warning them.");
             else
                 sb.AppendLine("- If the player demands MORE than your maximum, do not exceed it: HoldFirm near your " +
-                              "ceiling (make clear you're near your limit) or WalkAway when your patience runs out.");
+                              "ceiling (make clear you're near your limit). When your patience runs out, WARN them " +
+                              "you are about to leave — do not leave in the same breath.");
             sb.AppendLine($"- BARGAIN ACCEPT (snap it up): you are the BUYER, so if the fisherman ASKS FOR a " +
                           $"price that is AT OR BELOW your current offer of {EGP(state.currentOffer)}, you " +
                           "IMMEDIATELY Accept at THEIR price — never turn down paying less. This counts as " +
@@ -475,16 +560,29 @@ namespace DumyatRuntime
                           "they don't back out. \"newOfferAmount\" = the fisherman's asked price.");
             sb.AppendLine();
 
-            sb.AppendLine("CLOSING THE DEAL — Accept and PlayerDeclined END the sale, so be VERY strict:");
+            sb.AppendLine("CLOSING THE DEAL — Accept ENDS the sale, so be VERY strict:");
             sb.AppendLine($"- AGREEMENT ACCEPT: the fisherman EXPLICITLY agrees to sell at your CURRENT offer " +
                           $"with clear deal words ('اتفقنا', 'خلاص موافق', 'ماشي خدها') and NO new number " +
                           $"attached. Then newOfferAmount = {EGP(state.currentOffer)}. A price ABOVE your " +
                           $"current offer of {EGP(state.currentOffer)} is haggling — NOT acceptance (but a " +
                           "price at/below it is the BARGAIN ACCEPT above — take it).");
-            sb.AppendLine("- PlayerDeclined ONLY when the player clearly refuses to SELL AT ALL or ends the " +
-                          "conversation ('مش هبيع خلاص', 'مع السلامة', 'هدور على غيرك'). Saying no to YOUR " +
-                          "PRICE ('لا ده قليل', 'مش كفاية', 'بتهزر؟') is NOT declining — that is normal " +
-                          "haggling: answer with HoldFirm or a gradual RaiseOffer.");
+            sb.AppendLine();
+
+            AppendRejectionScoreRules(sb, state);
+
+            // Walking away ends the sale too, and the player must always hear it coming.
+            if (state.walkAwayWarningGiven)
+                sb.AppendLine("- YOU HAVE ALREADY WARNED the fisherman that you are about to leave. If they still " +
+                              "will not accept or decline, choose WalkAway now and say ONE short, firm farewell " +
+                              "that plainly ENDS the deal (no deal today, good luck elsewhere).");
+            else
+                sb.AppendLine("- NEVER WALK AWAY WITHOUT WARNING. However little patience you have left, you may not " +
+                              "just leave: you must FIRST spend a turn telling the fisherman plainly that your " +
+                              "patience is finished and you are about to walk, giving them one last chance to " +
+                              "decide (action HoldFirm, with that warning spoken out loud). Only on a LATER turn, " +
+                              "if they still will not decide, may you use WalkAway.");
+            sb.AppendLine();
+
             sb.AppendLine("- DEFAULT WHEN UNSURE: keep negotiating (HoldFirm / RaiseOffer / ClarifyRequest). " +
                           "Ending the sale by mistake ruins the game round; treat Accept and PlayerDeclined as " +
                           "rare, definitive endings you only pick on unmistakable words.");
@@ -494,7 +592,9 @@ namespace DumyatRuntime
             sb.AppendLine("{");
             sb.AppendLine("  \"merchantSpeech\": \"<what you say out loud, in Egyptian dialect>\",");
             sb.AppendLine("  \"speechTranslationEnglish\": \"<English translation of merchantSpeech, for subtitles>\",");
-            sb.AppendLine("  \"action\": \"RaiseOffer\" | \"HoldFirm\" | \"Accept\" | \"WalkAway\" | \"ClarifyRequest\" | \"PlayerDeclined\",");
+            sb.AppendLine("  \"action\": \"RaiseOffer\" | \"HoldFirm\" | \"Accept\" | \"WalkAway\" | \"ClarifyRequest\",");
+            sb.AppendLine("  \"rejectionScore\": <integer 0-100 — see REJECTION SCORE above. REQUIRED every turn. " +
+                          "Use 0 when the fisherman shows no sign at all of ending the sale>,");
             sb.AppendLine("  \"playerAskedPrice\": <number — the price in EGP the fisherman is CURRENTLY asking " +
                           "you to pay (the most recent price they named or insisted on, even if a few turns " +
                           "back and still standing). Whole number. Use 0 if they have not named any price yet " +
@@ -515,6 +615,13 @@ namespace DumyatRuntime
             sb.AppendLine("- Output ONLY the JSON object. No markdown, no code fences, no text before or after it.");
             sb.AppendLine("- NEVER break character. NEVER mention being an AI, a model, or a game.");
             sb.AppendLine("- ONLY discuss this fish sale. If the player goes off-topic, redirect in character via ClarifyRequest.");
+            sb.AppendLine("- You CANNOT end the sale because the fisherman wants to leave — you have no action for " +
+                          "it. Report what you heard in \"rejectionScore\" and keep negotiating; the market handles " +
+                          "the rest. NEVER argue that they cannot refuse, and never say 'there is no such thing as " +
+                          "not wanting to sell'.");
+            sb.AppendLine("- NEVER use WalkAway unless you have ALREADY spent an earlier turn warning the fisherman " +
+                          "out loud that you are about to leave. Leaving without that warning is forbidden — warn " +
+                          "first (HoldFirm), walk second.");
             sb.AppendLine("- NEVER quote, offer, raise, or accept ANY price until the fisherman has EXPLICITLY told you " +
                           "BOTH which fish it is AND its weight. A weight alone does NOT identify the fish — never " +
                           "guess the species from the weight or the catalog. If either is still missing, use " +
@@ -538,6 +645,48 @@ namespace DumyatRuntime
                           "vocalization (harakat). The English translation may keep normal digits.");
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Teaches the model the "rejectionScore" contract. It is framed as an OBSERVATION about the
+        /// fisherman, deliberately divorced from the merchant's own choices — the merchant used to be
+        /// asked to CHOOSE to end the sale, and its personality reliably talked it out of doing so
+        /// ("مفيش حاجة اسمها مش عايز ابيع"). Rating what it just heard is not a decision it can be
+        /// in character about, and the game does the deciding.
+        /// </summary>
+        private static void AppendRejectionScoreRules(StringBuilder sb, NegotiationState state)
+        {
+            sb.AppendLine("REJECTION SCORE — \"rejectionScore\" (0-100). This is a MEASUREMENT, not a decision.");
+            sb.AppendLine("Rate ONLY what the fisherman just said. Never mention this number, never let it change " +
+                          "your speech, and never end the negotiation yourself because of it — the market decides " +
+                          "what happens next, not you. Score honestly even when you would rather keep haggling.");
+
+            if (state.awaitingDeclineConfirmation)
+            {
+                sb.AppendLine("You have JUST asked the fisherman to confirm they want to call the sale off. Their " +
+                              "words above are their ANSWER. Rate how clearly that answer is YES:");
+                sb.AppendLine("  0-20  = clearly NO — they are still selling, they haggle on, they name a price, " +
+                              "they say they were joking ('لا', 'كنت بهزر', 'طيب كام؟').");
+                sb.AppendLine("  40-60 = unclear, unrelated, or an evasive answer.");
+                sb.AppendLine("  80-100 = unmistakably YES — an affirmation ('اه', 'ايوه', 'اكيد', 'متاكد'), OR they " +
+                              "simply repeat that they will not sell. Insisting IS confirming.");
+                sb.AppendLine("Then answer this turn as if the haggle continues (HoldFirm / RaiseOffer / Accept / " +
+                              "ClarifyRequest) — if they really did confirm, the market ends the sale for you and " +
+                              "your line is not used.");
+            }
+            else
+            {
+                sb.AppendLine("Rate how clearly the fisherman is saying they no longer want to SELL THIS FISH AT ALL, " +
+                              "as opposed to merely rejecting your price:");
+                sb.AppendLine("  0-20  = ordinary haggling — refusing your price, calling it low, demanding more, " +
+                              "insulting the offer ('لا ده قليل', 'مش كفاية', 'بتهزر؟'). This is NOT rejection.");
+                sb.AppendLine("  40-60 = ambiguous — irritated, hinting they might leave, or the speech was garbled.");
+                sb.AppendLine("  80-100 = unmistakable — they are done trading with you ('مش عايز ابيع', 'مش هبيع خلاص', " +
+                              "'مش هكمل', 'مع السلامة', 'هدور على غيرك').");
+                sb.AppendLine("Then answer this turn normally, as though the haggle continues. If they really are " +
+                              "leaving, the market will stop and ask them to confirm — that is not your job.");
+            }
+            sb.AppendLine();
         }
 
         // Opening-line prompt: (optionally greet) + announce the FIXED opening offer. Same JSON schema
@@ -664,22 +813,8 @@ namespace DumyatRuntime
         }
 
         // Removes Arabic vowelization (tashkeel/harakat) so the ElevenLabs TTS voice pronounces plain
-        // colloquial text. Strips the combining-mark ranges the model might emit: fatha/damma/kasra/
-        // tanwin/shadda/sukun and the extended marks (U+064B–U+065F) plus the superscript alef
-        // (U+0670). Base letters and spaces are untouched.
-        private static string StripArabicDiacritics(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return s;
-            var sb = new StringBuilder(s.Length);
-            foreach (char c in s)
-            {
-                // U+064B..U+065F (harakat/tanwin/shadda/sukun + extended marks) and U+0670 (superscript alef).
-                if ((c >= 'ً' && c <= 'ٟ') || c == 'ٰ')
-                    continue;
-                sb.Append(c);
-            }
-            return sb.ToString();
-        }
+        // colloquial text — LLMs regularly ignore "do not add diacritics".
+        private static string StripArabicDiacritics(string s) => ArabicText.StripDiacritics(s);
 
         // --- Strict parsing + validation -------------------------------------------
 
@@ -738,7 +873,7 @@ namespace DumyatRuntime
                 || !Enum.IsDefined(typeof(MerchantAction), action))
             {
                 rejectionReason = $"\"{dto.action}\" is not a valid action. Use exactly one of: " +
-                                  "RaiseOffer, HoldFirm, Accept, WalkAway, ClarifyRequest, PlayerDeclined.";
+                                  "RaiseOffer, HoldFirm, Accept, WalkAway, ClarifyRequest.";
                 Debug.LogWarning($"MerchantNegotiationLLM: unknown action '{dto.action}'.");
                 return false;
             }
@@ -754,14 +889,90 @@ namespace DumyatRuntime
                 NewOfferAmount = 0f,
                 PlayerAskedPrice = Mathf.Max(0f, dto.playerAskedPrice),
                 UnderstoodFishType = string.IsNullOrWhiteSpace(dto.understoodFishType) ? null : dto.understoodFishType.Trim(),
-                UnderstoodWeightKg = Mathf.Max(0f, dto.understoodWeightKg)
+                UnderstoodWeightKg = Mathf.Max(0f, dto.understoodWeightKg),
+                RejectionScore = Mathf.Clamp(dto.rejectionScore, 0f, 100f)
             };
+
+            // WITHDRAWAL: the model MEASURES, the game DECIDES. Asking the model to pick PlayerDeclined
+            // never worked — its personality and the "endings are rare" rule argue it out of the action
+            // ("مفيش حاجة اسمها مش عايز ابيع") — so it now only reports how clearly the player is ending
+            // the sale, exactly as it already reports playerAskedPrice and understoodFishType. Thresholding
+            // that score here overrides whatever action it chose, on BOTH attempts, so no retry, prompt or
+            // personality can haggle through a refusal.
+            if (state.awaitingDeclineConfirmation)
+            {
+                if (parsed.RejectionScore >= DeclineConfirmedScoreThreshold)
+                {
+                    Debug.Log($"MerchantNegotiationLLM: player confirmed the withdrawal " +
+                              $"(rejectionScore {parsed.RejectionScore:0} >= {DeclineConfirmedScoreThreshold:0}) " +
+                              "— applying the rejection.");
+                    CoerceLine(parsed, MerchantAction.PlayerDeclined, CoercedDeclineFarewellArabic, CoercedDeclineFarewellEnglish);
+                    result = parsed;
+                    return true;
+                }
+
+                // Not a yes — they are still selling. The model's own action stands and CommitTurn disarms
+                // the confirmation, so the haggle picks up exactly where it left off.
+                Debug.Log($"MerchantNegotiationLLM: withdrawal NOT confirmed " +
+                          $"(rejectionScore {parsed.RejectionScore:0} < {DeclineConfirmedScoreThreshold:0}) " +
+                          $"— resuming with '{parsed.Action}'.");
+            }
+            else if (parsed.RejectionScore >= WithdrawalScoreThreshold)
+            {
+                Debug.Log($"MerchantNegotiationLLM: player is ending the sale " +
+                          $"(rejectionScore {parsed.RejectionScore:0} >= {WithdrawalScoreThreshold:0}) " +
+                          "— asking them to confirm before it is applied.");
+                CoerceLine(parsed, MerchantAction.ConfirmDecline, CoercedConfirmDeclineArabic, CoercedConfirmDeclineEnglish);
+                result = parsed;
+                return true;
+            }
+
+            // The score above is the ONLY authority on ending the sale, so PlayerDeclined and ConfirmDecline
+            // are no longer in the model's schema. If it emits one anyway while the score says otherwise,
+            // the two contradict each other — trust the score and fall back to holding firm rather than
+            // letting an unscored action close the negotiation.
+            if (parsed.Action == MerchantAction.PlayerDeclined || parsed.Action == MerchantAction.ConfirmDecline)
+            {
+                Debug.LogWarning($"MerchantNegotiationLLM: model emitted '{parsed.Action}' (not in its schema) " +
+                                 $"with rejectionScore {parsed.RejectionScore:0}; holding firm instead.");
+                CoerceLine(parsed, MerchantAction.HoldFirm, CoercedHoldArabic, CoercedHoldEnglish);
+                result = parsed;
+                return true;
+            }
+
+            // WALK-AWAY WARNING GATE: leaving ends the negotiation, so the merchant may never do it out
+            // of the blue. The hold-at-max ladder warns via its ULTIMATUM turn, but a merchant that never
+            // reached its ceiling can still decide to leave on spent patience — and on that path nothing
+            // had ever told the player. So a WalkAway with no warning behind it is coerced into the
+            // warning turn, and only the NEXT WalkAway is allowed to end the sale. A flow rule, not a
+            // model mistake: coerced on BOTH attempts.
+            if (parsed.Action == MerchantAction.WalkAway && !state.walkAwayWarningGiven)
+            {
+                Debug.Log("MerchantNegotiationLLM: merchant tried to walk away without warning; " +
+                          "coercing to a final-warning HoldFirm.");
+                CoerceLine(parsed, MerchantAction.HoldFirm, CoercedFinalWarningArabic, CoercedFinalWarningEnglish);
+                parsed.IsFinalWarning = true;
+                result = parsed;
+                return true;
+            }
 
             // CLOSE-OUT STAGE: the merchant has held its maximum long enough to have already issued its
             // strict ultimatum, and the player STILL won't accept or decline. This turn must WALK AWAY.
             if (state.turnsHeldAtMax >= NegotiationState.HoldsBeforeWalkAway
                 && (action == MerchantAction.HoldFirm || action == MerchantAction.RaiseOffer))
             {
+                // Normally the ULTIMATUM turn already warned the player on the way here. If it somehow
+                // did not, warn now rather than closing out silently — the warning is unconditional.
+                if (!state.walkAwayWarningGiven)
+                {
+                    Debug.Log("MerchantNegotiationLLM: close-out reached without a walk-away warning; " +
+                              "warning this turn instead of leaving.");
+                    CoerceLine(parsed, MerchantAction.HoldFirm, CoercedFinalWarningArabic, CoercedFinalWarningEnglish);
+                    parsed.IsFinalWarning = true;
+                    result = parsed;
+                    return true;
+                }
+
                 if (!allowCoercion)
                 {
                     rejectionReason = "You already gave your final ultimatum and the player STILL will not " +
@@ -1066,6 +1277,12 @@ namespace DumyatRuntime
 
             /// <summary>The weight (kg) the fisherman has EXPLICITLY stated (0 if not stated yet).</summary>
             public float understoodWeightKg;
+
+            /// <summary>
+            /// 0-100 measurement of how clearly the fisherman is ENDING the sale this turn. The game
+            /// thresholds it and coerces the action; the model never acts on it itself.
+            /// </summary>
+            public float rejectionScore;
         }
     }
 }

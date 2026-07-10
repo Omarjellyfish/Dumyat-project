@@ -462,6 +462,15 @@ namespace DumyatRuntime
                     PlayMerchantLine(result.MerchantSpeech, BeginListening);
                     break;
 
+                case MerchantAction.ConfirmDecline:
+                    // The player said they no longer want to sell. Nothing is applied yet — the merchant
+                    // asks them to confirm and we listen for the answer. NegotiationState.awaitingDecline-
+                    // Confirmation (set by the LLM layer) lets the NEXT turn resolve as PlayerDeclined.
+                    Debug.Log($"{LogPrefix} Player wants to call the sale off — asking them to confirm.");
+                    _state.state = NegotiationPhase.Negotiating;
+                    PlayMerchantLine(result.MerchantSpeech, BeginListening);
+                    break;
+
                 case MerchantAction.Accept:
                     _state.currentOffer = result.NewOfferAmount;
                     _state.offerHistory.Add(_state.currentOffer);
@@ -475,7 +484,10 @@ namespace DumyatRuntime
                     break;
 
                 case MerchantAction.PlayerDeclined:
-                    // The player refused the sale: farewell line, then resolve as Declined.
+                    // The player CONFIRMED they don't want to sell (the LLM layer never lets this action
+                    // through without a preceding ConfirmDecline turn). The rejection is applied right
+                    // here — the farewell line just plays out over an already-Declined negotiation.
+                    Debug.Log($"{LogPrefix} Player confirmed the rejection — ending the sale.");
                     _state.state = NegotiationPhase.Declined;
                     PlayMerchantLine(result.MerchantSpeech, () => EndWithStat(NegotiationPhase.Declined));
                     break;
@@ -808,6 +820,12 @@ namespace DumyatRuntime
                         _state.turnsHeldAtMax++;
                     _state.state = NegotiationPhase.Negotiating;
                     break;
+                case MerchantAction.ConfirmDecline:
+                    // Non-terminal: the merchant asks the player to confirm calling the sale off, and the
+                    // graph loops for their answer (see ApplyTurnResult).
+                    Debug.Log($"{LogPrefix} Player wants to call the sale off — asking them to confirm.");
+                    _state.state = NegotiationPhase.Negotiating;
+                    break;
                 case MerchantAction.Accept:
                     _state.currentOffer = result.NewOfferAmount;
                     _state.offerHistory.Add(_state.currentOffer);
@@ -819,6 +837,8 @@ namespace DumyatRuntime
                     SetTerminal(NegotiationPhase.WalkedAway);
                     break;
                 case MerchantAction.PlayerDeclined:
+                    // Only reachable after the player confirmed the rejection (see ApplyTurnResult).
+                    Debug.Log($"{LogPrefix} Player confirmed the rejection — ending the sale.");
                     _state.state = NegotiationPhase.Declined;
                     SetTerminal(NegotiationPhase.Declined);
                     break;
