@@ -8,7 +8,7 @@ namespace DumyatRuntime
     {
         [Header("Subtitles")]
         [SerializeField] private Toggle _subtitlesToggle;
-        [SerializeField] private Toggle _subtitlesLanguge;
+
         [Header("Audio")]
         [SerializeField] private Slider _masterVolumeSlider;
         [SerializeField] private Slider _voiceVolumeSlider;
@@ -27,7 +27,6 @@ namespace DumyatRuntime
             _ambientVolumeSlider.value = _soundMixerService.GetSavedSoundFXVolume();
 
             _subtitlesToggle.onValueChanged.AddListener(OnSubtitlesChanged);
-            _subtitlesLanguge.onValueChanged.AddListener(OnSubtitlesLangugeChanged);
             _masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
             _voiceVolumeSlider.onValueChanged.AddListener(OnVoiceVolumeChanged);
             _ambientVolumeSlider.onValueChanged.AddListener(OnAmbientVolumeChanged);
@@ -60,10 +59,6 @@ namespace DumyatRuntime
         private void OnAmbientVolumeChanged(float _value)
         {
             _soundMixerService.SetSoundFXVolume(_value);
-        }
-        private void OnSubtitlesLangugeChanged(bool _value)
-        {
-            _settingsManager.SetLanguge(_value);
         }
     }
 }

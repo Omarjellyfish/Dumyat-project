@@ -9,26 +9,14 @@
         "name": "Animation",
         "dependencies": [
           {
-            "name": "AnimationClip",
-            "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
-            ],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
             "name": "Animator",
-            "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
-            ],
+            "scenes": [],
             "dependencyType": 0,
             "icon": null
           },
           {
             "name": "AnimatorController",
-            "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
-            ],
+            "scenes": [],
             "dependencyType": 1,
             "icon": null
           },
@@ -39,36 +27,10 @@
             "icon": null
           },
           {
-            "name": "Avatar",
-            "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
-            ],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
-            "name": "AvatarMask",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
-            "name": "Motion",
-            "scenes": [],
-            "dependencyType": 1,
-            "icon": null
-          },
-          {
             "name": "RuntimeAnimatorController",
             "scenes": [],
             "dependencyType": 1,
             "icon": null
-          },
-          {
-            "name": "Required by Director Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.director"
           }
         ]
       },
@@ -89,7 +51,7 @@
           {
             "name": "AudioBehaviour",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -97,7 +59,7 @@
           {
             "name": "AudioClip",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -105,7 +67,7 @@
           {
             "name": "AudioListener",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -119,7 +81,7 @@
           {
             "name": "AudioMixer",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -127,7 +89,7 @@
           {
             "name": "AudioMixerGroup",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -135,7 +97,7 @@
           {
             "name": "AudioMixerSnapshot",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -143,7 +105,7 @@
           {
             "name": "AudioResource",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -151,7 +113,7 @@
           {
             "name": "AudioSource",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -161,12 +123,6 @@
             "scenes": [],
             "dependencyType": 1,
             "icon": null
-          },
-          {
-            "name": "Required by Director Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.director"
           }
         ]
       },
@@ -188,7 +144,7 @@
           {
             "name": "Camera",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -208,7 +164,7 @@
           {
             "name": "Cubemap",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -228,7 +184,7 @@
           {
             "name": "EditorExtension",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 1,
             "icon": null
@@ -242,7 +198,7 @@
           {
             "name": "GameObject",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -274,7 +230,7 @@
           {
             "name": "LevelGameManager",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 1,
             "icon": null
@@ -282,7 +238,7 @@
           {
             "name": "Light",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -290,7 +246,7 @@
           {
             "name": "LightProbeGroup",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -304,7 +260,7 @@
           {
             "name": "LightProbes",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -312,7 +268,7 @@
           {
             "name": "LightingSettings",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -320,7 +276,7 @@
           {
             "name": "LightmapSettings",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -328,7 +284,7 @@
           {
             "name": "LineRenderer",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -342,7 +298,7 @@
           {
             "name": "Material",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -350,7 +306,7 @@
           {
             "name": "Mesh",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -358,7 +314,7 @@
           {
             "name": "MeshFilter",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -366,7 +322,7 @@
           {
             "name": "MeshRenderer",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -374,7 +330,7 @@
           {
             "name": "MonoBehaviour",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -388,7 +344,7 @@
           {
             "name": "MonoScript",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 1,
             "icon": null
@@ -396,7 +352,7 @@
           {
             "name": "NamedObject",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 1,
             "icon": null
@@ -434,7 +390,7 @@
           {
             "name": "RectTransform",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -448,14 +404,16 @@
           {
             "name": "RenderSettings",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
           },
           {
             "name": "RenderTexture",
-            "scenes": [],
+            "scenes": [
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
+            ],
             "dependencyType": 0,
             "icon": null
           },
@@ -480,7 +438,7 @@
           {
             "name": "Shader",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -494,7 +452,7 @@
           {
             "name": "SkinnedMeshRenderer",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -508,7 +466,7 @@
           {
             "name": "SortingGroup",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -516,7 +474,7 @@
           {
             "name": "Sprite",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -612,12 +570,6 @@
             "icon": "package/com.unity.modules.crashreporting"
           },
           {
-            "name": "Required by Director Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.director"
-          },
-          {
             "name": "Required by GraphicsStateCollectionSerializer Module",
             "scenes": [],
             "dependencyType": 2,
@@ -676,12 +628,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.jsonserialize"
-          },
-          {
-            "name": "Required by ParticleSystem Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.particlesystem"
           },
           {
             "name": "Required by Physics Module",
@@ -762,6 +708,12 @@
             "icon": "package/com.unity.modules.uielements"
           },
           {
+            "name": "Required by Umbra Module",
+            "scenes": [],
+            "dependencyType": 2,
+            "icon": "package/com.unity.modules.umbra"
+          },
+          {
             "name": "Required by UnityAnalytics Module",
             "scenes": [],
             "dependencyType": 2,
@@ -819,17 +771,6 @@
             "scenes": [],
             "dependencyType": 3,
             "icon": "class/PlayerSettings"
-          }
-        ]
-      },
-      {
-        "name": "Director",
-        "dependencies": [
-          {
-            "name": "PlayableDirector",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
           }
         ]
       },
@@ -1034,29 +975,12 @@
         ]
       },
       {
-        "name": "ParticleSystem",
-        "dependencies": [
-          {
-            "name": "ParticleSystem",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
-            "name": "ParticleSystemRenderer",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          }
-        ]
-      },
-      {
         "name": "Physics",
         "dependencies": [
           {
             "name": "BoxCollider",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1064,7 +988,7 @@
           {
             "name": "CapsuleCollider",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1072,7 +996,7 @@
           {
             "name": "CharacterController",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1086,7 +1010,7 @@
           {
             "name": "FixedJoint",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1100,7 +1024,7 @@
           {
             "name": "MeshCollider",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1114,16 +1038,14 @@
           {
             "name": "Rigidbody",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
           },
           {
             "name": "SphereCollider",
-            "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
-            ],
+            "scenes": [],
             "dependencyType": 0,
             "icon": null
           },
@@ -1237,12 +1159,6 @@
             "icon": "package/com.unity.modules.crashreporting"
           },
           {
-            "name": "Required by Director Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.director"
-          },
-          {
             "name": "Required by GraphicsStateCollectionSerializer Module",
             "scenes": [],
             "dependencyType": 2,
@@ -1301,12 +1217,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.jsonserialize"
-          },
-          {
-            "name": "Required by ParticleSystem Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.particlesystem"
           },
           {
             "name": "Required by Physics Module",
@@ -1385,6 +1295,12 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.uielements"
+          },
+          {
+            "name": "Required by Umbra Module",
+            "scenes": [],
+            "dependencyType": 2,
+            "icon": "package/com.unity.modules.umbra"
           },
           {
             "name": "Required by UnityAnalytics Module",
@@ -1533,7 +1449,7 @@
           {
             "name": "Font",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1576,7 +1492,7 @@
           {
             "name": "Canvas",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1584,7 +1500,7 @@
           {
             "name": "CanvasGroup",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1592,7 +1508,7 @@
           {
             "name": "CanvasRenderer",
             "scenes": [
-              "Assets/Scenes/DemoScenes/carpentar_room_Demo.unity"
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1612,6 +1528,27 @@
             "name": "UIRenderer",
             "scenes": [],
             "dependencyType": 0,
+            "icon": null
+          }
+        ]
+      },
+      {
+        "name": "Umbra",
+        "dependencies": [
+          {
+            "name": "OcclusionCullingData",
+            "scenes": [
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
+            ],
+            "dependencyType": 1,
+            "icon": null
+          },
+          {
+            "name": "OcclusionCullingSettings",
+            "scenes": [
+              "Assets/Runtime/Art/Scenes/carpentar_room.unity"
+            ],
+            "dependencyType": 1,
             "icon": null
           }
         ]

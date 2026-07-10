@@ -7,9 +7,6 @@ namespace DumyatRuntime
     {
         private bool _subtitlesEnabled = true;
         private int _subtitleSize = 2;
-        private bool _subtitlesLangugeArabic = true;
-        public void SetLanguge(bool _value) => _subtitlesLangugeArabic = _value;
-        public bool GetLanguage() => _subtitlesLangugeArabic;
 
         private IEventService _eventService;
 
