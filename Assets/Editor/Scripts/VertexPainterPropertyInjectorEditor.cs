@@ -13,8 +13,8 @@ namespace DumyatEditor
         private Editor _matAEditor;
         private Editor _matBEditor;
         private Editor _matCEditor;
-        private Editor _matDEditor;
-        private Editor _matEEditor;
+        // private Editor _matDEditor;
+        // private Editor _matEEditor;
 
         private void OnDisable()
         {
@@ -31,8 +31,8 @@ namespace DumyatEditor
             if (_matAEditor != null) DestroyImmediate(_matAEditor);
             if (_matBEditor != null) DestroyImmediate(_matBEditor);
             if (_matCEditor != null) DestroyImmediate(_matCEditor);
-            if (_matDEditor != null) DestroyImmediate(_matDEditor);
-            if (_matEEditor != null) DestroyImmediate(_matEEditor);
+            // if (_matDEditor != null) DestroyImmediate(_matDEditor);
+            // if (_matEEditor != null) DestroyImmediate(_matEEditor);
         }
 
         public override VisualElement CreateInspectorGUI()
@@ -49,15 +49,15 @@ namespace DumyatEditor
             PropertyField matAField = root.Q<PropertyField>("PropertyField:_materialA");
             PropertyField matBField = root.Q<PropertyField>("PropertyField:_materialB");
             PropertyField matCField = root.Q<PropertyField>("PropertyField:_materialC");
-            PropertyField matDField = root.Q<PropertyField>("PropertyField:_materialD");
-            PropertyField matEField = root.Q<PropertyField>("PropertyField:_materialE");
+            // PropertyField matDField = root.Q<PropertyField>("PropertyField:_materialD");
+            // PropertyField matEField = root.Q<PropertyField>("PropertyField:_materialE");
 
             // Get material assignments via serialized properties for the preview loop
             SerializedProperty matA = serializedObject.FindProperty("_materialA");
             SerializedProperty matB = serializedObject.FindProperty("_materialB");
             SerializedProperty matC = serializedObject.FindProperty("_materialC");
-            SerializedProperty matD = serializedObject.FindProperty("_materialD");
-            SerializedProperty matE = serializedObject.FindProperty("_materialE");
+            // SerializedProperty matD = serializedObject.FindProperty("_materialD");
+            // SerializedProperty matE = serializedObject.FindProperty("_materialE");
             SerializedProperty targetMat = serializedObject.FindProperty("_targetBlendMaterial");
 
             // 2. Source Material Previews Row Container
@@ -80,8 +80,8 @@ namespace DumyatEditor
                 if (matAField != null) matAField.style.display = DisplayStyle.Flex; // Always visible
                 if (matBField != null) matBField.style.display = DisplayStyle.Flex; // Always visible
                 if (matCField != null) matCField.style.display = (materialCountValue >= 1) ? DisplayStyle.Flex : DisplayStyle.None;
-                if (matDField != null) matDField.style.display = (materialCountValue >= 2) ? DisplayStyle.Flex : DisplayStyle.None;
-                if (matEField != null) matEField.style.display = (materialCountValue >= 3) ? DisplayStyle.Flex : DisplayStyle.None;
+                // if (matDField != null) matDField.style.display = (materialCountValue >= 2) ? DisplayStyle.Flex : DisplayStyle.None;
+                // if (matEField != null) matEField.style.display = (materialCountValue >= 3) ? DisplayStyle.Flex : DisplayStyle.None;
 
                 // Clear dynamic previews and rebuild them according to active slots
                 sourceContainer.Clear();
@@ -95,11 +95,11 @@ namespace DumyatEditor
                 if (matC.objectReferenceValue != null && materialCountValue >= 1)
                     sourceContainer.Add(CreatePreviewColumn("Mat 3", (Material)matC.objectReferenceValue, previewSize, ref _matCEditor));
                 
-                if (matD.objectReferenceValue != null && materialCountValue >= 2)
-                    sourceContainer.Add(CreatePreviewColumn("Mat 4", (Material)matD.objectReferenceValue, previewSize, ref _matDEditor));
+                // if (matD.objectReferenceValue != null && materialCountValue >= 2)
+                //     sourceContainer.Add(CreatePreviewColumn("Mat 4", (Material)matD.objectReferenceValue, previewSize, ref _matDEditor));
                 
-                if (matE.objectReferenceValue != null && materialCountValue >= 3)
-                    sourceContainer.Add(CreatePreviewColumn("Mat 5", (Material)matE.objectReferenceValue, previewSize, ref _matEEditor));
+                // if (matE.objectReferenceValue != null && materialCountValue >= 3)
+                //     sourceContainer.Add(CreatePreviewColumn("Mat 5", (Material)matE.objectReferenceValue, previewSize, ref _matEEditor));
             };
 
             // Register value change tracking to trigger UI toggle updates reactively
