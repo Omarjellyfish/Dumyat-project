@@ -11,9 +11,12 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: f8b02f3d4923e624092d22ae2a830f7d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - MAT1_USEEMISSION
+  - MAT2_USEEMISSION
+  - MAT3_USEEMISSION
   - _MATERIALCOUNT_FIVE
-  m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -33,7 +36,15 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _MasterMaterialMapsBreakdown_2aeaa0461cc24434aca175a989c3368a_EmissionMap_3167689029_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MasterMaterialMapsBreakdown_2aeaa0461cc24434aca175a989c3368a_EmissiveMap_989504086_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MasterMaterialMapsBreakdown_67f76d4dc5fb4e40b3ecf42fd6815a49_EmissionMap_3167689029_Texture2D:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -41,11 +52,23 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _MasterMaterialMapsBreakdown_a6d419dab2194d4681f17f3ba178b1fa_EmissionMap_3167689029_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MasterMaterialMapsBreakdown_a6d419dab2194d4681f17f3ba178b1fa_EmissiveMap_989504086_Texture2D:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _MasterMaterialMapsBreakdown_e0c0ae3cf46345d09691a5c8004fe105_EmissionMap_3167689029_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MasterMaterialMapsBreakdown_e0c0ae3cf46345d09691a5c8004fe105_EmissiveMap_989504086_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MasterMaterialMapsBreakdown_e26f343e75144de8b3fdf366b3354987_EmissionMap_3167689029_Texture2D:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -55,6 +78,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _Mat1_Color_Map:
         m_Texture: {fileID: 2800000, guid: 5a327724a94a9674a8a93e6b4e9a6eee, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat1_Emission_Map:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat1_Mask_Map:
@@ -69,6 +96,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 20ace0100cf8812439290b140f8284ee, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Mat2_Emission_Map:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Mat2_Mask_Map:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -78,7 +109,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat3_Color_Map:
-        m_Texture: {fileID: 2800000, guid: 25a38611a13f9f2449ae44ff2d40f367, type: 3}
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat3_Emission_Map:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat3_Mask_Map:
@@ -135,11 +170,41 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _MATERIALCOUNT: 3
+    - _MAT1_ENABLE_EMISISON: 0
+    - _MAT1_ENABLE_EMISSION: 0
+    - _MAT1_ENABLE_EMISSION_1: 0
+    - _MAT1_ENABLE_EMISSION_2: 0
+    - _MAT2_ENABLE_EMISSION: 0
+    - _MAT3_ENABLE_EMISSION: 0
+    - _MATERIALCOUNT: 1
+    - _Mat1_Normal_Strength: 1
+    - _Mat1_Normal_Strength_Final: 1
+    - _Mat1_roughness_l7d_matofrg: 0.4
+    - _Mat2_Normal_Strength: 1
+    - _Mat2_Normal_Strength_Final: 1
+    - _Mat2_roughness_l7d_matofrg: 0.4
+    - _Mat3_Normal_Strength: 1
+    - _Mat3_Normal_Strength_Final: 1
+    - _Mat3_roughness_l7d_matofrg: 0.4
     - _QueueControl: 0
     - _QueueOffset: 0
     - _XRMotionVectorsPass: 1
-    m_Colors: []
+    m_Colors:
+    - _Mat1_Color_Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat1_Emision_Color: {r: 1012.0572, g: 1012.0572, b: 1012.0572, a: 1}
+    - _Mat1_Emision_Color_True: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat1_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat1_Tilling: {r: 1, g: 1, b: 0, a: 0}
+    - _Mat2_Color_Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat2_Emision_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat2_Emision_Color_True: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat2_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat2_Tilling: {r: 1, g: 1, b: 0, a: 0}
+    - _Mat3_Color_Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat3_Emision_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat3_Emision_Color_True: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat3_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat3_Tilling: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &317531983133067913
