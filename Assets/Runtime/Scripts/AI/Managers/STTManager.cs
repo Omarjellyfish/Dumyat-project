@@ -13,7 +13,7 @@ namespace DumyatRuntime
     /// switching providers part-way through captured speech isn't meaningful. A failure is surfaced
     /// via <see cref="OnTranscriptionFailed"/>; the negotiation flow's recovery decides what next.
     /// </summary>
-    public class STTManager : AIModelManager<STTManager, ISTTModel>
+    public class STTManager : AIModelManager<STTManager, ISTTModel>, ISTTService
     {
         // LOCALE — CRITICAL (see docs/MERCHANT_CONTEXT.md): the player speaks Egyptian Arabic, not MSA.
         // Set this to the code that best recognises Egyptian dialect for your account and TEST it on

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -26,7 +27,7 @@ namespace DumyatRuntime
     /// when the negotiation ends this calls <c>merchant.EndNegotiation(phase)</c>, which the spawner
     /// listens to in order to release its one-at-a-time lock and start the cooldown.
     /// </summary>
-    public class NegotiationFlowController : MonoBehaviour, IManager
+    public class NegotiationFlowController : MonoBehaviour, INegotiationService
     {
         private const string LogPrefix = "[Negotiation]";
 
@@ -46,7 +47,21 @@ namespace DumyatRuntime
         // greeting; on later conversations a greeting is used only this fraction of the time.
         private const float GreetingChanceAfterFirst = 0.4f;
 
-        public static NegotiationFlowController Singleton { get; private set; }
+        // Injected AI / consent / stats services (replace the former manager singletons).
+        private IConsentService _consent;
+        private IMerchantNegotiationService _negotiation;
+        private ITTSService _tts;
+        private IPlayerStatsService _playerStats;
+
+        [Inject]
+        private void Inject(IConsentService consent, IMerchantNegotiationService negotiation,
+            ITTSService tts, IPlayerStatsService playerStats)
+        {
+            _consent = consent;
+            _negotiation = negotiation;
+            _tts = tts;
+            _playerStats = playerStats;
+        }
 
         [Header("Config")]
         [Tooltip("Global merchant system config (guard-rails, cooldown). Feeds the price calculator.")]
@@ -121,14 +136,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
             _calculator = new PriceNegotiationCalculator(_systemConfig);
         }
 
@@ -194,14 +201,14 @@ namespace DumyatRuntime
             }
 
             // POINT 1: consent + connectivity gate for the whole AI path.
-            if (ConsentManager.Singleton == null)
+            if (_consent == null)
             {
                 Debug.Log($"{LogPrefix} No ConsentManager — scripted fallback for '{NameOf(merchant)}'.");
                 TriggerScriptedFallback(merchant, fish);
                 return;
             }
 
-            if (ConsentManager.Singleton.IsVoiceModeAvailable())
+            if (_consent.IsVoiceModeAvailable())
             {
                 StartAiNegotiation(merchant, fish);
                 return;
@@ -211,17 +218,17 @@ namespace DumyatRuntime
             // the natural moment to ask: show the consent prompt (ConsentPromptUI) and continue on
             // whichever path their answer allows. Only a real decline / missing connectivity falls
             // back to scripted dialogue.
-            ConsentState consent = ConsentManager.Singleton.GetConsentStatus();
+            ConsentState consent = _consent.GetConsentStatus();
             bool neverAsked = consent.MicConsent == ConsentStatus.NotAsked
                               || consent.InternetConsent == ConsentStatus.NotAsked;
             if (neverAsked)
             {
                 Debug.Log($"{LogPrefix} Consent not asked yet — prompting before negotiating with '{NameOf(merchant)}'.");
-                ConsentManager.Singleton.RequestConsent((mic, internet) =>
+                _consent.RequestConsent((mic, internet) =>
                 {
                     if (_activeMerchant != merchant) return; // torn down while the prompt was up
 
-                    if (ConsentManager.Singleton != null && ConsentManager.Singleton.IsVoiceModeAvailable())
+                    if (_consent != null && _consent.IsVoiceModeAvailable())
                     {
                         StartAiNegotiation(merchant, fish);
                     }
@@ -276,7 +283,7 @@ namespace DumyatRuntime
                 Debug.Log($"{LogPrefix} Opening offer {opening:0} EGP (ceiling {_state.maxOffer:0}, " +
                           $"raise step ≤{_state.maxRaisePerTurn:0}) for {fish.fishType} (deceptive={isDeceptive}).");
 
-                if (MerchantNegotiationLLM.Singleton == null)
+                if (_negotiation == null)
                 {
                     Debug.LogWarning($"{LogPrefix} LLM unavailable; cannot phrase opening — scripted fallback.");
                     TriggerScriptedFallback(merchant, fish);
@@ -284,7 +291,7 @@ namespace DumyatRuntime
                 }
 
                 MerchantTurnResult opener =
-                    await MerchantNegotiationLLM.Singleton.GenerateOpeningLine(_state, isDeceptive, DecideOpeningGreeting(merchant));
+                    await _negotiation.GenerateOpeningLine(_state, isDeceptive, DecideOpeningGreeting(merchant));
 
                 if (!_busy) return; // negotiation ended while awaiting
 
@@ -358,7 +365,7 @@ namespace DumyatRuntime
                 Debug.Log($"{LogPrefix} Player said: \"{text}\"");
                 ShowThinkingCue();
 
-                if (MerchantNegotiationLLM.Singleton == null)
+                if (_negotiation == null)
                 {
                     Debug.LogWarning($"{LogPrefix} LLM client missing during turn — scripted fallback.");
                     HideThinkingCue();
@@ -369,7 +376,7 @@ namespace DumyatRuntime
                 // Tone follows the OPENING roll for the whole negotiation, matching the fixed
                 // offer envelope — not re-rolled per turn.
                 MerchantTurnResult result =
-                    await MerchantNegotiationLLM.Singleton.ProcessPlayerTurn(_state, text, _state.isDeceptive);
+                    await _negotiation.ProcessPlayerTurn(_state, text, _state.isDeceptive);
 
                 HideThinkingCue();
 
@@ -608,8 +615,8 @@ namespace DumyatRuntime
                     successRate = _calculator.CalculateSuccessRate(finalPrice, fair)
                 };
 
-                if (PlayerStats.Singleton != null)
-                    PlayerStats.Singleton.RecordSale(record);
+                if (_playerStats != null)
+                    _playerStats.RecordSale(record);
                 else
                     Debug.LogWarning($"{LogPrefix} PlayerStats missing; sale of {record.fishType} not recorded.");
 
@@ -652,7 +659,7 @@ namespace DumyatRuntime
         // never stalls on audio — the subtitle is already on screen (point 6).
         private void PlayMerchantLine(string arabicText, Action onDone)
         {
-            if (TTSManager.Singleton == null)
+            if (_tts == null)
             {
                 Debug.LogWarning($"{LogPrefix} TTS manager unavailable; continuing on subtitle only.");
                 onDone?.Invoke();
@@ -662,7 +669,7 @@ namespace DumyatRuntime
             // Voice is the one assigned to THIS NPC at spawn (stable across the whole negotiation),
             // not a per-archetype/per-call value.
             string voiceId = _activeMerchant != null ? _activeMerchant.AssignedVoiceId : null;
-            TTSManager.Singleton.PlaySpeech(
+            _tts.PlaySpeech(
                 voiceId, arabicText, _activeAudioSource,
                 onComplete: onDone,
                 onError: () =>
@@ -701,7 +708,7 @@ namespace DumyatRuntime
 
         /// <summary>Condition: is voice mode (mic + internet consent + connectivity) available?</summary>
         public bool Bt_ConsentAvailable() =>
-            ConsentManager.Singleton != null && ConsentManager.Singleton.IsVoiceModeAvailable();
+            _consent != null && _consent.IsVoiceModeAvailable();
 
         /// <summary>Setup step: resolve the fish, build the negotiation state, warm the STT session.</summary>
         public bool Bt_Setup()
@@ -733,7 +740,7 @@ namespace DumyatRuntime
         {
             try
             {
-                if (_state == null || MerchantNegotiationLLM.Singleton == null) return false;
+                if (_state == null || _negotiation == null) return false;
 
                 bool isDeceptive = _calculator.RollDeception(_activeMerchant.Config);
                 float opening = Mathf.Round(_calculator.GenerateOpeningOffer(_activeMerchant.Config, _state.fishBeingSold, isDeceptive));
@@ -745,7 +752,7 @@ namespace DumyatRuntime
                 Debug.Log($"{LogPrefix} Opening offer {opening:0} EGP (ceiling {_state.maxOffer:0}, " +
                           $"raise step ≤{_state.maxRaisePerTurn:0}) for {_state.fishBeingSold.fishType} (deceptive={isDeceptive}).");
 
-                MerchantTurnResult opener = await MerchantNegotiationLLM.Singleton.GenerateOpeningLine(
+                MerchantTurnResult opener = await _negotiation.GenerateOpeningLine(
                     _state, isDeceptive, DecideOpeningGreeting(_activeMerchant));
                 if (!_busy || opener == null) return false;
 
@@ -790,12 +797,12 @@ namespace DumyatRuntime
             try
             {
                 _lastResult = null;
-                if (_state == null || MerchantNegotiationLLM.Singleton == null) return false;
+                if (_state == null || _negotiation == null) return false;
 
                 ShowThinkingCue();
                 // Tone follows the OPENING roll (fixed offer envelope), not a per-turn re-roll.
                 MerchantTurnResult result =
-                    await MerchantNegotiationLLM.Singleton.ProcessPlayerTurn(_state, _lastTranscript, _state.isDeceptive);
+                    await _negotiation.ProcessPlayerTurn(_state, _lastTranscript, _state.isDeceptive);
                 HideThinkingCue();
 
                 if (!_busy || result == null) return false;
@@ -981,7 +988,7 @@ namespace DumyatRuntime
         private bool IsConnectivityLost()
         {
             if (Application.internetReachability == NetworkReachability.NotReachable) return true;
-            if (ConsentManager.Singleton == null || !ConsentManager.Singleton.IsVoiceModeAvailable()) return true;
+            if (_consent == null || !_consent.IsVoiceModeAvailable()) return true;
             return false;
         }
 

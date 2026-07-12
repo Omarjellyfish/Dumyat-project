@@ -9,7 +9,7 @@ namespace DumyatRuntime
     /// returns the first non-empty result, so a misconfigured or failing provider transparently
     /// falls through to the next.
     /// </summary>
-    public class LLMManager : AIModelManager<LLMManager, ILLMModel>
+    public class LLMManager : AIModelManager<LLMManager, ILLMModel>, ILLMService
     {
         /// <summary>
         /// Generates text for <paramref name="prompt"/>, trying each available model in priority

@@ -1,3 +1,4 @@
+using Reflex.Attributes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,6 +42,17 @@ namespace DumyatRuntime
         private string _lastGeminiResponse;
         private System.DateTime _promptStartTime;
 
+        // Injected pooled AI services (replace the former GeminiClient/ElevenLabsClient singletons).
+        private ILLMService _llm;
+        private ITTSService _tts;
+
+        [Inject]
+        private void Inject(ILLMService llm, ITTSService tts)
+        {
+            _llm = llm;
+            _tts = tts;
+        }
+
         private void Start()
         {
             if (_askGeminiButton == null || _responseLabel == null || _speakCustomButton == null || _askAndSpeakButton == null)
@@ -71,29 +83,29 @@ namespace DumyatRuntime
 
         // ── Option 1: Speak custom text ─────────────────────────────────────────────────────────
 
-        /// <summary>Sends <see cref="_customTtsText"/> directly to ElevenLabs TTS.</summary>
+        /// <summary>Sends <see cref="_customTtsText"/> to the pooled TTS service (e.g. ElevenLabs).</summary>
         public void SpeakCustomText()
         {
-            if (ElevenLabsClient.Singleton == null)
+            if (_tts == null)
             {
-                WarnAndDisplay("GeminiTestSample: No ElevenLabsClient in the scene.");
+                WarnAndDisplay("GeminiTestSample: No ITTSService available (missing DI scope?).");
                 return;
             }
 
             Debug.Log($"GeminiTestSample: Speaking custom text → \"{_customTtsText}\"");
             SetAllInteractable(false);
             SetLabel(WaitingTtsText);
-            ElevenLabsClient.Singleton.Speak(_customTtsText, OnAudioReady, OnTtsFailure);
+            _tts.PlaySpeech(null, _customTtsText, _audioSource, OnSpeakComplete, OnTtsFailure);
         }
 
-        // ── Option 2: Ask Gemini, then speak the reply ──────────────────────────────────────────
+        // ── Option 2: Ask the LLM, then speak the reply ─────────────────────────────────────────
 
-        /// <summary>Sends the LLM prompt and, on success, passes the reply to ElevenLabs.</summary>
-        public void AskAndSpeak()
+        /// <summary>Sends the LLM prompt and, on success, passes the reply to the TTS service.</summary>
+        public async void AskAndSpeak()
         {
-            if (GeminiClient.Singleton == null)
+            if (_llm == null)
             {
-                WarnAndDisplay("GeminiTestSample: No GeminiClient in the scene.");
+                WarnAndDisplay("GeminiTestSample: No ILLMService available (missing DI scope?).");
                 return;
             }
 
@@ -101,35 +113,38 @@ namespace DumyatRuntime
             SetAllInteractable(false);
             SetLabel(WaitingGeminiText);
             _promptStartTime = System.DateTime.Now;
-            GeminiClient.Singleton.SendPrompt(_prompt, OnResponseThenSpeak, OnGeminiFailure);
-        }
 
-        private void OnResponseThenSpeak(string reply)
-        {
+            string reply = await _llm.GenerateTextAsync(_prompt);
+            if (string.IsNullOrEmpty(reply))
+            {
+                OnGeminiFailure("The language model returned no response.");
+                return;
+            }
+
             _lastGeminiResponse = reply;
             double elapsed = System.DateTime.Now.Subtract(_promptStartTime).TotalMilliseconds;
-            Debug.Log($"GeminiTestSample: Gemini replied in {elapsed:F0} ms → {reply}");
+            Debug.Log($"GeminiTestSample: LLM replied in {elapsed:F0} ms → {reply}");
             SetLabel(reply);
 
-            if (ElevenLabsClient.Singleton == null)
+            if (_tts == null)
             {
-                Debug.LogWarning("GeminiTestSample: No ElevenLabsClient — skipping TTS.");
+                Debug.LogWarning("GeminiTestSample: No ITTSService — skipping TTS.");
                 SetAllInteractable(true);
                 return;
             }
 
             SetLabel($"{reply}\n\n[Synthesising speech…]");
-            ElevenLabsClient.Singleton.Speak(reply, OnAudioReady, OnTtsFailure);
+            _tts.PlaySpeech(null, reply, _audioSource, OnSpeakComplete, OnTtsFailure);
         }
 
-        // ── Gemini-only (no TTS) ─────────────────────────────────────────────────────────────────
+        // ── LLM-only (no TTS) ────────────────────────────────────────────────────────────────────
 
         /// <summary>Sends the configured prompt without TTS. Public so it can be wired to other UI events.</summary>
-        public void SendPrompt()
+        public async void SendPrompt()
         {
-            if (GeminiClient.Singleton == null)
+            if (_llm == null)
             {
-                WarnAndDisplay("GeminiTestSample: No GeminiClient in the scene.");
+                WarnAndDisplay("GeminiTestSample: No ILLMService available (missing DI scope?).");
                 return;
             }
 
@@ -137,51 +152,49 @@ namespace DumyatRuntime
             SetAllInteractable(false);
             SetLabel(WaitingGeminiText);
             _promptStartTime = System.DateTime.Now;
-            GeminiClient.Singleton.SendPrompt(_prompt, OnGeminiResponse, OnGeminiFailure);
+
+            string reply = await _llm.GenerateTextAsync(_prompt);
+            if (string.IsNullOrEmpty(reply))
+            {
+                OnGeminiFailure("The language model returned no response.");
+                return;
+            }
+            OnGeminiResponse(reply);
         }
 
         private void OnGeminiResponse(string reply)
         {
             _lastGeminiResponse = reply;
             double elapsed = System.DateTime.Now.Subtract(_promptStartTime).TotalMilliseconds;
-            Debug.Log($"GeminiTestSample: Gemini replied in {elapsed:F0} ms → {reply}");
+            Debug.Log($"GeminiTestSample: LLM replied in {elapsed:F0} ms → {reply}");
             SetLabel(reply);
             SetAllInteractable(true);
         }
 
         private void OnGeminiFailure(string fallback)
         {
-            Debug.LogWarning($"GeminiTestSample: Gemini request failed; fallback → {fallback}");
+            Debug.LogWarning($"GeminiTestSample: LLM request failed; fallback → {fallback}");
             SetLabel(fallback);
             SetAllInteractable(true);
         }
 
         // ── Shared TTS callbacks ─────────────────────────────────────────────────────────────────
 
-        private void OnAudioReady(AudioClip clip)
+        // The TTS service plays the clip on our AudioSource itself; this just restores UI once done.
+        private void OnSpeakComplete()
         {
-            Debug.Log($"GeminiTestSample: Audio ready — {clip.length:F2}s, {clip.frequency} Hz.");
-            if (_audioSource != null)
-            {
-                _audioSource.clip = clip;
-                _audioSource.Play();
-            }
-            else
-            {
-                Debug.LogWarning("GeminiTestSample: No AudioSource assigned — audio won't play.");
-            }
-
-            // Restore labels after "Synthesising" suffix (re-show the full response text).
             if (!string.IsNullOrEmpty(_lastGeminiResponse))
                 SetLabel(_lastGeminiResponse);
 
             SetAllInteractable(true);
         }
 
-        private void OnTtsFailure(string message)
+        // Matches ITTSService.PlaySpeech's parameterless onError (the pooled service handles the
+        // per-model failure detail internally and only signals "the whole pool failed" here).
+        private void OnTtsFailure()
         {
-            Debug.LogWarning($"GeminiTestSample: TTS failed — {message}");
-            SetLabel($"TTS failed: {message}");
+            Debug.LogWarning("GeminiTestSample: TTS failed (no model could synthesise the text).");
+            SetLabel("TTS failed.");
             SetAllInteractable(true);
         }
 

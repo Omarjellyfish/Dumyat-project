@@ -1,4 +1,5 @@
 using System;
+using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -49,20 +50,18 @@ namespace DumyatRuntime
     /// <see cref="OnConsentChanged"/> so they can fall back to scripted dialogue the
     /// instant consent is revoked mid-game (e.g. from a settings menu).
     /// </summary>
-    public class ConsentManager : MonoBehaviour, IManager
+    public class ConsentManager : MonoBehaviour, IConsentService
     {
         private const string MIC_CONSENT_KEY = "Dumyat.Consent.Mic";
         private const string INTERNET_CONSENT_KEY = "Dumyat.Consent.Internet";
 
-        public static ConsentManager Singleton { get; private set; }
+        // Injected event bus. Consent changes are broadcast as ConsentChangedEvent (replaces the
+        // former OnConsentChanged C# event); listeners re-evaluate IsVoiceModeAvailable and switch
+        // to fallback mode immediately if voice is no longer available.
+        private IEventService _events;
 
-        /// <summary>
-        /// Raised whenever either consent flag changes (granted, declined, or revoked).
-        /// Carries the new <see cref="ConsentState"/>. Listeners (e.g. the merchant
-        /// system) should re-evaluate <see cref="IsVoiceModeAvailable"/> and switch to
-        /// fallback mode immediately if voice is no longer available.
-        /// </summary>
-        public event Action<ConsentState> OnConsentChanged;
+        [Inject]
+        private void Inject(IEventService events) => _events = events;
 
         private ConsentStatus micConsentGranted = ConsentStatus.NotAsked;
         private ConsentStatus internetConsentGranted = ConsentStatus.NotAsked;
@@ -73,14 +72,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
             LoadConsent();
         }
 
@@ -152,17 +143,14 @@ namespace DumyatRuntime
         /// <summary>
         /// Wipes the persisted consent so the player counts as never asked — the prompt will
         /// show again on the next session start. Static so editor tooling can call it without
-        /// a scene instance; if a live instance exists its in-memory state is reset too (and
-        /// <see cref="OnConsentChanged"/> fires), so the change applies immediately in Play mode.
+        /// a scene instance. A live instance in Play mode should call
+        /// <see cref="SetConsent"/>(<see cref="ConsentStatus.NotAsked"/>, …) to also reset in-memory.
         /// </summary>
         public static void ClearPersistedConsent()
         {
             PlayerPrefs.DeleteKey(MIC_CONSENT_KEY);
             PlayerPrefs.DeleteKey(INTERNET_CONSENT_KEY);
             PlayerPrefs.Save();
-
-            if (Singleton != null)
-                Singleton.ApplyConsent(ConsentStatus.NotAsked, ConsentStatus.NotAsked);
         }
 
         /// <summary>
@@ -194,7 +182,7 @@ namespace DumyatRuntime
 
             if (changed)
             {
-                OnConsentChanged?.Invoke(new ConsentState(micConsentGranted, internetConsentGranted));
+                _events?.Publish(new ConsentChangedEvent(new ConsentState(micConsentGranted, internetConsentGranted)));
             }
         }
 

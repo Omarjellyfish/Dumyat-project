@@ -1,4 +1,5 @@
 using System.Collections;
+using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -13,6 +14,17 @@ namespace DumyatRuntime
     /// </summary>
     public class MerchantSystemTestDriver : MonoBehaviour
     {
+        // Injected consent + negotiation services (replace the former manager singletons).
+        private IConsentService _consent;
+        private INegotiationService _negotiation;
+
+        [Inject]
+        private void Inject(IConsentService consent, INegotiationService negotiation)
+        {
+            _consent = consent;
+            _negotiation = negotiation;
+        }
+
         [Header("Wiring")]
         [Tooltip("Spawner that owns the one-at-a-time lock; the negotiation is routed through it.")]
         [SerializeField] private MerchantSpawner _spawner;
@@ -72,20 +84,20 @@ namespace DumyatRuntime
         [ContextMenu("Grant Consent")]
         public void GrantConsent()
         {
-            if (ConsentManager.Singleton == null)
+            if (_consent == null)
             {
                 Debug.LogWarning("[TestDriver] No ConsentManager in scene.");
                 return;
             }
-            ConsentManager.Singleton.SubmitConsentResult(ConsentStatus.Granted, ConsentStatus.Granted);
+            _consent.SubmitConsentResult(ConsentStatus.Granted, ConsentStatus.Granted);
             Debug.Log("[TestDriver] Consent granted (mic + internet).");
         }
 
         [ContextMenu("Revoke Consent")]
         public void RevokeConsent()
         {
-            if (ConsentManager.Singleton == null) return;
-            ConsentManager.Singleton.SetConsent(ConsentStatus.Declined, ConsentStatus.Declined);
+            if (_consent == null) return;
+            _consent.SetConsent(ConsentStatus.Declined, ConsentStatus.Declined);
             Debug.Log("[TestDriver] Consent revoked — negotiations will use the scripted fallback.");
         }
 
@@ -103,10 +115,10 @@ namespace DumyatRuntime
                 Debug.Log($"[TestDriver] Starting negotiation with '{_merchant.name}' via MerchantSpawner.");
                 _spawner.PlayerInitiatesWithMerchant(_merchant);
             }
-            else if (NegotiationFlowController.Singleton != null)
+            else if (_negotiation != null)
             {
                 Debug.Log($"[TestDriver] No spawner set; starting directly with '{_merchant.name}'.");
-                NegotiationFlowController.Singleton.BeginNegotiation(_merchant);
+                _negotiation.BeginNegotiation(_merchant);
             }
             else
             {

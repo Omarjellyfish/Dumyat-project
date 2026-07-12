@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -7,30 +7,47 @@ namespace DumyatRuntime
     /// <summary>
     /// Records completed fish sales for progression, UI and the fish-sell process. Each accepted deal
     /// is stored as a <see cref="FishSaleRecord"/> (which fish, its weight, the agreed price and the
-    /// success score) and PERSISTED through the centralized save system: in <see cref="Awake"/> this
-    /// points its list at <c>SaveManager.CurrentSaveData.salesData.sales</c> (per the project's save
-    /// pattern), and every recorded sale triggers an async master-save.
+    /// success score) and PERSISTED through the centralized save system: it points its list at
+    /// <c>ISaveService.CurrentSaveData.salesData.sales</c> (per the project's save pattern), and every
+    /// recorded sale triggers an async master-save.
     ///
     /// Downstream systems (inventory deduction, wallet/credit, UI) should subscribe to
-    /// <see cref="OnSaleRecorded"/> rather than poll — keeping the sell process decoupled from the
-    /// negotiation flow.
+    /// <see cref="FishSaleRecordedEvent"/> on the event bus rather than poll — keeping the sell
+    /// process decoupled from the negotiation flow.
     /// </summary>
-    public class PlayerStats : MonoBehaviour, IManager
+    public class PlayerStats : MonoBehaviour, IPlayerStatsService
     {
-        public static PlayerStats Singleton { get; private set; }
+        // Injected save store + event bus. A recorded sale is broadcast as FishSaleRecordedEvent
+        // (replaces the former static OnSaleRecorded C# event); persistence goes through ISaveService
+        // (replaces the former static SaveManager).
+        private ISaveService _saveService;
+        private IEventService _events;
 
-        /// <summary>
-        /// Fired when a fish sale is recorded (an accepted deal). Carries the authoritative sale record
-        /// so the sell process / inventory / UI can react (credit money, remove the fish, refresh HUD).
-        /// </summary>
-        public static event Action<FishSaleRecord> OnSaleRecorded;
+        [Inject]
+        private void Inject(ISaveService saveService, IEventService events)
+        {
+            _saveService = saveService;
+            _events = events;
+        }
 
-        // Points at the persisted list inside the master save (set in Awake); never held as a separate
-        // copy, so mutating it mutates the save (project save convention).
+        // Points at the persisted list inside the master save; never held as a separate copy, so
+        // mutating it mutates the save (project save convention). Bound lazily because method
+        // injection can land after Awake.
         private List<FishSaleRecord> _sales;
 
+        // The persisted sales list, bound on first access from the injected save store.
+        private List<FishSaleRecord> SalesList
+        {
+            get
+            {
+                if (_sales == null && _saveService != null)
+                    _sales = _saveService.CurrentSaveData.salesData.sales;
+                return _sales;
+            }
+        }
+
         /// <summary>Every completed sale this save, oldest first.</summary>
-        public IReadOnlyList<FishSaleRecord> Sales => _sales;
+        public IReadOnlyList<FishSaleRecord> Sales => SalesList;
 
         /// <summary>Total money earned across all recorded sales.</summary>
         public float TotalEarnings
@@ -38,8 +55,9 @@ namespace DumyatRuntime
             get
             {
                 float sum = 0f;
-                if (_sales != null)
-                    foreach (FishSaleRecord s in _sales) sum += s.agreedPrice;
+                List<FishSaleRecord> sales = SalesList;
+                if (sales != null)
+                    foreach (FishSaleRecord s in sales) sum += s.agreedPrice;
                 return sum;
             }
         }
@@ -49,32 +67,17 @@ namespace DumyatRuntime
         {
             get
             {
-                if (_sales == null || _sales.Count == 0) return 0f;
+                List<FishSaleRecord> sales = SalesList;
+                if (sales == null || sales.Count == 0) return 0f;
                 float sum = 0f;
-                foreach (FishSaleRecord s in _sales) sum += s.successRate;
-                return sum / _sales.Count;
+                foreach (FishSaleRecord s in sales) sum += s.successRate;
+                return sum / sales.Count;
             }
-        }
-
-        private void Awake()
-        {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
-            // Ensure the master save is loaded, then point our list at the persisted sales sub-object
-            // (mutating it mutates the save; SaveGameAsync persists it).
-            if (SaveManager.CurrentSaveData == null) SaveManager.LoadGame();
-            _sales = SaveManager.CurrentSaveData.salesData.sales;
         }
 
         /// <summary>
         /// Records one completed fish sale (call only on an ACCEPTED deal), persists it, and notifies
-        /// listeners via <see cref="OnSaleRecorded"/>. Ignores a null record.
+        /// listeners via <see cref="FishSaleRecordedEvent"/>. Ignores a null record.
         /// </summary>
         public void RecordSale(FishSaleRecord record)
         {
@@ -84,15 +87,21 @@ namespace DumyatRuntime
                 return;
             }
 
-            if (_sales == null) _sales = SaveManager.CurrentSaveData.salesData.sales;
-            _sales.Add(record);
-            SaveManager.SaveGameAsync();
+            List<FishSaleRecord> sales = SalesList;
+            if (sales == null)
+            {
+                Debug.LogWarning("PlayerStats: no ISaveService injected; cannot record the sale.");
+                return;
+            }
+
+            sales.Add(record);
+            _saveService.SaveAsync();
 
             Debug.Log($"PlayerStats: recorded sale of {record.fishType} {record.weight:0.##}kg for " +
                       $"{record.agreedPrice:0} EGP (success {record.successRate:0.#}; " +
-                      $"{_sales.Count} sale(s), {TotalEarnings:0} EGP total).");
+                      $"{sales.Count} sale(s), {TotalEarnings:0} EGP total).");
 
-            OnSaleRecorded?.Invoke(record);
+            _events?.Publish(new FishSaleRecordedEvent(record));
         }
     }
 }

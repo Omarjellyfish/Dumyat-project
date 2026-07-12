@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -139,9 +140,20 @@ namespace DumyatRuntime
     /// construction, the JSON contract, validation, and a SECOND retry layer specific to
     /// malformed/off-rails structured output.
     /// </summary>
-    public class MerchantNegotiationLLM : MonoBehaviour, IManager
+    public class MerchantNegotiationLLM : MonoBehaviour, IMerchantNegotiationService
     {
-        public static MerchantNegotiationLLM Singleton { get; private set; }
+        // Injected pooled AI services + event bus (replace the former LLMManager/TTSManager singletons).
+        private ILLMService _llm;
+        private ITTSService _tts;
+        private IEventService _events;
+
+        [Inject]
+        private void Inject(ILLMService llm, ITTSService tts, IEventService events)
+        {
+            _llm = llm;
+            _tts = tts;
+            _events = events;
+        }
 
         // An offer this far above fair value is treated as the model hallucinating, not haggling.
         private const float HardOfferCapMultiplier = 2f;
@@ -256,10 +268,10 @@ namespace DumyatRuntime
         // The Egyptian-Arabic constraint from docs/MERCHANT_CONTEXT.md. It MUST appear in EVERY
         // prompt (LLMs drift toward MSA by default), so it lives here and is injected each turn.
         // Built per call (not a const) so the prompt names the EXACT TTS engine that will speak
-        // the reply — resolved live from TTSManager (e.g. "ElevenLabs TTS (eleven_multilingual_v2)").
-        private static string BuildDialectInstruction()
+        // the reply — resolved live from the injected TTS service (e.g. "ElevenLabs TTS (eleven_multilingual_v2)").
+        private string BuildDialectInstruction()
         {
-            string ttsName = TTSManager.Singleton != null ? TTSManager.Singleton.ActiveModelName : null;
+            string ttsName = _tts != null ? _tts.ActiveModelName : null;
             string ttsDescription = string.IsNullOrEmpty(ttsName)
                 ? FallbackTtsDescription
                 : $"a NATIVE Egyptian-Arabic text-to-speech engine, specifically \"{ttsName}\"";
@@ -293,28 +305,10 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Fired when a turn cannot produce a valid result after the retry. The argument is a
-        /// human-readable reason. The negotiation system should respond with a generic scripted
-        /// line (e.g. "I didn't quite catch that, can you repeat?").
-        /// </summary>
-        public event Action<string> OnLLMResponseFailed;
-
-        private void Awake()
-        {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-        }
-
-        /// <summary>
         /// Runs one negotiation turn through the LLM and returns a validated
-        /// <see cref="MerchantTurnResult"/>, or null if it could not be produced (in which case
-        /// <see cref="OnLLMResponseFailed"/> has already fired). Tries a full prompt first, then a
-        /// simplified prompt once, before giving up.
+        /// <see cref="MerchantTurnResult"/>, or null if it could not be produced (in which case a
+        /// <see cref="LLMResponseFailedEvent"/> has already been published). Tries a full prompt
+        /// first, then a simplified prompt once, before giving up.
         /// </summary>
         /// <param name="isDeceptive">
         /// Whether THIS merchant is being deceptive this turn, as decided by
@@ -329,7 +323,7 @@ namespace DumyatRuntime
                 return null;
             }
 
-            if (LLMManager.Singleton == null || !LLMManager.Singleton.HasAvailableModel)
+            if (_llm == null || !_llm.HasAvailableModel)
             {
                 FailTurn("No LLM model available.");
                 return null;
@@ -435,7 +429,7 @@ namespace DumyatRuntime
                 return null;
             }
 
-            if (LLMManager.Singleton == null || !LLMManager.Singleton.HasAvailableModel)
+            if (_llm == null || !_llm.HasAvailableModel)
             {
                 FailTurn("No LLM model available (opening line).");
                 return null;
@@ -467,11 +461,11 @@ namespace DumyatRuntime
         // (e.g. GeminiClient.GenerateTextAsync). Resolves on the main thread, so the await does too.
         private Task<string> SendPromptAsync(string prompt)
         {
-            if (LLMManager.Singleton == null) return Task.FromResult<string>(null);
+            if (_llm == null) return Task.FromResult<string>(null);
             // jsonObject: force the provider into structured-output mode (Groq json_object / Gemini
             // application/json) so the reply is a single valid JSON object, not prose we then fail to
             // parse and recover from.
-            return LLMManager.Singleton.GenerateTextAsync(prompt, jsonObject: true);
+            return _llm.GenerateTextAsync(prompt, jsonObject: true);
         }
 
         // --- Prompt construction ---------------------------------------------------
@@ -1369,7 +1363,7 @@ namespace DumyatRuntime
         private void FailTurn(string reason)
         {
             Debug.LogWarning($"MerchantNegotiationLLM: turn failed — {reason}");
-            OnLLMResponseFailed?.Invoke(reason);
+            _events?.Publish(new LLMResponseFailedEvent(reason));
         }
 
         // --- Conversation memory ---------------------------------------------------

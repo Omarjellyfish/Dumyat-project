@@ -22,6 +22,18 @@ namespace DumyatRuntime
         [Tooltip("Selection priority within TTSManager; higher = preferred.")]
         [SerializeField] private int _priority = 0;
 
+        [Tooltip("The REST client this model delegates synthesis to. Auto-resolved from this " +
+                 "GameObject if left empty (the two components co-locate).")]
+        [SerializeField] private ElevenLabsClient _client;
+
+        private void Awake()
+        {
+            if (_client == null) _client = GetComponent<ElevenLabsClient>();
+            if (_client == null)
+                Debug.LogWarning("ElevenLabsTTSModel: no ElevenLabsClient assigned or found on this " +
+                                 "GameObject; synthesis will fail until one is provided.");
+        }
+
         public string ModelName => $"ElevenLabs TTS ({EffectiveModelId})";
 
         // The model actually used at synthesis time: the override when set, otherwise the shared
@@ -32,27 +44,27 @@ namespace DumyatRuntime
             get
             {
                 if (!string.IsNullOrWhiteSpace(_modelId)) return _modelId;
-                return ElevenLabsClient.Singleton != null
-                    ? ElevenLabsClient.Singleton.EffectiveTtsModelId
+                return _client != null
+                    ? _client.EffectiveTtsModelId
                     : ElevenLabsConfig.DefaultTtsModelId;
             }
         }
 
         // The REST client validates the API key per request and routes failures to onError, so
         // "available" just means the client exists and has a key configured.
-        public bool IsAvailable => ElevenLabsClient.Singleton != null && ElevenLabsClient.Singleton.HasApiKey;
+        public bool IsAvailable => _client != null && _client.HasApiKey;
 
         public int Priority => _priority;
 
         public void Synthesize(string text, string voiceId, Action<AudioClip> onSuccess, Action<string> onError)
         {
-            if (ElevenLabsClient.Singleton == null)
+            if (_client == null)
             {
-                onError?.Invoke("ElevenLabsClient singleton is missing.");
+                onError?.Invoke("ElevenLabsClient reference is missing.");
                 return;
             }
 
-            ElevenLabsClient.Singleton.Speak(text, voiceId, _modelId,
+            _client.Speak(text, voiceId, _modelId,
                 onSuccess: clip => onSuccess?.Invoke(clip),
                 onFailure: msg => onError?.Invoke(msg));
         }

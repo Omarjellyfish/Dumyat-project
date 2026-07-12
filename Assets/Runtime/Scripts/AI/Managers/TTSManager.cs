@@ -14,7 +14,7 @@ namespace DumyatRuntime
     /// Playback is non-blocking: <see cref="PlaySpeech"/> returns immediately; the subtitle/state
     /// update is the caller's responsibility and must NOT wait on <c>onComplete</c>.
     /// </summary>
-    public class TTSManager : AIModelManager<TTSManager, ITTSModel>
+    public class TTSManager : AIModelManager<TTSManager, ITTSModel>, ITTSService
     {
         [Tooltip("AudioSource used when a caller passes none (optional).")]
         [SerializeField] private AudioSource _fallbackAudioSource;

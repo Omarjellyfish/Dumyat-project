@@ -6,6 +6,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -32,9 +33,21 @@ namespace DumyatRuntime
     /// TRANSPORT: System.Net.WebSockets.ClientWebSocket (built into .NET — no extra package).
     /// Works in the Editor, on Mono/IL2CPP Standalone and Android. It does NOT work on WebGL.
     /// </summary>
-    public class ElevenLabsScribeClient : MonoBehaviour, IManager, ISTTModel, IVoiceCaptureSource
+    public class ElevenLabsScribeClient : MonoBehaviour, ISTTModel, IVoiceCaptureSource
     {
-        public static ElevenLabsScribeClient Singleton { get; private set; }
+        // Injected consent + STT services and event bus (replace the former manager singletons). The
+        // STT service supplies the provider-agnostic language code when opening a session.
+        private IConsentService _consent;
+        private ISTTService _stt;
+        private IEventService _events;
+
+        [Inject]
+        private void Inject(IConsentService consent, ISTTService stt, IEventService events)
+        {
+            _consent = consent;
+            _stt = stt;
+            _events = events;
+        }
 
         // --- ElevenLabs Scribe v2 Realtime protocol constants ----------------------
         private const string Endpoint = "wss://api.elevenlabs.io/v1/speech-to-text/realtime";
@@ -229,14 +242,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
             if (_config == null)
                 _config = Resources.Load<ElevenLabsConfig>(DefaultConfigResourcePath);
 
@@ -246,8 +251,7 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            if (ConsentManager.Singleton != null)
-                ConsentManager.Singleton.OnConsentChanged += HandleConsentChanged;
+            _events?.Subscribe<ConsentChangedEvent>(HandleConsentChanged);
         }
 
         private void Start()
@@ -257,8 +261,7 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
-            if (ConsentManager.Singleton != null)
-                ConsentManager.Singleton.OnConsentChanged -= HandleConsentChanged;
+            _events?.Unsubscribe<ConsentChangedEvent>(HandleConsentChanged);
         }
 
         private void OnDestroy()
@@ -277,7 +280,7 @@ namespace DumyatRuntime
         {
             if (_socketOpen || _connecting) return true;
 
-            if (ConsentManager.Singleton == null || !ConsentManager.Singleton.IsVoiceModeAvailable())
+            if (_consent == null || !_consent.IsVoiceModeAvailable())
             {
                 NotifyFailed("Voice mode unavailable (consent not granted or offline).");
                 return false;
@@ -704,7 +707,7 @@ namespace DumyatRuntime
             string modelId = _config != null ? _config.SttModelId : ElevenLabsConfig.DefaultSttModelId;
 
             // Language code is a manager-level setting now (STTManager), not per-client.
-            string languageCode = STTManager.Singleton != null ? STTManager.Singleton.LanguageCode : null;
+            string languageCode = _stt != null ? _stt.LanguageCode : null;
 
             var sb = new StringBuilder(Endpoint);
             sb.Append("?model_id=").Append(modelId);
@@ -948,17 +951,16 @@ namespace DumyatRuntime
 
         // --- Consent reaction ------------------------------------------------------
 
-        private void HandleConsentChanged(ConsentState state)
+        private void HandleConsentChanged(ConsentChangedEvent evt)
         {
             // Stop the whole session immediately if consent/voice is no longer available.
-            if (IsSessionOpen && (ConsentManager.Singleton == null
-                                  || !ConsentManager.Singleton.IsVoiceModeAvailable()))
+            if (IsSessionOpen && (_consent == null || !_consent.IsVoiceModeAvailable()))
             {
                 FailSession("Voice mode revoked mid-session.");
             }
             else if (_autoStart && !MicrophoneEnabled
-                     && ConsentManager.Singleton != null
-                     && ConsentManager.Singleton.IsVoiceModeAvailable())
+                     && _consent != null
+                     && _consent.IsVoiceModeAvailable())
             {
                 SetMicrophoneEnabled(true);
             }

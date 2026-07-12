@@ -15,10 +15,8 @@ namespace DumyatRuntime
     /// (<see cref="ILlmClient"/>), and it also plugs into the <see cref="LLMManager"/> pool as an
     /// <see cref="ILLMModel"/> alongside <see cref="GeminiClient"/>.
     /// </summary>
-    public class GroqClient : MonoBehaviour, IManager, ILlmClient, ILLMModel
+    public class GroqClient : MonoBehaviour, ILlmClient, ILLMModel
     {
-        public static GroqClient Singleton { get; private set; }
-
         private const string Endpoint = "https://api.groq.com/openai/v1/chat/completions";
         private const string DefaultConfigResourcePath = "AI/Secrets/GroqConfig";
 
@@ -76,14 +74,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
             if (_config == null)
                 _config = Resources.Load<GroqConfig>(DefaultConfigResourcePath);
 

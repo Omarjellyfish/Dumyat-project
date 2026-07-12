@@ -13,42 +13,11 @@ namespace DumyatRuntime
     /// </summary>
     public class RandomFishInventoryTestDriver : MonoBehaviour, IFishInventory
     {
-        /// <summary>One authorable species row: name + per-kg price band + weight band.</summary>
-        [Serializable]
-        public class FishSpecies
-        {
-            [Tooltip("Species name (transliterated, e.g. \"Bouri\", \"Denis\"). Kept for logs/subtitles.")]
-            public string fishType = "Bouri";
-
-            [Tooltip("Species name in Egyptian Arabic (e.g. \"بوري\"). Sent to the merchant LLM so it " +
-                     "says the exact local fish name instead of mistranslating the transliteration.")]
-            public string fishTypeArabic = "بوري";
-
-            [Tooltip("Minimum fair price per kilogram, in game currency.")]
-            public float minPricePerKg = 60f;
-
-            [Tooltip("Maximum fair price per kilogram, in game currency.")]
-            public float maxPricePerKg = 110f;
-
-            [Tooltip("Minimum weight (kg) of a caught fish of this species.")]
-            public float minWeight = 0.4f;
-
-            [Tooltip("Maximum weight (kg) of a caught fish of this species.")]
-            public float maxWeight = 3.5f;
-        }
-
         [Header("Species Pool")]
-        [Tooltip("Egyptian fish species the test can hand to the merchant. Each sale picks one at random.")]
+        [Tooltip("Egyptian fish species the test can hand to the merchant, authored as FishSpeciesSO " +
+                 "assets. Each sale picks one at random. Assign the assets under Assets/Runtime/Content/Fish.")]
         [SerializeField]
-        private List<FishSpecies> _species = new List<FishSpecies>
-        {
-            new FishSpecies { fishType = "Bouri",    fishTypeArabic = "بوري",    minPricePerKg = 55f,  maxPricePerKg = 90f,  minWeight = 0.4f, maxWeight = 2.5f }, // grey mullet
-            new FishSpecies { fishType = "Denis",    fishTypeArabic = "دنيس",    minPricePerKg = 120f, maxPricePerKg = 200f, minWeight = 0.3f, maxWeight = 1.8f }, // sea bream
-            new FishSpecies { fishType = "Qaroos",   fishTypeArabic = "قاروص",   minPricePerKg = 130f, maxPricePerKg = 220f, minWeight = 0.5f, maxWeight = 3.0f }, // sea bass
-            new FishSpecies { fishType = "Wagar",    fishTypeArabic = "وقار",    minPricePerKg = 150f, maxPricePerKg = 260f, minWeight = 0.8f, maxWeight = 4.5f }, // grouper
-            new FishSpecies { fishType = "Balamida", fishTypeArabic = "بلاميدة", minPricePerKg = 45f,  maxPricePerKg = 80f,  minWeight = 0.6f, maxWeight = 3.0f }, // bonito
-            new FishSpecies { fishType = "Subaity",  fishTypeArabic = "سبيطي",   minPricePerKg = 90f,  maxPricePerKg = 160f, minWeight = 0.3f, maxWeight = 1.5f }, // sea bream (sobaity)
-        };
+        private List<FishSpeciesSO> _species = new List<FishSpeciesSO>();
 
         [Header("Value")]
         [Tooltip("Round the derived fair market value to the nearest whole currency unit for cleaner prompts.")]
@@ -64,7 +33,7 @@ namespace DumyatRuntime
             {
                 var catalog = new List<FishCatalogEntry>();
                 if (_species == null) return catalog;
-                foreach (FishSpecies s in _species)
+                foreach (FishSpeciesSO s in _species)
                 {
                     if (s == null || string.IsNullOrWhiteSpace(s.fishType)) continue;
                     catalog.Add(new FishCatalogEntry
@@ -95,7 +64,7 @@ namespace DumyatRuntime
             fish = null;
             if (!HasFish) return false;
 
-            FishSpecies species = _species[UnityEngine.Random.Range(0, _species.Count)];
+            FishSpeciesSO species = _species[UnityEngine.Random.Range(0, _species.Count)];
             if (species == null || string.IsNullOrWhiteSpace(species.fishType)) return false;
 
             float weight = UnityEngine.Random.Range(

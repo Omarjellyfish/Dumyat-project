@@ -7,8 +7,10 @@ using Action = Unity.Behavior.Action;
 namespace DumyatRuntime
 {
     // Behavior-graph ACTION nodes for the merchant negotiation. Each wraps one Bt_* step on
-    // NegotiationFlowController (reached via its Singleton, matching the project's singleton
-    // convention). Synchronous steps resolve in OnStart; async steps (LLM) poll a Task in OnUpdate;
+    // NegotiationFlowController, resolved off the agent's GameObject (the node's inherited
+    // GameObject property) — Behavior nodes aren't MonoBehaviours so they can't be DI-injected, and
+    // the controller lives on the same GameObject as the BehaviorGraphAgent. Synchronous steps
+    // resolve in OnStart; async steps (LLM) poll a Task in OnUpdate;
     // TTS/STT steps poll a completion flag. See Merchant/Behavior for the intended graph shape.
 
     /// <summary>Resolve the fish + build negotiation state + warm the STT session.</summary>
@@ -19,7 +21,7 @@ namespace DumyatRuntime
     {
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             return c.Bt_Setup() ? Status.Success : Status.Failure;
         }
@@ -35,7 +37,7 @@ namespace DumyatRuntime
 
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             _task = c.Bt_RunOpeningAsync();
             return Status.Running;
@@ -59,7 +61,7 @@ namespace DumyatRuntime
     {
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             c.Bt_PlayPendingLine();
             return c.LineFinished ? Status.Success : Status.Running;
@@ -67,7 +69,7 @@ namespace DumyatRuntime
 
         protected override Status OnUpdate()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             return c.LineFinished ? Status.Success : Status.Running;
         }
@@ -81,7 +83,7 @@ namespace DumyatRuntime
     {
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             c.Bt_BeginListen();
             return Status.Running;
@@ -89,7 +91,7 @@ namespace DumyatRuntime
 
         protected override Status OnUpdate()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             if (c.CaptureFailed) return Status.Failure;
             return c.TranscriptReady ? Status.Success : Status.Running;
@@ -106,7 +108,7 @@ namespace DumyatRuntime
 
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             _task = c.Bt_ProcessTurnAsync();
             return Status.Running;
@@ -130,7 +132,7 @@ namespace DumyatRuntime
     {
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             c.Bt_ApplyResult();
             return Status.Success;
@@ -145,7 +147,7 @@ namespace DumyatRuntime
     {
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             c.Bt_RecoverTurn();
             return Status.Success;
@@ -160,7 +162,7 @@ namespace DumyatRuntime
     {
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             c.Bt_Resolve();
             return Status.Success;
@@ -175,7 +177,7 @@ namespace DumyatRuntime
     {
         protected override Status OnStart()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             if (c == null) return Status.Failure;
             c.Bt_ScriptedFallback();
             return Status.Success;

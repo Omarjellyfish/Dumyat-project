@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using Reflex.Attributes;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -29,6 +30,14 @@ namespace DumyatRuntime
     public class VoiceCaptureController : MonoBehaviour
     {
         public enum CaptureMode { PushToTalk, VoiceActivity }
+
+        // Injected STT service, used to resolve a capture source from its model pool. Optional — a
+        // runtime-added controller isn't auto-injected, in which case EnsureSource falls back to a
+        // scene lookup (see EnsureSource).
+        private ISTTService _stt;
+
+        [Inject]
+        private void Inject(ISTTService stt) => _stt = stt;
 
         [Header("STT Source")]
         [Tooltip("The voice-capture source to drive. Assign the ElevenLabsScribeClient here; if left " +
@@ -330,7 +339,7 @@ namespace DumyatRuntime
         // --- Source resolution + events --------------------------------------------
 
         // Resolves the capture source lazily: prefer the Inspector reference, else the top-priority
-        // available model from the STTManager pool, else the first scribe client in the scene.
+        // available model from the injected STT service pool, else the first scribe client in the scene.
         private bool EnsureSource()
         {
             if (_source != null) return true;
@@ -341,9 +350,9 @@ namespace DumyatRuntime
                 return true;
             }
 
-            if (STTManager.Singleton != null)
+            if (_stt != null)
             {
-                foreach (ISTTModel model in STTManager.Singleton.Models)
+                foreach (ISTTModel model in _stt.Models)
                 {
                     if (model is IVoiceCaptureSource vcs && model.IsAvailable)
                     {

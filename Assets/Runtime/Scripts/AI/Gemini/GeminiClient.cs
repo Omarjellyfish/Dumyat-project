@@ -13,10 +13,8 @@ namespace DumyatRuntime
     /// handling and a basic retry, falling back to a configurable message when every attempt fails.
     /// Results are delivered through callbacks so callers stay decoupled (<see cref="ILlmClient"/>).
     /// </summary>
-    public class GeminiClient : MonoBehaviour, IManager, ILlmClient, ILLMModel
+    public class GeminiClient : MonoBehaviour, ILlmClient, ILLMModel
     {
-        public static GeminiClient Singleton { get; private set; }
-
         private const string EndpointFormat =
             "https://generativelanguage.googleapis.com/v1beta/models/{0}:generateContent";
         private const string DefaultConfigResourcePath = "AI/Secrets/GeminiConfig";
@@ -75,14 +73,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
             if (_config == null)
                 _config = Resources.Load<GeminiConfig>(DefaultConfigResourcePath);
 

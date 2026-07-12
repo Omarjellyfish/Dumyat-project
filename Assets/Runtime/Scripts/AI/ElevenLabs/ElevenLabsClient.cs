@@ -13,10 +13,8 @@ namespace DumyatRuntime
     /// (bad key, quota exceeded, bad voice ID) are logged with the HTTP status code and forwarded to
     /// the failure callback.
     /// </summary>
-    public class ElevenLabsClient : MonoBehaviour, IManager
+    public class ElevenLabsClient : MonoBehaviour
     {
-        public static ElevenLabsClient Singleton { get; private set; }
-
         private const string EndpointFormat = "https://api.elevenlabs.io/v1/text-to-speech/{0}";
         private const string DefaultConfigResourcePath = "AI/Secrets/ElevenLabsConfig";
 
@@ -64,14 +62,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = this;
-            DontDestroyOnLoad(gameObject);
-
             if (_config == null)
                 _config = Resources.Load<ElevenLabsConfig>(DefaultConfigResourcePath);
 

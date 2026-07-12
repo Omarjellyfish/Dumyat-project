@@ -1,3 +1,4 @@
+using Reflex.Attributes;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -29,6 +30,12 @@ namespace DumyatRuntime
                  "(either consent still NotAsked). Leave on so consent is settled before the first " +
                  "merchant approach instead of mid-negotiation.")]
         [SerializeField] private bool _promptOnStartWhenNotAsked = true;
+
+        // Injected consent service (replaces the former _consent).
+        private IConsentService _consent;
+
+        [Inject]
+        private void Inject(IConsentService consent) => _consent = consent;
 
         private UIDocument _document;
         private VisualElement _panel;
@@ -75,8 +82,8 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
-            if (ConsentManager.Singleton != null)
-                ConsentManager.Singleton.OnConsentUIRequested -= Show;
+            if (_consent != null)
+                _consent.OnConsentUIRequested -= Show;
 
             if (_confirmButton != null) _confirmButton.clicked -= HandleConfirm;
             if (_declineButton != null) _declineButton.clicked -= HandleDeclineAll;
@@ -88,7 +95,7 @@ namespace DumyatRuntime
         private void Start()
         {
             TrySubscribe();
-            if (ConsentManager.Singleton == null)
+            if (_consent == null)
             {
                 Debug.LogWarning("ConsentPromptUI: no ConsentManager in scene; prompt will never show.");
                 return;
@@ -96,7 +103,7 @@ namespace DumyatRuntime
 
             if (!_promptOnStartWhenNotAsked || _panel == null) return;
 
-            ConsentState state = ConsentManager.Singleton.GetConsentStatus();
+            ConsentState state = _consent.GetConsentStatus();
             if (state.MicConsent == ConsentStatus.NotAsked || state.InternetConsent == ConsentStatus.NotAsked)
                 Show();
         }
@@ -104,9 +111,9 @@ namespace DumyatRuntime
         // Idempotent subscribe (remove-then-add) so OnEnable and Start can both call it safely.
         private void TrySubscribe()
         {
-            if (ConsentManager.Singleton == null) return;
-            ConsentManager.Singleton.OnConsentUIRequested -= Show;
-            ConsentManager.Singleton.OnConsentUIRequested += Show;
+            if (_consent == null) return;
+            _consent.OnConsentUIRequested -= Show;
+            _consent.OnConsentUIRequested += Show;
         }
 
         /// <summary>Shows the prompt, pre-checking the toggles from the current consent state.</summary>
@@ -115,9 +122,9 @@ namespace DumyatRuntime
             if (_panel == null) return;
 
             // Previously-declined players see their choice reflected; first-timers default to on.
-            if (ConsentManager.Singleton != null)
+            if (_consent != null)
             {
-                ConsentState state = ConsentManager.Singleton.GetConsentStatus();
+                ConsentState state = _consent.GetConsentStatus();
                 if (_micToggle != null) _micToggle.value = state.MicConsent != ConsentStatus.Declined;
                 if (_internetToggle != null) _internetToggle.value = state.InternetConsent != ConsentStatus.Declined;
             }
@@ -153,13 +160,13 @@ namespace DumyatRuntime
         {
             Hide();
 
-            if (ConsentManager.Singleton == null)
+            if (_consent == null)
             {
                 Debug.LogWarning("ConsentPromptUI: consent chosen but no ConsentManager to receive it.");
                 return;
             }
 
-            ConsentManager.Singleton.SubmitConsentResult(mic, internet);
+            _consent.SubmitConsentResult(mic, internet);
             Debug.Log($"ConsentPromptUI: player chose mic={mic}, internet={internet}.");
         }
     }

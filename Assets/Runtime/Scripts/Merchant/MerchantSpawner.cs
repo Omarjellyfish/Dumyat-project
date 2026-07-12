@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -25,6 +26,12 @@ namespace DumyatRuntime
     /// </summary>
     public class MerchantSpawner : MonoBehaviour
     {
+        // Injected negotiation orchestrator (replaces the former NegotiationFlowController.Singleton).
+        private INegotiationService _negotiation;
+
+        [Inject]
+        private void Inject(INegotiationService negotiation) => _negotiation = negotiation;
+
         [Header("Config")]
         [Tooltip("Global merchant system config (roster size, cooldown, price ranges).")]
         [SerializeField] private MerchantSystemConfig _systemConfig;
@@ -206,15 +213,15 @@ namespace DumyatRuntime
             // Hand off to the flow controller, which runs the actual negotiation (voice/AI or a
             // scripted fallback) and signals completion back through merchant.EndNegotiation(...),
             // which fires OnNegotiationEnded -> HandleNegotiationEnded (releases the lock + cooldown).
-            if (NegotiationFlowController.Singleton != null)
+            if (_negotiation != null)
             {
-                NegotiationFlowController.Singleton.BeginNegotiation(merchant);
+                _negotiation.BeginNegotiation(merchant);
             }
             else
             {
                 // Without a controller the negotiation would never end and the lock would stick,
                 // wedging the spawner. Fail loud and release immediately so the player isn't stuck.
-                Debug.LogWarning("MerchantSpawner: no NegotiationFlowController in scene; " +
+                Debug.LogWarning("MerchantSpawner: no INegotiationService injected; " +
                                  "ending negotiation immediately to avoid a stuck state lock.");
                 merchant.EndNegotiation(NegotiationPhase.Declined);
             }

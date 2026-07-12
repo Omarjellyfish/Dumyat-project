@@ -1,3 +1,4 @@
+using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -21,6 +22,12 @@ namespace DumyatRuntime
     /// </summary>
     public class SttVoiceTestHarness : MonoBehaviour
     {
+        // Injected consent service (replaces the former ConsentManager.Singleton).
+        private IConsentService _consent;
+
+        [Inject]
+        private void Inject(IConsentService consent) => _consent = consent;
+
         [Header("Setup")]
         [Tooltip("Auto-grant mic + internet consent on Play so the STT path is reachable.")]
         [SerializeField] private bool _grantConsentOnPlay = true;
@@ -96,14 +103,14 @@ namespace DumyatRuntime
 
             if (_grantConsentOnPlay)
             {
-                if (ConsentManager.Singleton != null)
+                if (_consent != null)
                 {
-                    ConsentManager.Singleton.SubmitConsentResult(ConsentStatus.Granted, ConsentStatus.Granted);
+                    _consent.SubmitConsentResult(ConsentStatus.Granted, ConsentStatus.Granted);
                     Debug.Log("[SttTest] Consent granted (mic + internet).");
                 }
                 else
                 {
-                    Debug.LogWarning("[SttTest] No ConsentManager in scene — STT will fail its consent gate.");
+                    Debug.LogWarning("[SttTest] No IConsentService injected — STT will fail its consent gate.");
                 }
             }
 

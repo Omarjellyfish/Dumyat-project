@@ -540,6 +540,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ElevenLabsTTSModel
   _modelId: 
   _priority: 0
+  _client: {fileID: 0}
 --- !u!114 &475607734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -608,6 +609,70 @@ Transform:
   - {fileID: 475607731}
   - {fileID: 1507805454}
   - {fileID: 1145581058}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &821447375
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 821447378}
+  - component: {fileID: 821447377}
+  - component: {fileID: 821447376}
+  m_Layer: 0
+  m_Name: AI Scene Scope
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &821447376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821447375}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4efd9c9dd5023aa498c715223fc54d93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.AISceneInstaller
+  _llm: {fileID: 0}
+  _tts: {fileID: 0}
+  _stt: {fileID: 0}
+  _consent: {fileID: 0}
+  _playerStats: {fileID: 0}
+  _negotiationLLM: {fileID: 0}
+  _flow: {fileID: 0}
+--- !u!114 &821447377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821447375}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5312032623c34414a54ea00e35a7eb8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Reflex::Reflex.Core.ContainerScope
+--- !u!4 &821447378
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821447375}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1145581057
@@ -1365,30 +1430,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.RandomFishInventoryTestDriver
   _species:
-  - fishType: Bouri
-    fishTypeArabic: "\u0628\u0648\u0631\u064A"
-    minPricePerKg: 55
-    maxPricePerKg: 90
-    minWeight: 0.4
-    maxWeight: 2.5
-  - fishType: Denis
-    fishTypeArabic: "\u062F\u0646\u064A\u0633"
-    minPricePerKg: 120
-    maxPricePerKg: 200
-    minWeight: 0.3
-    maxWeight: 1.8
-  - fishType: Balamida
-    fishTypeArabic: "\u0628\u0644\u0627\u0645\u064A\u0637\u0629"
-    minPricePerKg: 45
-    maxPricePerKg: 80
-    minWeight: 0.6
-    maxWeight: 3
-  - fishType: Subaity
-    fishTypeArabic: "\u0633\u0628\u064A\u0637\u064A"
-    minPricePerKg: 90
-    maxPricePerKg: 160
-    minWeight: 0.3
-    maxWeight: 1.5
+  - {fileID: 11400000, guid: f19786baf7ff719489be33ccc9af8c58, type: 2}
+  - {fileID: 11400000, guid: b4e3e75d6d2554848b4cb369b8a06b61, type: 2}
+  - {fileID: 11400000, guid: 584e921d4f5d122419beda5ebe744d1f, type: 2}
+  - {fileID: 11400000, guid: 473b43bd57c2dae469fc1d0b2a8b2d75, type: 2}
+  - {fileID: 11400000, guid: b9ae28ed1694785438cdda992c082050, type: 2}
+  - {fileID: 11400000, guid: 65b8287db8cc6a247995f3949691997f, type: 2}
   _roundValue: 1
 --- !u!1 &1458502332
 GameObject:
@@ -2360,3 +2407,4 @@ SceneRoots:
   - {fileID: 4982099727541735508}
   - {fileID: 1796930916}
   - {fileID: 1399472611}
+  - {fileID: 821447378}

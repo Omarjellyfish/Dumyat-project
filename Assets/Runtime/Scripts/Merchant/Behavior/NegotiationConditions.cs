@@ -19,7 +19,7 @@ namespace DumyatRuntime
     {
         public override bool IsTrue()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             return c != null && c.Bt_ConsentAvailable();
         }
     }
@@ -39,7 +39,7 @@ namespace DumyatRuntime
     {
         public override bool IsTrue()
         {
-            NegotiationFlowController c = NegotiationFlowController.Singleton;
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
             return c != null && c.NegotiationOngoing;
         }
     }

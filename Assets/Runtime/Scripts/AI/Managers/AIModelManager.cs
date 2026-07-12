@@ -14,15 +14,14 @@ namespace DumyatRuntime
     /// runtime via <see cref="RegisterModel"/>/<see cref="UnregisterModel"/>. Models stay fully
     /// decoupled — they implement the interface and never reference the manager.
     ///
-    /// CRTP (<typeparamref name="TManager"/>) gives each concrete manager a strongly-typed
-    /// <see cref="Singleton"/> without re-declaring the boilerplate.
+    /// The concrete managers are registered against their capability interface (ILLMService /
+    /// ITTSService / ISTTService) by <see cref="AISceneInstaller"/> and injected by consumers — there
+    /// is no static accessor.
     /// </summary>
-    public abstract class AIModelManager<TManager, TModel> : MonoBehaviour, IManager
+    public abstract class AIModelManager<TManager, TModel> : MonoBehaviour
         where TManager : AIModelManager<TManager, TModel>
         where TModel : class, IAIModel
     {
-        public static TManager Singleton { get; private set; }
-
         private readonly List<TModel> _models = new List<TModel>();
 
         /// <summary>All registered models, highest priority first.</summary>
@@ -39,25 +38,9 @@ namespace DumyatRuntime
             }
         }
 
-        protected virtual void Awake()
-        {
-            if (Singleton != null && Singleton != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Singleton = (TManager)this;
-            DontDestroyOnLoad(gameObject);
-        }
-
         protected virtual void Start()
         {
             DiscoverModels();
-        }
-
-        protected virtual void OnDestroy()
-        {
-            if (Singleton == this) Singleton = null;
         }
 
         /// <summary>Adds a model to the pool (idempotent) and keeps the pool sorted by priority.</summary>
