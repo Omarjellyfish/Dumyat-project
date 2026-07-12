@@ -491,6 +491,27 @@ namespace DumyatRuntime
                     _state.state = NegotiationPhase.Declined;
                     PlayMerchantLine(result.MerchantSpeech, () => EndWithStat(NegotiationPhase.Declined));
                     break;
+
+                case MerchantAction.ConfirmAccept:
+                    // The acceptance mirror of ConfirmDecline. The player agreed to sell; nothing is applied
+                    // yet — the merchant asks them to confirm and we listen for the answer.
+                    // NegotiationState.awaitingAcceptConfirmation (set by the LLM layer) lets the NEXT turn
+                    // resolve as PlayerAccepted.
+                    Debug.Log($"{LogPrefix} Player wants to accept — asking them to confirm the sale.");
+                    _state.state = NegotiationPhase.Negotiating;
+                    PlayMerchantLine(result.MerchantSpeech, BeginListening);
+                    break;
+
+                case MerchantAction.PlayerAccepted:
+                    // The player CONFIRMED they agree to sell (the LLM layer never lets this action through
+                    // without a preceding ConfirmAccept turn). The sale closes at the agreed price carried
+                    // on the result; the closing line plays out over an already-Accepted negotiation.
+                    Debug.Log($"{LogPrefix} Player confirmed the sale — closing the deal.");
+                    _state.currentOffer = result.NewOfferAmount;
+                    _state.offerHistory.Add(_state.currentOffer);
+                    _state.state = NegotiationPhase.Accepted;
+                    PlayMerchantLine(result.MerchantSpeech, () => EndWithStat(NegotiationPhase.Accepted));
+                    break;
             }
         }
 
@@ -841,6 +862,21 @@ namespace DumyatRuntime
                     Debug.Log($"{LogPrefix} Player confirmed the rejection — ending the sale.");
                     _state.state = NegotiationPhase.Declined;
                     SetTerminal(NegotiationPhase.Declined);
+                    break;
+                case MerchantAction.ConfirmAccept:
+                    // Non-terminal: the merchant asks the player to confirm the sale, and the graph loops
+                    // for their answer (see ApplyTurnResult). The acceptance mirror of ConfirmDecline.
+                    Debug.Log($"{LogPrefix} Player wants to accept — asking them to confirm the sale.");
+                    _state.state = NegotiationPhase.Negotiating;
+                    break;
+                case MerchantAction.PlayerAccepted:
+                    // Only reachable after the player confirmed the sale (see ApplyTurnResult). Closes at
+                    // the agreed price carried on the result.
+                    Debug.Log($"{LogPrefix} Player confirmed the sale — closing the deal.");
+                    _state.currentOffer = result.NewOfferAmount;
+                    _state.offerHistory.Add(_state.currentOffer);
+                    _state.state = NegotiationPhase.Accepted;
+                    SetTerminal(NegotiationPhase.Accepted);
                     break;
             }
         }

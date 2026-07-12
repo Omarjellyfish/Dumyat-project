@@ -37,7 +37,26 @@ namespace DumyatRuntime
         /// negotiation open for exactly one more turn. The next turn resolves it: an unmistakable yes
         /// becomes <see cref="PlayerDeclined"/>; anything else resumes haggling.
         /// </summary>
-        ConfirmDecline
+        ConfirmDecline,
+
+        /// <summary>
+        /// The PLAYER clearly agreed to sell at the merchant's standing offer, AND has already confirmed
+        /// it when asked. The merchant speaks a short warm closing line and the negotiation resolves as
+        /// <see cref="NegotiationPhase.Accepted"/> (the sale is recorded). The exact acceptance mirror of
+        /// <see cref="PlayerDeclined"/>: never applied without a preceding <see cref="ConfirmAccept"/>
+        /// turn, and driven by the game's threshold on <see cref="MerchantTurnResult.AcceptanceScore"/>,
+        /// not by the model choosing to close.
+        /// </summary>
+        PlayerAccepted,
+
+        /// <summary>
+        /// The player just agreed to sell at the standing offer. Before the sale is locked in the merchant
+        /// asks them to CONFIRM ("so we're agreed, you'll sell it to me?") and keeps the negotiation open
+        /// for exactly one more turn. The next turn resolves it: an unmistakable yes becomes
+        /// <see cref="PlayerAccepted"/>; anything else resumes haggling. The acceptance mirror of
+        /// <see cref="ConfirmDecline"/>.
+        /// </summary>
+        ConfirmAccept
     }
 
     /// <summary>
@@ -88,6 +107,16 @@ namespace DumyatRuntime
         /// </summary>
         public float RejectionScore;
 
+        /// <summary>
+        /// 0–100: how clearly the model judges the player to be AGREEING to sell at the merchant's standing
+        /// offer — before the merchant has asked, how clearly they are saying yes at all; once asked, how
+        /// clearly they answered YES. The acceptance mirror of <see cref="RejectionScore"/>: a MEASUREMENT
+        /// the model reports, never a decision it acts on. The game thresholds it (see
+        /// <see cref="MerchantNegotiationLLM.AcceptanceScoreThreshold"/> /
+        /// <see cref="MerchantNegotiationLLM.AcceptConfirmedScoreThreshold"/>) and coerces the action.
+        /// </summary>
+        public float AcceptanceScore;
+
         /// <summary>True when <see cref="NewOfferAmount"/> is meaningful for this action.</summary>
         public bool HasNewOffer => Action == MerchantAction.RaiseOffer || Action == MerchantAction.Accept;
     }
@@ -136,6 +165,28 @@ namespace DumyatRuntime
         /// </summary>
         public const float DeclineConfirmedScoreThreshold = 55f;
 
+        // --- Acceptance thresholds (see MerchantTurnResult.AcceptanceScore) ---------
+        //
+        // The exact acceptance mirror of the withdrawal thresholds above. The model MEASURES how clearly
+        // the player is agreeing to sell at the standing offer; the game DECIDES here. Choosing Accept was
+        // as unreliable as choosing PlayerDeclined — the haggling personality keeps the merchant
+        // negotiating even after the player says yes — so a high score is thresholded and coerced through
+        // a one-turn confirmation, exactly like a withdrawal.
+
+        /// <summary>
+        /// Score at or above which an unprompted statement counts as the player agreeing to sell, and the
+        /// merchant must stop and ask them to confirm. Set high (like <see cref="WithdrawalScoreThreshold"/>):
+        /// mistaking ordinary haggling for agreement closes a sale the player did not mean to close.
+        /// </summary>
+        public const float AcceptanceScoreThreshold = 70f;
+
+        /// <summary>
+        /// Score at or above which the player's ANSWER to "are you sure you'll sell?" counts as yes, and
+        /// the sale is closed immediately. Set lower (like <see cref="DeclineConfirmedScoreThreshold"/>):
+        /// they have already agreed once and been asked point-blank.
+        /// </summary>
+        public const float AcceptConfirmedScoreThreshold = 55f;
+
         // Deterministic lines used ONLY when a turn is coerced to a different action than the model
         // spoke (a last-resort fallback after the corrected retry still produced an illegal offer). The
         // model's own line would contradict the coerced action (e.g. promise a raise on a HoldFirm — the
@@ -164,6 +215,21 @@ namespace DumyatRuntime
             "ماشي يا ريس، زي ما تحب، مفيش بيع النهاردة، ربنا يوفقك.";
         private const string CoercedDeclineFarewellEnglish =
             "As you wish, sir — no sale today. Good luck to you.";
+
+        // Acceptance mirror of the decline confirm line. The player agreed to sell, so before the sale is
+        // locked in the merchant asks them to CONFIRM (one turn). Deliberately names no number — the price
+        // is already on the table — so it stays a simple yes/no question, exactly like the decline confirm.
+        private const string CoercedConfirmAcceptArabic =
+            "طيب يا ريس، يبقى اتفقنا وهتبيعهالي؟ قولي اه ولا لا عشان اكد البيعة.";
+        private const string CoercedConfirmAcceptEnglish =
+            "Alright sir — so we're agreed and you'll sell it to me? Tell me yes or no so I can confirm the sale.";
+
+        // Scripted closing line for the coerced acceptance: the merchant has already spent its one
+        // confirmation, so the agreement it was told about is simply applied and the deal is warmly closed.
+        private const string CoercedAcceptFarewellArabic =
+            "تمام يا ريس، اتفقنا، البيعة ليا، الله يبارك لك في رزقك.";
+        private const string CoercedAcceptFarewellEnglish =
+            "Great, sir — it's a deal, the sale's mine. God bless your livelihood.";
 
         // Scripted WARNING spoken when the merchant tries to walk away without having told the player it
         // is leaving. It announces the departure plainly and gives them one turn to decide; only then may
@@ -312,6 +378,15 @@ namespace DumyatRuntime
                 state.awaitingDeclineConfirmation = true;
             else if (result.Action != MerchantAction.PlayerDeclined)
                 state.awaitingDeclineConfirmation = false;
+
+            // Acceptance bookkeeping — the exact mirror of the decline bookkeeping above. Asking "are you
+            // sure you'll sell?" arms the ONE turn on which the acceptance score is read as a yes/no answer;
+            // any other action means the player carried on haggling, so disarm. ConfirmAccept is only ever
+            // produced while this flag is CLEAR, so the merchant can never ask twice in a row.
+            if (result.Action == MerchantAction.ConfirmAccept)
+                state.awaitingAcceptConfirmation = true;
+            else if (result.Action != MerchantAction.PlayerAccepted)
+                state.awaitingAcceptConfirmation = false;
 
             // The merchant has now TOLD the player it is about to leave — either the coerced warning
             // above, or the hold-at-max ULTIMATUM turn (turnsHeldAtMax is still the pre-turn value here,
@@ -532,6 +607,13 @@ namespace DumyatRuntime
             sb.AppendLine("- If the player has only just told you what fish they have and no price talk has " +
                           $"happened yet, QUOTE your current offer {EGP(state.currentOffer)} in your speech " +
                           "(action HoldFirm) — the haggle is just beginning.");
+            sb.AppendLine("- ANSWERING A PLAIN QUESTION: if the fisherman is just ASKING you something rather than " +
+                          "haggling — most commonly they forgot and ask what price you offered ('انت قلت كام؟', " +
+                          "'السعر كام تاني؟'), or ask you to repeat what fish/weight you meant — simply ANSWER it. " +
+                          $"Restate the fact they asked for (for a price question, your current offer of " +
+                          $"{EGP(state.currentOffer)}) in a plain speech-only turn (action HoldFirm) and do NOT " +
+                          "change your offer. A question is NOT an offer, an agreement, or a reason to move your " +
+                          "price: never RaiseOffer, Accept, or lower anything just because you were asked something.");
             if (state.turnsHeldAtMax >= NegotiationState.HoldsBeforeWalkAway)
                 sb.AppendLine($"- WALK AWAY NOW: you already gave the player your final ultimatum and they STILL " +
                               "will not decide — they keep haggling instead of accepting or declining. You are done: " +
@@ -569,6 +651,7 @@ namespace DumyatRuntime
             sb.AppendLine();
 
             AppendRejectionScoreRules(sb, state);
+            AppendAcceptanceScoreRules(sb, state);
 
             // Walking away ends the sale too, and the player must always hear it coming.
             if (state.walkAwayWarningGiven)
@@ -595,6 +678,8 @@ namespace DumyatRuntime
             sb.AppendLine("  \"action\": \"RaiseOffer\" | \"HoldFirm\" | \"Accept\" | \"WalkAway\" | \"ClarifyRequest\",");
             sb.AppendLine("  \"rejectionScore\": <integer 0-100 — see REJECTION SCORE above. REQUIRED every turn. " +
                           "Use 0 when the fisherman shows no sign at all of ending the sale>,");
+            sb.AppendLine("  \"acceptanceScore\": <integer 0-100 — see ACCEPTANCE SCORE above. REQUIRED every turn. " +
+                          "Use 0 when the fisherman shows no sign at all of agreeing to sell at your offer>,");
             sb.AppendLine("  \"playerAskedPrice\": <number — the price in EGP the fisherman is CURRENTLY asking " +
                           "you to pay (the most recent price they named or insisted on, even if a few turns " +
                           "back and still standing). Whole number. Use 0 if they have not named any price yet " +
@@ -629,6 +714,10 @@ namespace DumyatRuntime
             sb.AppendLine($"- RaiseOffer: newOfferAmount MUST be STRICTLY HIGHER than {EGP(state.currentOffer)} " +
                           $"and AT MOST {EGP(raiseCap)} this turn. Never lower a standing offer; never exceed " +
                           "your maximum; never jump more than this turn's cap.");
+            sb.AppendLine("- A QUESTION IS NOT A HAGGLE: if the fisherman merely ASKS you something (e.g. what price " +
+                          "you offered, or to repeat the fish/weight), just ANSWER it with a speech-only HoldFirm " +
+                          $"that restates your current offer {EGP(state.currentOffer)} unchanged. NEVER RaiseOffer, " +
+                          "Accept, or move your price in response to a question.");
             sb.AppendLine($"- THE SPOKEN PRICE IS BINDING AND NEVER DROPS: the number in merchantSpeech must NEVER " +
                           $"be below your current offer {EGP(state.currentOffer)}. On HoldFirm, if you name a price " +
                           $"it must be EXACTLY {EGP(state.currentOffer)}; on RaiseOffer, speak EXACTLY your new " +
@@ -685,6 +774,50 @@ namespace DumyatRuntime
                               "'مش هكمل', 'مع السلامة', 'هدور على غيرك').");
                 sb.AppendLine("Then answer this turn normally, as though the haggle continues. If they really are " +
                               "leaving, the market will stop and ask them to confirm — that is not your job.");
+            }
+            sb.AppendLine();
+        }
+
+        /// <summary>
+        /// Teaches the model the "acceptanceScore" contract — the exact acceptance mirror of
+        /// <see cref="AppendRejectionScoreRules"/>. Framed as an OBSERVATION about the fisherman, divorced
+        /// from the merchant's own haggling instinct: choosing to close was as unreliable as choosing to
+        /// end the sale (the personality keeps it negotiating), so the model only RATES how clearly the
+        /// player is agreeing and the game does the deciding.
+        /// </summary>
+        private static void AppendAcceptanceScoreRules(StringBuilder sb, NegotiationState state)
+        {
+            sb.AppendLine("ACCEPTANCE SCORE — \"acceptanceScore\" (0-100). This is a MEASUREMENT, not a decision.");
+            sb.AppendLine("Rate ONLY what the fisherman just said. Never mention this number, never let it change " +
+                          "your speech, and never close the sale yourself because of it — the market decides what " +
+                          "happens next, not you. Score honestly even when you would rather keep haggling for a " +
+                          "cheaper price.");
+
+            if (state.awaitingAcceptConfirmation)
+            {
+                sb.AppendLine("You have JUST asked the fisherman to confirm they agree to sell to you. Their words " +
+                              "above are their ANSWER. Rate how clearly that answer is YES:");
+                sb.AppendLine("  0-20  = clearly NO — they back out, they haggle on, they demand a different price, " +
+                              "they say they changed their mind ('لا', 'استنى', 'عايز اكتر').");
+                sb.AppendLine("  40-60 = unclear, unrelated, or an evasive answer.");
+                sb.AppendLine("  80-100 = unmistakably YES — an affirmation ('اه', 'ايوه', 'اكيد', 'ماشي', 'اتفقنا', " +
+                              "'تمام خدها'). Confirming the deal IS agreeing.");
+                sb.AppendLine("Then answer this turn as if the haggle continues (HoldFirm / RaiseOffer / " +
+                              "ClarifyRequest) — if they really did confirm, the market closes the sale for you and " +
+                              "your line is not used.");
+            }
+            else
+            {
+                sb.AppendLine("Rate how clearly the fisherman is AGREEING to SELL at your CURRENT offer, as opposed " +
+                              "to still haggling for more:");
+                sb.AppendLine("  0-20  = still haggling — refusing your price, asking for more, silent on agreeing, " +
+                              "or naming a price ABOVE your current offer (that is haggling, NOT acceptance).");
+                sb.AppendLine("  40-60 = leaning toward yes but not a clear commitment, or the speech was garbled.");
+                sb.AppendLine("  80-100 = unmistakable agreement to sell at your offer with NO higher number attached " +
+                              "('اتفقنا', 'خلاص موافق', 'ماشي خدها', 'تمام هبيعهالك'), OR they ask for a price AT OR " +
+                              "BELOW your current offer (accepting for even less).");
+                sb.AppendLine("Then answer this turn normally, as though the haggle continues. If they really are " +
+                              "agreeing, the market will stop and ask them to confirm — that is not your job.");
             }
             sb.AppendLine();
         }
@@ -801,6 +934,18 @@ namespace DumyatRuntime
             return Mathf.Round(Mathf.Min(ceiling, state.currentOffer + state.maxRaisePerTurn));
         }
 
+        // The price an acceptance closes at: the merchant never pays more than it was asked, so a
+        // fisherman asking BELOW the standing offer (a bargain) closes at their ask; otherwise — a plain
+        // "yes" to the offer on the table — it closes at the current offer. Never above the ceiling.
+        private static float ComputeAcceptPrice(NegotiationState state, float playerAsk)
+        {
+            float ceiling = NegotiationCeiling(state);
+            float price = (playerAsk > 0f && playerAsk < state.currentOffer)
+                ? Mathf.Min(playerAsk, ceiling)
+                : state.currentOffer;
+            return Mathf.Round(Mathf.Min(price, ceiling));
+        }
+
         // True if the string contains any ASCII Latin letter (A–Z / a–z). Used to reject romanized /
         // transliterated Arabic in the spoken line — the native-Arabic TTS voice cannot pronounce
         // Latin script (e.g. it would try to read "riis" instead of speaking "ريس").
@@ -890,7 +1035,8 @@ namespace DumyatRuntime
                 PlayerAskedPrice = Mathf.Max(0f, dto.playerAskedPrice),
                 UnderstoodFishType = string.IsNullOrWhiteSpace(dto.understoodFishType) ? null : dto.understoodFishType.Trim(),
                 UnderstoodWeightKg = Mathf.Max(0f, dto.understoodWeightKg),
-                RejectionScore = Mathf.Clamp(dto.rejectionScore, 0f, 100f)
+                RejectionScore = Mathf.Clamp(dto.rejectionScore, 0f, 100f),
+                AcceptanceScore = Mathf.Clamp(dto.acceptanceScore, 0f, 100f)
             };
 
             // WITHDRAWAL: the model MEASURES, the game DECIDES. Asking the model to pick PlayerDeclined
@@ -927,14 +1073,61 @@ namespace DumyatRuntime
                 return true;
             }
 
-            // The score above is the ONLY authority on ending the sale, so PlayerDeclined and ConfirmDecline
-            // are no longer in the model's schema. If it emits one anyway while the score says otherwise,
-            // the two contradict each other — trust the score and fall back to holding firm rather than
-            // letting an unscored action close the negotiation.
-            if (parsed.Action == MerchantAction.PlayerDeclined || parsed.Action == MerchantAction.ConfirmDecline)
+            // ACCEPTANCE: the exact mirror of the withdrawal block above. The model MEASURES how clearly
+            // the player is agreeing (acceptanceScore); the game DECIDES here. This overrides whatever
+            // action the model chose — including a merchant that keeps haggling after a clear "yes" (the
+            // reported bug) — and also intercepts an explicit Accept, so EVERY acceptance is confirmed once
+            // before the sale is locked in. It is only meaningful once a real, PRICED offer is on the table
+            // (fish + weight disclosed): before that there is nothing to accept, and a stray "yes/ok" must
+            // never close a sale on an unknown, unpriced fish.
+            bool offerOnTable = !string.IsNullOrWhiteSpace(state.disclosedFishType)
+                                && state.disclosedWeightKg > 0f && state.currentOffer > 0f;
+            if (offerOnTable)
+            {
+                if (state.awaitingAcceptConfirmation)
+                {
+                    if (parsed.AcceptanceScore >= AcceptConfirmedScoreThreshold)
+                    {
+                        float dealPrice = Mathf.Round(state.pendingAcceptPrice > 0f
+                            ? state.pendingAcceptPrice : state.currentOffer);
+                        Debug.Log($"MerchantNegotiationLLM: player confirmed the sale " +
+                                  $"(acceptanceScore {parsed.AcceptanceScore:0} >= {AcceptConfirmedScoreThreshold:0}) " +
+                                  $"— closing at {dealPrice:0}.");
+                        CoerceLine(parsed, MerchantAction.PlayerAccepted, CoercedAcceptFarewellArabic, CoercedAcceptFarewellEnglish);
+                        parsed.NewOfferAmount = dealPrice;   // CoerceLine cleared it; carry the agreed price for the close
+                        result = parsed;
+                        return true;
+                    }
+
+                    // Not a yes — they are still haggling. The model's own action stands and CommitTurn
+                    // disarms the confirmation, so the haggle picks up exactly where it left off.
+                    Debug.Log($"MerchantNegotiationLLM: acceptance NOT confirmed " +
+                              $"(acceptanceScore {parsed.AcceptanceScore:0} < {AcceptConfirmedScoreThreshold:0}) " +
+                              $"— resuming with '{parsed.Action}'.");
+                }
+                else if (parsed.AcceptanceScore >= AcceptanceScoreThreshold || parsed.Action == MerchantAction.Accept)
+                {
+                    float dealPrice = ComputeAcceptPrice(state, parsed.PlayerAskedPrice);
+                    state.pendingAcceptPrice = dealPrice;
+                    Debug.Log($"MerchantNegotiationLLM: player is agreeing to sell " +
+                              $"(acceptanceScore {parsed.AcceptanceScore:0}, action '{parsed.Action}') " +
+                              $"— asking to confirm before closing at {dealPrice:0}.");
+                    CoerceLine(parsed, MerchantAction.ConfirmAccept, CoercedConfirmAcceptArabic, CoercedConfirmAcceptEnglish);
+                    result = parsed;
+                    return true;
+                }
+            }
+
+            // The scores above are the ONLY authority on ending the sale, so PlayerDeclined/ConfirmDecline
+            // and PlayerAccepted/ConfirmAccept are not in the model's schema. If it emits one anyway while
+            // the score says otherwise, the two contradict each other — trust the score and fall back to
+            // holding firm rather than letting an unscored action close (or abort) the negotiation.
+            if (parsed.Action == MerchantAction.PlayerDeclined || parsed.Action == MerchantAction.ConfirmDecline
+                || parsed.Action == MerchantAction.PlayerAccepted || parsed.Action == MerchantAction.ConfirmAccept)
             {
                 Debug.LogWarning($"MerchantNegotiationLLM: model emitted '{parsed.Action}' (not in its schema) " +
-                                 $"with rejectionScore {parsed.RejectionScore:0}; holding firm instead.");
+                                 $"with rejectionScore {parsed.RejectionScore:0} / acceptanceScore {parsed.AcceptanceScore:0}; " +
+                                 "holding firm instead.");
                 CoerceLine(parsed, MerchantAction.HoldFirm, CoercedHoldArabic, CoercedHoldEnglish);
                 result = parsed;
                 return true;
@@ -1090,12 +1283,15 @@ namespace DumyatRuntime
                     }
                     else if (ask > 0f && Mathf.Round(Mathf.Min(ask, ceiling)) <= state.currentOffer)
                     {
-                        // The fisherman is asking AT/BELOW the standing offer — a bargain. Close at the ask.
-                        float dealPrice = Mathf.Round(Mathf.Min(ask, ceiling));
+                        // The fisherman is asking AT/BELOW the standing offer — a bargain, i.e. an
+                        // acceptance at their own price. Route it through the SAME one-turn confirmation as
+                        // every other acceptance (arm ConfirmAccept, locking the deal price) rather than
+                        // closing outright, so a mis-heard low number can't lock in a sale either.
+                        float dealPrice = ComputeAcceptPrice(state, ask);
+                        state.pendingAcceptPrice = dealPrice;
                         Debug.Log($"MerchantNegotiationLLM: player asks {ask} <= current {state.currentOffer}; " +
-                                  "coercing RaiseOffer to bargain Accept.");
-                        parsed.NewOfferAmount = dealPrice;
-                        CoerceLine(parsed, MerchantAction.Accept, CoercedBargainAcceptArabic, CoercedBargainAcceptEnglish);
+                                  $"coercing RaiseOffer to a bargain ConfirmAccept at {dealPrice:0}.");
+                        CoerceLine(parsed, MerchantAction.ConfirmAccept, CoercedConfirmAcceptArabic, CoercedConfirmAcceptEnglish);
                     }
                     else
                     {
@@ -1283,6 +1479,12 @@ namespace DumyatRuntime
             /// thresholds it and coerces the action; the model never acts on it itself.
             /// </summary>
             public float rejectionScore;
+
+            /// <summary>
+            /// 0-100 measurement of how clearly the fisherman is AGREEING to sell at the standing offer
+            /// this turn. The game thresholds it and coerces the action; the model never acts on it itself.
+            /// </summary>
+            public float acceptanceScore;
         }
     }
 }

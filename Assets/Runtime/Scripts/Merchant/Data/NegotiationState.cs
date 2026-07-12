@@ -160,6 +160,26 @@ namespace DumyatRuntime
         public bool awaitingDeclineConfirmation;
 
         /// <summary>
+        /// True for the ONE turn that follows the merchant asking the player to confirm they really want
+        /// to sell at the standing offer (see <see cref="MerchantAction.ConfirmAccept"/>). The exact
+        /// mirror of <see cref="awaitingDeclineConfirmation"/>: it switches how the model's acceptance
+        /// score is read — "are they agreeing?" becomes "did they answer yes?" — and an acceptance is
+        /// only ever APPLIED while it is set, so the player can never lose a sale (or lock in a price) to
+        /// a single mis-heard sentence. Cleared again as soon as the player says anything that resumes
+        /// the haggle. The merchant cannot ask twice in a row: <see cref="MerchantAction.ConfirmAccept"/>
+        /// is only produced while this is clear, and producing it sets it.
+        /// </summary>
+        public bool awaitingAcceptConfirmation;
+
+        /// <summary>
+        /// The price the sale will close at once the player confirms an acceptance, captured when the
+        /// merchant asks them to confirm (see <see cref="awaitingAcceptConfirmation"/>). Locking it here
+        /// means the confirming turn closes at exactly the number the player agreed to — never a value
+        /// that drifted in between. Only meaningful while <see cref="awaitingAcceptConfirmation"/> is set.
+        /// </summary>
+        public float pendingAcceptPrice;
+
+        /// <summary>
         /// True once the merchant has spent a turn TELLING the player it is about to leave. A
         /// <see cref="MerchantAction.WalkAway"/> is never applied while this is false — it is coerced
         /// into that warning turn instead — so the player is never dropped mid-haggle without notice.
