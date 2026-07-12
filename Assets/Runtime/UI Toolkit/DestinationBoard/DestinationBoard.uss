@@ -1,0 +1,92 @@
+.destination-root {
+    flex-grow: 1;
+    background-color: rgba(30, 30, 35, 0.95);
+    border-radius: 12px;
+    border-width: 2px;
+    border-color: rgba(100, 150, 255, 0.4);
+    padding: 16px;
+    width: 600px;
+    height: 800px;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+.destination-header-container {
+    background-color: rgba(20, 20, 25, 0.8);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    align-items: center;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(100, 150, 255, 0.6);
+}
+
+.destination-header {
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(240, 240, 245);
+    letter-spacing: 2px;
+}
+
+.destination-scroll {
+    flex-grow: 1;
+}
+
+.destination-empty {
+    font-size: 20px;
+    color: rgb(150, 150, 160);
+    -unity-text-align: middle-center;
+    margin-top: 50px;
+}
+
+.destination-card {
+    background-color: rgba(45, 45, 55, 0.9);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-width: 1px;
+    border-color: rgba(100, 150, 255, 0.2);
+    transition-duration: 0.2s;
+    transition-property: background-color, border-color;
+}
+
+.destination-card:hover {
+    background-color: rgba(55, 55, 65, 0.95);
+    border-color: rgba(100, 150, 255, 0.6);
+}
+
+.destination-name {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    margin-bottom: 8px;
+}
+
+.destination-description {
+    font-size: 16px;
+    color: rgb(180, 180, 190);
+    white-space: normal;
+    margin-bottom: 16px;
+}
+
+.destination-travel-btn {
+    background-color: rgba(100, 150, 255, 0.2);
+    border-color: rgb(100, 150, 255);
+    border-width: 2px;
+    border-radius: 6px;
+    color: rgb(255, 255, 255);
+    font-size: 18px;
+    -unity-font-style: bold;
+    padding: 10px 0;
+    margin: 0;
+    transition-duration: 0.15s;
+    transition-property: background-color;
+}
+
+.destination-travel-btn:hover {
+    background-color: rgba(100, 150, 255, 0.5);
+}
+
+.destination-travel-btn:active {
+    background-color: rgba(100, 150, 255, 0.8);
+}

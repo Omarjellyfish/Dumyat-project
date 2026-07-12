@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="TestContainer" style="flex-grow: 1; align-items: center; justify-content: center; background-color: rgb(40, 40, 40);">
+        <ui:Label text="Scene Load Tester" style="font-size: 30px; color: rgb(255, 255, 255); margin-bottom: 20px;" />
+        
+        <ui:VisualElement style="width: 400px; background-color: rgb(60, 60, 60); padding: 20px; border-radius: 10px;">
+            <ui:TextField label="Target Scene Name:" name="TargetSceneInput" value="TargetScene" style="margin-bottom: 10px;" />
+            <ui:TextField label="Loading Scene Name (Optional):" name="LoadingSceneInput" value="" style="margin-bottom: 20px;" />
+            
+            <ui:Button text="TRIGGER LOAD" name="LoadButton" style="height: 40px; font-size: 16px; background-color: rgb(100, 150, 200);" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <ui:VisualElement name="LoadingOverlay" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgb(0, 0, 0); align-items: center; justify-content: center; display: none;">
+        <ui:Label text="LOADING..." style="font-size: 50px; color: rgb(255, 255, 255); margin-bottom: 20px;" />
+        <ui:Label name="ProgressLabel" text="0%" style="font-size: 30px; color: rgb(200, 200, 200); margin-bottom: 10px;" />
+        <ui:ProgressBar name="ProgressBar" value="0" high-value="1" style="width: 50%; height: 20px;" />
+    </ui:VisualElement>
+</ui:UXML>
