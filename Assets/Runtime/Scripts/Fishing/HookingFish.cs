@@ -1,10 +1,15 @@
 using UnityEngine;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
     public class HookingFish : MonoBehaviour
     {
         private bool isFishHooked = false;
+        private IHapticService _haptics;
+
+        [Inject]
+        private void Inject(IHapticService haptics) => _haptics = haptics;
 
         private void OnTriggerEnter(Collider collision)
         {
@@ -38,6 +43,8 @@ namespace DumyatRuntime
             joint.breakTorque = Mathf.Infinity;
 
             isFishHooked = true;
+
+            _haptics?.TriggerVibration(1f, 2f, 0.5f, HapticHand.Right);
 
             fish.OnCaught();
             Debug.Log("Fish hooked");

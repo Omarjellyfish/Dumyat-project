@@ -91,7 +91,7 @@ Transform:
   m_LocalRotation: {x: 0.25402397, y: -0.662507, z: -0.22314084, w: 0.6684045}
   m_LocalPosition: {x: 0.023053747, y: -0.5000117, z: 0.13470632}
   m_LocalScale: {x: 0.49999988, y: 0.49999994, z: 0.4999999}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2132887711828981422}
   - {fileID: 9093637839525997419}
@@ -135,6 +135,11 @@ MonoBehaviour:
   fishingLine: {fileID: 67889334979961266}
   castMultiplier: 1.5
   minimumCastVelocity: 1
+  waterLayer:
+    serializedVersion: 2
+    m_Bits: 16
+  settleVelocityThreshold: 0.2
+  maxFlightTime: 5
 --- !u!1 &1174989399550488976
 GameObject:
   m_ObjectHideFlags: 0
@@ -735,12 +740,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.FishingLineController
   whatTheRopeIsConnectedTo: {fileID: 5122359844281760570}
   whatIsHangingFromTheRope: {fileID: 1095376371639949236}
-  lineAttachPoint: {fileID: 1095376371639949236}
   allRopeSections: []
   ropeLength: 0.1
   minRopeLength: 1
   maxRopeLength: 20
-  startSegmentCount: 8
+  startSegmentCount: 6
   reelPivot: {fileID: 4576339752824899493}
 --- !u!54 &1610293099859204335
 Rigidbody:
@@ -1211,8 +1215,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.25402418, y: 0.6625071, z: 0.2231377, w: 0.6684053}
   m_LocalPosition: {x: 6.658, y: 4.62, z: -8.178}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2887889099748959681}
   m_Father: {fileID: 0}
@@ -1576,6 +1580,7 @@ GameObject:
   - component: {fileID: 857127016269678955}
   - component: {fileID: 6836760860858117720}
   - component: {fileID: 8861879872424483510}
+  - component: {fileID: 5545310233330177}
   m_Layer: 0
   m_Name: hookCollider
   m_TagString: Untagged
@@ -1592,7 +1597,7 @@ Transform:
   m_GameObject: {fileID: 8933370283333356939}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.059280396, y: -4.2694817, z: 0.029691426}
+  m_LocalPosition: {x: -0.06, y: -0.58, z: 0.03}
   m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1719,7 +1724,7 @@ SpringJoint:
   m_ConnectedAnchor: {x: 0, y: 0, z: 0}
   m_Spring: 500
   m_Damper: 15
-  m_MinDistance: 2.22
+  m_MinDistance: 1
   m_MaxDistance: 0
   m_Tolerance: 0.025
   m_BreakForce: Infinity
@@ -1728,6 +1733,20 @@ SpringJoint:
   m_EnablePreprocessing: 1
   m_MassScale: 1
   m_ConnectedMassScale: 1
+--- !u!114 &5545310233330177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8933370283333356939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d2c288f440653243b5fd99e2afd3db7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.HookFishDetector
+  fishArea: {fileID: 0}
+  fishDetectionRadius: 50
 --- !u!1 &9218752218057396202
 GameObject:
   m_ObjectHideFlags: 0

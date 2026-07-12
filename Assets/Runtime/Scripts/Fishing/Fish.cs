@@ -16,12 +16,12 @@ namespace DumyatRuntime
         private void Start()
         {
             Animator fishAnimator = GetComponentInChildren<Animator>();
-            fishAnimator.SetBool("IsHooked", false);
+            fishAnimator.SetBool("isHooked", false);
         }
         public void StopAnimation()
         {
             Animator fishAnimator = GetComponentInChildren<Animator>();
-            fishAnimator.SetBool("IsHooked", true);
+            fishAnimator.SetBool("isHooked", true);
         }
         public void Initialize(FishData fishData)
         {

@@ -105,7 +105,7 @@ namespace DumyatRuntime
                     StashItem(pickup);
                 }
 
-                StashItem(pickup);
+                // StashItem(pickup);
 
             }
         }
