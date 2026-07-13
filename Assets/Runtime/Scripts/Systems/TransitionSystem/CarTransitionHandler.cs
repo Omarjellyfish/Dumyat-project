@@ -85,8 +85,8 @@ namespace DumyatRuntime
 
             // Seat the player inside the car
             _playerRoot.SetParent(transform);
-            _playerRoot.position = _playerSeatPoint.position;
-            _playerRoot.rotation = _playerSeatPoint.rotation;
+            _playerRoot.position = _playerSeatPoint.localPosition;
+            _playerRoot.rotation = _playerSeatPoint.localRotation;
 
             // Mark as persistent the first time
             if (!_isPersistent)
