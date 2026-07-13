@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 4967937059408696145}
   - component: {fileID: 6347684363668041811}
   - component: {fileID: 3782302496308827466}
+  - component: {fileID: 379044034080301257}
   m_Layer: 0
   m_Name: Fish
   m_TagString: Fish
@@ -60,7 +61,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 64
@@ -261,8 +262,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18135d5aee81c3241ab05fea31f978cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ItemPickup
-  _itemID: 2
+  _itemID: 5
   _amount: 1
+--- !u!114 &379044034080301257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3256871146256090849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c751344fcf9a89245bae33e130bcffe5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.FishBehaviour
+  fishArea: {fileID: 0}
+  patrolSpeed: 1.5
+  patrolPointReachDistance: 0.5
+  swimToHookSpeed: 3
+  stoppingDistance: 0.005
+  biteChance: 1
+  minReactionDelay: 0
+  maxReactionDelay: 0
 --- !u!1001 &6839782929536139823
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Reflex.Attributes;
+using System.Security.Permissions;
 
 namespace DumyatRuntime
 {
@@ -7,9 +8,14 @@ namespace DumyatRuntime
     {
         private bool isFishHooked = false;
         private IHapticService _haptics;
+        private ISoundService _soundService;
+
+        [Header("Audio Feedback")]
+        [SerializeField] private AudioClip HookFatherSound;
+        [SerializeField] Transform Rod;
 
         [Inject]
-        private void Inject(IHapticService haptics) => _haptics = haptics;
+        private void Inject(IHapticService haptics, ISoundService soundService) => (_haptics, _soundService) = (haptics, soundService);
 
         private void OnTriggerEnter(Collider collision)
         {
@@ -43,6 +49,8 @@ namespace DumyatRuntime
             joint.breakTorque = Mathf.Infinity;
 
             isFishHooked = true;
+
+            _soundService.PlaySoundFxAtPosition(HookFatherSound, Rod.transform, 1f);
 
             _haptics?.TriggerVibration(1f, 2f, 0.5f, HapticHand.Right);
 
