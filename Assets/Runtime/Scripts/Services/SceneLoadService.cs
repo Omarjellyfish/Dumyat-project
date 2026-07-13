@@ -55,7 +55,7 @@ namespace DumyatRuntime
             _eventService.Publish(new SceneLoadProgressEvent { Progress = 1f });
 
             // 5. Brief delay before activating (gives the player a moment in the loading environment)
-            await Task.Delay(2000);
+            await Task.Delay(500);
 
             AllowSceneActivation(targetSceneName);
         }
