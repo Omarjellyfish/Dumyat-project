@@ -71,6 +71,10 @@ namespace DumyatRuntime
             containerBuilder.RegisterType(typeof(EventService), new[] { typeof(IEventService) },
                 Lifetime.Singleton, Resolution.Eager);
 
+            // Scene orchestrator for VR loading flows. Eager so it can listen/dispatch immediately.
+            containerBuilder.RegisterType(typeof(SceneLoadService), new[] { typeof(ISceneLoadService) },
+                Lifetime.Singleton, Resolution.Eager);
+
             // Global MonoBehaviour services — registered as values.
             // Reflex does NOT instantiate the ProjectScope prefab. It only reads from it.
             // Therefore, we must manually Instantiate these prefabs to create real scene objects.

@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/DestinationBoard/DestinationBoard.uss" />
+    <ui:VisualElement name="DestinationRoot" class="destination-root">
+        <ui:VisualElement class="destination-header-container">
+            <ui:Label name="HeaderLabel" text="AVAILABLE DESTINATIONS" class="destination-header" />
+        </ui:VisualElement>
+        <ui:ScrollView name="DestinationContainer" class="destination-scroll" />
+    </ui:VisualElement>
+</ui:UXML>
