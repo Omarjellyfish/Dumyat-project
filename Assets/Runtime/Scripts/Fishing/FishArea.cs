@@ -110,5 +110,24 @@ namespace DumyatRuntime
 
             return nearestFish;
         }
+        private void OnTriggerEnter(Collider other)
+        {
+            FishBehaviour fish = other.GetComponent<FishBehaviour>();
+
+            if (fish != null)
+            {
+                fish.SetInsideFishArea(true);
+            }
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            FishBehaviour fish = other.GetComponent<FishBehaviour>();
+
+            if (fish != null)
+            {
+                fish.SetInsideFishArea(false);
+            }
+        }
     }
 }

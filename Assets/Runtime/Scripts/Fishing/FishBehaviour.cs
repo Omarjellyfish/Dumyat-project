@@ -24,6 +24,7 @@ namespace DumyatRuntime
         public float maxReactionDelay = 0f;
 
         private Vector3 patrolTarget;
+        private bool isInsideFishArea;
 
         private bool movingToHook;
         private bool isHooked;
@@ -58,10 +59,11 @@ namespace DumyatRuntime
 
         private void Update()
         {
-            if (isHooked)
-            {
+            if (!isInsideFishArea)
                 return;
-            }
+
+            if (isHooked)
+                return;
 
             if (movingToHook)
             {
@@ -198,6 +200,10 @@ namespace DumyatRuntime
             movingToHook = true;
 
             Debug.Log(name + " moving to hook");
+        }
+        public void SetInsideFishArea(bool inside)
+        {
+            isInsideFishArea = inside;
         }
     }
 }
