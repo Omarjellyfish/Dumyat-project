@@ -51,7 +51,12 @@ namespace DumyatRuntime
 
                 if (!bounds.Contains(fish.transform.position))
                 {
-                    Debug.Log($"{fish.name} left the fish area and was removed from tracking.", fish);
+                    fish.SetInsideFishArea(false);
+
+                    Debug.Log(
+                        $"{fish.name} left the fish area and was removed from tracking.",
+                        fish);
+
                     fishes.RemoveAt(i);
                 }
             }

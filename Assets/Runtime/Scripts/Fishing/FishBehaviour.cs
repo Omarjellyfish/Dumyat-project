@@ -8,6 +8,7 @@ namespace DumyatRuntime
         [Header("References")]
         public FishArea fishArea;
         // public Rigidbody rb;
+        private Rigidbody fishRb;
 
         [Header("Patrol")]
         public float patrolSpeed = 1.5f;
@@ -30,17 +31,17 @@ namespace DumyatRuntime
         private bool isHooked;
         private Transform hookTarget;
 
+
+        private void Awake()
+        {
+            fishRb = GetComponent<Rigidbody>();
+        }
         private void Start()
         {
             if (fishArea == null)
             {
                 fishArea = FindFirstObjectByType<FishArea>();
             }
-
-            // if (rb == null)
-            // {
-            //     rb = GetComponent<Rigidbody>();
-            // }
 
             fishArea.RegisterFish(this);
 
@@ -204,6 +205,14 @@ namespace DumyatRuntime
         public void SetInsideFishArea(bool inside)
         {
             isInsideFishArea = inside;
+
+            Debug.Log($"{name} inside fish area = {inside}");
+
+            if (!inside && fishRb != null)
+            {
+                Debug.Log($"{name} enabling gravity");
+                fishRb.useGravity = true;
+            }
         }
     }
 }
