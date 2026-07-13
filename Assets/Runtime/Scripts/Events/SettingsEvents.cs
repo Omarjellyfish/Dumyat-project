@@ -1,15 +1,35 @@
 namespace DumyatRuntime
 {
-    /// <summary>Published by <see cref="SettingsManager"/> when subtitle settings change.</summary>
+    public enum GameLanguage
+    {
+        English,
+        Arabic
+    }
+
+    /// <summary>
+    /// Published by SettingsManager whenever subtitle settings change.
+    /// (Was referenced in SettingsManager.cs but never actually defined - added here.)
+    /// </summary>
     public readonly struct SubtitleSettingsChangedEvent : IGameEvent
     {
-        public readonly bool Enabled;
-        public readonly int Size;
+        public readonly bool SubtitlesEnabled;
+        public readonly int SubtitleSize;
 
-        public SubtitleSettingsChangedEvent(bool enabled, int size)
+        public SubtitleSettingsChangedEvent(bool subtitlesEnabled, int subtitleSize)
         {
-            Enabled = enabled;
-            Size = size;
+            SubtitlesEnabled = subtitlesEnabled;
+            SubtitleSize = subtitleSize;
+        }
+    }
+
+    /// <summary>Published by SettingsManager whenever the active language changes.</summary>
+    public readonly struct LanguageChangedEvent : IGameEvent
+    {
+        public readonly GameLanguage Language;
+
+        public LanguageChangedEvent(GameLanguage language)
+        {
+            Language = language;
         }
     }
 }
