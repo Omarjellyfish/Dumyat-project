@@ -6,6 +6,9 @@ namespace DumyatRuntime
     {
         protected override void ConstrainMovement()
         {
+            if (_visualObject == null)
+                return;
+
             Vector3 delta = GetMovementSinceSnap();
 
             // Project movement straight onto the 2D surface plane

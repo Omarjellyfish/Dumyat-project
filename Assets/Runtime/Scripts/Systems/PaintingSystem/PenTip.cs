@@ -1,4 +1,5 @@
 using UnityEngine;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -15,17 +16,32 @@ namespace DumyatRuntime
         private float _lastDrawnTime;
         [SerializeField] private float _timeInterval = 0.01f;
 
+        [Header("Mode Toggles")]
+        [Tooltip("Temporarily disable free draw entirely while focusing on line drawing.")]
+        [SerializeField] private bool _freeDrawEnabled = true;
+
         [HideInInspector] public PenMode _currentMode;
+        public PenMode CurrentMode
+        {
+            get => _currentMode;
+            set => _currentMode = value;
+        }
 
         private Vector3 _pointAWorld;
         private Vector2 _pointAUV;
         private bool _pointASet = false;
 
         private WoodPaintSurface _currentWood;
+        private IEventService _eventService;
 
-        private void Start()
+        [Inject]
+        private void Inject(IEventService eventService) => _eventService = eventService;
+
+        private void Awake()
         {
             _currentMode = PenMode.FreeDraw;
+            if (_paintBrush == null)
+                _paintBrush = GetComponent<PaintBrush>();
         }
 
         private void Update()
@@ -35,16 +51,24 @@ namespace DumyatRuntime
             {
                 WoodPaintSurface wood = hit.collider.GetComponent<WoodPaintSurface>();
                 if (wood == null) return;
+                if (_paintBrush == null) return;
 
                 _currentWood = wood;
+
+                // Use the second UV channel (unique/non-overlapping unwrap),
+                // NOT hit.textureCoord (UV0), which is the trim sheet's overlapping UVs.
+                Vector2 uv = hit.textureCoord2;
 
                 switch (_currentMode)
                 {
                     case PenMode.FreeDraw:
+                        if (!_freeDrawEnabled)
+                            break;
+
                         if (Time.time - _lastDrawnTime >= _timeInterval)
                         {
-                            Vector2 uv = wood.GetUVFromWorldPoint(hit.point);
                             _paintBrush.PaintAt(wood, uv, _penColor, _brushSize);
+                            _eventService?.Publish(new PaintAppliedEvent(wood, uv, _penColor, _brushSize));
                             _lastDrawnTime = Time.time;
                         }
                         break;
@@ -53,7 +77,7 @@ namespace DumyatRuntime
                         if (!_pointASet)
                         {
                             _pointAWorld = hit.point;
-                            _pointAUV = wood.GetUVFromWorldPoint(hit.point);
+                            _pointAUV = uv;
                             _pointASet = true;
                         }
                         _lineDraw.UpdateLinePositions(_pointAWorld, hit.point);
@@ -73,7 +97,13 @@ namespace DumyatRuntime
             Physics.Raycast(transform.position, -transform.forward,
                 out RaycastHit hit, _rayDistance, _woodLayer);
 
-            Vector2 finalUV = _currentWood.GetUVFromWorldPoint(hit.point);
+            if (hit.collider == null || _paintBrush == null)
+            {
+                ResetLineState();
+                return;
+            }
+
+            Vector2 finalUV = hit.textureCoord2;
 
             float distance = Vector2.Distance(_pointAUV, finalUV);
             float brushSpacing = _brushSize * 0.5f;
@@ -84,8 +114,10 @@ namespace DumyatRuntime
                 float t = i / (float)steps;
                 Vector2 stepUV = Vector2.Lerp(_pointAUV, finalUV, t);
                 _paintBrush.PaintAt(_currentWood, stepUV, _penColor, _brushSizeLine);
+                _eventService?.Publish(new PaintAppliedEvent(_currentWood, stepUV, _penColor, _brushSizeLine));
             }
 
+            _eventService?.Publish(new PaintLineCompletedEvent(_currentWood, _pointAUV, finalUV, _brushSizeLine));
             ResetLineState();
         }
 
