@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/ConsentPrompt.uss" />
+    <ui:VisualElement name="consent-panel" class="consent-overlay">
+        <ui:VisualElement class="consent-card">
+            <ui:Label text="Voice &amp; AI Features" class="consent-title" />
+            <ui:Label text="Dumyat can let you haggle with merchants using your own voice. This uses your microphone and sends your speech to online AI services to generate the merchants&#8217; replies and voices. Nothing is recorded outside these conversations. You can change this anytime in Settings." class="consent-body" />
+            <ui:Toggle name="mic-toggle" label="Allow microphone (speak to merchants)" value="true" class="consent-toggle" />
+            <ui:Toggle name="internet-toggle" label="Allow online AI services (dialogue &amp; voices)" value="true" class="consent-toggle" />
+            <!-- Disabled until the scripted-dialogue fallback ships:
+            <ui:Label text="Declining is fine &#8212; merchants will use scripted dialogue instead." class="consent-note" />
+            -->
+            <ui:VisualElement class="consent-buttons">
+                <ui:Button name="decline-button" text="Decline All" class="consent-button consent-button--secondary" />
+                <ui:Button name="confirm-button" text="Confirm" class="consent-button consent-button--primary" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

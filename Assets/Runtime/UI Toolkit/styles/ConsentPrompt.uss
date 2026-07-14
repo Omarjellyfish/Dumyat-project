@@ -1,0 +1,87 @@
+/* Consent prompt — full-screen dim overlay with a centered card.
+   The panel root ("consent-panel") is shown/hidden by ConsentPromptUI via display. */
+
+.consent-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    align-items: center;
+    justify-content: center;
+}
+
+.consent-card {
+    width: 560px;
+    max-width: 90%;
+    padding: 28px 32px;
+    border-radius: 14px;
+    background-color: rgb(32, 34, 40);
+    border-width: 1px;
+    border-color: rgb(70, 74, 84);
+}
+
+.consent-title {
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(240, 240, 245);
+    margin-bottom: 12px;
+}
+
+.consent-body {
+    font-size: 15px;
+    color: rgb(200, 203, 210);
+    white-space: normal;
+    margin-bottom: 18px;
+}
+
+.consent-toggle {
+    font-size: 16px;
+    color: rgb(230, 232, 238);
+    margin-bottom: 8px;
+}
+
+.consent-toggle .unity-toggle__label {
+    color: rgb(230, 232, 238);
+    font-size: 16px;
+}
+
+.consent-note {
+    font-size: 13px;
+    color: rgb(150, 154, 164);
+    white-space: normal;
+    margin-top: 6px;
+    margin-bottom: 18px;
+}
+
+.consent-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.consent-button {
+    font-size: 16px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    margin-left: 10px;
+    border-width: 0;
+}
+
+.consent-button--primary {
+    background-color: rgb(58, 134, 92);
+    color: rgb(255, 255, 255);
+}
+
+.consent-button--primary:hover {
+    background-color: rgb(70, 156, 109);
+}
+
+.consent-button--secondary {
+    background-color: rgb(62, 66, 76);
+    color: rgb(215, 218, 225);
+}
+
+.consent-button--secondary:hover {
+    background-color: rgb(78, 83, 95);
+}
