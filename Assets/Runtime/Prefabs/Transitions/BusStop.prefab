@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.11776, y: 2.48, z: 5.41272}
-  m_LocalScale: {x: 0.547, y: 6.2233, z: 0.44656}
+  m_LocalScale: {x: 0.5, y: 3.76, z: 0.44656}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3201064477634635426}
@@ -129,7 +129,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.BusStation
   _pickupPoint: {fileID: 3201064477634635426}
   _destinations:
-  - {fileID: 11400000, guid: 54c34436dd9afc74a89a9edd6dbcefd3, type: 2}
+  - {fileID: 11400000, guid: d5747cdf50c62234b9c43baf75442e81, type: 2}
+  - {fileID: 11400000, guid: 7fbbf3deaded4984dad3305eff6a1841, type: 2}
   _playerTag: Player
   _carTag: PlayerCar
 --- !u!1 &6270779726518705797
@@ -181,7 +182,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5033295815123871270, guid: 759cc788b3e91074da48016c6e4697aa, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.07
+      value: 0.15
       objectReference: {fileID: 0}
     - target: {fileID: 5033295815123871270, guid: 759cc788b3e91074da48016c6e4697aa, type: 3}
       propertyPath: m_LocalScale.z
