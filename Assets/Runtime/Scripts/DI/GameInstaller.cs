@@ -63,6 +63,10 @@ namespace DumyatRuntime
             containerBuilder.RegisterType(typeof(PlayerPersistenceService), new[] { typeof(IPlayerPersistenceService) },
                 Lifetime.Singleton, Resolution.Lazy);
 
+            // Narrative engine — stack-based dialogue with interruption/resume.
+            containerBuilder.RegisterType(typeof(NarrativeService), new[] { typeof(INarrativeService) },
+                Lifetime.Singleton, Resolution.Lazy);
+
             // Global game-state machine. Eager so it exists for the whole app lifetime.
             containerBuilder.RegisterType(typeof(GameStateService), new[] { typeof(IGameStateService) },
                 Lifetime.Singleton, Resolution.Eager);
