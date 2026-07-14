@@ -11,7 +11,7 @@ namespace DumyatRuntime
     public sealed class NarrativeService : INarrativeService
     {
         private const int MAX_STACK_DEPTH = 3;
-        private const float CHARS_PER_SECOND = 15f;
+        private const float CHARS_PER_SECOND = 30f;
         private const float MIN_LINE_DURATION = 1f;
         private const int MAX_SKIP_ITERATIONS = 100;
 
