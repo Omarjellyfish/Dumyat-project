@@ -3,7 +3,7 @@ using UnityEngine;
 namespace DumyatRuntime
 {
     [System.Serializable]
-    public class FishData
+    public class FishyData
     {
         public string fishName;
         public float minWeight;

@@ -5,11 +5,11 @@ namespace DumyatRuntime
 {
     public class FishDatabase : MonoBehaviour
     {
-        public List<FishData> fishTypes = new List<FishData>();
+        public List<FishyData> fishTypes = new List<FishyData>();
 
         private void Awake()
         {
-            fishTypes.Add(new FishData
+            fishTypes.Add(new FishyData
             {
                 fishName = "Tilapia",
                 minWeight = 0.5f,
@@ -17,7 +17,7 @@ namespace DumyatRuntime
                 pricePerKg = 50f
             });
 
-            fishTypes.Add(new FishData
+            fishTypes.Add(new FishyData
             {
                 fishName = "Catfish",
                 minWeight = 1f,
@@ -25,7 +25,7 @@ namespace DumyatRuntime
                 pricePerKg = 80f
             });
 
-            fishTypes.Add(new FishData
+            fishTypes.Add(new FishyData
             {
                 fishName = "Tuna",
                 minWeight = 5f,
@@ -34,7 +34,7 @@ namespace DumyatRuntime
             });
         }
 
-        public FishData GetRandomFishType()
+        public FishyData GetRandomFishType()
         {
             return fishTypes[Random.Range(0, fishTypes.Count)];
         }

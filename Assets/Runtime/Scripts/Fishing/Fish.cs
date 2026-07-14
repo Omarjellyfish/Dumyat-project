@@ -4,7 +4,7 @@ namespace DumyatRuntime
 {
     public class Fish : MonoBehaviour
     {
-        public FishData data;
+        public FishyData data;
 
         public float currentWeight;
         public float currentValue;
@@ -23,7 +23,7 @@ namespace DumyatRuntime
             Animator fishAnimator = GetComponentInChildren<Animator>();
             fishAnimator.SetBool("isHooked", true);
         }
-        public void Initialize(FishData fishData)
+        public void Initialize(FishyData fishData)
         {
             data = fishData;
 
@@ -42,7 +42,7 @@ namespace DumyatRuntime
 
             if (data == null)
             {
-                Debug.LogError("FishData is NULL!");
+                Debug.LogError("FishyData is NULL!");
                 return;
             }
 

@@ -248,6 +248,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c54b98167d2104e4d8a6d088c74e2bb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  HookFatherSound: {fileID: 0}
+  Rod: {fileID: 0}
 --- !u!135 &9172186218120347746
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -1746,6 +1748,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.HookFishDetector
   fishArea: {fileID: 0}
+  hookingFish: {fileID: 0}
   fishDetectionRadius: 50
 --- !u!1 &9218752218057396202
 GameObject:
