@@ -1453,8 +1453,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57a8edf73a112c54e8c2defb664389a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.FishArea
+  areaCollider: {fileID: 0}
   hookedRb: {fileID: 0}
   leaveCheckInterval: 0.5
+  leaveCheckTimer: 0
 --- !u!1001 &738410333
 PrefabInstance:
   m_ObjectHideFlags: 0
