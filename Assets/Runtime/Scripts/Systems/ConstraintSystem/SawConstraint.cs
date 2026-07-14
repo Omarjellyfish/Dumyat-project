@@ -11,6 +11,9 @@ namespace DumyatRuntime
 
         protected override void ConstrainMovement()
         {
+            if (_visualObject == null)
+                return;
+
             // 1. Get smooth real-time hand movement tracking delta
             Vector3 delta = GetMovementSinceSnap();
 

@@ -36,4 +36,68 @@ namespace DumyatRuntime
             Position = position;
         }
     }
+
+    /// <summary>Published when a constrained tool starts or stops being locked to a surface.</summary>
+    public readonly struct SurfaceConstraintChangedEvent : IGameEvent
+    {
+        public readonly SurfaceConstraint Constraint;
+        public readonly bool IsConstrained;
+        public readonly Vector3 Position;
+        public readonly Vector3 Normal;
+
+        public SurfaceConstraintChangedEvent(SurfaceConstraint constraint, bool isConstrained, Vector3 position, Vector3 normal)
+        {
+            Constraint = constraint;
+            IsConstrained = isConstrained;
+            Position = position;
+            Normal = normal;
+        }
+    }
+
+    /// <summary>Published whenever a constrained tool reports progress along its current action.</summary>
+    public readonly struct SurfaceConstraintProgressEvent : IGameEvent
+    {
+        public readonly SurfaceConstraint Constraint;
+        public readonly int Current;
+        public readonly int Required;
+
+        public SurfaceConstraintProgressEvent(SurfaceConstraint constraint, int current, int required)
+        {
+            Constraint = constraint;
+            Current = current;
+            Required = required;
+        }
+    }
+
+    public readonly struct PaintAppliedEvent : IGameEvent
+    {
+        public readonly WoodPaintSurface Surface;
+        public readonly Vector2 Uv;
+        public readonly Color Color;
+        public readonly float BrushSize;
+
+        public PaintAppliedEvent(WoodPaintSurface surface, Vector2 uv, Color color, float brushSize)
+        {
+            Surface = surface;
+            Uv = uv;
+            Color = color;
+            BrushSize = brushSize;
+        }
+    }
+
+    public readonly struct PaintLineCompletedEvent : IGameEvent
+    {
+        public readonly WoodPaintSurface Surface;
+        public readonly Vector2 StartUv;
+        public readonly Vector2 EndUv;
+        public readonly float BrushSize;
+
+        public PaintLineCompletedEvent(WoodPaintSurface surface, Vector2 startUv, Vector2 endUv, float brushSize)
+        {
+            Surface = surface;
+            StartUv = startUv;
+            EndUv = endUv;
+            BrushSize = brushSize;
+        }
+    }
 }
