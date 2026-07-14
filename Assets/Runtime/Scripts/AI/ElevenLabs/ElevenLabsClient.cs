@@ -27,7 +27,13 @@ namespace DumyatRuntime
         private const float MinSpeed = 0.7f;
         private const float MaxSpeed = 1.2f;
 
-        [Header("Voice Settings")]
+        [Header("Model Version")]
+        [Tooltip("DEFAULT ElevenLabs model generation, used when a caller supplies no per-line settings. " +
+                 "v2 = speed/stability/similarity/style; v3 = stability + language override (more expressive). " +
+                 "A per-merchant MerchantConfig overrides this per line.")]
+        [SerializeField] private ElevenLabsModelVersion _modelVersion = ElevenLabsModelVersion.V2;
+
+        [Header("Voice Settings — Eleven v2")]
         [Tooltip("Speaking speed. 1 = normal, < 1 = slower, > 1 = faster. ElevenLabs only accepts " +
                  "0.7–1.2; values outside this are rejected (HTTP 400), so the range is enforced here.")]
         [SerializeField, Range(MinSpeed, MaxSpeed)] private float _speed = 1f;
@@ -44,6 +50,15 @@ namespace DumyatRuntime
         [SerializeField] private string _languageOverride = "";
         [Tooltip("Speaker boost. Boosts similarity to the original speaker (slightly higher latency).")]
         [SerializeField] private bool _useSpeakerBoost = true;
+
+        [Header("Voice Settings — Eleven v3")]
+        [Tooltip("Stability for Eleven v3. v3 accepts only three settings — 0 = Creative (most " +
+                 "expressive/variable), 0.5 = Natural, 1 = Robust (most stable). Authored values are " +
+                 "snapped to the nearest of these.")]
+        [SerializeField, Range(0f, 1f)] private float _v3Stability = 0.5f;
+        [Tooltip("Language override for Eleven v3 (ISO 639-1, e.g. 'ar' for Arabic). Leave BLANK to " +
+                 "auto-detect; an empty value is omitted from the request.")]
+        [SerializeField] private string _v3LanguageOverride = "";
 
         [Header("Reliability")]
         [Tooltip("Seconds to wait for the audio response before treating the request as failed.")]
@@ -90,17 +105,22 @@ namespace DumyatRuntime
                 return;
             }
 
-            // Empty model → resolved from the ElevenLabsConfig SO in the overload below.
-            Speak(text, _config.VoiceId, null, onSuccess, onFailure);
+            // Empty model → resolved from the ElevenLabsConfig SO in the overload below. Null settings →
+            // the overload uses this client's own serialized voice parameters.
+            Speak(text, _config.VoiceId, null, null, onSuccess, onFailure);
         }
 
         /// <summary>
         /// Synthesises <paramref name="text"/> with an explicit <paramref name="voiceId"/> and
         /// <paramref name="modelId"/> (e.g. a per-merchant Egyptian-Arabic voice, or a low-latency
         /// flash model). Falls back to the default model when <paramref name="modelId"/> is empty.
+        /// <paramref name="voiceSettings"/> optionally overrides this client's serialized voice
+        /// parameters (speed/stability/similarity/style) for this call only — pass a per-merchant
+        /// <see cref="TtsVoiceSettings"/>, or null to use the client's own fields.
         /// Used by <see cref="ElevenLabsTTSModel"/> so a single REST/auth/error path is shared.
         /// </summary>
         public void Speak(string text, string voiceId, string modelId,
+            TtsVoiceSettings? voiceSettings,
             Action<AudioClip> onSuccess, Action<string> onFailure = null)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -124,29 +144,55 @@ namespace DumyatRuntime
                 return;
             }
 
-            // An explicit modelId wins; otherwise fall back to the ElevenLabsConfig SO's TTS model.
-            string model = string.IsNullOrWhiteSpace(modelId) ? ResolveDefaultModel() : modelId;
-            StartCoroutine(SpeakRoutine(text, voiceId, model, onSuccess, onFailure));
+            // The per-line settings pick the model version (else this client's default); the version
+            // then resolves the actual model ID (v3 ignores the v2-only per-pool model override).
+            ElevenLabsModelVersion version = voiceSettings?.Version ?? _modelVersion;
+            string model = ResolveModel(version, modelId);
+            StartCoroutine(SpeakRoutine(text, voiceId, model, version, voiceSettings, onSuccess, onFailure));
         }
 
-        // The default TTS model comes from the ElevenLabsConfig SO (or its built-in default when no
+        // The default v2 TTS model comes from the ElevenLabsConfig SO (or its built-in default when no
         // config is assigned), so designers can change it without touching code.
         private string ResolveDefaultModel() =>
             _config != null ? _config.TtsModelId : ElevenLabsConfig.DefaultTtsModelId;
 
+        // Resolves the model ID for a given version. v3 always uses the config's v3 model (the per-pool
+        // modelId override is a v2 model and is ignored); v2 honours an explicit per-pool model first.
+        private string ResolveModel(ElevenLabsModelVersion version, string explicitModelId)
+        {
+            if (version == ElevenLabsModelVersion.V3)
+                return _config != null ? _config.TtsModelIdV3 : ElevenLabsConfig.DefaultTtsModelIdV3;
+
+            return string.IsNullOrWhiteSpace(explicitModelId) ? ResolveDefaultModel() : explicitModelId;
+        }
+
         /// <summary>
-        /// The TTS model ID a synthesis call will use when no explicit override is passed — the
-        /// ElevenLabsConfig SO's model, or the built-in default. Exposed so pool entries
-        /// (<see cref="ElevenLabsTTSModel"/>) can report the model they will EFFECTIVELY use.
+        /// The TTS model ID a synthesis call will use when no explicit override is passed — resolved
+        /// from this client's default <see cref="ElevenLabsModelVersion"/> and the ElevenLabsConfig SO
+        /// (or the built-in default). Exposed so pool entries (<see cref="ElevenLabsTTSModel"/>) can
+        /// report the model they will EFFECTIVELY use.
         /// </summary>
-        public string EffectiveTtsModelId => ResolveDefaultModel();
+        public string EffectiveTtsModelId => ResolveModel(_modelVersion, null);
 
         private IEnumerator SpeakRoutine(string text, string voiceId, string modelId,
+            ElevenLabsModelVersion version, TtsVoiceSettings? voiceSettings,
             Action<AudioClip> onSuccess, Action<string> onFailure)
         {
+            // Per-call settings (e.g. a per-merchant TtsVoiceSettings) win; otherwise use this client's
+            // serialized fields for the resolved version. Each builder clamps to ElevenLabs' bounds.
+            string json = version == ElevenLabsModelVersion.V3
+                ? BuildRequestJsonV3(text, modelId,
+                    voiceSettings?.Stability ?? _v3Stability,
+                    voiceSettings?.LanguageOverride ?? _v3LanguageOverride)
+                : BuildRequestJsonV2(text, modelId,
+                    voiceSettings?.Speed ?? _speed,
+                    voiceSettings?.Stability ?? _stability,
+                    voiceSettings?.SimilarityBoost ?? _similarityBoost,
+                    voiceSettings?.Style ?? _style);
+
             string url = string.Format(EndpointFormat, voiceId);
-            byte[] body = System.Text.Encoding.UTF8.GetBytes(BuildRequestJson(text, modelId));
-            Debug.Log($"ElevenLabsClient: POST {url} — speed={_speed}, style={_style} ({body.Length} bytes)");
+            byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
+            Debug.Log($"ElevenLabsClient: POST {url} — {version}, model={modelId} ({body.Length} bytes)");
 
             using (UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
             {
@@ -181,7 +227,8 @@ namespace DumyatRuntime
             onFailure?.Invoke(_fallbackMessage);
         }
 
-        private string BuildRequestJson(string text, string modelId)
+        private string BuildRequestJsonV2(string text, string modelId,
+            float speed, float stability, float similarityBoost, float style)
         {
             // Built by hand rather than via JsonUtility on purpose: JsonUtility widens `float` fields
             // to double when serializing, so a boundary speed like 1.2f is emitted as
@@ -198,14 +245,45 @@ namespace DumyatRuntime
             if (language != null)
                 sb.Append(",\"language_code\":\"").Append(JsonEscape(language)).Append('"');
             sb.Append(",\"voice_settings\":{")
-              .Append("\"stability\":").Append(Num(Mathf.Clamp01(_stability)))
-              .Append(",\"similarity_boost\":").Append(Num(Mathf.Clamp01(_similarityBoost)))
-              .Append(",\"style\":").Append(Num(Mathf.Clamp01(_style)))
-              .Append(",\"speed\":").Append(Num(Mathf.Clamp(_speed, MinSpeed, MaxSpeed)))
+              .Append("\"stability\":").Append(Num(Mathf.Clamp01(stability)))
+              .Append(",\"similarity_boost\":").Append(Num(Mathf.Clamp01(similarityBoost)))
+              .Append(",\"style\":").Append(Num(Mathf.Clamp01(style)))
+              .Append(",\"speed\":").Append(Num(Mathf.Clamp(speed, MinSpeed, MaxSpeed)))
               .Append(",\"use_speaker_boost\":").Append(_useSpeakerBoost ? "true" : "false")
               .Append('}');
             sb.Append('}');
             return sb.ToString();
+        }
+
+        // Eleven v3 request body. v3 takes a DIFFERENT, smaller parameter set than v2: stability plus
+        // an optional language override. speed / similarity_boost / style are v2-only and omitted here.
+        private string BuildRequestJsonV3(string text, string modelId, float stability, string languageOverride)
+        {
+            // v3 exposes stability as three discrete settings (0 Creative / 0.5 Natural / 1 Robust);
+            // snap an authored in-between value so the API can't reject it (mirrors the v2 speed clamp).
+            float snapped = SnapV3Stability(stability);
+            string language = string.IsNullOrWhiteSpace(languageOverride) ? null : languageOverride.Trim();
+
+            var sb = new System.Text.StringBuilder(256);
+            sb.Append('{');
+            sb.Append("\"text\":\"").Append(JsonEscape(text)).Append('"');
+            sb.Append(",\"model_id\":\"").Append(JsonEscape(modelId)).Append('"');
+            if (language != null)
+                sb.Append(",\"language_code\":\"").Append(JsonEscape(language)).Append('"');
+            sb.Append(",\"voice_settings\":{")
+              .Append("\"stability\":").Append(Num(snapped))
+              .Append('}');
+            sb.Append('}');
+            return sb.ToString();
+        }
+
+        // v3 stability is one of {0, 0.5, 1}; snap to the nearest so any authored value stays valid.
+        private static float SnapV3Stability(float v)
+        {
+            v = Mathf.Clamp01(v);
+            if (v < 0.25f) return 0f;
+            if (v < 0.75f) return 0.5f;
+            return 1f;
         }
 
         // Fixed-precision, culture-invariant number (e.g. "1.2", "0.51") so voice-settings values land

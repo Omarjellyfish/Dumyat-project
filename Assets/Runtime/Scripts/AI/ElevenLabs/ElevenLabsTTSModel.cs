@@ -56,7 +56,8 @@ namespace DumyatRuntime
 
         public int Priority => _priority;
 
-        public void Synthesize(string text, string voiceId, Action<AudioClip> onSuccess, Action<string> onError)
+        public void Synthesize(string text, string voiceId, TtsVoiceSettings? voiceSettings,
+            Action<AudioClip> onSuccess, Action<string> onError)
         {
             if (_client == null)
             {
@@ -64,7 +65,7 @@ namespace DumyatRuntime
                 return;
             }
 
-            _client.Speak(text, voiceId, _modelId,
+            _client.Speak(text, voiceId, _modelId, voiceSettings,
                 onSuccess: clip => onSuccess?.Invoke(clip),
                 onFailure: msg => onError?.Invoke(msg));
         }

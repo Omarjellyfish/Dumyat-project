@@ -21,8 +21,11 @@ namespace DumyatRuntime
         /// Synthesises <paramref name="text"/> with <paramref name="voiceId"/> and plays it through
         /// <paramref name="targetSource"/> (or the manager's fallback source). <paramref name="onComplete"/>
         /// fires when playback finishes; <paramref name="onError"/> fires only if EVERY model fails.
+        /// Pass <paramref name="voiceSettings"/> to override the provider's global voice parameters for
+        /// this line only (e.g. a per-merchant <see cref="TtsVoiceSettings"/>); leave it null to use the
+        /// provider's own defaults.
         /// </summary>
         void PlaySpeech(string voiceId, string text, AudioSource targetSource,
-            Action onComplete = null, Action onError = null);
+            Action onComplete = null, Action onError = null, TtsVoiceSettings? voiceSettings = null);
     }
 }

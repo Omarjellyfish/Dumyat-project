@@ -802,14 +802,18 @@ namespace DumyatRuntime
             }
             else
             {
-                sb.AppendLine("Rate how clearly the fisherman is AGREEING to SELL at your CURRENT offer, as opposed " +
-                              "to still haggling for more:");
-                sb.AppendLine("  0-20  = still haggling — refusing your price, asking for more, silent on agreeing, " +
-                              "or naming a price ABOVE your current offer (that is haggling, NOT acceptance).");
+                sb.AppendLine("Rate how clearly the fisherman, IN THE WORDS THEY JUST SAID THIS TURN, is agreeing to " +
+                              "sell at your CURRENT offer. Judge ONLY this turn's words: a higher price they named on " +
+                              "an EARLIER turn is stale and must NOT drag this score down — agreement is about what " +
+                              "they say NOW, not the number still sitting in the ask history.");
+                sb.AppendLine("  0-20  = still haggling THIS TURN — refusing your price, or naming a NEW higher price " +
+                              "right now. (A price they demanded on a PREVIOUS turn does not count as haggling here.)");
                 sb.AppendLine("  40-60 = leaning toward yes but not a clear commitment, or the speech was garbled.");
-                sb.AppendLine("  80-100 = unmistakable agreement to sell at your offer with NO higher number attached " +
-                              "('اتفقنا', 'خلاص موافق', 'ماشي خدها', 'تمام هبيعهالك'), OR they ask for a price AT OR " +
-                              "BELOW your current offer (accepting for even less).");
+                sb.AppendLine("  80-100 = unmistakable agreement words THIS TURN ('اتفقنا', 'خلاص موافق', 'ماشي خدها', " +
+                              "'تمام هبيعهالك', 'انا موافق', 'خلاص بيعتهالك'), OR they ask for a price AT OR BELOW your " +
+                              "current offer. Score this HIGH even if they were demanding MORE only a moment ago and " +
+                              "even if a higher ask is STILL on record — a clear 'موافق' NOW outranks any stale number, " +
+                              "and the sale simply closes at YOUR current offer, never their earlier higher one.");
                 sb.AppendLine("Then answer this turn normally, as though the haggle continues. If they really are " +
                               "agreeing, the market will stop and ask them to confirm — that is not your job.");
             }
@@ -1416,9 +1420,13 @@ namespace DumyatRuntime
                 sb.AppendLine($"  ⚠ THE FISHERMAN IS RAISING THEIR ASK: they already agreed to go as low as " +
                               $"{EGP(lowest)}, but are now asking {EGP(latest)} — MORE than before. You are the " +
                               $"BUYER: you MUST call this out plainly in merchantSpeech — remind them they already " +
-                              $"said {EGP(lowest)} and refuse to pay more than {EGP(lowest)}. Do NOT accept or move " +
-                              $"toward the higher {EGP(latest)}; HoldFirm at {EGP(lowest)} or below. Never reward a " +
-                              "seller for pushing their price back up.");
+                              $"said {EGP(lowest)} and refuse to PAY the higher {EGP(latest)}; never pay more than " +
+                              $"{EGP(lowest)} and never reward a seller for pushing their price back up.");
+                sb.AppendLine($"  This warning is ONLY about the NUMBER, never about refusing to close the sale. The " +
+                              "moment the fisherman DROPS the higher demand and simply agrees to sell at YOUR current " +
+                              "offer (or asks for less), that is a WIN: treat it as acceptance, score acceptanceScore " +
+                              "HIGH, and stop scolding them about the old higher number — do NOT keep replaying 'why " +
+                              "did you raise your price?' once they have agreed.");
             }
             else
             {

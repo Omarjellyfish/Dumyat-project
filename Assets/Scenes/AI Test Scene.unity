@@ -554,12 +554,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ElevenLabsClient
   _config: {fileID: 11400000, guid: 1edf6ecdfae13a3429dcc1bfe76d83d6, type: 2}
+  _modelVersion: 1
   _speed: 1
   _stability: 0.35
   _similarityBoost: 0.75
   _style: 0.15
   _languageOverride: ar
   _useSpeakerBoost: 1
+  _v3Stability: 0.5
+  _v3LanguageOverride: 
   _timeoutSeconds: 30
   _fallbackMessage: Text-to-speech is unavailable right now.
 --- !u!114 &475607735
@@ -1615,7 +1618,7 @@ MonoBehaviour:
   _silenceAmplitudeThreshold: 0.02
   _connectionTimeoutSeconds: 5
   _responseTimeoutSeconds: 15
-  _transcriptSettleSeconds: 1
+  _transcriptSettleSeconds: 1.5
   _transcriptSettleMaxSeconds: 3
   _verboseLogging: 1
   _dumpSttAudio: 1

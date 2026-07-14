@@ -51,6 +51,43 @@ namespace DumyatRuntime
                  "MerchantNPC 'Voice Id' empty. MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.")]
         [SerializeField] private string _voiceId;
 
+        [Header("Voice (TTS parameters)")]
+        // Per-merchant ElevenLabs voice_settings, so each archetype can sound distinct while still
+        // sharing the pooled synthesis path. These override the shared ElevenLabsClient's defaults for
+        // THIS merchant's lines only. The two model generations take DIFFERENT parameters, so which
+        // group below applies is chosen by the version selector; the other group is ignored.
+        [Tooltip("Which ElevenLabs model generation this merchant speaks with. " +
+                 "v2 = speed/stability/similarity/style; v3 = stability + language override (more expressive).")]
+        [SerializeField] private ElevenLabsModelVersion _ttsVersion = ElevenLabsModelVersion.V2;
+
+        [Header("Voice — Eleven v2 parameters")]
+        [Tooltip("Speaking speed for this merchant. 1 = normal, < 1 slower, > 1 faster. " +
+                 "ElevenLabs only accepts 0.7–1.2.")]
+        [Range(0.7f, 1.2f)]
+        [SerializeField] private float _v2Speed = 1f;
+
+        [Tooltip("Stability. Lower = more variable/expressive, higher = more stable/consistent.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _v2Stability = 0.5f;
+
+        [Tooltip("Similarity boost. How closely the output matches the original voice.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _v2Similarity = 0.75f;
+
+        [Tooltip("Style exaggeration. 0 = neutral, 1 = highly expressive. Over ~0.5 may add instability. " +
+                 "Only affects v2 models.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _v2Style = 0f;
+
+        [Header("Voice — Eleven v3 parameters")]
+        [Tooltip("Stability for Eleven v3. v3 accepts only 0 = Creative (most expressive), 0.5 = Natural, " +
+                 "1 = Robust (most stable); authored values are snapped to the nearest.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _v3Stability = 0.5f;
+
+        [Tooltip("Language override for Eleven v3 (ISO 639-1, e.g. 'ar' for Arabic). Leave BLANK to auto-detect.")]
+        [SerializeField] private string _v3LanguageOverride = "ar";
+
         /// <summary>Display name of the merchant, used in subtitles and UI.</summary>
         public string MerchantName => _merchantName;
 
@@ -78,5 +115,19 @@ namespace DumyatRuntime
         /// MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.
         /// </summary>
         public string VoiceId => _voiceId;
+
+        /// <summary>Which ElevenLabs model generation this merchant's voice lines use.</summary>
+        public ElevenLabsModelVersion TtsVersion => _ttsVersion;
+
+        /// <summary>
+        /// This merchant's ElevenLabs voice-synthesis parameters, bundled for the TTS chain and built
+        /// for the selected <see cref="TtsVersion"/> (v2 → speed/stability/similarity/style; v3 →
+        /// stability + language override). Passed through <see cref="ITTSService.PlaySpeech"/> so each
+        /// merchant sounds distinct; the client still clamps values to ElevenLabs' accepted ranges.
+        /// </summary>
+        public TtsVoiceSettings VoiceSettings =>
+            _ttsVersion == ElevenLabsModelVersion.V3
+                ? TtsVoiceSettings.ForV3(_v3Stability, _v3LanguageOverride)
+                : TtsVoiceSettings.ForV2(_v2Speed, _v2Stability, _v2Similarity, _v2Style);
     }
 }

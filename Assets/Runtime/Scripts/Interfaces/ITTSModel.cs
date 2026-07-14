@@ -14,8 +14,10 @@ namespace DumyatRuntime
         /// <summary>
         /// Synthesises <paramref name="text"/> with <paramref name="voiceId"/>. Delivers a ready
         /// <see cref="AudioClip"/> via <paramref name="onSuccess"/>, or a reason via
-        /// <paramref name="onError"/> so the manager can try the next model.
+        /// <paramref name="onError"/> so the manager can try the next model. <paramref name="voiceSettings"/>
+        /// optionally overrides the provider's global voice parameters for this line (null = provider default).
         /// </summary>
-        void Synthesize(string text, string voiceId, Action<AudioClip> onSuccess, Action<string> onError);
+        void Synthesize(string text, string voiceId, TtsVoiceSettings? voiceSettings,
+            Action<AudioClip> onSuccess, Action<string> onError);
     }
 }

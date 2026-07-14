@@ -40,7 +40,7 @@ namespace DumyatRuntime
         /// fires when playback finishes; <paramref name="onError"/> fires only if EVERY model fails.
         /// </summary>
         public void PlaySpeech(string voiceId, string text, AudioSource targetSource,
-            Action onComplete = null, Action onError = null)
+            Action onComplete = null, Action onError = null, TtsVoiceSettings? voiceSettings = null)
         {
             AudioSource source = targetSource != null ? targetSource : _fallbackAudioSource;
             if (source == null)
@@ -64,11 +64,11 @@ namespace DumyatRuntime
                 return;
             }
 
-            SynthesizeWithFallback(models, 0, voiceId, text, source, onComplete, onError);
+            SynthesizeWithFallback(models, 0, voiceId, text, source, onComplete, onError, voiceSettings);
         }
 
         private void SynthesizeWithFallback(List<ITTSModel> models, int index, string voiceId, string text,
-            AudioSource source, Action onComplete, Action onError)
+            AudioSource source, Action onComplete, Action onError, TtsVoiceSettings? voiceSettings)
         {
             if (index >= models.Count)
             {
@@ -78,13 +78,13 @@ namespace DumyatRuntime
             }
 
             ITTSModel model = models[index];
-            model.Synthesize(text, voiceId,
+            model.Synthesize(text, voiceId, voiceSettings,
                 onSuccess: clip =>
                 {
                     if (clip == null || source == null)
                     {
                         // Treat as this model failing; try the next.
-                        SynthesizeWithFallback(models, index + 1, voiceId, text, source, onComplete, onError);
+                        SynthesizeWithFallback(models, index + 1, voiceId, text, source, onComplete, onError, voiceSettings);
                         return;
                     }
                     source.clip = clip;
@@ -94,7 +94,7 @@ namespace DumyatRuntime
                 onError: msg =>
                 {
                     Debug.LogWarning($"TTSManager: model '{model.ModelName}' failed ({msg}); trying next.");
-                    SynthesizeWithFallback(models, index + 1, voiceId, text, source, onComplete, onError);
+                    SynthesizeWithFallback(models, index + 1, voiceId, text, source, onComplete, onError, voiceSettings);
                 });
         }
 

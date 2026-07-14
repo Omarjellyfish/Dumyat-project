@@ -667,8 +667,11 @@ namespace DumyatRuntime
             }
 
             // Voice is the one assigned to THIS NPC at spawn (stable across the whole negotiation),
-            // not a per-archetype/per-call value.
+            // not a per-archetype/per-call value. The voice PARAMETERS (speed/stability/similarity/style)
+            // come from this merchant's archetype config, so each merchant sounds distinct.
             string voiceId = _activeMerchant != null ? _activeMerchant.AssignedVoiceId : null;
+            MerchantConfig config = _activeMerchant != null ? _activeMerchant.Config : null;
+            TtsVoiceSettings? voiceSettings = config != null ? config.VoiceSettings : null;
             _tts.PlaySpeech(
                 voiceId, arabicText, _activeAudioSource,
                 onComplete: onDone,
@@ -676,7 +679,8 @@ namespace DumyatRuntime
                 {
                     Debug.LogWarning($"{LogPrefix} TTS failed; continuing on subtitle only.");
                     onDone?.Invoke();
-                });
+                },
+                voiceSettings: voiceSettings);
         }
 
         // --- Behavior-graph steps (called by the custom nodes in Merchant/Behavior) ----------------
