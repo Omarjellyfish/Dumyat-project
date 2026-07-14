@@ -24,10 +24,10 @@ void DrawRoundedRectangleMask_float(
     float dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - Radius;
 
     // 3. Determine which edge/side the current pixel is closest to
-    float isRight  = smoothstep(0.0, 1.0, -centeredUV.x / max(halfSize.x, 0.001));
-    float isLeft   = smoothstep(0.0, 1.0, centeredUV.x / max(halfSize.x, 0.001));
-    float isTop    = smoothstep(0.0, 1.0, -centeredUV.y / max(halfSize.y, 0.001));
-    float isBottom = smoothstep(0.0, 1.0, centeredUV.y / max(halfSize.y, 0.001));
+    float isRight  = smoothstep(0.0, 1.0, centeredUV.x / max(halfSize.x, 0.001));
+    float isLeft   = smoothstep(0.0, 1.0, -centeredUV.x / max(halfSize.x, 0.001));
+    float isTop    = smoothstep(0.0, 1.0, centeredUV.y / max(halfSize.y, 0.001));
+    float isBottom = smoothstep(0.0, 1.0, -centeredUV.y / max(halfSize.y, 0.001));
 
     // Normalize weights so they equal 1.0 overall across the canvas
     float weightSum = isRight + isLeft + isTop + isBottom;
@@ -66,10 +66,10 @@ void DrawRoundedRectangleMask_half(
     half dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - Radius;
 
     // 3. Determine which edge/side the current pixel is closest to
-    half isRight  = smoothstep(0.0, 1.0, -centeredUV.x / max(halfSize.x, 0.001));
-    half isLeft   = smoothstep(0.0, 1.0, centeredUV.x / max(halfSize.x, 0.001));
-    half isTop    = smoothstep(0.0, 1.0, -centeredUV.y / max(halfSize.y, 0.001));
-    half isBottom = smoothstep(0.0, 1.0, centeredUV.y / max(halfSize.y, 0.001));
+    half isRight  = smoothstep(0.0, 1.0, centeredUV.x / max(halfSize.x, 0.001));
+    half isLeft   = smoothstep(0.0, 1.0, -centeredUV.x / max(halfSize.x, 0.001));
+    half isTop    = smoothstep(0.0, 1.0, centeredUV.y / max(halfSize.y, 0.001));
+    half isBottom = smoothstep(0.0, 1.0, -centeredUV.y / max(halfSize.y, 0.001));
 
     // Normalize weights so they equal 1.0 overall across the canvas
     half weightSum = isRight + isLeft + isTop + isBottom;
