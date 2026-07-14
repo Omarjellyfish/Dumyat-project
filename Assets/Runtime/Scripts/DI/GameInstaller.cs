@@ -47,7 +47,7 @@ namespace DumyatRuntime
 
             // Inventory — plain C# service constructed from ISaveService + ItemDatabase.
             containerBuilder.RegisterType(typeof(InventoryService), new[] { typeof(IInventoryService) },
-                Lifetime.Singleton, Resolution.Eager);
+                Lifetime.Singleton, Resolution.Lazy);
 
             // Recipe database asset for CraftingService.
             if (_recipeDatabase != null)
