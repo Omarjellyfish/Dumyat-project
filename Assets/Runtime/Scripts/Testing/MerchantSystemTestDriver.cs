@@ -36,10 +36,6 @@ namespace DumyatRuntime
         [Tooltip("Auto-grant mic + internet consent on Play so the AI path is reachable.")]
         [SerializeField] private bool _grantConsentOnPlay = true;
 
-        [Tooltip("Disable any SttVoiceTestHarness in the scene so the isolated STT test does not also " +
-                 "grab the microphone / STT source during the merchant test.")]
-        [SerializeField] private bool _disableVoiceHarness = true;
-
         [Tooltip("Ensure a RandomFishInventoryTestDriver exists so the negotiation has fish to sell.")]
         [SerializeField] private bool _ensureFishInventory = true;
 
@@ -51,20 +47,9 @@ namespace DumyatRuntime
 
         private void Start()
         {
-            if (_disableVoiceHarness) DisableVoiceHarness();
             if (_ensureFishInventory) EnsureFishInventory();
             if (_grantConsentOnPlay) GrantConsent();
             if (_startNegotiationOnPlay) StartCoroutine(StartAfterDelay());
-        }
-
-        // Turn off the isolated STT harness so the two mic-owning test objects don't contend.
-        private void DisableVoiceHarness()
-        {
-            foreach (var harness in FindObjectsByType<SttVoiceTestHarness>(FindObjectsSortMode.None))
-            {
-                harness.enabled = false;
-                Debug.Log($"[TestDriver] Disabled SttVoiceTestHarness on '{harness.name}' for the merchant test.");
-            }
         }
 
         // Make sure the negotiation has a fish source (random test provider) if none is present.
