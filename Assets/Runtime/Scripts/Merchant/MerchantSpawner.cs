@@ -65,11 +65,44 @@ namespace DumyatRuntime
         private MerchantNPC _lastApproached;
         private Coroutine _cooldownRoutine;
 
-        /// <summary>True while a merchant is actively approaching or negotiating with the player.</summary>
+        // Cached approach-movers for the roster (null entries allowed for merchants without one), so
+        // IsAnyMerchantEngaging can cheaply check whether ANY merchant is currently in motion.
+        private readonly Dictionary<MerchantNPC, MerchantApproachMover> _movers =
+            new Dictionary<MerchantNPC, MerchantApproachMover>();
+
+        /// <summary>True while a merchant is actively negotiating with the player.</summary>
         public bool IsNegotiationActive => _activeMerchant != null;
 
         /// <summary>The merchant currently engaged with the player, or null if none.</summary>
         public MerchantNPC ActiveMerchant => _activeMerchant;
+
+        /// <summary>
+        /// True when the player is already being engaged by SOME merchant — either a negotiation is
+        /// active, or a merchant is currently walking to/from the player. This is the real "one NPC at
+        /// a time" gate: a second merchant must not even START approaching while this is true (the
+        /// negotiation lock alone is not enough, because it is only taken once a merchant ARRIVES —
+        /// without this check two merchants would walk over together and the loser would only be turned
+        /// back on arrival).
+        /// </summary>
+        public bool IsAnyMerchantEngaging()
+        {
+            if (IsNegotiationActive) return true;
+            foreach (MerchantNPC merchant in _merchants)
+            {
+                MerchantApproachMover mover = ResolveMover(merchant);
+                if (mover != null && mover.IsBusy) return true;
+            }
+            return false;
+        }
+
+        private MerchantApproachMover ResolveMover(MerchantNPC merchant)
+        {
+            if (merchant == null) return null;
+            if (_movers.TryGetValue(merchant, out MerchantApproachMover cached)) return cached;
+            MerchantApproachMover mover = merchant.GetComponent<MerchantApproachMover>();
+            _movers[merchant] = mover;   // cache even null so we don't GetComponent every frame
+            return mover;
+        }
 
         private void Start()
         {
@@ -151,7 +184,7 @@ namespace DumyatRuntime
 
         private void TryStartAutoApproach()
         {
-            if (IsNegotiationActive) return;       // state lock: one at a time
+            if (IsAnyMerchantEngaging()) return;   // one at a time: nobody negotiating OR approaching
             if (!_playerInMarket) return;
             if (_approachedThisVisit) return;      // one conversation per visit — wait for a re-entry
             if (!PlayerHasFish()) return;
@@ -200,6 +233,22 @@ namespace DumyatRuntime
             }
 
             BeginNegotiationWith(merchant);
+        }
+
+        /// <summary>
+        /// Called by <see cref="MerchantProximityTrigger"/> when the player physically walks out of a
+        /// merchant's conversation range. If that merchant is the one currently negotiating, the
+        /// negotiation is cancelled (the merchant walks away); otherwise it is ignored.
+        /// </summary>
+        public void PlayerLeftConversationArea(MerchantNPC merchant)
+        {
+            if (merchant == null || merchant != _activeMerchant) return;
+
+            Debug.Log($"MerchantSpawner: player left '{NameOf(merchant)}' conversation area — cancelling negotiation.");
+            if (_negotiation != null)
+                _negotiation.CancelNegotiation(merchant);
+            else
+                merchant.EndNegotiation(NegotiationPhase.WalkedAway); // no controller: release the lock directly
         }
 
         private void BeginNegotiationWith(MerchantNPC merchant)

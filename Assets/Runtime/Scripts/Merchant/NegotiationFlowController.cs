@@ -522,6 +522,27 @@ namespace DumyatRuntime
             }
         }
 
+        /// <summary>
+        /// Aborts the negotiation with <paramref name="merchant"/> (player left the conversation area).
+        /// Stops any line still playing, then tears down as a walk-away — which fires
+        /// <c>merchant.EndNegotiation</c> so the spawner releases its lock and the merchant walks home.
+        /// No-op unless this merchant is the one currently negotiating.
+        /// </summary>
+        public void CancelNegotiation(MerchantNPC merchant)
+        {
+            if (merchant == null || merchant != _activeMerchant || !_busy) return;
+
+            Debug.Log($"{LogPrefix} Negotiation with '{NameOf(merchant)}' cancelled — player left the conversation area.");
+
+            // Silence any merchant line still playing so it doesn't keep talking to an empty spot.
+            if (_activeAudioSource != null) _activeAudioSource.Stop();
+
+            // For the Behavior-graph path, mark terminal so any polling nodes unwind; Cleanup is
+            // idempotent (keyed on _activeMerchant), so a later Bt_Resolve becomes a no-op.
+            SetTerminal(NegotiationPhase.WalkedAway);
+            Cleanup(NegotiationPhase.WalkedAway);
+        }
+
         // --- Recovery paths --------------------------------------------------------
 
         // Point 5: a recoverable STT/LLM glitch (still online). Speak a generic "say that again"
@@ -672,6 +693,13 @@ namespace DumyatRuntime
             string voiceId = _activeMerchant != null ? _activeMerchant.AssignedVoiceId : null;
             MerchantConfig config = _activeMerchant != null ? _activeMerchant.Config : null;
             TtsVoiceSettings? voiceSettings = config != null ? config.VoiceSettings : null;
+
+            // A missing voice ID means the merchant's config has no VoiceId — the request would fail
+            // silently (subtitle only). Surface it loudly so a mis-authored config is obvious instead
+            // of the merchant appearing to "lose" its voice mid-scene.
+            if (string.IsNullOrWhiteSpace(voiceId))
+                Debug.LogWarning($"{LogPrefix} Merchant '{NameOf(_activeMerchant)}' has no ElevenLabs " +
+                                 "VoiceId on its MerchantConfig; TTS will fall back to subtitle only.");
             _tts.PlaySpeech(
                 voiceId, arabicText, _activeAudioSource,
                 onComplete: onDone,

@@ -56,8 +56,17 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            // The merchant's voice is defined by its config archetype.
+            // The merchant's voice is defined by its config archetype, and stays fixed for this NPC's
+            // lifetime so its voice never changes between TTS lines.
             AssignedVoiceId = _config != null ? _config.VoiceId : null;
+
+            // Catch mis-authored configs early: a null config or empty VoiceId means this NPC has no
+            // stable voice, which otherwise only shows up as silent (subtitle-only) TTS at run time.
+            if (_config == null)
+                Debug.LogWarning($"MerchantNPC '{name}': no MerchantConfig assigned — it has no voice.");
+            else if (string.IsNullOrWhiteSpace(AssignedVoiceId))
+                Debug.LogWarning($"MerchantNPC '{name}' (config '{_config.MerchantName}'): MerchantConfig " +
+                                 "has no ElevenLabs VoiceId; this merchant will have no voice.");
         }
 
         /// <summary>
