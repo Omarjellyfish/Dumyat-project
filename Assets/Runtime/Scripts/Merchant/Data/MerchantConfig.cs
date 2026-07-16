@@ -41,14 +41,14 @@ namespace DumyatRuntime
                  "away from the negotiation.")]
         [SerializeField] private int _patienceLevel = 3;
 
-        [Header("Voice (archetype fallback)")]
-        // FALLBACK voice for any NPC using this config that does NOT set its own voice. Each NPC's
-        // voice is normally assigned PER INSTANCE on its MerchantNPC component (MerchantNPC._voiceId);
-        // this value is only used when that per-NPC field is empty. There is no shared voice pool.
+        [Header("Voice")]
+        // The ElevenLabs voice every NPC using this config speaks with — MerchantNPC reads its
+        // AssignedVoiceId straight from here. The archetype owns the voice; there is no per-NPC
+        // override and no shared pool.
         // IMPORTANT: any value here MUST be a verified Egyptian Arabic voice (اللهجة المصرية), not
         // generic "Arabic", Gulf, Levantine, Maghrebi or MSA. See docs/MERCHANT_CONTEXT.md.
-        [Tooltip("FALLBACK ElevenLabs voice, used only when an NPC using this config leaves its own " +
-                 "MerchantNPC 'Voice Id' empty. MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.")]
+        [Tooltip("The ElevenLabs voice every NPC using this config speaks with. " +
+                 "MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.")]
         [SerializeField] private string _voiceId;
 
         [Header("Voice (TTS parameters)")]
@@ -110,9 +110,9 @@ namespace DumyatRuntime
         public int PatienceLevel => _patienceLevel;
 
         /// <summary>
-        /// Fallback ElevenLabs voice for NPCs using this config that don't set their own
-        /// <c>MerchantNPC._voiceId</c> (each NPC owns its voice — there is no shared pool). Any value
-        /// MUST be a verified Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.
+        /// The ElevenLabs voice every NPC using this config speaks with (the archetype owns its
+        /// voice — there is no per-NPC override or shared pool). Any value MUST be a verified
+        /// Egyptian Arabic voice. See docs/MERCHANT_CONTEXT.md.
         /// </summary>
         public string VoiceId => _voiceId;
 

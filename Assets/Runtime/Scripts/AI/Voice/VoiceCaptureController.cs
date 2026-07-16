@@ -8,8 +8,8 @@ using UnityEngine.InputSystem;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Reusable voice-capture controller: the single home for the capture-control features that used
-    /// to live only in <see cref="SttVoiceTestHarness"/> — capture mode (push-to-talk / voice-activity),
+    /// Reusable voice-capture controller: the single home for the capture-control features —
+    /// capture mode (push-to-talk / voice-activity),
     /// push-to-talk release tail, voice-activity amplitude + silence tuning, reconnect cooldown,
     /// mic/session status, and an Arabic-safe UTF-8 debug log. It drives an
     /// <see cref="IVoiceCaptureSource"/> (e.g. <see cref="ElevenLabsScribeClient"/>) directly so both

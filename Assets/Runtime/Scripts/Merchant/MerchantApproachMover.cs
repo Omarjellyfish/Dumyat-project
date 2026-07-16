@@ -1,20 +1,24 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace DumyatRuntime
 {
     /// <summary>
     /// Walks the merchant to the player and back. When <see cref="ApproachAndInitiate"/> is called
     /// (by <see cref="MerchantProximityTrigger"/> when the player comes into detection range), the
-    /// merchant walks straight to the player, stops at conversation distance, faces them and starts
-    /// the negotiation through <see cref="MerchantSpawner.PlayerInitiatesWithMerchant"/> — so the
+    /// merchant walks to the player, stops at conversation distance, faces them and starts the
+    /// negotiation through <see cref="MerchantSpawner.PlayerInitiatesWithMerchant"/> — so the
     /// one-at-a-time lock and fish check still apply. When the negotiation ends (any outcome), the
     /// merchant walks back to the position/rotation it had at startup and idles there.
     ///
-    /// Locomotion is a simple straight-line kinematic move with the Animator cross-faded between
-    /// the Walk and Idle states — no NavMesh, which is fine for the open test market. The greeting
+    /// Locomotion is a <see cref="NavMeshAgent"/>: the merchant PATHFINDS around stalls, props and
+    /// walls (the scene needs a baked NavMesh — see the NavMeshSurface in the scene). If no NavMesh
+    /// is available at runtime the mover degrades gracefully to a straight-line walk so the merchant
+    /// still functions. The Animator is cross-faded between the Walk and Idle states; the greeting
     /// Wave on arrival stays <see cref="MerchantAnimationDriver"/>'s job.
     /// </summary>
     [RequireComponent(typeof(MerchantNPC))]
+    [RequireComponent(typeof(NavMeshAgent))]
     public class MerchantApproachMover : MonoBehaviour
     {
         private enum State { AtHome, WalkingToPlayer, Engaged, WalkingHome }
@@ -30,7 +34,7 @@ namespace DumyatRuntime
         [SerializeField, Min(0.5f)] private float _stopDistance = 1.7f;
 
         [Tooltip("How close to the home position counts as arrived when walking back.")]
-        [SerializeField, Min(0.01f)] private float _homeArriveDistance = 0.08f;
+        [SerializeField, Min(0.01f)] private float _homeArriveDistance = 0.2f;
 
         [Header("Animator States")]
         [Tooltip("Animator to drive. Auto-resolved from this GameObject or its children when empty.")]
@@ -47,6 +51,7 @@ namespace DumyatRuntime
         [SerializeField] private MerchantSpawner _spawner;
 
         private MerchantNPC _merchant;
+        private NavMeshAgent _agent;
         private Transform _playerTarget;
         private Vector3 _homePosition;
         private Quaternion _homeRotation;
@@ -63,6 +68,47 @@ namespace DumyatRuntime
 
             _homePosition = transform.position;
             _homeRotation = transform.rotation;
+
+            ConfigureAgent();
+            EnsureBodyCollider();
+        }
+
+        // Set up the NavMeshAgent from the serialized locomotion tuning. Arrival is judged explicitly
+        // against the live target (below), so the agent's own stoppingDistance is left at 0. If the
+        // agent isn't sitting on the baked NavMesh yet, snap it onto the nearest point.
+        private void ConfigureAgent()
+        {
+            _agent = GetComponent<NavMeshAgent>();
+            if (_agent == null) _agent = gameObject.AddComponent<NavMeshAgent>();
+
+            _agent.speed = _walkSpeed;
+            _agent.angularSpeed = _turnSpeed;
+            _agent.acceleration = 8f;
+            _agent.stoppingDistance = 0f;
+            _agent.autoBraking = true;
+            _agent.updateRotation = true;
+            _agent.updateUpAxis = true;
+
+            if (!_agent.isOnNavMesh &&
+                NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+            {
+                _agent.Warp(hit.position);
+            }
+        }
+
+        // A solid (non-trigger) collider so the physics-driven player can't walk THROUGH the merchant.
+        // The prefab's own colliders are all triggers (detection range), which never block anything.
+        private void EnsureBodyCollider()
+        {
+            foreach (var col in GetComponents<Collider>())
+            {
+                if (!col.isTrigger) return;
+            }
+            var capsule = gameObject.AddComponent<CapsuleCollider>();
+            capsule.isTrigger = false;
+            capsule.radius = 0.3f;
+            capsule.height = 1.8f;
+            capsule.center = new Vector3(0f, 0.9f, 0f);
         }
 
         private void OnEnable()
@@ -85,6 +131,7 @@ namespace DumyatRuntime
 
             _playerTarget = player;
             _state = State.WalkingToPlayer;
+            DriveAgentTo(player.position);
         }
 
         private void Update()
@@ -113,6 +160,7 @@ namespace DumyatRuntime
 
             if (toPlayer.magnitude <= _stopDistance)
             {
+                StopAgent();
                 FaceToward(_playerTarget.position);
                 _state = State.Engaged;
                 EnsureAnimatorState(_idleState);
@@ -125,7 +173,9 @@ namespace DumyatRuntime
                 return;
             }
 
-            MoveAlong(toPlayer);
+            // Keep re-targeting so the merchant tracks the (possibly moving) player.
+            DriveAgentTo(_playerTarget.position, toPlayer);
+            EnsureAnimatorState(_walkState);
         }
 
         private void UpdateWalkHome()
@@ -133,28 +183,62 @@ namespace DumyatRuntime
             Vector3 toHome = _homePosition - transform.position;
             toHome.y = 0f;
 
-            if (toHome.magnitude <= _homeArriveDistance)
+            if (HasArrivedHome(toHome))
             {
-                transform.position = new Vector3(_homePosition.x, transform.position.y, _homePosition.z);
+                StopAgent();
                 transform.rotation = _homeRotation;
                 _state = State.AtHome;
                 EnsureAnimatorState(_idleState);
                 return;
             }
 
-            MoveAlong(toHome);
+            DriveAgentTo(_homePosition, toHome);
+            EnsureAnimatorState(_walkState);
         }
 
-        // Straight-line kinematic step with a turn toward the travel direction. The walk state is
-        // re-asserted each frame so another negotiation-end listener (e.g. the animation driver's
-        // return-to-idle) can't leave the merchant sliding in its idle pose.
-        private void MoveAlong(Vector3 flatDirection)
+        // Home is reached when the merchant is within the arrival radius, or the agent has run its
+        // path out and effectively stopped (covers it braking a hair short of the exact point).
+        private bool HasArrivedHome(Vector3 flatToHome)
         {
+            if (flatToHome.magnitude <= _homeArriveDistance) return true;
+            return UseAgent() && !_agent.pathPending &&
+                   _agent.remainingDistance <= 0.3f && _agent.velocity.sqrMagnitude < 0.04f;
+        }
+
+        // Send the agent toward a world point. Falls back to a straight-line transform move when no
+        // NavMesh is available, so the merchant still walks (just without obstacle avoidance).
+        private void DriveAgentTo(Vector3 worldPoint, Vector3 fallbackFlatDir = default)
+        {
+            if (UseAgent())
+            {
+                _agent.isStopped = false;
+                _agent.SetDestination(worldPoint);
+            }
+            else
+            {
+                MoveStraightLine(fallbackFlatDir);
+            }
+        }
+
+        private void StopAgent()
+        {
+            if (UseAgent())
+            {
+                _agent.isStopped = true;
+                _agent.ResetPath();
+            }
+        }
+
+        private bool UseAgent() => _agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh;
+
+        // Graceful degradation only: straight-line step toward the flat direction with a turn.
+        private void MoveStraightLine(Vector3 flatDirection)
+        {
+            if (flatDirection.sqrMagnitude < 0.0001f) return;
             Vector3 direction = flatDirection.normalized;
             Quaternion look = Quaternion.LookRotation(direction, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, look, _turnSpeed * Time.deltaTime);
             transform.position += direction * (_walkSpeed * Time.deltaTime);
-            EnsureAnimatorState(_walkState);
         }
 
         // Invoke target: the spawner rejected the approach (busy / no fish) if this merchant never
@@ -182,6 +266,7 @@ namespace DumyatRuntime
             toHome.y = 0f;
             if (toHome.magnitude <= _homeArriveDistance)
             {
+                StopAgent();
                 transform.rotation = _homeRotation;
                 _state = State.AtHome;
                 EnsureAnimatorState(_idleState);
@@ -189,6 +274,7 @@ namespace DumyatRuntime
             }
 
             _state = State.WalkingHome;
+            DriveAgentTo(_homePosition, toHome);
         }
 
         private void FaceToward(Vector3 worldPoint)
