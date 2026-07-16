@@ -15,13 +15,6 @@ namespace DumyatRuntime
         [Tooltip("Archetype/config that defines this merchant's personality and economics.")]
         [SerializeField] private MerchantConfig _config;
 
-        [Header("Voice")]
-        [Tooltip("The ElevenLabs voice ID this specific NPC speaks with, for its whole lifetime. " +
-                 "Assign one PER NPC here (no shared pool). MUST be a verified Egyptian Arabic voice " +
-                 "(اللهجة المصرية) — see docs/MERCHANT_CONTEXT.md. If left empty, the MerchantConfig's " +
-                 "VoiceId is used as a fallback.")]
-        [SerializeField] private string _voiceId;
-
         [Tooltip("If false, the spawner will skip this merchant when picking who approaches next.")]
         [SerializeField] private bool _isAvailable = true;
 
@@ -57,19 +50,23 @@ namespace DumyatRuntime
 
         /// <summary>
         /// The ElevenLabs voice ID this merchant speaks with for its lifetime, so its voice never
-        /// changes between TTS lines. Set PER NPC via the <c>_voiceId</c> field on this component;
-        /// if that is empty it falls back to <see cref="MerchantConfig.VoiceId"/>. There is no shared
-        /// voice pool — each NPC owns its voice.
+        /// changes between TTS lines. Sourced from the merchant's <see cref="MerchantConfig.VoiceId"/>.
         /// </summary>
         public string AssignedVoiceId { get; private set; }
 
         private void Awake()
         {
-            // Each NPC owns its voice: this component's own _voiceId wins; the config's VoiceId is a
-            // fallback for merchants that don't set one per-instance.
-            AssignedVoiceId = !string.IsNullOrWhiteSpace(_voiceId)
-                ? _voiceId
-                : (_config != null ? _config.VoiceId : null);
+            // The merchant's voice is defined by its config archetype, and stays fixed for this NPC's
+            // lifetime so its voice never changes between TTS lines.
+            AssignedVoiceId = _config != null ? _config.VoiceId : null;
+
+            // Catch mis-authored configs early: a null config or empty VoiceId means this NPC has no
+            // stable voice, which otherwise only shows up as silent (subtitle-only) TTS at run time.
+            if (_config == null)
+                Debug.LogWarning($"MerchantNPC '{name}': no MerchantConfig assigned — it has no voice.");
+            else if (string.IsNullOrWhiteSpace(AssignedVoiceId))
+                Debug.LogWarning($"MerchantNPC '{name}' (config '{_config.MerchantName}'): MerchantConfig " +
+                                 "has no ElevenLabs VoiceId; this merchant will have no voice.");
         }
 
         /// <summary>

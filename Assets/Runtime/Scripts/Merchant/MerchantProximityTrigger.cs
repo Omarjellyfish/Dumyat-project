@@ -19,6 +19,13 @@ namespace DumyatRuntime
     /// the player must LEAVE the range and come back to talk again. OnTriggerStay only keeps RE-TRYING
     /// the single engagement until it actually starts (e.g. when the spawner/mover was momentarily
     /// busy at the moment of entry); it never starts a second one.
+    ///
+    /// WALK-AWAY CANCEL: while THIS merchant is mid-negotiation, <see cref="Update"/> watches the
+    /// player's distance and cancels the sale (the merchant walks back to its spot) once they move
+    /// beyond <c>_conversationRange</c> for longer than the grace window. This is a plain distance
+    /// check — no extra collider or child object is needed, and the range is independent of (and
+    /// smaller than) the detection sphere, so the player doesn't have to leave detection range to end
+    /// the conversation.
     /// </summary>
     [RequireComponent(typeof(MerchantNPC))]
     public class MerchantProximityTrigger : MonoBehaviour
@@ -33,8 +40,25 @@ namespace DumyatRuntime
                  "player when they come into range.")]
         [SerializeField] private bool _facePlayerOnApproach = true;
 
+        [Header("Conversation Range")]
+        [Tooltip("While THIS merchant is negotiating, if the player moves further than this from the " +
+                 "merchant the negotiation is cancelled and the merchant walks back to its spot. Must " +
+                 "be larger than the mover's stop distance (~1.7 m) so simply standing to haggle stays " +
+                 "in range. Smaller than the detection radius so walking off ends the sale.")]
+        [SerializeField, Min(0.5f)] private float _conversationRange = 3f;
+
+        [Tooltip("Seconds the player must stay BEYOND the conversation range before the negotiation is " +
+                 "cancelled. A small value absorbs momentary boundary/VR jitter; 0 cancels instantly.")]
+        [SerializeField, Min(0f)] private float _exitGraceSeconds = 0.75f;
+
         private MerchantNPC _merchant;
         private MerchantApproachMover _mover;
+
+        // Player transform, captured when they enter the detection range, so the conversation-range
+        // check can measure distance every frame while negotiating.
+        private Transform _player;
+        // Seconds the player has continuously been beyond the conversation range this negotiation.
+        private float _outOfRangeTimer;
 
         // True once the merchant has engaged the player during the CURRENT time-in-range. Blocks any
         // further engagement until the player leaves and re-enters (reset in OnTriggerExit).
@@ -54,9 +78,47 @@ namespace DumyatRuntime
         private void OnTriggerEnter(Collider other)
         {
             if (!other.CompareTag(_playerTag)) return;
+            _player = other.transform;   // remember the player for the conversation-range check
             // Fresh entry into range: allow exactly one engagement this visit.
             _engagedThisVisit = false;
             TryEngage(other);
+        }
+
+        // While THIS merchant is the one negotiating, cancel the sale (merchant walks back) if the
+        // player wanders beyond the conversation range for longer than the grace window. This is a
+        // distance check, not a trigger, so it works with no extra colliders/child objects — the
+        // player never has to leave the (larger) detection sphere for the conversation to end.
+        private void Update()
+        {
+            if (_spawner == null || _merchant == null) return;
+            if (_spawner.ActiveMerchant != _merchant) { _outOfRangeTimer = 0f; return; }
+
+            Transform player = ResolvePlayer();
+            if (player == null) return;
+
+            Vector3 toPlayer = player.position - transform.position;
+            toPlayer.y = 0f;   // horizontal distance — VR head height must not affect it
+            if (toPlayer.magnitude <= _conversationRange)
+            {
+                _outOfRangeTimer = 0f;
+                return;
+            }
+
+            _outOfRangeTimer += Time.deltaTime;
+            if (_outOfRangeTimer < _exitGraceSeconds) return;
+
+            _outOfRangeTimer = 0f;
+            Debug.Log($"MerchantProximityTrigger: player left '{name}' conversation range " +
+                      $"({toPlayer.magnitude:0.#}m > {_conversationRange:0.#}m) — cancelling negotiation.");
+            _spawner.PlayerLeftConversationArea(_merchant);
+        }
+
+        private Transform ResolvePlayer()
+        {
+            if (_player != null) return _player;
+            GameObject go = GameObject.FindWithTag(_playerTag);
+            if (go != null) _player = go.transform;
+            return _player;
         }
 
         // Keep RE-TRYING the single engagement only until it actually starts — the spawner or mover may
@@ -79,8 +141,10 @@ namespace DumyatRuntime
             if (!other.CompareTag(_playerTag)) return;
             if (_spawner == null || _merchant == null) return;
             if (_engagedThisVisit) return;                 // already had this visit's one conversation
-            if (_spawner.IsNegotiationActive) return;      // busy now — OnTriggerStay retries later
-            if (_mover != null && _mover.IsBusy) return;
+            // One NPC at a time: block while any merchant is negotiating OR already walking to/from the
+            // player. Checking the spawner-wide state (not just this merchant's mover) is what stops two
+            // merchants from approaching together. OnTriggerStay retries once the coast is clear.
+            if (_spawner.IsAnyMerchantEngaging()) return;
 
             // Mark engaged BEFORE starting so nothing can slip a second conversation in this visit.
             _engagedThisVisit = true;
