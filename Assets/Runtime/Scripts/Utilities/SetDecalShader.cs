@@ -34,19 +34,22 @@ namespace DumyatRuntime
         }
 
         private void UpdateProperties()
-        {
-            if (_renderer == null) _renderer = GetComponent<Renderer>();
-            if (_propBlock == null) _propBlock = new MaterialPropertyBlock();
+{
+    if (_renderer == null) _renderer = GetComponent<Renderer>();
+    if (_propBlock == null) _propBlock = new MaterialPropertyBlock();
 
-            _renderer.GetPropertyBlock(_propBlock);
-            
-            // Map 1-4 slider to 0-3 index logic
-            _propBlock.SetFloat(ChannelNumberID, channelNumber - 1);
-            _propBlock.SetColor(ColorID, color); 
-            _propBlock.SetTexture(PackedDecalTextureID, _texture);
-            _propBlock.SetFloat(InvertTextureID, _invertTexture ? 1.0f : 0.0f);
-            
-            _renderer.SetPropertyBlock(_propBlock);
-        }
+    _renderer.GetPropertyBlock(_propBlock);
+
+    // Map 1-4 slider to 0-3 index logic
+    _propBlock.SetFloat(ChannelNumberID, channelNumber - 1);
+    _propBlock.SetColor(ColorID, color);
+
+    if (_texture != null)
+        _propBlock.SetTexture(PackedDecalTextureID, _texture);
+
+    _propBlock.SetFloat(InvertTextureID, _invertTexture ? 1.0f : 0.0f);
+
+    _renderer.SetPropertyBlock(_propBlock);
+}
     }
 }
