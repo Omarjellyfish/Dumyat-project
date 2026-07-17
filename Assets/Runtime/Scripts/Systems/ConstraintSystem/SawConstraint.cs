@@ -16,6 +16,14 @@ public class SawConstraint : SurfaceConstraint
     [SerializeField] private float _maxDepth = 0.02f;
 
     private float _currentDepth = 0f;
+    private float _previousStrokeAmount = 0f;
+
+    /// <summary>
+    /// Signed stroke speed along the blade axis, in meters/second. Only updates while
+    /// ConstrainMovement runs (i.e. IsConstrained is true), so VFX/SFX driven by this
+    /// reacts purely to actual cutting strokes rather than raw transform movement.
+    /// </summary>
+    public float StrokeVelocity { get; private set; }
 
     public void AdvanceCutDepth()
     {
@@ -54,6 +62,12 @@ public class SawConstraint : SurfaceConstraint
 
         float strokeAmount = Vector3.Dot(delta, sawingAxisVector);
         Vector3 lockedMovement = sawingAxisVector * strokeAmount;
+
+        // Track how fast the stroke position changes frame-to-frame, purely for VFX intensity.
+        StrokeVelocity = Time.deltaTime > 0f
+            ? (strokeAmount - _previousStrokeAmount) / Time.deltaTime
+            : 0f;
+        _previousStrokeAmount = strokeAmount;
 
         // Sink into the wood along the (inverse) surface normal as strokes accumulate.
         Vector3 depthOffset = -_hitNormal * _currentDepth;

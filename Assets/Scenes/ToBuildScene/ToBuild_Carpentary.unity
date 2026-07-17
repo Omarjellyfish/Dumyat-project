@@ -7777,6 +7777,22 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5117540248532394536, guid: 1c819744bd1951d458845811c8782b3e, type: 3}
   m_PrefabInstance: {fileID: 359312703}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &362905011 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 821444228109015969, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
+  m_PrefabInstance: {fileID: 627222541}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 732d532c2fd743440b9f99ae163892ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SawConstraint
+--- !u!4 &362905014 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8986942479874244489, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
+  m_PrefabInstance: {fileID: 627222541}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &374934555 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2060296407267442439, guid: 7822906258aaaa5448564a7241f5899a, type: 3}
@@ -14595,7 +14611,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 8986942479874244489, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7607670931345860158}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
 --- !u!1001 &627413592
@@ -56032,6 +56051,159 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!2083052967 &1884744801602211275
+VisualEffect:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163196731266951835}
+  m_Enabled: 1
+  m_Asset: {fileID: 8926484042661614526, guid: 5cf6df5eacde2fb43a136050cf88fdb7, type: 3}
+  m_InitialEventName: OnPlay
+  m_InitialEventNameOverriden: 0
+  m_StartSeed: 0
+  m_ResetSeedOnPlay: 1
+  m_AllowInstancing: 1
+  m_ResourceVersion: 1
+  m_PropertySheet:
+    m_Float:
+      m_Array:
+      - m_Value: 2000
+        m_Name: Spawn Rate
+        m_Overridden: 1
+      - m_Value: 427.48
+        m_Name: Particle Size
+        m_Overridden: 0
+      - m_Value: 0
+        m_Name: Overall Speed
+        m_Overridden: 1
+      - m_Value: 0.1
+        m_Name: Drag Coefficient
+        m_Overridden: 1
+      - m_Value: -9.81
+        m_Name: Gravity Force
+        m_Overridden: 0
+      - m_Value: 0.03
+        m_Name: Radius
+        m_Overridden: 1
+      - m_Value: 0.68
+        m_Name: Stream Focus
+        m_Overridden: 1
+      - m_Value: 0.03
+        m_Name: Overall Scale
+        m_Overridden: 0
+      - m_Value: 0
+        m_Name: ParticleSize
+        m_Overridden: 1
+      - m_Value: 0
+        m_Name: SpawnRate
+        m_Overridden: 1
+      - m_Value: 0
+        m_Name: SpawnDistanceRate
+        m_Overridden: 1
+      - m_Value: 1
+        m_Name: EjectionDirectionZ
+        m_Overridden: 1
+      - m_Value: 0.14
+        m_Name: EjectionDirectionY
+        m_Overridden: 1
+    m_Vector2f:
+      m_Array:
+      - m_Value: {x: 3, y: 4.8}
+        m_Name: Min/Max Speed
+        m_Overridden: 1
+      - m_Value: {x: 0.1, y: 0.8}
+        m_Name: Min/Max LifeTime
+        m_Overridden: 1
+    m_Vector3f:
+      m_Array:
+      - m_Value: {x: 1, y: 1, z: 10.76}
+        m_Name: Emitter Scale
+        m_Overridden: 1
+      - m_Value: {x: 0, y: 0, z: 1}
+        m_Name: Emit Direction
+        m_Overridden: 1
+      - m_Value: {x: 0, y: 195.83, z: 0}
+        m_Name: EjectionDirectionY
+        m_Overridden: 1
+    m_Vector4f:
+      m_Array: []
+    m_Uint:
+      m_Array: []
+    m_Int:
+      m_Array: []
+    m_Matrix4x4f:
+      m_Array: []
+    m_AnimationCurve:
+      m_Array:
+      - m_Value:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: -0.013381392
+            value: 0.3646296
+            inSlope: -0.032459162
+            outSlope: -0.032459162
+            tangentMode: 34
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0.33333334
+          - serializedVersion: 3
+            time: 1
+            value: 0.3317361
+            inSlope: -0.032459162
+            outSlope: -0.032459162
+            tangentMode: 34
+            weightedMode: 0
+            inWeight: 0.33333334
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        m_Name: Size Over Life
+        m_Overridden: 1
+    m_Gradient:
+      m_Array:
+      - m_Value:
+          serializedVersion: 2
+          key0: {r: 0.19645993, g: 0.2116192, b: 0.026951503, a: 1}
+          key1: {r: 0.16138902, g: 0.17159055, b: 0.050991528, a: 0.12156863}
+          key2: {r: 0, g: 0, b: 0, a: 0}
+          key3: {r: 0, g: 0, b: 0, a: 0}
+          key4: {r: 0, g: 0, b: 0, a: 0}
+          key5: {r: 0, g: 0, b: 0, a: 0}
+          key6: {r: 0, g: 0, b: 0, a: 0}
+          key7: {r: 0, g: 0, b: 0, a: 0}
+          ctime0: 0
+          ctime1: 65535
+          ctime2: 0
+          ctime3: 0
+          ctime4: 0
+          ctime5: 0
+          ctime6: 0
+          ctime7: 0
+          atime0: 0
+          atime1: 65535
+          atime2: 65535
+          atime3: 0
+          atime4: 0
+          atime5: 0
+          atime6: 0
+          atime7: 0
+          m_Mode: 0
+          m_ColorSpace: 1
+          m_NumColorKeys: 2
+          m_NumAlphaKeys: 2
+        m_Name: Color Over Life Time
+        m_Overridden: 1
+    m_NamedObject:
+      m_Array: []
+    m_Bool:
+      m_Array:
+      - m_Value: 1
+        m_Name: Scale From Center
+        m_Overridden: 1
 --- !u!1001 &2293620463413207905
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -56506,6 +56678,104 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 96dd2a78957dd254bbaca52eb8a8899a, type: 3}
+--- !u!114 &3799727211862634420
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163196731266951835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94b89be0b21caa44a8c14515245a9f77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SawVFXController
+  sawVFX: {fileID: 1884744801602211275}
+  sawConstraint: {fileID: 362905011}
+  minVelocityToEmit: 0.1
+  maxVelocity: 100
+  maxSpawnRate: 200
+  spawnSensitivity: 1.71
+  baseParticleSize: 0.07
+  maxParticleSizeMultiplier: 3.04
+  sizeSensitivity: 0.75
+  baseOverallSpeed: 0.81
+  maxOverallSpeedMultiplier: 5
+  speedSensitivity: 2.1
+  baseStreamFocus: 0.68
+  maxStreamFocus: 1
+  focusSensitivity: 10
+  baseDrag: 0.1
+  maxDrag: 0.5
+  dragSensitivity: 1.5
+  backwardIntensityMultiplier: 0.548
+  propertyLerpSpeed: 30
+--- !u!73398921 &4007196158901930282
+VFXRenderer:
+  serializedVersion: 1
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163196731266951835}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+--- !u!1 &4163196731266951835
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7607670931345860158}
+  - component: {fileID: 3799727211862634420}
+  - component: {fileID: 1884744801602211275}
+  - component: {fileID: 4007196158901930282}
+  m_Layer: 0
+  m_Name: SFX_SawDust
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1001 &4343974796984461054
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -57700,6 +57970,21 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2fac4f2ac054eb34f86f067d4d5b09f0, type: 3}
+--- !u!4 &7607670931345860158
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4163196731266951835}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.0189584, y: 0.010408757, z: -0.0029537173, w: 0.99976176}
+  m_LocalPosition: {x: -0.001039505, y: -0.16487849, z: -0.0062446594}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 362905014}
+  m_LocalEulerAnglesHint: {x: 2.176, y: 1.187, z: -0.316}
 --- !u!1001 &7820528074124390849
 PrefabInstance:
   m_ObjectHideFlags: 0
