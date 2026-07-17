@@ -69,11 +69,33 @@ namespace DumyatRuntime
 
             // "wood" here may actually be a child collider (e.g. the WoodPaint painting
             // collider on the Wood Layer, which is what the saw's contact detection hits)
-            // rather than the real plank root. Every valid plank root carries its own
-            // Rigidbody (set up in SetupPiece / present on the original prefab), so walk
-            // up to find it - this is the object that should actually get sliced and destroyed.
-            Rigidbody rootRigidbody = wood.GetComponentInParent<Rigidbody>();
-            wood = rootRigidbody != null ? rootRigidbody.gameObject : wood;
+            // rather than the real plank root. The real plank root carries a dynamic
+            // (non-kinematic) Rigidbody - but WoodPaint ALSO carries its own Rigidbody
+            // (kinematic, added in SetupPiece purely to keep its collider out of the
+            // root's compound collider). A plain GetComponentInParent<Rigidbody>() would
+            // match WoodPaint's kinematic body first and destroy the wrong object, so we
+            // walk up manually and skip any kinematic Rigidbody we find along the way.
+            Rigidbody rootRigidbody = null;
+            Transform searchTransform = wood.transform;
+            while (searchTransform != null)
+            {
+                Rigidbody candidate = searchTransform.GetComponent<Rigidbody>();
+                if (candidate != null && !candidate.isKinematic)
+                {
+                    rootRigidbody = candidate;
+                    break;
+                }
+                searchTransform = searchTransform.parent;
+            }
+
+            if (rootRigidbody == null)
+            {
+                Debug.LogError($"WoodSlicer: '{wood.name}' has no non-kinematic Rigidbody in its parent chain. Aborting cut.");
+                _isSlicing = false;
+                return;
+            }
+
+            wood = rootRigidbody.gameObject;
 
             _isSlicing = true;
 
@@ -152,6 +174,11 @@ namespace DumyatRuntime
         {
             if (piece == null)
                 return;
+
+            // EzySlice's hull pieces are created at world origin with identity rotation -
+            // align to the source mesh's actual transform before doing anything pivot-related,
+            // otherwise the piece ends up positioned near world origin instead of at the plank.
+            piece.transform.SetPositionAndRotation(originalWood.transform.position, originalWood.transform.rotation);
 
             if (_recenterPiecePivot)
                 RecenterMeshPivot(piece);

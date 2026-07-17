@@ -19,7 +19,10 @@ namespace DumyatRuntime
         private IFloatingTextService _floatingTextService;
 
         [Inject]
-        // private void Inject(IFloatingTextService floatingTextService) => _floatingTextService = floatingTextService;
+        private void Inject(IFloatingTextService floatingTextService)
+        {
+            _floatingTextService = floatingTextService;
+        }
 
         private void Awake()
         {
@@ -91,11 +94,7 @@ namespace DumyatRuntime
             if (_lineRenderer != null)
                 _lineRenderer.enabled = false;
 
-            // if (_distanceText != null)
-            {
-                _floatingTextService?.Hide(_distanceText);
-                _distanceText = null;
-            }
+            HideDistanceText();
         }
 
         private void StartLineDraw(ActivateEventArgs args)
@@ -117,8 +116,10 @@ namespace DumyatRuntime
                 Debug.LogError($"[{nameof(LineDrawing)}] LineRenderer is null. Cannot start drawing.");
             }
 
-            // if (_floatingTextService != null)
-            //     _distanceText = _floatingTextService.Show(transform.position, "0.0 cm");
+            if (_floatingTextService != null)
+            {
+                _distanceText = _floatingTextService.Show(transform.position, "0.0 cm");
+            }
         }
 
         public void UpdateLinePositions(Vector3 startWorldPoint, Vector3 currentWorldPoint)
@@ -132,11 +133,24 @@ namespace DumyatRuntime
             Vector3 midpoint = (startWorldPoint + currentWorldPoint) / 2f;
             float distanceCm = Vector3.Distance(startWorldPoint, currentWorldPoint) * 100f;
 
-            // if (_distanceText != null)
-            // {
-            //     _distanceText.SetPosition(midpoint, offset);
-            //     _distanceText.SetText($"{distanceCm:F1} cm");
-            // }
+            if (_distanceText != null)
+            {
+                _distanceText.SetPosition(midpoint, offset);
+                _distanceText.SetText($"{distanceCm:F1} cm");
+            }
+            else if (_floatingTextService != null)
+            {
+                _distanceText = _floatingTextService.Show(midpoint, $"{distanceCm:F1} cm");
+            }
+        }
+
+        private void HideDistanceText()
+        {
+            if (_distanceText == null)
+                return;
+
+            _floatingTextService?.Hide(_distanceText);
+            _distanceText = null;
         }
     }
 }

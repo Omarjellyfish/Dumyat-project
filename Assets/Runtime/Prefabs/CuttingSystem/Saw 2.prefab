@@ -370,12 +370,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SawConstraint
   _woodLayer:
     serializedVersion: 2
-    m_Bits: 1077936128
+    m_Bits: 4194304
   _visualObject: {fileID: 6023583057333272983}
   _detectionDistance: 0.2
   _sideRayOffset: 0.14
-  _surfaceClearance: 0.07
+  _surfaceClearance: 0.1
   _bladeLengthAxis: 1
+  _depthPerStroke: 0.006
+  _maxDepth: 0.02
 --- !u!114 &3786575737844547267
 MonoBehaviour:
   m_ObjectHideFlags: 0
