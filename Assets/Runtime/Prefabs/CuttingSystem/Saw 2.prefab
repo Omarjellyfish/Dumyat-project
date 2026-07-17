@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 821444228109015969}
   - component: {fileID: 3786575737844547267}
   m_Layer: 0
-  m_Name: Saw 1
+  m_Name: Saw 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -376,9 +376,6 @@ MonoBehaviour:
   _sideRayOffset: 0.14
   _surfaceClearance: 0.07
   _bladeLengthAxis: 1
-  _zAxisCorrectionDegrees: -3
-  _maxCutDepth: 0.03
-  _depthLerpSpeed: 6
 --- !u!114 &3786575737844547267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -573,7 +570,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -5486666814757336904, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
+    - {fileID: 8582306376266198838, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
+    - {fileID: 5149186512590018278, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
