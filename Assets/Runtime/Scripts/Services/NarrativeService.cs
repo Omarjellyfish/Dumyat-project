@@ -129,11 +129,13 @@ namespace DumyatRuntime
 
         private void OnPlayDialogueEvent(PlayDialogueEvent evt)
         {
+            Debug.Log($"[NarrativeService] Received PlayDialogueEvent for sequence: {(evt.Sequence != null ? evt.Sequence.name : "NULL")}");
             PlayDialogue(evt.Sequence, evt.Priority);
         }
 
         private void StartNewSequence(DialogueSequenceSO sequence)
         {
+            Debug.Log($"[NarrativeService] Starting new sequence: {sequence.name}");
             _current = new DialogueState
             {
                 Sequence = sequence,
@@ -198,6 +200,7 @@ namespace DumyatRuntime
             }
 
             var currentLine = _current.Sequence.Lines[_current.CurrentLineIndex];
+            Debug.Log($"[NarrativeService] Playing line index {_current.CurrentLineIndex}");
 
             // Set keys if required
             if (!string.IsNullOrEmpty(currentLine.PersistenceKeyToSet))
@@ -206,15 +209,18 @@ namespace DumyatRuntime
             }
 
             // Fire event for UI and Audio
+            string characterId = currentLine.Character != null ? currentLine.Character.CharacterId : string.Empty;
             string speakerName = ResolveSpeakerName(currentLine);
             AudioClip clip = currentLine.Character != null ? currentLine.Character.GetClip(currentLine.VoiceLineKey) : null;
             string subtitleText = currentLine.SubtitleText ?? string.Empty;
+
+            Debug.Log($"[NarrativeService] Publishing DialogueLineStartedEvent. CharacterId: {characterId}, Subtitle: {subtitleText}, HasClip: {clip != null}");
 
             float duration = clip != null
                 ? clip.length
                 : Mathf.Max(MIN_LINE_DURATION, subtitleText.Length / CHARS_PER_SECOND);
 
-            _eventService.Publish(new DialogueLineStartedEvent(speakerName, subtitleText, clip, duration));
+            _eventService.Publish(new DialogueLineStartedEvent(characterId, speakerName, subtitleText, clip, duration));
 
             // Check if we need to present choices after this line
             CheckForChoicePoint();

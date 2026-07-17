@@ -19,13 +19,15 @@ namespace DumyatRuntime
     /// <summary>Published by NarrativeService when a new line starts playing.</summary>
     public readonly struct DialogueLineStartedEvent : IGameEvent
     {
+        public readonly string CharacterId;
         public readonly string SpeakerName;
         public readonly string SubtitleText;
         public readonly AudioClip VoiceClip;
         public readonly float Duration;
 
-        public DialogueLineStartedEvent(string speakerName, string subtitleText, AudioClip voiceClip, float duration)
+        public DialogueLineStartedEvent(string characterId, string speakerName, string subtitleText, AudioClip voiceClip, float duration)
         {
+            CharacterId = characterId;
             SpeakerName = speakerName;
             SubtitleText = subtitleText;
             VoiceClip = voiceClip;
