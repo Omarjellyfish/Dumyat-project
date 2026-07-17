@@ -1,22 +1,26 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
     /// <summary>
     /// Placed at each bus station in every scene. Holds a list of available
     /// <see cref="TravelDestination"/> options. When the player selects one,
-    /// this component finds the persistent car and tells it to pick them up.
+    /// it triggers a fade transition to the destination scene.
     /// </summary>
     public class BusStation : MonoBehaviour
     {
         [Header("Station Config")]
-        [SerializeField] private Transform _pickupPoint;
         [SerializeField] private List<TravelDestination> _destinations;
 
-        [Header("Tags")]
-        [SerializeField] private string _playerTag = "Player";
-        [SerializeField] private string _carTag = "PlayerCar";
+        private IFadeTransitionService _fadeTransition;
+
+        [Inject]
+        private void Inject(IFadeTransitionService fadeTransition)
+        {
+            _fadeTransition = fadeTransition;
+        }
 
         /// <summary>
         /// Returns the list of available destinations from this station.
@@ -36,29 +40,13 @@ namespace DumyatRuntime
                 return;
             }
 
-            GameObject playerObj = GameObject.FindWithTag(_playerTag);
-            GameObject carObj = GameObject.FindWithTag(_carTag);
-
-            if (playerObj == null)
+            if (_fadeTransition == null)
             {
-                Debug.LogWarning("BusStation: No GameObject with tag 'Player' found.");
+                Debug.LogError("BusStation: IFadeTransitionService not injected.");
                 return;
             }
 
-            if (carObj == null)
-            {
-                Debug.LogWarning("BusStation: No GameObject with tag 'PlayerCar' found.");
-                return;
-            }
-
-            var carHandler = carObj.GetComponent<CarTransitionHandler>();
-            if (carHandler == null)
-            {
-                Debug.LogWarning("BusStation: Car is missing CarTransitionHandler component.");
-                return;
-            }
-
-            carHandler.RequestPickup(_pickupPoint, playerObj.transform, destination.SceneName);
+            _fadeTransition.StartTransition(destination.SceneName);
         }
 
         /// <summary>
