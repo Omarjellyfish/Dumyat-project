@@ -154,7 +154,7 @@ namespace DumyatRuntime
         }
     }
 
-    /// <summary>Record the outcome + tear down (notifies the spawner). Runs after the loop resolves.</summary>
+    /// <summary>Record the outcome + tear down (notifies the coordinator). Runs after the loop resolves.</summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(name: "Resolve Negotiation", story: "Resolve negotiation",
         category: "Action/Merchant", id: "c2a10008-4b20-4c30-8d40-000000000008")]

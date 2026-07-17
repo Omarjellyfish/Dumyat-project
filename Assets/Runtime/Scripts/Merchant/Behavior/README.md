@@ -7,7 +7,7 @@ package). This file is the build recipe.
 
 ## How it fits together
 
-- `MerchantSpawner` still calls `NegotiationFlowController.BeginNegotiation(merchant)`.
+- `MerchantApproachCoordinator` still calls `NegotiationFlowController.BeginNegotiation(merchant)`.
 - If a `BehaviorGraphAgent` **with a graph** is assigned to the controller's `_agent` field, it
   `Restart()`s the graph. Otherwise the **legacy coded flow runs** (nothing breaks before the graph
   exists — this is the regression safety net).
@@ -85,4 +85,4 @@ Blackboard variables are **not required** — the nodes read state from
   template differs on your version, reconcile these classes against a freshly generated node (the
   `Bt_*` calls stay the same).
 - `Recover Turn` / `Scripted Fallback` both end via the controller's idempotent teardown, so the
-  spawner's one-at-a-time lock + cooldown release correctly.
+  coordinator's one-at-a-time lock + cooldown release correctly.

@@ -78,14 +78,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 144f90d6c04085e4db5027ebc334df26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.Fish
-  data:
-    fishName: Nimo
-    minWeight: 0.5
-    maxWeight: 2
-    pricePerKg: 100
-  currentWeight: 0
-  currentValue: 0
-  mouthPoint: {fileID: 8772536495441265128}
+  _species: {fileID: 11400000, guid: f19786baf7ff719489be33ccc9af8c58, type: 2}
+  _mouthPoint: {fileID: 8772536495441265128}
 --- !u!136 &7558044808312730590
 CapsuleCollider:
   m_ObjectHideFlags: 0

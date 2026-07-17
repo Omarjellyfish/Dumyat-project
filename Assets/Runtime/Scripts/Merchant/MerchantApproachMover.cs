@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.AI;
 
 namespace DumyatRuntime
@@ -7,7 +8,7 @@ namespace DumyatRuntime
     /// Walks the merchant to the player and back. When <see cref="ApproachAndInitiate"/> is called
     /// (by <see cref="MerchantProximityTrigger"/> when the player comes into detection range), the
     /// merchant walks to the player, stops at conversation distance, faces them and starts the
-    /// negotiation through <see cref="MerchantSpawner.PlayerInitiatesWithMerchant"/> — so the
+    /// negotiation through <see cref="MerchantApproachCoordinator.PlayerInitiatesWithMerchant"/> — so the
     /// one-at-a-time lock and fish check still apply. When the negotiation ends (any outcome), the
     /// merchant walks back to the position/rotation it had at startup and idles there.
     ///
@@ -47,8 +48,8 @@ namespace DumyatRuntime
         [SerializeField] private string _idleState = "Idle";
 
         [Header("Wiring")]
-        [Tooltip("Spawner that owns the negotiation lock. Auto-resolved from the scene when empty.")]
-        [SerializeField] private MerchantSpawner _spawner;
+        [Tooltip("Coordinator that owns the negotiation lock. Auto-resolved from the scene when empty.")]
+        [SerializeField, FormerlySerializedAs("_spawner")] private MerchantApproachCoordinator _coordinator;
 
         private MerchantNPC _merchant;
         private NavMeshAgent _agent;
@@ -64,7 +65,7 @@ namespace DumyatRuntime
         {
             _merchant = GetComponent<MerchantNPC>();
             if (_animator == null) _animator = GetComponentInChildren<Animator>();
-            if (_spawner == null) _spawner = FindFirstObjectByType<MerchantSpawner>();
+            if (_coordinator == null) _coordinator = FindFirstObjectByType<MerchantApproachCoordinator>();
 
             _homePosition = transform.position;
             _homeRotation = transform.rotation;
@@ -123,7 +124,7 @@ namespace DumyatRuntime
 
         /// <summary>
         /// Starts walking to <paramref name="player"/>; on arrival the negotiation is initiated
-        /// through the spawner. Ignored while already walking or engaged.
+        /// through the coordinator. Ignored while already walking or engaged.
         /// </summary>
         public void ApproachAndInitiate(Transform player)
         {
@@ -165,9 +166,9 @@ namespace DumyatRuntime
                 _state = State.Engaged;
                 EnsureAnimatorState(_idleState);
 
-                // Route through the spawner (lock + fish check). If it rejects, no negotiation
+                // Route through the coordinator (lock + fish check). If it rejects, no negotiation
                 // starts and OnNegotiationEnded never fires — verify shortly after and go home.
-                if (_spawner != null) _spawner.PlayerInitiatesWithMerchant(_merchant);
+                if (_coordinator != null) _coordinator.PlayerInitiatesWithMerchant(_merchant);
                 CancelInvoke(nameof(VerifyEngaged));
                 Invoke(nameof(VerifyEngaged), 0.25f);
                 return;
@@ -241,12 +242,12 @@ namespace DumyatRuntime
             transform.position += direction * (_walkSpeed * Time.deltaTime);
         }
 
-        // Invoke target: the spawner rejected the approach (busy / no fish) if this merchant never
+        // Invoke target: the coordinator rejected the approach (busy / no fish) if this merchant never
         // became the active one — walk back instead of standing at the player forever.
         private void VerifyEngaged()
         {
             if (_state != State.Engaged) return;
-            if (_spawner == null || _spawner.ActiveMerchant != _merchant)
+            if (_coordinator == null || _coordinator.ActiveMerchant != _merchant)
             {
                 Debug.Log($"MerchantApproachMover: '{name}' approach was rejected; returning home.");
                 StartWalkingHome();

@@ -208,8 +208,10 @@ namespace DumyatRuntime
         private const string CoercedHoldEnglish = "No sir, that's my final price — I can't go any higher than this.";
         private const string CoercedUltimatumArabic = "يا ريس، ده اخر سعر ونهائي، يا تقبل يا نسيبها، قرر دلوقتي.";
         private const string CoercedUltimatumEnglish = "Sir, this is my final, last price — take it or leave it, decide now.";
-        private const string CoercedWalkAwayArabic = "خلاص يا ريس، مفيش اتفاق النهاردة، ربنا يوفقك في السوق.";
-        private const string CoercedWalkAwayEnglish = "That's it, sir — no deal today, good luck in the market.";
+        // Public so a hard ceiling enforced outside this layer (NegotiationFlowController's turn limit)
+        // speaks with the merchant's own canned voice instead of inventing a second farewell line.
+        public const string CoercedWalkAwayArabic = "خلاص يا ريس، مفيش اتفاق النهاردة، ربنا يوفقك في السوق.";
+        public const string CoercedWalkAwayEnglish = "That's it, sir — no deal today, good luck in the market.";
         private const string CoercedBargainAcceptArabic = "ماشي يا ريس، اتفقنا خلاص، هدهالك بالسعر اللي انت طالبه.";
         private const string CoercedBargainAcceptEnglish = "Alright sir, deal — I'll take it at the price you asked.";
 
@@ -245,10 +247,10 @@ namespace DumyatRuntime
 
         // Scripted WARNING spoken when the merchant tries to walk away without having told the player it
         // is leaving. It announces the departure plainly and gives them one turn to decide; only then may
-        // a WalkAway actually end the negotiation.
-        private const string CoercedFinalWarningArabic =
+        // a WalkAway actually end the negotiation. Public for the same reason as the walk-away pair above.
+        public const string CoercedFinalWarningArabic =
             "بص يا ريس، صبري خلص وانا همشي، دي اخر فرصة، يا نتفق دلوقتي يا كل واحد يروح في حاله.";
-        private const string CoercedFinalWarningEnglish =
+        public const string CoercedFinalWarningEnglish =
             "Look sir, my patience is finished and I'm about to leave. This is your last chance — we agree now, or we each go our own way.";
 
         // Scripted clarify lines used when the merchant tried to price the fish before the fisherman

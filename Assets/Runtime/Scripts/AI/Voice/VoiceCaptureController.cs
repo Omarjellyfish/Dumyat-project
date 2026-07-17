@@ -80,6 +80,12 @@ namespace DumyatRuntime
                  "failing reconnect backs off instead of hammering every frame.")]
         [SerializeField, Min(0f)] private float _reconnectCooldownSeconds = 2f;
 
+        [Header("Speech Limit")]
+        [Tooltip("Hard cap on ONE player utterance, in seconds. On reaching it the mic commits early " +
+                 "(the audio captured so far is still transcribed) so a long ramble cannot burn " +
+                 "unbounded STT usage. Applies to both capture modes. 0 = no cap.")]
+        [SerializeField, Min(0f)] private float _maxSpeechSeconds = 20f;
+
         [Header("Debug Log File")]
         [Tooltip("Write transcripts + status/errors (and, via AppendLog, merchant lines) to a UTF-8 " +
                  "text file so the Arabic/Egyptian output can be reviewed outside the Unity Console. " +
@@ -109,6 +115,7 @@ namespace DumyatRuntime
         private bool _pttStopPending;        // PTT released; committing after the tail delay
         private float _pttStopTime;          // unscaled time at which the delayed PTT stop fires
         private float _reconnectAllowedTime; // earliest time we may auto-reconnect after a drop
+        private float _utteranceStartTime;   // unscaled time the current utterance started (speech cap)
         private CaptureMode _lastCaptureMode;
         private string _status = "Idle.";
         private string _lastTranscript = "";
@@ -122,6 +129,8 @@ namespace DumyatRuntime
         public float VadAmplitudeThreshold { get => _vadAmplitudeThreshold; set => _vadAmplitudeThreshold = Mathf.Clamp(value, 0f, 0.5f); }
         public float VadSilenceSeconds { get => _vadSilenceSeconds; set => _vadSilenceSeconds = Mathf.Max(0.1f, value); }
         public float ReconnectCooldownSeconds { get => _reconnectCooldownSeconds; set => _reconnectCooldownSeconds = Mathf.Max(0f, value); }
+        /// <summary>Hard cap on one utterance, in seconds; 0 = no cap. See <see cref="_maxSpeechSeconds"/>.</summary>
+        public float MaxSpeechSeconds { get => _maxSpeechSeconds; set => _maxSpeechSeconds = Mathf.Max(0f, value); }
         public bool LogToFile { get => _logToFile; set => _logToFile = value; }
         /// <summary>Log file name; only takes effect before the first log line is written.</summary>
         public string LogFileName { get => _logFileName; set => _logFileName = value; }
@@ -243,6 +252,24 @@ namespace DumyatRuntime
                 _status = $"Switched to {_captureMode}.";
             }
 
+            // Speech cap: commit the utterance early once it runs too long, so one rambling answer
+            // cannot stream unbounded audio to STT. Checked BEFORE the mode branches because the
+            // voice-activity branch returns below and would never reach a check placed after it.
+            //
+            // EndCapture() (not StopPushToTalkCapture()) is deliberate: it disarms as well as
+            // committing. Merely stopping the mic would leave _armed set, and the voice-activity
+            // re-arm below would start a fresh utterance on the very next frame — letting the player
+            // talk forever in back-to-back capped chunks, which is exactly what the cap must prevent.
+            // The flow re-arms for the next turn via BeginListening -> BeginCapture.
+            if (_startedCapture && _maxSpeechSeconds > 0f
+                && Time.unscaledTime - _utteranceStartTime >= _maxSpeechSeconds)
+            {
+                EndCapture();
+                _status = $"Speech limit ({_maxSpeechSeconds:0}s) reached — sending.";
+                AppendLog("STT", $"Player hit the {_maxSpeechSeconds:0}s speech cap; committing early.");
+                return;
+            }
+
             if (_captureMode == CaptureMode.VoiceActivity)
             {
                 // Arm/re-arm: after a session drop, reconnect only past the cooldown.
@@ -301,6 +328,7 @@ namespace DumyatRuntime
             ConfigureSourceForMode();
             _lastError = "";
             _startedCapture = true;
+            _utteranceStartTime = Time.unscaledTime;   // starts this utterance's speech-cap clock
             _status = _captureMode == CaptureMode.PushToTalk
                 ? "Capturing… release to send."
                 : "Armed — speak; auto-stops on silence.";

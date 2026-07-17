@@ -6,7 +6,7 @@ namespace DumyatRuntime
     /// <summary>
     /// Thin component placed on each pre-existing merchant GameObject in the market
     /// scene. For now it only carries the merchant's <see cref="MerchantConfig"/> and
-    /// exposes the seams the <see cref="MerchantSpawner"/> needs to orchestrate
+    /// exposes the seams the <see cref="MerchantApproachCoordinator"/> needs to orchestrate
     /// approaches. The actual negotiation logic is intentionally NOT here yet — it
     /// will be added in the next step and will drive <see cref="EndNegotiation"/>.
     /// </summary>
@@ -15,7 +15,7 @@ namespace DumyatRuntime
         [Tooltip("Archetype/config that defines this merchant's personality and economics.")]
         [SerializeField] private MerchantConfig _config;
 
-        [Tooltip("If false, the spawner will skip this merchant when picking who approaches next.")]
+        [Tooltip("If false, the coordinator will skip this merchant when picking who approaches next.")]
         [SerializeField] private bool _isAvailable = true;
 
         /// <summary>The archetype configuration for this merchant.</summary>
@@ -37,7 +37,7 @@ namespace DumyatRuntime
 
         /// <summary>
         /// Raised when a negotiation with this merchant ends, carrying the final outcome.
-        /// The spawner subscribes to this to release its state lock and start the cooldown.
+        /// The coordinator subscribes to this to release its state lock and start the cooldown.
         /// </summary>
         public event Action<MerchantNPC, NegotiationPhase> OnNegotiationEnded;
 
@@ -70,7 +70,7 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Called by the spawner to tell this merchant to begin approaching/greeting the
+        /// Called by the coordinator to tell this merchant to begin approaching/greeting the
         /// player. Notifies cosmetic listeners via <see cref="OnApproachStarted"/> (the
         /// negotiation itself is driven by <see cref="NegotiationFlowController"/>).
         /// </summary>
@@ -84,7 +84,7 @@ namespace DumyatRuntime
         /// <summary>
         /// Ends the current negotiation with the given outcome and notifies subscribers.
         /// Temporary seam: the negotiation system (next step) will call this. Exposed now
-        /// so the spawner's cooldown/lock flow can be wired and tested.
+        /// so the coordinator's cooldown/lock flow can be wired and tested.
         /// </summary>
         public void EndNegotiation(NegotiationPhase outcome)
         {

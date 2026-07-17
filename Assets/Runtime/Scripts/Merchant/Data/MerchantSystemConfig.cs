@@ -12,10 +12,6 @@ namespace DumyatRuntime
     public class MerchantSystemConfig : ScriptableObject
     {
         [Header("Roster")]
-        [Tooltip("Total number of merchant NPCs configured for the market. " +
-                 "Intended to match the length of Merchant Configs.")]
-        [SerializeField] private int _merchantCount;
-
         [Tooltip("Every merchant archetype available in the market.")]
         [SerializeField] private List<MerchantConfig> _merchantConfigs = new List<MerchantConfig>();
 
@@ -32,9 +28,6 @@ namespace DumyatRuntime
         [Tooltip("Cooldown, in seconds, before the player can approach a merchant " +
                  "again after a negotiation ends.")]
         [SerializeField] private float _cooldownBetweenApproaches = 5f;
-
-        /// <summary>Total number of merchant NPCs configured for the market.</summary>
-        public int MerchantCount => _merchantCount;
 
         /// <summary>Every merchant archetype available in the market.</summary>
         public IReadOnlyList<MerchantConfig> MerchantConfigs => _merchantConfigs;

@@ -6,10 +6,14 @@ namespace DumyatRuntime
 {
     /// <summary>
     /// TEST-ONLY <see cref="IFishInventory"/>: hands the negotiation flow a fresh, randomized
-    /// <see cref="FishData"/> per sale so the merchant pipeline can be exercised without the real
-    /// inventory. Each entry is an Egyptian species with a fair-value and weight RANGE; a sale rolls
-    /// a weight in range and derives the fair market value from a per-kg price so heavier fish are
-    /// worth more. Pure data generation — no ItemData / InventoryManager coupling.
+    /// <see cref="FishData"/> per sale so the merchant pipeline can be exercised without fishing.
+    /// A sale rolls a weight and a per-kg rate in the species' bands, deriving a fair market value so
+    /// heavier fish are worth more — the same rolls a real <see cref="Fish"/> makes at spawn.
+    ///
+    /// For the real thing — the fish the player actually caught — use
+    /// <see cref="CaughtFishInventory"/>. Keep only one of the two in a scene, or assign the one you
+    /// want explicitly on <c>NegotiationFlowController</c> / <c>MerchantApproachCoordinator</c>: they resolve an
+    /// inventory by scanning the scene and would otherwise pick whichever they find first.
     /// </summary>
     public class RandomFishInventoryTestDriver : MonoBehaviour, IFishInventory
     {
@@ -33,16 +37,10 @@ namespace DumyatRuntime
             {
                 var catalog = new List<FishCatalogEntry>();
                 if (_species == null) return catalog;
-                foreach (FishSpeciesSO s in _species)
+                foreach (FishSpeciesSO species in _species)
                 {
-                    if (s == null || string.IsNullOrWhiteSpace(s.fishType)) continue;
-                    catalog.Add(new FishCatalogEntry
-                    {
-                        fishType = s.fishType,
-                        fishTypeArabic = s.fishTypeArabic,
-                        minWeight = s.minWeight,
-                        maxWeight = s.maxWeight
-                    });
+                    if (species == null || string.IsNullOrWhiteSpace(species.FishType)) continue;
+                    catalog.Add(species.ToCatalogEntry());
                 }
                 return catalog;
             }
@@ -65,22 +63,16 @@ namespace DumyatRuntime
             if (!HasFish) return false;
 
             FishSpeciesSO species = _species[UnityEngine.Random.Range(0, _species.Count)];
-            if (species == null || string.IsNullOrWhiteSpace(species.fishType)) return false;
+            if (species == null || string.IsNullOrWhiteSpace(species.FishType)) return false;
 
-            float weight = UnityEngine.Random.Range(
-                Mathf.Max(0.01f, species.minWeight),
-                Mathf.Max(species.minWeight, species.maxWeight));
-            float pricePerKg = UnityEngine.Random.Range(
-                Mathf.Max(0f, species.minPricePerKg),
-                Mathf.Max(species.minPricePerKg, species.maxPricePerKg));
-
-            float value = weight * pricePerKg;
+            float weight = species.RollWeight();
+            float value = weight * species.RollPricePerKg();
             if (_roundValue) value = Mathf.Round(value);
 
             fish = new FishData
             {
-                fishType = species.fishType,
-                fishTypeArabic = species.fishTypeArabic,
+                fishType = species.FishType,
+                fishTypeArabic = species.FishTypeArabic,
                 weight = (float)Math.Round(weight, 2),
                 fairMarketValue = value
             };

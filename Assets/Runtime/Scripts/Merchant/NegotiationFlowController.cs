@@ -23,8 +23,8 @@ namespace DumyatRuntime
     ///   deterministic <c>EvaluateCounterOffer</c> is intentionally NOT used to drive turns here —
     ///   it remains available if you later want to gate/override the LLM's action.
     ///
-    /// Lifecycle handoff: the <see cref="MerchantSpawner"/> calls <see cref="BeginNegotiation"/>;
-    /// when the negotiation ends this calls <c>merchant.EndNegotiation(phase)</c>, which the spawner
+    /// Lifecycle handoff: the <see cref="MerchantApproachCoordinator"/> calls <see cref="BeginNegotiation"/>;
+    /// when the negotiation ends this calls <c>merchant.EndNegotiation(phase)</c>, which the coordinator
     /// listens to in order to release its one-at-a-time lock and start the cooldown.
     /// </summary>
     public class NegotiationFlowController : MonoBehaviour, INegotiationService
@@ -47,16 +47,25 @@ namespace DumyatRuntime
         // greeting; on later conversations a greeting is used only this fraction of the time.
         private const float GreetingChanceAfterFirst = 0.4f;
 
+        [Header("Limits")]
+        [Tooltip("Hard ceiling on how many player turns one sale may take, protecting the LLM/TTS " +
+                 "usage budget. The merchant gives its final warning on the second-to-last turn and " +
+                 "walks away on the last. Only PROCESSED turns count — silent/failed captures are " +
+                 "capped separately. 0 = no limit.")]
+        [SerializeField, Min(0)] private int _maxPlayerTurns = 20;
+
         // Injected AI / consent / stats services (replace the former manager singletons).
         private IConsentService _consent;
         private IMerchantNegotiationService _negotiation;
         private ITTSService _tts;
         private IPlayerStatsService _playerStats;
+        private IEventService _eventService;
 
         [Inject]
         private void Inject(IConsentService consent, IMerchantNegotiationService negotiation,
-            ITTSService tts, IPlayerStatsService playerStats)
+            ITTSService tts, IPlayerStatsService playerStats, IEventService eventService)
         {
+            _eventService = eventService;
             _consent = consent;
             _negotiation = negotiation;
             _tts = tts;
@@ -144,7 +153,7 @@ namespace DumyatRuntime
             Unsubscribe();
         }
 
-        // --- Entry point (called by MerchantSpawner) -------------------------------
+        // --- Entry point (called by MerchantApproachCoordinator) -------------------------------
 
         /// <summary>
         /// Starts a negotiation with <paramref name="merchant"/>. Gates on consent/connectivity
@@ -437,10 +446,55 @@ namespace DumyatRuntime
 
         // Applies the LLM's action to game state IMMEDIATELY, then plays the merchant's line in
         // parallel (point 5). Non-terminal actions re-open the mic after the line; terminal actions
-        // resolve after the line so the closing/farewell is heard before the spawner moves on.
+        // resolve after the line so the closing/farewell is heard before the coordinator moves on.
+        // Hard ceiling on how long one sale may drag on, protecting the LLM/TTS usage budget. This is
+        // independent of the LLM layer's own hold-at-max patience ladder, which usually ends a sale
+        // long before this — the limit exists for the player who negotiates forever.
+        //
+        // It mirrors that ladder's invariant (see the WALK-AWAY WARNING GATE in MerchantNegotiationLLM):
+        // the merchant WARNS on the second-to-last turn and only LEAVES on the last, so it never
+        // vanishes mid-conversation with no signal. That gate lives in the LLM validation layer and has
+        // already run by the time we get here, so this path has to honour the rule itself.
+        //
+        // Overrides the ACTION rather than ending the negotiation directly, so both callers route it
+        // through their own existing WalkAway/HoldFirm cases instead of duplicating terminal handling.
+        // Called from ApplyTurnResult AND Bt_ApplyResult — the two are near-identical twins that have
+        // drifted before, so the limit lives in one place by construction.
+        private void ApplyTurnLimit(MerchantTurnResult result)
+        {
+            if (_maxPlayerTurns <= 0 || _state == null) return;
+
+            // Never override a turn that is already closing the sale: if the player finally accepts (or
+            // confirms they are done) on the very last turn, that outcome stands.
+            if (result.Action == MerchantAction.Accept || result.Action == MerchantAction.PlayerDeclined)
+                return;
+
+            if (_state.turnCount >= _maxPlayerTurns)
+            {
+                Debug.Log($"{LogPrefix} Turn limit ({_maxPlayerTurns}) reached — merchant walks away.");
+                result.Action = MerchantAction.WalkAway;
+                result.MerchantSpeech = MerchantNegotiationLLM.CoercedWalkAwayArabic;
+                result.SpeechTranslationEnglish = MerchantNegotiationLLM.CoercedWalkAwayEnglish;
+                return;
+            }
+
+            // Second-to-last turn: spend it on the warning, unless the patience ladder already warned.
+            if (_state.turnCount >= _maxPlayerTurns - 1 && !_state.walkAwayWarningGiven)
+            {
+                Debug.Log($"{LogPrefix} Turn {_state.turnCount}/{_maxPlayerTurns} — final warning before " +
+                          "the turn limit walks the merchant away.");
+                result.Action = MerchantAction.HoldFirm;
+                result.IsFinalWarning = true;
+                result.MerchantSpeech = MerchantNegotiationLLM.CoercedFinalWarningArabic;
+                result.SpeechTranslationEnglish = MerchantNegotiationLLM.CoercedFinalWarningEnglish;
+                _state.walkAwayWarningGiven = true;
+            }
+        }
+
         private void ApplyTurnResult(MerchantTurnResult result)
         {
             _state.turnCount++;
+            ApplyTurnLimit(result);
             Debug.Log($"{LogPrefix} Turn {_state.turnCount}: action={result.Action}" +
                       (result.HasNewOffer ? $", newOffer={result.NewOfferAmount:0.#}" : "."));
 
@@ -525,7 +579,7 @@ namespace DumyatRuntime
         /// <summary>
         /// Aborts the negotiation with <paramref name="merchant"/> (player left the conversation area).
         /// Stops any line still playing, then tears down as a walk-away — which fires
-        /// <c>merchant.EndNegotiation</c> so the spawner releases its lock and the merchant walks home.
+        /// <c>merchant.EndNegotiation</c> so the coordinator releases its lock and the merchant walks home.
         /// No-op unless this merchant is the one currently negotiating.
         /// </summary>
         public void CancelNegotiation(MerchantNPC merchant)
@@ -602,7 +656,7 @@ namespace DumyatRuntime
         }
 
         // STUB for the later scripted-dialogue task. For now it logs a clear TODO and ends cleanly so
-        // the spawner can proceed; the real system should take over the negotiation here instead.
+        // the coordinator can proceed; the real system should take over the negotiation here instead.
         private void TriggerScriptedFallback(MerchantNPC merchant, FishData fish)
         {
             string fishName = fish != null ? fish.fishType : "<no fish>";
@@ -655,7 +709,7 @@ namespace DumyatRuntime
             Cleanup(phase);
         }
 
-        // Idempotent teardown (keyed on _activeMerchant). Notifies the spawner so it releases its
+        // Idempotent teardown (keyed on _activeMerchant). Notifies the coordinator so it releases its
         // lock and starts the cooldown for the next approach (point 7).
         private void Cleanup(NegotiationPhase phase)
         {
@@ -665,13 +719,17 @@ namespace DumyatRuntime
             CancelInvoke(nameof(ReListen));   // drop any pending silent re-listen
             Unsubscribe();
             _voiceCapture?.CloseSession();
+
+            // Published before _activeMerchant is cleared below, so listeners still know WHO stopped.
+            _eventService?.Publish(new MerchantStoppedSpeakingEvent(merchant));
+
             _activeMerchant = null;
             _state = null;
             _activeAudioSource = null;
             _busy = false;
 
-            Debug.Log($"{LogPrefix} Cleanup ({phase}); notifying spawner.");
-            merchant.EndNegotiation(phase); // -> MerchantSpawner.HandleNegotiationEnded (lock + cooldown)
+            Debug.Log($"{LogPrefix} Cleanup ({phase}); notifying coordinator.");
+            merchant.EndNegotiation(phase); // -> MerchantApproachCoordinator.HandleNegotiationEnded (lock + cooldown)
         }
 
         // --- External call wrappers ------------------------------------------------
@@ -859,6 +917,7 @@ namespace DumyatRuntime
             _lastResult = null;
 
             _state.turnCount++;
+            ApplyTurnLimit(result);
             Debug.Log($"{LogPrefix} Turn {_state.turnCount}: action={result.Action}" +
                       (result.HasNewOffer ? $", newOffer={result.NewOfferAmount:0.#}" : "."));
             ShowSubtitle(result.SpeechTranslationEnglish, result.MerchantSpeech);
@@ -936,7 +995,7 @@ namespace DumyatRuntime
             _pendingLine = FallbackArabic;
         }
 
-        /// <summary>Resolve step: record the outcome and tear down (notifies the spawner).</summary>
+        /// <summary>Resolve step: record the outcome and tear down (notifies the coordinator).</summary>
         public void Bt_Resolve() => EndWithStat(Outcome);
 
         /// <summary>Fallback step: hand to the scripted fallback + tear down (early-failure branch).</summary>
@@ -1045,13 +1104,17 @@ namespace DumyatRuntime
             _subscribed = false;
         }
 
+        // Announces a merchant line for display. Called the moment the line is settled and never waits
+        // on audio, so the subtitle and the speech start together.
         private void ShowSubtitle(string english, string arabic)
         {
-            // STUB: UI team hooks subtitle display here. Called immediately, independent of audio.
             Debug.Log($"{LogPrefix} [Subtitle] {english}  |  (AR) {arabic}");
             // Also record the merchant's Arabic line to the shared UTF-8 log so the whole conversation
             // (merchant + player transcripts) is reviewable outside the Unity Console.
             _voiceCapture?.AppendLog("MERCHANT", $"{arabic}  |  (EN) {english}");
+
+            if (_eventService == null || _activeMerchant == null) return;
+            _eventService.Publish(new MerchantSpokeEvent(_activeMerchant, english, arabic));
         }
 
         private void ShowThinkingCue()

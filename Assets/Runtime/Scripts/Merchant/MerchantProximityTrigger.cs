@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DumyatRuntime
 {
@@ -11,13 +12,13 @@ namespace DumyatRuntime
     /// With a <see cref="MerchantApproachMover"/> on the same GameObject the MERCHANT walks over
     /// to the player and the negotiation starts on arrival; without one it starts immediately in
     /// place (legacy behaviour). Either way the request routes through
-    /// <see cref="MerchantSpawner.PlayerInitiatesWithMerchant"/> so the spawner's one-at-a-time
+    /// <see cref="MerchantApproachCoordinator.PlayerInitiatesWithMerchant"/> so the coordinator's one-at-a-time
     /// lock and fish check still apply.
     ///
     /// ONE CONVERSATION PER VISIT: the merchant engages the player exactly once per time they are in
     /// range. After a negotiation ends, it will NOT start another while the player stays in range —
     /// the player must LEAVE the range and come back to talk again. OnTriggerStay only keeps RE-TRYING
-    /// the single engagement until it actually starts (e.g. when the spawner/mover was momentarily
+    /// the single engagement until it actually starts (e.g. when the coordinator/mover was momentarily
     /// busy at the moment of entry); it never starts a second one.
     ///
     /// WALK-AWAY CANCEL: while THIS merchant is mid-negotiation, <see cref="Update"/> watches the
@@ -33,8 +34,8 @@ namespace DumyatRuntime
         [Tooltip("Tag identifying the player object entering the trigger.")]
         [SerializeField] private string _playerTag = "Player";
 
-        [Tooltip("Spawner that owns the negotiation lock. Auto-resolved from the scene when empty.")]
-        [SerializeField] private MerchantSpawner _spawner;
+        [Tooltip("Coordinator that owns the negotiation lock. Auto-resolved from the scene when empty.")]
+        [SerializeField, FormerlySerializedAs("_spawner")] private MerchantApproachCoordinator _coordinator;
 
         [Tooltip("Legacy mode only (no MerchantApproachMover): rotate the merchant to face the " +
                  "player when they come into range.")]
@@ -69,9 +70,9 @@ namespace DumyatRuntime
             _merchant = GetComponent<MerchantNPC>();
             _mover = GetComponent<MerchantApproachMover>();
 
-            if (_spawner == null) _spawner = FindFirstObjectByType<MerchantSpawner>();
-            if (_spawner == null)
-                Debug.LogWarning($"MerchantProximityTrigger: no MerchantSpawner in scene for '{name}'; " +
+            if (_coordinator == null) _coordinator = FindFirstObjectByType<MerchantApproachCoordinator>();
+            if (_coordinator == null)
+                Debug.LogWarning($"MerchantProximityTrigger: no MerchantApproachCoordinator in scene for '{name}'; " +
                                  "approaches will do nothing.");
         }
 
@@ -90,8 +91,8 @@ namespace DumyatRuntime
         // player never has to leave the (larger) detection sphere for the conversation to end.
         private void Update()
         {
-            if (_spawner == null || _merchant == null) return;
-            if (_spawner.ActiveMerchant != _merchant) { _outOfRangeTimer = 0f; return; }
+            if (_coordinator == null || _merchant == null) return;
+            if (_coordinator.ActiveMerchant != _merchant) { _outOfRangeTimer = 0f; return; }
 
             Transform player = ResolvePlayer();
             if (player == null) return;
@@ -110,7 +111,7 @@ namespace DumyatRuntime
             _outOfRangeTimer = 0f;
             Debug.Log($"MerchantProximityTrigger: player left '{name}' conversation range " +
                       $"({toPlayer.magnitude:0.#}m > {_conversationRange:0.#}m) — cancelling negotiation.");
-            _spawner.PlayerLeftConversationArea(_merchant);
+            _coordinator.PlayerLeftConversationArea(_merchant);
         }
 
         private Transform ResolvePlayer()
@@ -121,7 +122,7 @@ namespace DumyatRuntime
             return _player;
         }
 
-        // Keep RE-TRYING the single engagement only until it actually starts — the spawner or mover may
+        // Keep RE-TRYING the single engagement only until it actually starts — the coordinator or mover may
         // have been busy at the instant of entry. Once engaged, this is a no-op until the player leaves.
         private void OnTriggerStay(Collider other)
         {
@@ -139,12 +140,12 @@ namespace DumyatRuntime
         private void TryEngage(Collider other)
         {
             if (!other.CompareTag(_playerTag)) return;
-            if (_spawner == null || _merchant == null) return;
+            if (_coordinator == null || _merchant == null) return;
             if (_engagedThisVisit) return;                 // already had this visit's one conversation
             // One NPC at a time: block while any merchant is negotiating OR already walking to/from the
-            // player. Checking the spawner-wide state (not just this merchant's mover) is what stops two
+            // player. Checking the coordinator-wide state (not just this merchant's mover) is what stops two
             // merchants from approaching together. OnTriggerStay retries once the coast is clear.
-            if (_spawner.IsAnyMerchantEngaging()) return;
+            if (_coordinator.IsAnyMerchantEngaging()) return;
 
             // Mark engaged BEFORE starting so nothing can slip a second conversation in this visit.
             _engagedThisVisit = true;
@@ -152,13 +153,14 @@ namespace DumyatRuntime
             if (_mover != null)
             {
                 // The merchant walks to the player; the negotiation is initiated on arrival.
+                Debug.Log("Approaching player: " + other.gameObject.name);
                 _mover.ApproachAndInitiate(other.transform);
             }
             else
             {
                 // Legacy in-place start.
                 if (_facePlayerOnApproach) FaceToward(other.transform.position);
-                _spawner.PlayerInitiatesWithMerchant(_merchant);
+                _coordinator.PlayerInitiatesWithMerchant(_merchant);
             }
         }
 
