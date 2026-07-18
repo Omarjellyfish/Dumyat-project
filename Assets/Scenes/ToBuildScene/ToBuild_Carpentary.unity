@@ -7898,6 +7898,8 @@ MonoBehaviour:
   _dialogueSequence: {fileID: 11400000, guid: b86dd1e3b58fcfd44a655f151bdf08c4, type: 2}
   _priority: 1
   _triggerOnce: 1
+  _persistenceKey: 
+  _requireKeyToTrigger: 0
 --- !u!4 &376710569
 Transform:
   m_ObjectHideFlags: 0
@@ -14624,11 +14626,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8885769875920508766, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[2].m_Value
-      value: 0
+      value: 2.2717174e-35
       objectReference: {fileID: 0}
     - target: {fileID: 8885769875920508766, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[8].m_Value
-      value: 0
+      value: 1.9632124e-36
       objectReference: {fileID: 0}
     - target: {fileID: 8986942479874244489, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
       propertyPath: m_LocalPosition.x
@@ -24069,66 +24071,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1719376726959596989, guid: 7822906258aaaa5448564a7241f5899a, type: 3}
   m_PrefabInstance: {fileID: 5107635159154347719}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &904921255
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 1.5625118
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.00000012271619
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -3.5200818
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3309285002930837712, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      propertyPath: m_Name
-      value: XR Origin (XR Rig)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 809209258092432758, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
-  m_SourcePrefab: {fileID: 100100000, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
 --- !u!1001 &906109802
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -34213,6 +34155,8 @@ MonoBehaviour:
   _dialogueSequence: {fileID: 11400000, guid: 772a4756ac2921f4cbf7d979d59a3ab9, type: 2}
   _priority: 1
   _triggerOnce: 1
+  _persistenceKey: 
+  _requireKeyToTrigger: 0
 --- !u!4 &1349110700
 Transform:
   m_ObjectHideFlags: 0
@@ -94946,4 +94890,3 @@ SceneRoots:
   - {fileID: 954777123}
   - {fileID: 1349110700}
   - {fileID: 376710569}
-  - {fileID: 904921255}
