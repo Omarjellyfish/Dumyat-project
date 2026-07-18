@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4918520832842546531}
   - component: {fileID: 454234298418069389}
   - component: {fileID: 5067247143922523362}
+  - component: {fileID: 3483384146054133041}
   m_Layer: 0
   m_Name: Crafting Station
   m_TagString: Untagged
@@ -129,8 +130,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CraftingStation
   _rootBody: {fileID: 0}
   _recipe: {fileID: 0}
+  _hologramObject: {fileID: 0}
   _spawnPoint: {fileID: 3643886541200400252}
+  _spawnPointHologram: {fileID: 0}
   _availableRecipes: []
+  _spawnClips: []
+  _spawnSfxVolume: 0.8
 --- !u!114 &5067247143922523362
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -144,6 +149,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.Testing.ValidationTester
   _station: {fileID: 454234298418069389}
+--- !u!114 &3483384146054133041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7446225689437742064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 453f5462c814e8a41b2ec29944ee2c7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.FloatingUIManager
+  _floatingTextPrefab: {fileID: 0}
+  _initialPoolSize: 5
+  offset: {x: 0, y: 0, z: 0}
 --- !u!1 &8837554791380232204
 GameObject:
   m_ObjectHideFlags: 0
