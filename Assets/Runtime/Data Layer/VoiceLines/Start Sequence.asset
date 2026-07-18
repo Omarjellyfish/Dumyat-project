@@ -10,25 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: faab39427066832489fca51809ed474f, type: 3}
-  m_Name: Test Dialogue Sequence 1
+  m_Name: Start Sequence
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DialogueSequenceSO
-  SequenceId: 1
-  Priority: 3
+  SequenceId: 0
+  Priority: 1
   CanBeInterrupted: 1
   ResumeAfterInterruption: 1
   Lines:
-  - Character: {fileID: 11400000, guid: c5e97e5479374fb4385c7a648c1cba29, type: 2}
+  - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
     VoiceLineKey: 0
-    SubtitleText: "yao\t\t"
+    SubtitleText: 
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 1
+  - Character: {fileID: 11400000, guid: 01a4dbe4fdb4bd24ba2b31065d45b323, type: 2}
+    VoiceLineKey: 0
+    SubtitleText: 
     PersistenceConditionKey: 
     RequiredState: 0
     PersistenceKeyToSet: 
     NextLineIndex: 2
-  - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
-    VoiceLineKey: 11
-    SubtitleText: 3mk amgad etc
-    PersistenceConditionKey: 
-    RequiredState: 0
-    PersistenceKeyToSet: 2
-    NextLineIndex: 0
   ChoicePoints: []

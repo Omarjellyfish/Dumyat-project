@@ -67,7 +67,15 @@ namespace DumyatRuntime
 
             // Narrative engine — stack-based dialogue with interruption/resume.
             containerBuilder.RegisterType(typeof(NarrativeService), new[] { typeof(INarrativeService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // NPC Registry — global so NPCs can register/unregister across scene loads.
+            containerBuilder.RegisterType(typeof(NpcRegistryService), new[] { typeof(INpcRegistryService) },
                 Lifetime.Singleton, Resolution.Lazy);
+
+            // Dialogue presentation — routes narrative events to NPC audio or 2D fallback.
+            containerBuilder.RegisterType(typeof(DialoguePresentationManager), new[] { typeof(DialoguePresentationManager) },
+                Lifetime.Singleton, Resolution.Eager);
 
             // Global game-state machine. Eager so it exists for the whole app lifetime.
             containerBuilder.RegisterType(typeof(GameStateService), new[] { typeof(IGameStateService) },
