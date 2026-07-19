@@ -47,6 +47,20 @@ namespace DumyatRuntime
 
         public Transform MouthPoint => _mouthPoint;
 
+        /// <summary>
+        /// Resolves the <see cref="Fish"/> a contacting collider belongs to — directly, or via the
+        /// collider's attached <see cref="Rigidbody"/> so a child collider still maps back to the fish
+        /// root (mirrors <c>HookingFish</c>). Returns null when the collider is not part of a fish.
+        /// Shared by the sell scale and the fumble detectors so they all identify fish identically.
+        /// </summary>
+        public static Fish FromCollider(Collider other)
+        {
+            if (other == null) return null;
+            if (other.TryGetComponent(out Fish fish)) return fish;
+            Rigidbody rb = other.attachedRigidbody;
+            return rb != null ? rb.GetComponent<Fish>() : null;
+        }
+
         private void Awake()
         {
             _animator = GetComponentInChildren<Animator>();

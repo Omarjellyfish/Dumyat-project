@@ -24,6 +24,24 @@ namespace DumyatRuntime
     }
 
     /// <summary>
+    /// The conversational STAGE of a multi-fish sale, orthogonal to <see cref="NegotiationPhase"/>.
+    /// The same turn loop (listen → process → apply → speak) runs throughout; the stage selects what a
+    /// turn MEANS. Drives the scale-based flow: greet and wait for the player to load the scale, haggle
+    /// one bundle price, then read a per-fish summary and re-verify the scale before paying out.
+    /// </summary>
+    public enum NegotiationStage
+    {
+        /// <summary>Merchant has welcomed the player and is waiting for fish to be placed on the scale.</summary>
+        AwaitingPlacement,
+
+        /// <summary>The catch on the scale is known; actively haggling one bundle price.</summary>
+        Negotiating,
+
+        /// <summary>A bundle price was agreed; merchant read the summary and awaits the player's confirmation.</summary>
+        AwaitingSaleConfirm
+    }
+
+    /// <summary>
     /// One line of the spoken back-and-forth in a negotiation, kept so the LLM can be reminded of
     /// the full conversation each turn (it is stateless between requests). <see cref="text"/> is the
     /// Egyptian-Arabic line as spoken; <see cref="speaker"/> is "Merchant" or "Player".
@@ -50,8 +68,26 @@ namespace DumyatRuntime
         /// <summary>The merchant the player is currently haggling with.</summary>
         public MerchantConfig currentMerchant;
 
-        /// <summary>The fish item being sold in this negotiation.</summary>
+        /// <summary>
+        /// The fish item being sold — the SINGLE-fish carrier used by the legacy coded fallback path
+        /// only. The scale-based multi-fish flow uses <see cref="fishBundle"/> instead.
+        /// </summary>
         public FishData fishBeingSold;
+
+        /// <summary>
+        /// The whole catch being sold in the scale-based flow: every fish snapshotted from the
+        /// merchant's sell scale when the player confirmed placement. The bundle is haggled as ONE
+        /// total (<see cref="currentOffer"/>/<see cref="maxOffer"/> are the bundle envelope); the final
+        /// per-fish prices are split from the agreed total at summary/payout time. Empty until the
+        /// player loads the scale (stage <see cref="NegotiationStage.AwaitingPlacement"/>).
+        /// </summary>
+        public List<FishData> fishBundle = new List<FishData>();
+
+        /// <summary>
+        /// Conversational stage of the scale-based sale (welcome → haggle → confirm). Distinct from
+        /// <see cref="state"/> (<see cref="NegotiationPhase"/>), which tracks the overall outcome.
+        /// </summary>
+        public NegotiationStage stage = NegotiationStage.AwaitingPlacement;
 
         /// <summary>
         /// The fish species the fisherman has EXPLICITLY named so far (empty until they actually say

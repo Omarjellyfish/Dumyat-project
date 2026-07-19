@@ -319,7 +319,7 @@ namespace DumyatRuntime
         public async Task<MerchantTurnResult> ProcessPlayerTurn(
             NegotiationState state, string playerSpeechText, bool isDeceptive)
         {
-            if (state == null || state.currentMerchant == null || state.fishBeingSold == null)
+            if (state == null || state.currentMerchant == null || !HasSellableFish(state))
             {
                 FailTurn("Incomplete negotiation state.");
                 return null;
@@ -425,7 +425,7 @@ namespace DumyatRuntime
         /// </param>
         public async Task<MerchantTurnResult> GenerateOpeningLine(NegotiationState state, bool isDeceptive, bool withGreeting = true)
         {
-            if (state == null || state.currentMerchant == null || state.fishBeingSold == null)
+            if (state == null || state.currentMerchant == null || !HasSellableFish(state))
             {
                 FailTurn("Incomplete negotiation state (opening line).");
                 return null;
@@ -456,6 +456,261 @@ namespace DumyatRuntime
             return null;
         }
 
+        // --- Scale-flow lines (welcome / summary / fumble) + confirmation ----------
+        //
+        // These are "phrase this for me" lines around the haggle: they carry authoritative content the
+        // game already decided (fish list, prices), so the model only voices it. Each falls back to a
+        // fixed Egyptian line if the LLM is unavailable or returns something unusable, so the scale flow
+        // never dead-ends on an auxiliary line. Numbers that vary (prices) live ONLY in LLM-voiced lines;
+        // the templated fallbacks are number-free (the exact figures ride the subtitle instead).
+
+        private const string WelcomeGreetArabic = "اهلا يا ريس، حط السمك اللي عايز تبيعه على الميزان وكلمني تاني.";
+        private const string WelcomeGreetEnglish = "Welcome, sir — put the fish you want to sell on the scale and talk to me again.";
+        private const string WelcomeNoGreetArabic = "حط السمك اللي عايز تبيعه على الميزان وقولي لما تخلص.";
+        private const string WelcomeNoGreetEnglish = "Put the fish you want to sell on the scale and tell me when you're done.";
+
+        private const string SummaryFallbackArabic = "بص يا ريس، ده حساب السمك كله اللي على الميزان، متفقين نكمل البيعة؟";
+        private const string SummaryFallbackEnglish = "Look sir, that's the price for all the fish on the scale — shall we close the sale?";
+
+        private const string FumbleHitArabic = "يا ريس، بتلعب كوره بالسمك ولا بتبيع؟ حطها على الميزان بالراحة بقى.";
+        private const string FumbleHitEnglish = "Sir, are you selling fish or playing football with them? Put it on the scale, gently.";
+        private const string FumbleMissArabic = "يا ريس، السمكه على الارض مش على الميزان، خدها وحطها صح.";
+        private const string FumbleMissEnglish = "Sir, the fish is on the ground, not on the scale — pick it up and place it properly.";
+
+        /// <summary>
+        /// The merchant's WELCOME line for the scale flow: greet (optionally) and ask the fisherman to
+        /// put the fish they want to sell on the scale, then talk back. No fish/price is named yet.
+        /// </summary>
+        public Task<MerchantTurnResult> GenerateWelcomeLine(NegotiationState state, bool withGreeting)
+            => GenerateSpeechLine(
+                BuildWelcomePrompt(state, withGreeting),
+                withGreeting ? WelcomeGreetArabic : WelcomeNoGreetArabic,
+                withGreeting ? WelcomeGreetEnglish : WelcomeNoGreetEnglish);
+
+        /// <summary>
+        /// The merchant's SALE SUMMARY line: run through the fish on the scale with their agreed per-fish
+        /// prices and the total, and ask the player to confirm. <paramref name="perFishPrices"/> aligns to
+        /// <c>state.fishBundle</c>; <paramref name="afterRemoval"/> is true when re-reading a reduced deal
+        /// after the player took fish off the scale.
+        /// </summary>
+        public Task<MerchantTurnResult> GenerateSaleSummaryLine(NegotiationState state, float[] perFishPrices,
+            float total, bool afterRemoval)
+            => GenerateSpeechLine(
+                BuildSummaryPrompt(state, perFishPrices, total, afterRemoval),
+                SummaryFallbackArabic, SummaryFallbackEnglish);
+
+        /// <summary>
+        /// A light-hearted line for when the player fumbles a fish while placing it (threw it at the
+        /// merchant, or dropped it on the ground short of the scale). Teasing, never angry.
+        /// </summary>
+        public Task<MerchantTurnResult> GenerateFumbleLine(NegotiationState state, FishFumbleReason reason)
+            => GenerateSpeechLine(
+                BuildFumblePrompt(state, reason),
+                reason == FishFumbleReason.HitMerchant ? FumbleHitArabic : FumbleMissArabic,
+                reason == FishFumbleReason.HitMerchant ? FumbleHitEnglish : FumbleMissEnglish);
+
+        /// <summary>
+        /// Classifies the player's reply to a yes/no confirmation (e.g. "shall we close the sale?").
+        /// Returns <see cref="ConfirmationAnswer.Unclear"/> when the LLM is unavailable or the answer is
+        /// ambiguous, so the caller can simply ask again.
+        /// </summary>
+        public async Task<ConfirmationAnswer> InterpretConfirmation(string playerSpeechText)
+        {
+            if (_llm == null || !_llm.HasAvailableModel || string.IsNullOrWhiteSpace(playerSpeechText))
+                return ConfirmationAnswer.Unclear;
+
+            string json = ExtractJsonObject(await SendPromptAsync(BuildConfirmationPrompt(playerSpeechText)));
+            if (json == null) return ConfirmationAnswer.Unclear;
+
+            ConfirmationDto dto;
+            try { dto = JsonUtility.FromJson<ConfirmationDto>(json); }
+            catch { return ConfirmationAnswer.Unclear; }
+
+            string answer = dto?.answer?.Trim().ToLowerInvariant();
+            if (answer == "yes") return ConfirmationAnswer.Yes;
+            if (answer == "no") return ConfirmationAnswer.No;
+            return ConfirmationAnswer.Unclear;
+        }
+
+        // Shared LLM call for a speech-only line: try the model (with the Arabic-script check), and fall
+        // back to a fixed line if it is unavailable or the reply is unusable — the flow never stalls.
+        private async Task<MerchantTurnResult> GenerateSpeechLine(string prompt, string fallbackArabic, string fallbackEnglish)
+        {
+            if (_llm != null && _llm.HasAvailableModel)
+            {
+                if (TryParseSpeechLine(await SendPromptAsync(prompt), out MerchantTurnResult result))
+                    return result;
+                Debug.LogWarning("MerchantNegotiationLLM: speech line invalid or unavailable; using templated fallback.");
+            }
+
+            return new MerchantTurnResult
+            {
+                MerchantSpeech = fallbackArabic,
+                SpeechTranslationEnglish = fallbackEnglish,
+                Action = MerchantAction.HoldFirm
+            };
+        }
+
+        // Lightweight parse for a speech-only line (welcome/summary/fumble): extract the spoken Arabic +
+        // English subtitle, reject Latin script (the TTS can't pronounce it), strip diacritics. No offer
+        // or score validation — these lines carry no negotiable number of their own.
+        private static bool TryParseSpeechLine(string reply, out MerchantTurnResult result)
+        {
+            result = null;
+
+            string json = ExtractJsonObject(reply);
+            if (json == null) return false;
+
+            MerchantTurnDto dto;
+            try { dto = JsonUtility.FromJson<MerchantTurnDto>(json); }
+            catch { return false; }
+
+            if (dto == null || string.IsNullOrWhiteSpace(dto.merchantSpeech) || ContainsLatinLetters(dto.merchantSpeech))
+                return false;
+
+            result = new MerchantTurnResult
+            {
+                MerchantSpeech = StripArabicDiacritics(dto.merchantSpeech),
+                SpeechTranslationEnglish = dto.speechTranslationEnglish,
+                Action = MerchantAction.HoldFirm
+            };
+            return true;
+        }
+
+        // --- Scale-flow prompt builders --------------------------------------------
+
+        private string BuildWelcomePrompt(NegotiationState state, bool withGreeting)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
+            sb.AppendLine("A FISHERMAN has walked up to sell their catch. You have a SCALE where they place the fish they want to sell.");
+            sb.AppendLine(BuildDialectInstruction());
+            sb.AppendLine();
+            AppendPersonality(sb, state);
+
+            sb.AppendLine("THIS IS YOUR WELCOME LINE. Nothing is on your scale yet — you cannot see or price any fish.");
+            sb.AppendLine(withGreeting
+                ? "Greet the fisherman warmly (Egyptian market style: 'يا ريس' / 'اهلا يا معلم' / 'يا باشا'), then tell " +
+                  "them to put the fish they want to sell ON YOUR SCALE and talk to you again when they are done. Short and friendly."
+                : "You already know this fisherman — skip the greeting. Just tell them to put the fish they want to sell " +
+                  "ON YOUR SCALE and talk to you again when they are done. Short and natural.");
+            sb.AppendLine("Do NOT name any fish, weight, or price — nothing has been placed yet.");
+            sb.AppendLine();
+            AppendSpeechOnlySchema(sb, "your welcome line asking them to load the scale, in Egyptian dialect");
+            AppendSpeechOnlyHardRules(sb);
+            return sb.ToString();
+        }
+
+        private string BuildSummaryPrompt(NegotiationState state, float[] perFishPrices, float total, bool afterRemoval)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
+            sb.AppendLine("You have agreed a TOTAL price with a FISHERMAN for the whole catch resting on your scale.");
+            sb.AppendLine(BuildDialectInstruction());
+            sb.AppendLine();
+            AppendPersonality(sb, state);
+
+            if (afterRemoval)
+                sb.AppendLine("NOTE: the fisherman took some fish BACK OFF the scale, so this is the UPDATED deal for what " +
+                              "REMAINS. Mention lightly that the deal changed because some fish were removed.");
+
+            sb.AppendLine("Read the deal back to the fisherman. The catch on the scale and what you will pay for each " +
+                          "(spell all numbers out as Egyptian words when you speak them):");
+            sb.Append(BuildPricedFishList(state, perFishPrices));
+            sb.AppendLine($"TOTAL you will pay for everything: {EGP(total)}.");
+            sb.AppendLine($"Briefly run through the fish and their prices, clearly state the ONE TOTAL of {EGP(total)}, then " +
+                          "ask the fisherman to CONFIRM the sale (a clear yes / 'اتفقنا'). You may add that they can still " +
+                          "change the fish on the scale if they want. Keep it to a couple of natural sentences.");
+            sb.AppendLine();
+            AppendSpeechOnlySchema(sb, "your summary of the fish + prices + total, then ask them to confirm, in Egyptian dialect");
+            AppendSpeechOnlyHardRules(sb);
+            return sb.ToString();
+        }
+
+        private string BuildFumblePrompt(NegotiationState state, FishFumbleReason reason)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
+            sb.AppendLine("A FISHERMAN is trying to place fish on your scale to sell them, but just fumbled:");
+            sb.AppendLine(reason == FishFumbleReason.HitMerchant
+                ? "- They threw or dropped a fish and it HIT YOU."
+                : "- They dropped a fish on the GROUND next to the scale instead of ON it.");
+            sb.AppendLine(BuildDialectInstruction());
+            sb.AppendLine();
+            AppendPersonality(sb, state);
+
+            sb.AppendLine("React with ONE short, GOOD-NATURED, funny Egyptian market quip — tease them lightly, never truly " +
+                          "angry — then remind them to put the fish GENTLY on the scale. Keep it playful and brief. Do NOT " +
+                          "name a price.");
+            sb.AppendLine();
+            AppendSpeechOnlySchema(sb, "your playful reaction + reminder to place the fish on the scale, in Egyptian dialect");
+            AppendSpeechOnlyHardRules(sb);
+            return sb.ToString();
+        }
+
+        private static string BuildConfirmationPrompt(string playerSpeechText)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("A fisherman at a fish market was asked to CONFIRM a sale (a yes/no question). Decide whether " +
+                          "they are AGREEING to finalize the sale, based ONLY on what they said.");
+            sb.AppendLine($"What the fisherman said (Egyptian Arabic, transcribed): \"{playerSpeechText}\"");
+            sb.AppendLine("Reply as exactly one JSON object and nothing else:");
+            sb.AppendLine("{\"answer\": \"yes\" | \"no\" | \"unclear\"}");
+            sb.AppendLine("- \"yes\"  = they agree / confirm the sale (اه، ايوه، اكيد، اتفقنا، ماشي، تمام، خلاص بيعتهالك).");
+            sb.AppendLine("- \"no\"   = they decline, back out, or want to change something (لا، مش عايز، استنى، عايز اغير).");
+            sb.AppendLine("- \"unclear\" = anything ambiguous, unrelated, or empty.");
+            sb.AppendLine("Output ONLY the JSON object.");
+            return sb.ToString();
+        }
+
+        // Shared prompt fragments for the speech-only lines above.
+        private static void AppendPersonality(StringBuilder sb, NegotiationState state)
+        {
+            if (state?.currentMerchant == null || string.IsNullOrWhiteSpace(state.currentMerchant.Personality)) return;
+            sb.AppendLine("PERSONALITY (stay in character as this specific vendor):");
+            sb.AppendLine(state.currentMerchant.Personality);
+            sb.AppendLine();
+        }
+
+        private static void AppendSpeechOnlySchema(StringBuilder sb, string speechDescription)
+        {
+            sb.AppendLine("Return your reply as exactly one valid json object and nothing else. Schema:");
+            sb.AppendLine("{");
+            sb.AppendLine($"  \"merchantSpeech\": \"<{speechDescription}>\",");
+            sb.AppendLine("  \"speechTranslationEnglish\": \"<English translation, for subtitles>\",");
+            sb.AppendLine("  \"action\": \"HoldFirm\",");
+            sb.AppendLine("  \"newOfferAmount\": 0");
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
+
+        private static void AppendSpeechOnlyHardRules(StringBuilder sb)
+        {
+            sb.AppendLine("HARD RULES:");
+            sb.AppendLine("- Output ONLY the JSON object. No markdown, no code fences, no text before or after it.");
+            sb.AppendLine("- NEVER break character. NEVER mention being an AI, a model, or a game.");
+            sb.AppendLine("- Keep merchantSpeech to one or two short, natural market-style sentences.");
+            sb.AppendLine("- CRITICAL: in merchantSpeech, spell every number out as Egyptian WORDS (never digits like 90 " +
+                          "or ٩٠), and write plain Arabic with NO diacritics / tashkeel / vocalization (harakat). The " +
+                          "English translation may keep normal digits.");
+        }
+
+        // Renders the fish on the scale with their agreed per-fish prices for the summary prompt.
+        private static string BuildPricedFishList(NegotiationState state, float[] perFishPrices)
+        {
+            var sb = new StringBuilder();
+            var bundle = state.fishBundle;
+            for (int i = 0; i < bundle.Count; i++)
+            {
+                FishData fish = bundle[i];
+                if (fish == null) continue;
+                string name = !string.IsNullOrWhiteSpace(fish.fishTypeArabic) ? fish.fishTypeArabic : fish.fishType;
+                float price = perFishPrices != null && i < perFishPrices.Length ? perFishPrices[i] : 0f;
+                sb.AppendLine($"    • {name} ({fish.weight:0.##} kg) — {EGP(price)}");
+            }
+            return sb.ToString();
+        }
+
         // --- Transport bridge: callback-based GeminiClient -> awaitable ------------
 
         // Returns the model's raw reply text, or null on failure. The LLMManager picks an available
@@ -477,6 +732,7 @@ namespace DumyatRuntime
         {
             MerchantConfig merchant = state.currentMerchant;
             FishData fish = state.fishBeingSold;
+            bool bundleMode = IsBundleMode(state);
             int patienceRemaining = Mathf.Max(0, merchant.PatienceLevel - state.turnCount);
             string playerSaid = string.IsNullOrWhiteSpace(playerSpeechText) ? "(unclear / no speech)" : playerSpeechText;
 
@@ -496,9 +752,20 @@ namespace DumyatRuntime
             }
 
             sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
-            sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
-            sb.AppendLine("You ONLY buy and haggle over THIS one fish. Nothing else is for sale and the player cannot buy anything from you. " +
-                          "If they say anything off-topic, steer them back to selling this fish (use ClarifyRequest).");
+            if (bundleMode)
+            {
+                sb.AppendLine("The player is a FISHERMAN who has put their fresh catch on YOUR SCALE to SELL it to you — " +
+                              "YOU are buying it from them.");
+                sb.AppendLine("You buy and haggle over the WHOLE catch on your scale (all the fish listed below) as ONE deal " +
+                              "for ONE total price. Nothing else is for sale and the player cannot buy anything from you. " +
+                              "If they say anything off-topic, steer them back to selling this catch (use ClarifyRequest).");
+            }
+            else
+            {
+                sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
+                sb.AppendLine("You ONLY buy and haggle over THIS one fish. Nothing else is for sale and the player cannot buy anything from you. " +
+                              "If they say anything off-topic, steer them back to selling this fish (use ClarifyRequest).");
+            }
             sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
 
@@ -520,53 +787,66 @@ namespace DumyatRuntime
             // and the player have already said and offered, instead of treating each turn as new.
             AppendTranscript(sb, state);
 
-            string catalogText = BuildFishCatalog(state);
-
-            bool fishDisclosed = !string.IsNullOrWhiteSpace(state.disclosedFishType);
-            bool weightDisclosed = state.disclosedWeightKg > 0f;
-
-            sb.AppendLine("WHAT YOU KNOW:");
-            sb.AppendLine("- You do NOT automatically know what fish this is or how much it weighs. NEVER assume, " +
-                          "guess or name a fish yourself. You learn the fish AND its weight ONLY from what the " +
-                          "fisherman tells you in the conversation above. Until they have clearly told you BOTH " +
-                          "(a) which fish they caught AND (b) roughly how much it weighs, ASK for whatever is " +
-                          "still missing (ClarifyRequest) before quoting any price — never invent a fish or a " +
-                          "weight they did not say.");
-            sb.AppendLine("- CRITICAL: a WEIGHT tells you NOTHING about the species — many different fish weigh the " +
-                          "same. Knowing how many kilos it is does NOT let you name the fish. If the fisherman gave " +
-                          "you a weight but has NOT named the fish, you STILL do not know the fish: you MUST ask which " +
-                          "fish it is (ClarifyRequest). Likewise if they named the fish but not the weight, ask the weight.");
-            sb.AppendLine("- SO FAR THE FISHERMAN HAS EXPLICITLY TOLD YOU:");
-            sb.AppendLine($"    • Fish type: {(fishDisclosed ? state.disclosedFishType : "NOT told yet — you do NOT know the fish; do not price it, ASK.")}");
-            sb.AppendLine($"    • Weight: {(weightDisclosed ? state.disclosedWeightKg.ToString("0.##") + " kg" : "NOT told yet — you do NOT know the weight; do not price it, ASK.")}");
-            if (catalogText != null)
+            if (bundleMode)
             {
-                sb.AppendLine("- This market ONLY buys the following fish. The list is what you are WILLING to buy — it " +
-                              "is NOT a hint about which fish the fisherman brought; never guess their fish from it or " +
-                              "from the weight. Acknowledge a fish ONLY once THEY name it AND it is on this list; if " +
-                              "they name anything else, tell them (in character) you don't deal that fish here and ask " +
-                              "for one you do (ClarifyRequest) — never price an unknown fish:");
-                sb.Append(catalogText);
-                sb.AppendLine("- WEIGHT LIMITS ARE STRICT: you can only buy a fish whose weight is WITHIN the band " +
-                              "shown for the species the fisherman named. If their stated weight is BELOW the " +
-                              "minimum or ABOVE the maximum for that fish, you CANNOT buy it — say so plainly (too " +
-                              "small / too big for you to take) and do not quote a price (ClarifyRequest, or " +
-                              "WalkAway if they insist).");
+                sb.AppendLine("WHAT YOU KNOW:");
+                sb.AppendLine("- The fisherman has already loaded these fish onto your scale, so you can SEE the whole " +
+                              "catch and you ALREADY KNOW exactly what it is and what each one weighs. You do NOT need " +
+                              "to ask what they caught or how much it weighs — never ask; just deal over it:");
+                sb.Append(BuildBundleFishList(state));
+                sb.AppendLine("- Refer to the fish by these exact Egyptian names. You are buying ALL of them together as " +
+                              "one lot for one total price — talk about the catch as a whole, not one fish at a time.");
             }
             else
             {
-                sb.AppendLine($"- ONLY once the fisherman has told you the fish, refer to it by its correct " +
-                              $"Egyptian name: {DescribeFish(fish)}");
+                string catalogText = BuildFishCatalog(state);
+
+                bool fishDisclosed = !string.IsNullOrWhiteSpace(state.disclosedFishType);
+                bool weightDisclosed = state.disclosedWeightKg > 0f;
+
+                sb.AppendLine("WHAT YOU KNOW:");
+                sb.AppendLine("- You do NOT automatically know what fish this is or how much it weighs. NEVER assume, " +
+                              "guess or name a fish yourself. You learn the fish AND its weight ONLY from what the " +
+                              "fisherman tells you in the conversation above. Until they have clearly told you BOTH " +
+                              "(a) which fish they caught AND (b) roughly how much it weighs, ASK for whatever is " +
+                              "still missing (ClarifyRequest) before quoting any price — never invent a fish or a " +
+                              "weight they did not say.");
+                sb.AppendLine("- CRITICAL: a WEIGHT tells you NOTHING about the species — many different fish weigh the " +
+                              "same. Knowing how many kilos it is does NOT let you name the fish. If the fisherman gave " +
+                              "you a weight but has NOT named the fish, you STILL do not know the fish: you MUST ask which " +
+                              "fish it is (ClarifyRequest). Likewise if they named the fish but not the weight, ask the weight.");
+                sb.AppendLine("- SO FAR THE FISHERMAN HAS EXPLICITLY TOLD YOU:");
+                sb.AppendLine($"    • Fish type: {(fishDisclosed ? state.disclosedFishType : "NOT told yet — you do NOT know the fish; do not price it, ASK.")}");
+                sb.AppendLine($"    • Weight: {(weightDisclosed ? state.disclosedWeightKg.ToString("0.##") + " kg" : "NOT told yet — you do NOT know the weight; do not price it, ASK.")}");
+                if (catalogText != null)
+                {
+                    sb.AppendLine("- This market ONLY buys the following fish. The list is what you are WILLING to buy — it " +
+                                  "is NOT a hint about which fish the fisherman brought; never guess their fish from it or " +
+                                  "from the weight. Acknowledge a fish ONLY once THEY name it AND it is on this list; if " +
+                                  "they name anything else, tell them (in character) you don't deal that fish here and ask " +
+                                  "for one you do (ClarifyRequest) — never price an unknown fish:");
+                    sb.Append(catalogText);
+                    sb.AppendLine("- WEIGHT LIMITS ARE STRICT: you can only buy a fish whose weight is WITHIN the band " +
+                                  "shown for the species the fisherman named. If their stated weight is BELOW the " +
+                                  "minimum or ABOVE the maximum for that fish, you CANNOT buy it — say so plainly (too " +
+                                  "small / too big for you to take) and do not quote a price (ClarifyRequest, or " +
+                                  "WalkAway if they insist).");
+                }
+                else
+                {
+                    sb.AppendLine($"- ONLY once the fisherman has told you the fish, refer to it by its correct " +
+                                  $"Egyptian name: {DescribeFish(fish)}");
+                }
             }
             sb.AppendLine();
             float ceiling = NegotiationCeiling(state);
             bool atCeiling = state.currentOffer >= ceiling;
 
             sb.AppendLine("YOUR PRICING (all amounts are in Egyptian Pounds, whole numbers only):");
-            sb.AppendLine($"- The price you are currently offering to pay: {EGP(state.currentOffer)}");
-            sb.AppendLine($"- The ABSOLUTE MAXIMUM you will EVER pay for this fish: {EGP(ceiling)}. This is your " +
+            sb.AppendLine($"- The price you are currently offering to pay{(bundleMode ? " for the whole catch" : "")}: {EGP(state.currentOffer)}");
+            sb.AppendLine($"- The ABSOLUTE MAXIMUM you will EVER pay{(bundleMode ? " for the whole catch" : " for this fish")}: {EGP(ceiling)}. This is your " +
                           "hard ceiling for this whole negotiation — private, never reveal it, NEVER offer above it.");
-            sb.AppendLine($"- Fair market value (your private reference — do NOT reveal this number to the player): {EGP(fish.fairMarketValue)}");
+            sb.AppendLine($"- Fair market value (your private reference — do NOT reveal this number to the player): {EGP(TotalFairValue(state))}");
             sb.AppendLine($"- Turn number: {state.turnCount}");
             sb.AppendLine($"- Your patience remaining (counter-offers left before you walk away): {patienceRemaining}");
             sb.AppendLine($"- Player just said (transcribed Egyptian speech): \"{playerSaid}\"");
@@ -680,11 +960,20 @@ namespace DumyatRuntime
                           "you to pay (the most recent price they named or insisted on, even if a few turns " +
                           "back and still standing). Whole number. Use 0 if they have not named any price yet " +
                           "or it is unclear. This is the SELLER's price, NOT your offer>,");
-            sb.AppendLine("  \"understoodFishType\": \"<the fish species the fisherman has EXPLICITLY named so far, " +
-                          "in Arabic. EMPTY STRING if they have not named a fish yet. NEVER guess it from the weight " +
-                          "or the catalog — only fill this when they actually said which fish it is>\",");
-            sb.AppendLine("  \"understoodWeightKg\": <number — the weight in kg the fisherman has EXPLICITLY stated. " +
-                          "0 if they have not stated a weight yet>,");
+            if (bundleMode)
+            {
+                sb.AppendLine("  \"understoodFishType\": \"<leave as an EMPTY STRING — the catch is already known from the " +
+                              "scale, so you do not need to report a fish type>\",");
+                sb.AppendLine("  \"understoodWeightKg\": <leave as 0 — the weights are already known from the scale>,");
+            }
+            else
+            {
+                sb.AppendLine("  \"understoodFishType\": \"<the fish species the fisherman has EXPLICITLY named so far, " +
+                              "in Arabic. EMPTY STRING if they have not named a fish yet. NEVER guess it from the weight " +
+                              "or the catalog — only fill this when they actually said which fish it is>\",");
+                sb.AppendLine("  \"understoodWeightKg\": <number — the weight in kg the fisherman has EXPLICITLY stated. " +
+                              "0 if they have not stated a weight yet>,");
+            }
             sb.AppendLine("  \"newOfferAmount\": <number, REQUIRED only when action is RaiseOffer or Accept; omit otherwise>");
             sb.AppendLine("}");
             sb.AppendLine();
@@ -703,10 +992,11 @@ namespace DumyatRuntime
             sb.AppendLine("- NEVER use WalkAway unless you have ALREADY spent an earlier turn warning the fisherman " +
                           "out loud that you are about to leave. Leaving without that warning is forbidden — warn " +
                           "first (HoldFirm), walk second.");
-            sb.AppendLine("- NEVER quote, offer, raise, or accept ANY price until the fisherman has EXPLICITLY told you " +
-                          "BOTH which fish it is AND its weight. A weight alone does NOT identify the fish — never " +
-                          "guess the species from the weight or the catalog. If either is still missing, use " +
-                          "ClarifyRequest and ask for the missing one — do NOT put a number on an unknown fish.");
+            if (!bundleMode)
+                sb.AppendLine("- NEVER quote, offer, raise, or accept ANY price until the fisherman has EXPLICITLY told you " +
+                              "BOTH which fish it is AND its weight. A weight alone does NOT identify the fish — never " +
+                              "guess the species from the weight or the catalog. If either is still missing, use " +
+                              "ClarifyRequest and ask for the missing one — do NOT put a number on an unknown fish.");
             sb.AppendLine($"- RaiseOffer: newOfferAmount MUST be STRICTLY HIGHER than {EGP(state.currentOffer)} " +
                           $"and AT MOST {EGP(raiseCap)} this turn. Never lower a standing offer; never exceed " +
                           "your maximum; never jump more than this turn's cap.");
@@ -828,13 +1118,23 @@ namespace DumyatRuntime
         private string BuildOpeningPrompt(NegotiationState state, bool isDeceptive, bool withGreeting, bool simplified)
         {
             MerchantConfig merchant = state.currentMerchant;
+            bool bundleMode = IsBundleMode(state);
 
             var sb = new StringBuilder();
 
             sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
-            sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
-            sb.AppendLine("You ONLY buy and haggle over THIS one fish. Nothing else is for sale and the player cannot buy anything from you. " +
-                          "If they say anything off-topic, steer them back to selling this fish (use ClarifyRequest).");
+            if (bundleMode)
+            {
+                sb.AppendLine("The player is a FISHERMAN who has just loaded their fresh catch onto YOUR SCALE to SELL it " +
+                              "to you — YOU are buying it from them.");
+                sb.AppendLine("You buy the WHOLE catch on your scale as ONE lot for ONE total price.");
+            }
+            else
+            {
+                sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
+                sb.AppendLine("You ONLY buy and haggle over THIS one fish. Nothing else is for sale and the player cannot buy anything from you. " +
+                              "If they say anything off-topic, steer them back to selling this fish (use ClarifyRequest).");
+            }
             sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
 
@@ -850,25 +1150,58 @@ namespace DumyatRuntime
                 : "TONE: you are dealing fairly and openly.");
             sb.AppendLine();
 
-            sb.AppendLine("THIS IS YOUR OPENING LINE. A fisherman just walked up to you to sell their fresh catch.");
-            sb.AppendLine("You do NOT yet know what they caught or how much it weighs — you can't see it clearly " +
-                          "and they haven't told you. Do NOT name any fish, any weight, or any price yet.");
-            sb.AppendLine(withGreeting
-                ? "Open with a warm Egyptian market-style greeting (a friendly call like 'يا ريس' / " +
-                  "'اهلا يا معلم' / 'يا باشا' / يا غالي'), then ask the fisherman what they've got for you today and roughly how " +
-                  "much it weighs. One or two short, natural market sentences."
-                : "Do NOT greet — you already know this fisherman and have dealt with them before. Skip any " +
-                  "salutation and go straight to asking what they've brought you today and roughly how much " +
-                  "it weighs, in natural Egyptian market style. One or two short sentences.");
-            sb.AppendLine();
+            if (bundleMode)
+            {
+                sb.AppendLine(isDeceptive
+                    ? "TONE: you are quietly trying to get a bargain — warm and persuasive, never openly dishonest."
+                    : "TONE: you are dealing fairly and openly.");
+                sb.AppendLine();
 
-            sb.AppendLine("Return your reply as exactly one valid json object and nothing else. Schema:");
-            sb.AppendLine("{");
-            sb.AppendLine("  \"merchantSpeech\": \"<your opening line — greet (if appropriate) and ask what they caught; NO fish name, weight or price yet, in Egyptian dialect>\",");
-            sb.AppendLine("  \"speechTranslationEnglish\": \"<English translation, for subtitles>\",");
-            sb.AppendLine("  \"action\": \"HoldFirm\",");
-            sb.AppendLine("  \"newOfferAmount\": 0");
-            sb.AppendLine("}");
+                sb.AppendLine("THIS IS YOUR OPENING LINE, spoken the moment the fisherman tells you the catch is on your " +
+                              "scale. You can SEE the whole catch and already know exactly what it is:");
+                sb.Append(BuildBundleFishList(state));
+                sb.AppendLine();
+                sb.AppendLine(withGreeting
+                    ? "Open with a warm Egyptian market-style greeting (a friendly call like 'يا ريس' / 'اهلا يا معلم' / " +
+                      "'يا باشا'), briefly ACKNOWLEDGE the catch by naming what you see on the scale, then make your " +
+                      $"OPENING OFFER for the whole lot: exactly {EGP(state.currentOffer)}. One or two short, natural sentences."
+                    : "Do NOT greet — you already know this fisherman. Briefly ACKNOWLEDGE the catch by naming what you " +
+                      $"see on the scale, then make your OPENING OFFER for the whole lot: exactly {EGP(state.currentOffer)}. " +
+                      "One or two short sentences.");
+                sb.AppendLine($"State the price as EXACTLY {EGP(state.currentOffer)} — do not invent a different number. " +
+                              "Say it as one total for all the fish together, not a price per fish.");
+                sb.AppendLine();
+
+                sb.AppendLine("Return your reply as exactly one valid json object and nothing else. Schema:");
+                sb.AppendLine("{");
+                sb.AppendLine("  \"merchantSpeech\": \"<your opening line — acknowledge the catch and offer the total, in Egyptian dialect>\",");
+                sb.AppendLine("  \"speechTranslationEnglish\": \"<English translation, for subtitles>\",");
+                sb.AppendLine("  \"action\": \"HoldFirm\",");
+                sb.AppendLine($"  \"newOfferAmount\": {Mathf.RoundToInt(state.currentOffer)}");
+                sb.AppendLine("}");
+            }
+            else
+            {
+                sb.AppendLine("THIS IS YOUR OPENING LINE. A fisherman just walked up to you to sell their fresh catch.");
+                sb.AppendLine("You do NOT yet know what they caught or how much it weighs — you can't see it clearly " +
+                              "and they haven't told you. Do NOT name any fish, any weight, or any price yet.");
+                sb.AppendLine(withGreeting
+                    ? "Open with a warm Egyptian market-style greeting (a friendly call like 'يا ريس' / " +
+                      "'اهلا يا معلم' / 'يا باشا' / يا غالي'), then ask the fisherman what they've got for you today and roughly how " +
+                      "much it weighs. One or two short, natural market sentences."
+                    : "Do NOT greet — you already know this fisherman and have dealt with them before. Skip any " +
+                      "salutation and go straight to asking what they've brought you today and roughly how much " +
+                      "it weighs, in natural Egyptian market style. One or two short sentences.");
+                sb.AppendLine();
+
+                sb.AppendLine("Return your reply as exactly one valid json object and nothing else. Schema:");
+                sb.AppendLine("{");
+                sb.AppendLine("  \"merchantSpeech\": \"<your opening line — greet (if appropriate) and ask what they caught; NO fish name, weight or price yet, in Egyptian dialect>\",");
+                sb.AppendLine("  \"speechTranslationEnglish\": \"<English translation, for subtitles>\",");
+                sb.AppendLine("  \"action\": \"HoldFirm\",");
+                sb.AppendLine("  \"newOfferAmount\": 0");
+                sb.AppendLine("}");
+            }
             sb.AppendLine();
 
             sb.AppendLine("HARD RULES:");
@@ -913,17 +1246,61 @@ namespace DumyatRuntime
             return sb.Length == 0 ? null : sb.ToString();
         }
 
+        // --- Multi-fish (bundle) helpers -------------------------------------------
+        //
+        // The scale-based sale hands the merchant a whole catch that is ALREADY KNOWN (the fish rest on
+        // the scale) and haggles it as one bundle total. These helpers let BuildPrompt/validation treat
+        // bundle mode and the legacy single-fish path with the same code: the fish list replaces the
+        // "ask what you caught" discovery, and the bundle's summed fair value replaces the single fish's.
+
+        /// <summary>True when this negotiation is selling a bundle of fish off a scale (vs one fish).</summary>
+        private static bool IsBundleMode(NegotiationState state) =>
+            state.fishBundle != null && state.fishBundle.Count > 0;
+
+        /// <summary>True when there is anything to sell at all (bundle on the scale, or a single fish).</summary>
+        private static bool HasSellableFish(NegotiationState state) =>
+            IsBundleMode(state) || state.fishBeingSold != null;
+
+        /// <summary>
+        /// The fair market value the negotiation is priced against: the SUM of the bundle's fish in
+        /// bundle mode, otherwise the single fish's fair value. 0 when nothing is being sold.
+        /// </summary>
+        private static float TotalFairValue(NegotiationState state)
+        {
+            if (IsBundleMode(state))
+            {
+                float sum = 0f;
+                foreach (FishData f in state.fishBundle)
+                    if (f != null) sum += f.fairMarketValue;
+                return sum;
+            }
+            return state.fishBeingSold != null ? state.fishBeingSold.fairMarketValue : 0f;
+        }
+
+        // Renders the fish resting on the scale as a bullet list for the prompt (Egyptian name + weight),
+        // so the merchant names the ALREADY-KNOWN catch instead of asking the fisherman what it is.
+        private static string BuildBundleFishList(NegotiationState state)
+        {
+            var sb = new StringBuilder();
+            foreach (FishData fish in state.fishBundle)
+            {
+                if (fish == null) continue;
+                string name = !string.IsNullOrWhiteSpace(fish.fishTypeArabic) ? fish.fishTypeArabic : fish.fishType;
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                sb.AppendLine($"    • {name} — {fish.weight:0.##} kg");
+            }
+            return sb.ToString();
+        }
+
         // Formats a price as a whole number of Egyptian Pounds — the game only deals in integer EGP,
         // so the model is never shown (or asked to produce) a fractional/decimal price.
         private static string EGP(float v) => $"{Mathf.RoundToInt(v)} EGP";
 
         // The most this merchant will pay THIS negotiation: the deterministic deception-based
-        // ceiling set at the opening, falling back to the fish's FULL fair market value for state
-        // built by older callers that never set maxOffer (pricing is fish-data driven).
+        // ceiling set at the opening, falling back to the FULL fair market value (bundle sum or single
+        // fish) for state built by older callers that never set maxOffer (pricing is fish-data driven).
         private static float NegotiationCeiling(NegotiationState state) =>
-            state.maxOffer > 0f
-                ? state.maxOffer
-                : state.fishBeingSold.fairMarketValue;
+            state.maxOffer > 0f ? state.maxOffer : TotalFairValue(state);
 
         // The highest a RaiseOffer may go THIS turn: current offer + the per-negotiation step,
         // never past the ceiling. No step configured (older callers) => only the ceiling applies.
@@ -1186,7 +1563,10 @@ namespace DumyatRuntime
             // weight or the catalog. Knowledge is accumulated across turns (state.disclosed*) so a later
             // turn can't "forget" it. A priced action (RaiseOffer/Accept) while either is still unknown
             // is illegal — reject on the strict attempt, or coerce to ASK for whatever is missing.
-            if (parsed.HasNewOffer)
+            //
+            // Bundle mode skips this gate entirely: the catch is already known from the scale, so there is
+            // nothing to discover and the merchant may price from the first turn.
+            if (parsed.HasNewOffer && !IsBundleMode(state))
             {
                 string knownFish = !string.IsNullOrWhiteSpace(parsed.UnderstoodFishType)
                     ? parsed.UnderstoodFishType : state.disclosedFishType;
@@ -1219,7 +1599,7 @@ namespace DumyatRuntime
             // Validate the offer only when the action actually carries one.
             if (parsed.HasNewOffer)
             {
-                float fair = state.fishBeingSold.fairMarketValue;
+                float fair = TotalFairValue(state);
                 float ceiling = NegotiationCeiling(state);
                 float hardCap = fair * HardOfferCapMultiplier;
                 float ask = parsed.PlayerAskedPrice;   // 0 = unknown
@@ -1489,6 +1869,13 @@ namespace DumyatRuntime
             /// this turn. The game thresholds it and coerces the action; the model never acts on it itself.
             /// </summary>
             public float acceptanceScore;
+        }
+
+        // Serializable DTO for the yes/no confirmation classifier (see InterpretConfirmation).
+        [Serializable]
+        private class ConfirmationDto
+        {
+            public string answer;   // "yes" | "no" | "unclear"
         }
     }
 }

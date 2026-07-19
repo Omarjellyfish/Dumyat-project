@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -181,6 +182,80 @@ namespace DumyatRuntime
         public float GenerateMaxRaiseStep(float openingOffer, float maxOffer)
         {
             return Mathf.Max(1f, Mathf.Round((maxOffer - openingOffer) * RaiseStepFraction));
+        }
+
+        // --- Bundle (multi-fish) pricing -------------------------------------------
+        //
+        // The scale-based sale haggles the WHOLE catch as one total. Because the per-fish math above is
+        // stateless, the bundle envelope is simply the sum of the individual fish envelopes under ONE
+        // shared deception roll — no new pricing rules, just aggregation. The final per-fish prices are
+        // split back out of the agreed total by fair value (see SplitBundlePrice) for the summary/payout.
+
+        /// <summary>
+        /// Computes the whole-bundle opening offer and ceiling in a single pass: each fish's opening
+        /// offer and its per-fish ceiling (derived from that same opening) are summed, so the bundle
+        /// envelope equals the sum of the individual fish envelopes under one shared
+        /// <paramref name="deceiving"/> roll. Both outputs are 0 for an empty/null bundle.
+        /// </summary>
+        public void GenerateBundleEnvelope(MerchantConfig merchant, IReadOnlyList<FishData> bundle,
+            bool deceiving, out float openingOffer, out float maxOffer)
+        {
+            openingOffer = 0f;
+            maxOffer = 0f;
+
+            if (bundle == null || bundle.Count == 0)
+            {
+                Debug.LogWarning("PriceNegotiationCalculator: empty bundle in GenerateBundleEnvelope.");
+                return;
+            }
+
+            foreach (FishData fish in bundle)
+            {
+                if (fish == null) continue;
+                float opening = GenerateOpeningOffer(merchant, fish, deceiving);
+                openingOffer += opening;
+                maxOffer += GenerateMaxOffer(merchant, fish, deceiving, opening);
+            }
+        }
+
+        /// <summary>
+        /// Splits an agreed BUNDLE total across the fish by each fish's fair market value (higher-value
+        /// fish carry more of the price). Each share is rounded, and the rounding remainder is assigned
+        /// to the highest-value fish so the per-fish prices sum EXACTLY to the (rounded)
+        /// <paramref name="agreedTotal"/>. Returns one price per entry, aligned to <paramref name="bundle"/>'s
+        /// order (0 for a null entry). When no fish has a positive fair value, the total is split evenly.
+        /// </summary>
+        public float[] SplitBundlePrice(IReadOnlyList<FishData> bundle, float agreedTotal)
+        {
+            int n = bundle?.Count ?? 0;
+            var prices = new float[n];
+            if (n == 0) return prices;
+
+            float total = Mathf.Round(agreedTotal);
+
+            float sumFair = 0f;
+            int count = 0;
+            for (int i = 0; i < n; i++)
+                if (bundle[i] != null) { sumFair += bundle[i].fairMarketValue; count++; }
+            if (count == 0) return prices;
+
+            int biggest = -1;
+            float running = 0f;
+            for (int i = 0; i < n; i++)
+            {
+                FishData fish = bundle[i];
+                if (fish == null) continue;
+
+                float share = sumFair > 0f ? total * (fish.fairMarketValue / sumFair) : total / count;
+                prices[i] = Mathf.Round(share);
+                running += prices[i];
+
+                if (biggest < 0 || fish.fairMarketValue > bundle[biggest].fairMarketValue) biggest = i;
+            }
+
+            // Absorb the rounding remainder into the highest-value fish so the parts sum to the total.
+            if (biggest >= 0) prices[biggest] += total - running;
+            return prices;
         }
 
         /// <summary>

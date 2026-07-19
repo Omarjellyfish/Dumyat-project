@@ -18,11 +18,22 @@ namespace DumyatRuntime
         [Tooltip("If false, the coordinator will skip this merchant when picking who approaches next.")]
         [SerializeField] private bool _isAvailable = true;
 
+        [Tooltip("This merchant's physical fish scale — the source of truth for which fish the player " +
+                 "is selling. The merchant can only recognize and buy fish resting on it. Auto-resolved " +
+                 "from children if left empty.")]
+        [SerializeField] private FishSellScale _sellScale;
+
         /// <summary>The archetype configuration for this merchant.</summary>
         public MerchantConfig Config => _config;
 
         /// <summary>Whether this merchant can currently be picked to approach the player.</summary>
         public bool IsAvailable => _isAvailable;
+
+        /// <summary>
+        /// This merchant's sell scale (source of truth for the fish being sold), or null if none is
+        /// wired — in which case the negotiation falls back to the legacy single-fish path.
+        /// </summary>
+        public ISellScale SellScale => _sellScale;
 
         private int _conversationCount;
 
@@ -56,6 +67,9 @@ namespace DumyatRuntime
 
         private void Awake()
         {
+            // Fall back to a scale nested under this merchant if the field was left unassigned.
+            if (_sellScale == null) _sellScale = GetComponentInChildren<FishSellScale>(true);
+
             // The merchant's voice is defined by its config archetype, and stays fixed for this NPC's
             // lifetime so its voice never changes between TTS lines.
             AssignedVoiceId = _config != null ? _config.VoiceId : null;

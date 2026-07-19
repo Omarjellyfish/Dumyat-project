@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Reflex.Attributes;
 using UnityEngine;
+#if UNITY_EDITOR
+using Reflex.Extensions;
+#endif
 
 namespace DumyatRuntime
 {
@@ -131,6 +134,77 @@ namespace DumyatRuntime
             Debug.Log($"MerchantApproachCoordinator: roster left empty — auto-discovered " +
                       $"{_merchants.Count} merchant(s) in the scene.");
         }
+
+#if UNITY_EDITOR
+        // --- Testing helper (Editor only) ------------------------------------------
+
+        [Header("Testing (Editor only)")]
+        [Tooltip("TEST ONLY: inventory item ID given by 'Give Test Fish To Player'. Defaults to the " +
+                 "generic fish item (5). You then DROP them yourself from the inventory UI and grab " +
+                 "each onto a merchant's sell scale.")]
+        [SerializeField] private string _testFishItemId = "5";
+
+        [Tooltip("TEST ONLY: how many batches of fish to add. Each batch adds a random quantity (1-4) " +
+                 "of the item above, so you get roughly a handful to place on the scale.")]
+        [SerializeField, Min(1)] private int _testFishBatches = 3;
+
+        /// <summary>
+        /// TEST HELPER (right-click the component ▸ "Give Test Fish To Player", or call at runtime):
+        /// adds fish to the player's real item inventory (<see cref="IInventoryService"/>) in a few
+        /// batches of a random quantity (1-4) each, so the scale-based selling flow can be exercised
+        /// end-to-end: you DROP them yourself from the inventory UI and grab each onto a merchant's sell
+        /// scale. Play mode only — the inventory service is resolved from the scene DI container.
+        /// </summary>
+        [ContextMenu("Give Test Fish To Player")]
+        public void GiveTestFishToPlayer()
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogWarning("MerchantApproachCoordinator: 'Give Test Fish' only works in Play mode.");
+                return;
+            }
+            if (string.IsNullOrEmpty(_testFishItemId))
+            {
+                Debug.LogWarning("MerchantApproachCoordinator: set 'Test Fish Item Id' (e.g. 5) first.");
+                return;
+            }
+
+            IInventoryService inventory = ResolveInventoryService();
+            if (inventory == null)
+            {
+                Debug.LogWarning("MerchantApproachCoordinator: no IInventoryService reachable — can't give test " +
+                                 "fish. Does the scene have a SceneScope, and is the fish item in the ItemDatabase?");
+                return;
+            }
+
+            int total = 0;
+            for (int batch = 0; batch < _testFishBatches; batch++)
+            {
+                int qty = Random.Range(1, 5);   // 1..4 inclusive
+                inventory.AddItemToInventory(_testFishItemId, qty);
+                total += qty;
+            }
+
+            Debug.Log($"MerchantApproachCoordinator: gave {total} test fish (item '{_testFishItemId}') to the " +
+                      "player across " + _testFishBatches + " batches. Drop them from the inventory UI and place " +
+                      "each on a merchant's sell scale.");
+        }
+
+        // Resolves IInventoryService off the scene DI container (which delegates to the root container
+        // where the service is registered). Editor test only.
+        private IInventoryService ResolveInventoryService()
+        {
+            try
+            {
+                return gameObject.scene.GetSceneContainer().Resolve<IInventoryService>();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"MerchantApproachCoordinator: could not resolve IInventoryService — {e.Message}");
+                return null;
+            }
+        }
+#endif
 
         // MerchantSystemConfig is read purely as a design-time guard: warn when a scene merchant is
         // mis-authored so it surfaces in the Console instead of silently changing who can approach.

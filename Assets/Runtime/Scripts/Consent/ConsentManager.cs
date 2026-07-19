@@ -115,11 +115,15 @@ namespace DumyatRuntime
         /// </summary>
         public void SubmitConsentResult(ConsentStatus micResult, ConsentStatus internetResult)
         {
-            ApplyConsent(micResult, internetResult);
-
-            Action<ConsentStatus, ConsentStatus> callback = _pendingRequestCallback;
-            _pendingRequestCallback = null;
-            callback?.Invoke(micConsentGranted, internetConsentGranted);
+            // Defer completing the pending request until ApplyConsent has settled the OS mic permission
+            // (which may show an async system prompt), so the caller's callback sees the TRUE voice-mode
+            // availability rather than a state where in-app consent is on but the OS grant is still pending.
+            ApplyConsent(micResult, internetResult, onApplied: () =>
+            {
+                Action<ConsentStatus, ConsentStatus> callback = _pendingRequestCallback;
+                _pendingRequestCallback = null;
+                callback?.Invoke(micConsentGranted, internetConsentGranted);
+            });
         }
 
         /// <summary>
@@ -167,12 +171,16 @@ namespace DumyatRuntime
 
             bool networkReachable = Application.internetReachability != NetworkReachability.NotReachable;
 
-            return bothGranted && networkReachable;
+            // The in-app grant is not enough: capture also needs the OS-level microphone permission
+            // (Android RECORD_AUDIO), or Microphone.devices stays empty and capture fails silently.
+            // Always true on Editor/Standalone (see MicrophonePermission).
+            return bothGranted && networkReachable && MicrophonePermission.IsGranted;
         }
 
-        // Shared apply path for both UI results and programmatic updates: writes the
-        // fields, persists to PlayerPrefs, and notifies subscribers only on an actual change.
-        private void ApplyConsent(ConsentStatus micConsent, ConsentStatus internetConsent)
+        // Shared apply path for both UI results and programmatic updates: writes the fields, persists to
+        // PlayerPrefs, secures the OS mic permission when consent is granted, and notifies subscribers.
+        // onApplied fires once the state is fully settled (after any async OS permission prompt).
+        private void ApplyConsent(ConsentStatus micConsent, ConsentStatus internetConsent, Action onApplied = null)
         {
             bool changed = micConsent != micConsentGranted || internetConsent != internetConsentGranted;
 
@@ -180,10 +188,30 @@ namespace DumyatRuntime
             internetConsentGranted = internetConsent;
             SaveConsent();
 
+            // Securing the OS microphone permission is part of granting mic consent — the in-app toggle
+            // alone leaves Microphone.devices empty. Request it now (immediate/no-op off Android and when
+            // already held), and hold the change notification + completion until the OS decision is in so
+            // every listener re-evaluating IsVoiceModeAvailable() sees the real state.
+            if (micConsentGranted == ConsentStatus.Granted && !MicrophonePermission.IsGranted)
+            {
+                MicrophonePermission.Request(granted =>
+                {
+                    if (!granted)
+                        Debug.LogWarning("ConsentManager: in-app microphone consent was granted but the OS " +
+                                         "microphone permission was denied — voice mode stays unavailable " +
+                                         "until it is allowed in the device's app permission settings.");
+
+                    _events?.Publish(new ConsentChangedEvent(new ConsentState(micConsentGranted, internetConsentGranted)));
+                    onApplied?.Invoke();
+                });
+                return;
+            }
+
             if (changed)
             {
                 _events?.Publish(new ConsentChangedEvent(new ConsentState(micConsentGranted, internetConsentGranted)));
             }
+            onApplied?.Invoke();
         }
 
         private void LoadConsent()

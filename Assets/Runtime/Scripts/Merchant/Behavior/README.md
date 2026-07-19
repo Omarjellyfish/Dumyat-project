@@ -18,11 +18,53 @@ package). This file is the build recipe.
 ## Custom nodes (already compiled — appear in the editor's Add-node menu)
 
 Conditions (`Conditions/Merchant`): **Voice Mode Available**, **Negotiation Ongoing**.
-Actions (`Action/Merchant`): **Setup Negotiation**, **Generate Opening Line**, **Speak Merchant
-Line**, **Listen For Player**, **Process Player Turn**, **Apply Turn Result**, **Recover Turn**,
-**Resolve Negotiation**, **Scripted Fallback**.
+Actions (`Action/Merchant`): **Setup Negotiation**, **Run Placement Phase**, **Generate Opening
+Line**, **Speak Merchant Line**, **Listen For Player**, **Process Player Turn**, **Apply Turn
+Result**, **Recover Turn**, **Run Sale Confirm Phase**, **Resolve Negotiation**, **Scripted Fallback**.
 
-## Graph shape to build
+**Run Placement Phase** and **Run Sale Confirm Phase** are the scale-flow phases below. Each is one
+async node that drives its own listen/speak turns internally (a conversational loop that is awkward to
+author as graph nodes), so the graph only needs to sequence them — it does not loop them.
+
+## Graph shape to build — SCALE FLOW (current: multi-fish sale off a physical scale)
+
+Wire the merchant's `FishSellScale` into `MerchantNPC ▸ Sell Scale` (or nest it under the merchant so
+it auto-resolves). With a scale present, `Setup Negotiation` builds the bundle sale and the graph is:
+
+```
+Selector (root)
+├─ Sequence  "AI scale sale"
+│   ├─ [Condition] Voice Mode Available
+│   ├─ Setup Negotiation                 (builds the AwaitingPlacement bundle state)
+│   ├─ Run Placement Phase               (welcome → wait for fish on the scale → snapshot priced bundle)
+│   ├─ Generate Opening Line             (acknowledge the catch + opening TOTAL offer)
+│   ├─ Speak Merchant Line
+│   ├─ Repeat While: Negotiation Ongoing (haggle the ONE bundle total — unchanged loop)
+│   │    └─ Sequence  "turn"
+│   │         ├─ Selector  "get a turn or recover"
+│   │         │    ├─ Sequence
+│   │         │    │    ├─ Listen For Player
+│   │         │    │    ├─ Process Player Turn
+│   │         │    │    └─ Apply Turn Result   (on agree → moves to AwaitingSaleConfirm, exits loop)
+│   │         │    └─ Recover Turn
+│   │         └─ Speak Merchant Line
+│   ├─ Run Sale Confirm Phase            (per-fish summary → confirm → re-verify scale → pay out)
+│   └─ Resolve Negotiation
+└─ Scripted Fallback                     (no consent, or the player never loaded the scale)
+```
+
+Why this shape:
+- **Run Placement Phase** succeeds once the catch is on the scale (it internally re-asks and quips at
+  fumbles); if the player never loads it, the node fails → the root Selector runs **Scripted Fallback**.
+- Agreeing a price in the haggle loop moves the stage to `AwaitingSaleConfirm`, which makes **Negotiation
+  Ongoing** false so the loop exits into **Run Sale Confirm Phase**.
+- **Run Sale Confirm Phase** always ends in a terminal state (paid out / declined), so **Resolve
+  Negotiation** tears down and notifies the coordinator.
+
+## Graph shape — LEGACY single-fish (merchants with NO scale wired)
+
+Unchanged from the original single-fish flow; `Setup Negotiation` falls back to it when the merchant
+has no `SellScale`. Omit **Run Placement Phase** / **Run Sale Confirm Phase**:
 
 ```
 Selector (root)

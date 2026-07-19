@@ -99,4 +99,52 @@ namespace DumyatRuntime
             Reason = reason;
         }
     }
+
+    /// <summary>
+    /// Published by a <see cref="FishSellScale"/> whenever the set of fish physically resting on it
+    /// changes (a fish placed or removed). Carries the scale so a listener can re-query
+    /// <see cref="ISellScale.FishOnScale"/>; the negotiation compares <see cref="Scale"/> against its
+    /// merchant's own scale, since every scale publishes on the same channel.
+    /// </summary>
+    public readonly struct ScaleContentsChangedEvent : IGameEvent
+    {
+        /// <summary>The scale whose contents changed.</summary>
+        public readonly ISellScale Scale;
+
+        public ScaleContentsChangedEvent(ISellScale scale)
+        {
+            Scale = scale;
+        }
+    }
+
+    /// <summary>Why a fish counted as a fumble (drives the merchant's funny reaction line).</summary>
+    public enum FishFumbleReason
+    {
+        /// <summary>The player threw/dropped a fish that struck the merchant's body.</summary>
+        HitMerchant,
+
+        /// <summary>A fish was released while placing but did not come to rest on the sell scale.</summary>
+        MissedScale
+    }
+
+    /// <summary>
+    /// Published when the player fumbles a fish while trying to place it on a merchant's sell scale —
+    /// either it hit the merchant (<see cref="FishFumbleReason.HitMerchant"/>) or it was dropped and
+    /// missed the scale (<see cref="FishFumbleReason.MissedScale"/>). The negotiation, while awaiting
+    /// placement, reacts with a light-hearted line.
+    /// </summary>
+    public readonly struct FishFumbledEvent : IGameEvent
+    {
+        /// <summary>The fumbled fish (may be null if it was already destroyed).</summary>
+        public readonly Fish Fish;
+
+        /// <summary>What kind of fumble this was.</summary>
+        public readonly FishFumbleReason Reason;
+
+        public FishFumbledEvent(Fish fish, FishFumbleReason reason)
+        {
+            Fish = fish;
+            Reason = reason;
+        }
+    }
 }

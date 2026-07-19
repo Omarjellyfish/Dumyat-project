@@ -333,6 +333,18 @@ namespace DumyatRuntime
         {
             if (MicrophoneEnabled) return;
 
+            // Android needs the RECORD_AUDIO runtime grant before Microphone.devices is populated —
+            // without it the device check below fails and capture never starts. The consent flow secures
+            // it up front for the negotiation path, but a caller that bypasses consent (e.g. the STT test
+            // harness) can reach here without it. Request it and bail this attempt: the async grant can't
+            // retroactively fill this call, so the next mic-enable proceeds once it is allowed.
+            if (!MicrophonePermission.IsGranted)
+            {
+                MicrophonePermission.Request(_ => { });
+                NotifyFailed("Microphone permission not granted yet — requested it; try again once allowed.");
+                return;
+            }
+
             // Auto-open the session on first use, then validate the mic device.
             if (!IsSessionOpen && !OpenSession()) return;
 

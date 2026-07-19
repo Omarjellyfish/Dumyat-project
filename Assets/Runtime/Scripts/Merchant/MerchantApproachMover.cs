@@ -25,6 +25,11 @@ namespace DumyatRuntime
         private enum State { AtHome, WalkingToPlayer, Engaged, WalkingHome }
 
         [Header("Locomotion")]
+        [Tooltip("When ON, the merchant WALKS to the player and the conversation starts on arrival. " +
+                 "When OFF, the merchant stays put and engages IN PLACE as soon as the player is in " +
+                 "range — no walking, and no NavMesh needed.")]
+        [SerializeField] private bool _walkToPlayer = true;
+
         [Tooltip("Walk speed in metres per second.")]
         [SerializeField, Min(0.1f)] private float _walkSpeed = 1.4f;
 
@@ -131,6 +136,14 @@ namespace DumyatRuntime
             if (_state != State.AtHome || player == null) return;
 
             _playerTarget = player;
+
+            // Walking disabled: skip the walk and start the conversation where the merchant stands.
+            if (!_walkToPlayer)
+            {
+                EngageInPlace();
+                return;
+            }
+
             _state = State.WalkingToPlayer;
             DriveAgentTo(player.position);
         }
@@ -161,22 +174,29 @@ namespace DumyatRuntime
 
             if (toPlayer.magnitude <= _stopDistance)
             {
-                StopAgent();
-                FaceToward(_playerTarget.position);
-                _state = State.Engaged;
-                EnsureAnimatorState(_idleState);
-
-                // Route through the coordinator (lock + fish check). If it rejects, no negotiation
-                // starts and OnNegotiationEnded never fires — verify shortly after and go home.
-                if (_coordinator != null) _coordinator.PlayerInitiatesWithMerchant(_merchant);
-                CancelInvoke(nameof(VerifyEngaged));
-                Invoke(nameof(VerifyEngaged), 0.25f);
+                EngageInPlace();
                 return;
             }
 
             // Keep re-targeting so the merchant tracks the (possibly moving) player.
             DriveAgentTo(_playerTarget.position, toPlayer);
             EnsureAnimatorState(_walkState);
+        }
+
+        // Stop, face the player, and hand off to the coordinator (its one-at-a-time lock + fish check
+        // still apply). Used both on ARRIVAL when walking, and IMMEDIATELY when walking is disabled. If
+        // the coordinator rejects the approach, OnNegotiationEnded never fires — VerifyEngaged catches
+        // that shortly after and walks/settles the merchant back home.
+        private void EngageInPlace()
+        {
+            StopAgent();
+            if (_playerTarget != null) FaceToward(_playerTarget.position);
+            _state = State.Engaged;
+            EnsureAnimatorState(_idleState);
+
+            if (_coordinator != null) _coordinator.PlayerInitiatesWithMerchant(_merchant);
+            CancelInvoke(nameof(VerifyEngaged));
+            Invoke(nameof(VerifyEngaged), 0.25f);
         }
 
         private void UpdateWalkHome()
