@@ -74,6 +74,9 @@ namespace DumyatRuntime
 
         private void Awake()
         {
+            // Fall back to an AudioSource on this GameObject so placement audio works without manual wiring.
+            if (_audioSource == null) TryGetComponent(out _audioSource);
+
             if (TryGetComponent(out Collider col) && !col.isTrigger)
                 Debug.LogWarning($"FishSellScale on '{name}': its Collider is not set as a trigger — " +
                                  "fish placement will not be detected. Enable 'Is Trigger'.", this);

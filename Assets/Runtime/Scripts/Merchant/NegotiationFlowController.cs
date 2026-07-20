@@ -66,6 +66,27 @@ namespace DumyatRuntime
                  "capped separately. 0 = no limit.")]
         [SerializeField, Min(0)] private int _maxPlayerTurns = 20;
 
+        [Header("Placement (scale sale)")]
+        [Tooltip("Seconds to wait for the player to load the scale (or change it) before nudging them " +
+                 "again to place their fish.")]
+        [SerializeField, Min(0.5f)] private float _placementIdleSeconds = 15f;
+
+        [Tooltip("How many times to re-arm the mic while waiting for the player's answer to \"is that " +
+                 "your whole catch?\" before re-asking. Each attempt lasts until they speak OR the STT " +
+                 "session idle-closes (~15s), so this multiplies how long the merchant patiently waits.")]
+        [SerializeField, Min(1)] private int _maxAnswerListens = 3;
+
+        [Tooltip("Give-up guard: after this many unproductive placement rounds (no fish loaded, or no " +
+                 "clear \"that's all\" confirmation) the merchant abandons the sale.")]
+        [SerializeField, Min(1)] private int _maxPlacementPrompts = 8;
+
+        [Header("Sale Confirmation (scale sale)")]
+        [Tooltip("ON: after the player accepts a bundle price, the merchant reads the per-fish price " +
+                 "summary back and waits for the player to confirm it before sealing the deal " +
+                 "(accept > summary > confirm > close). OFF: acceptance seals the deal immediately — the " +
+                 "summary read-back and its confirmation are skipped (accept > close).")]
+        [SerializeField] private bool _enableFishSummary = true;
+
         // Injected AI / consent / stats services (replace the former manager singletons).
         private IConsentService _consent;
         private IMerchantNegotiationService _negotiation;
@@ -108,11 +129,6 @@ namespace DumyatRuntime
                  "If empty, one is searched for in the scene; otherwise the debug fish below is used.")]
         [SerializeField] private MonoBehaviour _fishInventorySource;
 
-        [Header("Stubs (temporary)")]
-        [Tooltip("STUB fish used when no IFishInventory is available. " +
-                 "Set fishType/fairMarketValue/weight to exercise the flow in-editor.")]
-        [SerializeField] private FishData _debugFish = new FishData();
-
         private PriceNegotiationCalculator _calculator;
         private NegotiationState _state;
         private MerchantNPC _activeMerchant;
@@ -136,8 +152,7 @@ namespace DumyatRuntime
         private FishFumbleReason? _pendingFumble;                 // a fumble to quip about while awaiting placement
         private TaskCompletionSource<string> _listenTcs;          // bridges one turn-based capture to an await
         private TaskCompletionSource<bool> _speakTcs;             // bridges one TTS line to an await
-        private const int MaxPlacementPrompts = 8;                // give-up guard: player never loads the scale
-        private const int MaxConfirmRounds = 6;                   // give-up guard: summary/confirm loop
+        private TaskCompletionSource<bool> _placementSignal;      // wakes the placement wait on a fumble / scale change
 
         /// <summary>True once a catch has been snapshotted from the scale — the scale-based bundle sale.</summary>
         private bool IsBundleSale => _state != null && _state.fishBundle != null && _state.fishBundle.Count > 0;
@@ -169,6 +184,11 @@ namespace DumyatRuntime
         private void Awake()
         {
             _calculator = new PriceNegotiationCalculator(_systemConfig);
+
+            // Auto-resolve the Behavior agent from THIS GameObject when left unassigned. The graph's
+            // nodes resolve the controller via GetComponent on the agent's own GameObject, so the agent
+            // must live on the same object as the controller — enforce that by construction here.
+            if (_agent == null) TryGetComponent(out _agent);
         }
 
         private void OnDestroy()
@@ -417,18 +437,22 @@ namespace DumyatRuntime
                 string transcript = await ListenAsync();
                 if (!_busy) return;
 
-                if (transcript == null)          // capture failed — recover a few times, then give up
+                // No usable input yet — a blank capture (player said nothing) OR an STT session error (the
+                // socket idle-closing while WAITING for the player, who hasn't pressed-to-talk). Either way
+                // stay QUIET and re-listen; never nag "say that again" before the player has actually
+                // spoken. The next capture reopens an idle-closed socket. Bail only if genuinely offline, or
+                // after prolonged silence.
+                if (string.IsNullOrWhiteSpace(transcript))
                 {
-                    Bt_RecoverTurn();
-                    if (IsTerminal) return;
-                    if (!await SpeakPendingAsync()) return;
-                    continue;
-                }
-                if (string.IsNullOrWhiteSpace(transcript))   // blank/no-speech — stay quiet and re-listen
-                {
+                    if (transcript == null && IsConnectivityLost())
+                    {
+                        Debug.LogWarning($"{LogPrefix} Connectivity lost during haggle — ending negotiation.");
+                        SetTerminal(NegotiationPhase.Declined);
+                        return;
+                    }
                     if (++silent > MaxSilentRetries)
                     {
-                        Debug.LogWarning($"{LogPrefix} Too many blank captures — ending negotiation.");
+                        Debug.LogWarning($"{LogPrefix} No player speech after {silent} retries — ending negotiation.");
                         SetTerminal(NegotiationPhase.Declined);
                         return;
                     }
@@ -984,6 +1008,8 @@ namespace DumyatRuntime
             _listenTcs = null;
             _speakTcs?.TrySetResult(true);
             _speakTcs = null;
+            _placementSignal?.TrySetResult(false);
+            _placementSignal = null;
             _pendingFumble = null;
 
             Unsubscribe();
@@ -1196,10 +1222,8 @@ namespace DumyatRuntime
                 int prompts = 0;
                 while (_busy && _state.stage == NegotiationStage.AwaitingPlacement)
                 {
-                    await ListenAsync();                     // wait for the player to talk back
-                    if (!_busy) return false;
-
-                    // Quip about a fumble that happened while they were loading the scale.
+                    // React to a fumble the INSTANT it happens (HandleFishFumbled wakes this loop), rather
+                    // than waiting for the player to next speak.
                     if (_pendingFumble.HasValue)
                     {
                         FishFumbleReason reason = _pendingFumble.Value;
@@ -1208,20 +1232,66 @@ namespace DumyatRuntime
                         continue;
                     }
 
-                    if (scale.HasFish)
+                    // Scale still empty: wait for the player to load it (a scale change / fumble wakes us),
+                    // nudging them if they stall too long, and giving up after too many silent nudges.
+                    if (!scale.HasFish)
+                    {
+                        bool woke = await WaitForPlacementActivityAsync(_placementIdleSeconds);
+                        if (!_busy) return false;
+                        if (_pendingFumble.HasValue || scale.HasFish) continue; // handled at the top / below
+                        if (woke) continue;                                     // some other change — re-evaluate
+
+                        if (++prompts > _maxPlacementPrompts)
+                        {
+                            Debug.LogWarning($"{LogPrefix} Player never loaded the scale after {prompts} prompts — giving up.");
+                            return false;
+                        }
+                        if (!await SpeakLineAsync(await _negotiation.GenerateWelcomeLine(_state, withGreeting: false))) return false;
+                        continue;
+                    }
+
+                    // Scale HAS fish: do NOT price yet — confirm the fisherman has placed his WHOLE catch,
+                    // so he can keep loading more before we snapshot the bundle.
+                    if (!await SpeakLineAsync(await _negotiation.GenerateAllPlacedPromptLine(_state))) return false;
+
+                    // Listen for the yes/no answer WITHOUT a premature timeout that could drop a late reply.
+                    // Plain ListenAsync waits until the player speaks OR the STT socket idle-closes; on a
+                    // drop/blank we RE-ARM (the next capture reopens the socket) and keep waiting, up to
+                    // _maxAnswerListens attempts, so the player's real answer is captured, not swallowed.
+                    ConfirmationAnswer answered = ConfirmationAnswer.Unclear;
+                    for (int listenTry = 0; listenTry < _maxAnswerListens && _busy; listenTry++)
+                    {
+                        string text = await ListenAsync();
+                        if (!_busy) return false;
+                        if (_pendingFumble.HasValue || !scale.HasFish) break;  // handled after the loop
+                        if (string.IsNullOrWhiteSpace(text))                    // drop / idle-close / blank — re-arm
+                        {
+                            Debug.Log($"{LogPrefix} Placement confirm: no usable answer (attempt {listenTry + 1}/{_maxAnswerListens}) — re-listening.");
+                            continue;
+                        }
+                        answered = await _negotiation.InterpretConfirmation(text, MerchantPhase.PlacementConfirm);
+                        Debug.Log($"{LogPrefix} Placement confirm: heard \"{text}\" → classified {answered}.");
+                        break;
+                    }
+                    if (!_busy) return false;
+                    if (_pendingFumble.HasValue) continue;   // fumbled while answering — quip first
+                    if (!scale.HasFish) continue;            // took everything back off — back to the empty branch
+
+                    if (answered == ConfirmationAnswer.Yes)
                     {
                         SnapshotBundleFromScale(scale);      // -> fills the bundle + price envelope, stage=Negotiating
                         return true;
                     }
 
-                    if (++prompts > MaxPlacementPrompts)
+                    // Not "yes" (more to add, unclear, or silent): don't spin re-asking — give up after too
+                    // many rounds, otherwise wait for them to change the scale before asking again.
+                    if (++prompts > _maxPlacementPrompts)
                     {
-                        Debug.LogWarning($"{LogPrefix} Player never loaded the scale after {prompts} prompts — giving up.");
+                        Debug.LogWarning($"{LogPrefix} No 'that's all my fish' confirmation after {prompts} rounds — giving up.");
                         return false;
                     }
-
-                    // Scale still empty — nudge them to load it (no greeting this time).
-                    if (!await SpeakLineAsync(await _negotiation.GenerateWelcomeLine(_state, withGreeting: false))) return false;
+                    await WaitForPlacementActivityAsync(_placementIdleSeconds);
+                    if (!_busy) return false;
                 }
 
                 return _state.stage == NegotiationStage.Negotiating;
@@ -1234,10 +1304,18 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// SALE-CONFIRM phase (after a bundle price is agreed): read back the per-fish summary + total and
-        /// ask the player to confirm. On "yes" it re-verifies the scale — if fish were removed it re-reads
-        /// a reduced summary, otherwise it pays out (records a sale per fish and removes them from the
-        /// scale) and ends Accepted. On "no" it ends Declined. Always resolves to a terminal state.
+        /// SALE-CONFIRM phase (after the player accepts a bundle price): an INTERACTIVE review of the deal.
+        /// The merchant reads back the per-fish summary + total and invites the player to confirm, keep
+        /// haggling, or change the catch. Each round it folds fish the player added / took off the scale into
+        /// the running total (an added fish extends it by its fair value, a removed one drops its share) and,
+        /// when the catch changed, ACKNOWLEDGES what changed by name and re-reads the updated summary before
+        /// treating the player's words as anything else. Speech that isn't a fish change runs through the full
+        /// haggle turn, so the player can still renegotiate the total; a clear agreement SEALS the deal (pay
+        /// out + spoken closing line, Accepted), a clear walk-away ends it Declined. An emptied scale nudges
+        /// for re-placement instead of cancelling. Always resolves to a terminal state. This is where the
+        /// bundle is finally AGREED — the haggle acceptance only routes here (see Bt_ApplyResult). When
+        /// <see cref="_enableFishSummary"/> is OFF the whole review is skipped: acceptance pays out and speaks
+        /// the closing line immediately (accept > close).
         /// </summary>
         public async Task<bool> Bt_RunSaleConfirmPhaseAsync()
         {
@@ -1246,59 +1324,114 @@ namespace DumyatRuntime
                 ISellScale scale = _activeMerchant != null ? _activeMerchant.SellScale : null;
                 if (_state == null || _negotiation == null || scale == null) return false;
 
-                // Freeze the agreed per-fish prices from the agreed total, so removing a fish just drops
-                // its share (the total is always the sum of the remaining fish's frozen prices).
-                var priceByFish = new Dictionary<FishData, float>();
-                float[] initial = _calculator.SplitBundlePrice(_state.fishBundle, _state.currentOffer);
-                for (int i = 0; i < _state.fishBundle.Count; i++)
-                    if (_state.fishBundle[i] != null) priceByFish[_state.fishBundle[i]] = initial[i];
+                // Summary disabled: the player's acceptance already sealed the price, so skip the per-fish
+                // read-back and its confirmation entirely. Split the accepted total across the accepted catch,
+                // drop any fish taken back off (its share just falls away), then pay out and close (accept > close).
+                if (!_enableFishSummary)
+                {
+                    Dictionary<FishData, float> frozen = BuildBundlePriceMap();
+                    ReconcileBundleWithScale(scale);
+                    if (_state.fishBundle.Count == 0) { SetTerminal(NegotiationPhase.Declined); return true; }
+                    await SealBundleSaleAsync(scale, frozen);
+                    return true;
+                }
 
-                bool afterRemoval = false;
-                int rounds = 0;
+                // Interactive summary. Price EVERYTHING off a single NEGOTIATION RATE = the agreed offer per
+                // unit of fair value (each fish's price = its fairMarketValue × rate, exactly how the total is
+                // distributed). A fish's price then depends ONLY on the fish and the current rate — never on the
+                // order fish were added/removed — so removing a fish and adding the same one back returns to the
+                // IDENTICAL total. The rate moves only when the player haggles; the ceiling rate is fixed.
+                float fairSum = SumFairValue(_state.fishBundle);
+                float rate = fairSum > 0f ? _state.currentOffer / fairSum : 1f;
+                float maxRate = fairSum > 0f ? Mathf.Max(rate, _state.maxOffer / fairSum) : rate;
+
+                var added = new List<FishData>();
+                var removed = new List<FishData>();
+                ReconcileScaleForSummary(scale, rate, maxRate, added, removed);   // fold any drift since acceptance
+
+                bool speakSummary = true;   // read the summary now, and again whenever the catch changes
+                int emptyNudges = 0;
                 while (_busy)
                 {
-                    if (++rounds > MaxConfirmRounds)
-                    {
-                        Debug.LogWarning($"{LogPrefix} Sale confirmation went {rounds} rounds without a decision — ending.");
-                        SetTerminal(NegotiationPhase.Declined);
-                        return true;
-                    }
-
-                    // Drop any fish the player has taken back off the scale.
-                    if (ReconcileBundleWithScale(scale)) afterRemoval = true;
                     if (_state.fishBundle.Count == 0)
                     {
-                        Debug.Log($"{LogPrefix} All fish were removed from the scale — nothing to sell.");
-                        SetTerminal(NegotiationPhase.Declined);
-                        return true;
+                        // Empty scale — do NOT cancel. Lifting one fish off a small scale can knock its
+                        // neighbours out of the trigger, and the player may just be rearranging. Nudge them to
+                        // put fish back and wait (same patience as placement); give up only after many rounds.
+                        if (++emptyNudges > _maxPlacementPrompts)
+                        {
+                            Debug.Log($"{LogPrefix} Scale stayed empty through the summary — ending the sale.");
+                            SetTerminal(NegotiationPhase.Declined);
+                            return true;
+                        }
+                        if (!await SpeakLineAsync(await _negotiation.GenerateWelcomeLine(_state, false))) return false;
+                        if (!scale.HasFish) await WaitForPlacementActivityAsync(_placementIdleSeconds);
+                        if (!_busy) return false;
+                        ReconcileScaleForSummary(scale, rate, maxRate, added, removed);   // pick up replaced fish
+                        speakSummary = true;
+                        continue;
                     }
+                    emptyNudges = 0;
 
-                    float[] prices = PricesFor(_state.fishBundle, priceByFish, out float total);
-                    if (!await SpeakLineAsync(await _negotiation.GenerateSaleSummaryLine(_state, prices, total, afterRemoval)))
-                        return false;
+                    if (speakSummary)
+                    {
+                        float[] prices = _calculator.SplitBundlePrice(_state.fishBundle, _state.currentOffer);
+                        if (!await SpeakLineAsync(await _negotiation.GenerateSaleSummaryLine(
+                                _state, prices, _state.currentOffer, FishNames(added), FishNames(removed))))
+                            return false;
+                        speakSummary = false;
+                    }
 
                     await ListenAsync();
                     if (!_busy) return false;
 
-                    ConfirmationAnswer answer = await _negotiation.InterpretConfirmation(_lastTranscript);
-                    if (!_busy) return false;
+                    // Catch changed before/while the player spoke → acknowledge it with a fresh summary before
+                    // treating their words as haggling ("tell me what changed the next time I speak").
+                    if (ReconcileScaleForSummary(scale, rate, maxRate, added, removed)) { speakSummary = true; continue; }
 
-                    if (answer == ConfirmationAnswer.No)
+                    // Otherwise the player is confirming, walking away, or HAGGLING the total — run a full turn.
+                    _state.turnCount++;
+                    if (_maxPlayerTurns > 0 && _state.turnCount > _maxPlayerTurns)
                     {
-                        Debug.Log($"{LogPrefix} Player declined the sale at the summary.");
+                        Debug.LogWarning($"{LogPrefix} Hit the turn limit while haggling the summary — ending.");
+                        SetTerminal(NegotiationPhase.WalkedAway);
+                        return true;
+                    }
+
+                    MerchantTurnResult result =
+                        await _negotiation.ProcessPlayerTurn(_state, _lastTranscript, _state.isDeceptive);
+                    if (!_busy) return false;
+                    if (result == null) { speakSummary = true; continue; }   // LLM glitch → just re-read the summary
+
+                    if (IsAcceptanceResult(result))
+                    {
+                        // Player confirmed — the summary WAS the confirmation prompt, so a clear yes seals (no
+                        // second "are you sure?"). Re-verify the scale first, then pay out and close.
+                        if (ReconcileScaleForSummary(scale, rate, maxRate, added, removed)) { speakSummary = true; continue; }
+                        if (_state.fishBundle.Count == 0) continue;
+                        await SealBundleSaleAsync(scale, BuildBundlePriceMap());
+                        return true;
+                    }
+                    if (IsDeclineResult(result))
+                    {
+                        Debug.Log($"{LogPrefix} Player walked away from the sale at the summary.");
                         SetTerminal(NegotiationPhase.Declined);
                         return true;
                     }
-                    if (answer != ConfirmationAnswer.Yes)
-                        continue;   // unclear — re-read the summary and ask again
 
-                    // Confirmed. Re-verify the scale one last time; if it changed, re-summarize the reduced deal.
-                    if (ReconcileBundleWithScale(scale)) { afterRemoval = true; continue; }
-                    if (_state.fishBundle.Count == 0) { SetTerminal(NegotiationPhase.Declined); return true; }
-
-                    PayoutBundle(scale, priceByFish);
-                    SetTerminal(NegotiationPhase.Accepted);
-                    return true;
+                    // Haggle / other (raise, hold, clarify, or "are you sure you want to stop?"): fold any raised
+                    // total into the RATE (offer per unit of fair value), so the whole catch re-prices off it and
+                    // the deal stays add/remove-symmetric. Then speak the merchant's own reply.
+                    if (result.HasNewOffer && result.NewOfferAmount > 0f)
+                    {
+                        // Ratchet: the total only ever moves UP toward the ceiling, never down (matches the haggle).
+                        _state.currentOffer =
+                            Mathf.Round(Mathf.Max(_state.currentOffer, Mathf.Min(result.NewOfferAmount, _state.maxOffer)));
+                        _state.offerHistory.Add(_state.currentOffer);
+                        float fs = SumFairValue(_state.fishBundle);
+                        if (fs > 0f) rate = _state.currentOffer / fs;
+                    }
+                    if (!await SpeakLineAsync(result)) return false;
                 }
 
                 return false;
@@ -1308,6 +1441,19 @@ namespace DumyatRuntime
                 Debug.LogError($"{LogPrefix} BT sale-confirm phase error: {e}");
                 return false;
             }
+        }
+
+        // Seals an AGREED bundle: pay out at the frozen per-fish prices, then speak the closing line and end
+        // Accepted. Shared by the summary-confirmed path and the summary-disabled path. Pays out BEFORE the
+        // close line so a confirmed deal is honoured even if the player walks off while it plays. The caller
+        // has already reconciled the bundle against the scale and ensured it is non-empty.
+        private async Task SealBundleSaleAsync(ISellScale scale, Dictionary<FishData, float> priceByFish)
+        {
+            PricesFor(_state.fishBundle, priceByFish, out float agreedTotal);
+            PayoutBundle(scale, priceByFish);
+            _state.state = NegotiationPhase.Accepted;
+            await SpeakLineAsync(await _negotiation.GenerateSaleClosedLine(_state, agreedTotal));
+            SetTerminal(NegotiationPhase.Accepted);
         }
 
         // Snapshots the fish resting on the scale into a priced bundle and rolls the (single) deception
@@ -1342,6 +1488,84 @@ namespace DumyatRuntime
             _state.fishBundle.RemoveAll(f => f == null || !ContainsByRef(onScale, f));
             return _state.fishBundle.Count != before;
         }
+
+        // Folds fish added to / removed from the scale into the running summary deal, then RE-PRICES the whole
+        // catch off the fixed negotiation <paramref name="rate"/> (offer per unit of fair value): the total is
+        // always rate × the current sum of fair values, never an accumulation of per-fish deltas. That makes
+        // add/remove perfectly symmetric — removing a fish then adding the same one back restores the identical
+        // total. The ceiling tracks <paramref name="maxRate"/> the same way. Fills added/removed with what
+        // changed (for the merchant's spoken acknowledgement) and returns true if anything changed. Fish
+        // references are stable per fish (cached ToFishData), so comparison is by reference.
+        private bool ReconcileScaleForSummary(ISellScale scale, float rate, float maxRate,
+            List<FishData> added, List<FishData> removed)
+        {
+            added.Clear();
+            removed.Clear();
+            IReadOnlyList<FishData> onScale = scale.FishDataOnScale;
+
+            foreach (FishData f in _state.fishBundle)
+                if (f != null && !ContainsByRef(onScale, f)) removed.Add(f);
+            foreach (FishData f in onScale)
+                if (f != null && !ContainsByRef(_state.fishBundle, f)) added.Add(f);
+
+            if (added.Count == 0 && removed.Count == 0) return false;
+
+            foreach (FishData f in removed) _state.fishBundle.Remove(f);
+            foreach (FishData f in added) _state.fishBundle.Add(f);
+
+            float fairSum = SumFairValue(_state.fishBundle);
+            _state.currentOffer = Mathf.Round(rate * fairSum);
+            _state.maxOffer = Mathf.Max(_state.currentOffer, Mathf.Round(maxRate * fairSum));
+            return true;
+        }
+
+        // Sum of the fair market values of the fish in a bundle — the base the negotiation rate multiplies.
+        private static float SumFairValue(List<FishData> bundle)
+        {
+            float sum = 0f;
+            foreach (FishData f in bundle)
+                if (f != null) sum += f.fairMarketValue;
+            return sum;
+        }
+
+        // The per-fish price map for the CURRENT bundle at the current total, split proportional to fair value
+        // (the same distribution the negotiation rate implies). Built fresh at seal / for the fast path.
+        private Dictionary<FishData, float> BuildBundlePriceMap()
+        {
+            var map = new Dictionary<FishData, float>();
+            float[] split = _calculator.SplitBundlePrice(_state.fishBundle, _state.currentOffer);
+            for (int i = 0; i < _state.fishBundle.Count; i++)
+                if (_state.fishBundle[i] != null) map[_state.fishBundle[i]] = split[i];
+            return map;
+        }
+
+        // Arabic (fallback transliterated) display names for a set of fish, for the summary's spoken
+        // acknowledgement of what the player just added / removed.
+        private static IReadOnlyList<string> FishNames(List<FishData> fish)
+        {
+            if (fish == null || fish.Count == 0) return Array.Empty<string>();
+            var names = new List<string>(fish.Count);
+            foreach (FishData f in fish)
+            {
+                if (f == null) continue;
+                names.Add(!string.IsNullOrWhiteSpace(f.fishTypeArabic) ? f.fishTypeArabic : f.fishType);
+            }
+            return names;
+        }
+
+        // A processed turn that clearly CLOSES the deal. The game already coerces a clear agreement into one
+        // of these actions (the same signal Bt_ApplyResult trusts), so we act on the action, not the raw
+        // score. The summary WAS the confirmation prompt, so ConfirmAccept ("are you sure?") also seals here
+        // rather than asking a second time.
+        private static bool IsAcceptanceResult(MerchantTurnResult r) =>
+            r != null && (r.Action == MerchantAction.Accept || r.Action == MerchantAction.ConfirmAccept ||
+                          r.Action == MerchantAction.PlayerAccepted);
+
+        // A processed turn where the player is DONE with the sale (not mere price pushback). A first-time
+        // "I want to stop" surfaces as ConfirmDecline, which stays in the haggle path so the merchant asks
+        // them to confirm before the sale is actually thrown away.
+        private static bool IsDeclineResult(MerchantTurnResult r) =>
+            r != null && (r.Action == MerchantAction.PlayerDeclined || r.Action == MerchantAction.WalkAway);
 
         // Per-fish prices (aligned to the bundle) pulled from the frozen map, plus their running total.
         private static float[] PricesFor(List<FishData> bundle, Dictionary<FishData, float> priceByFish, out float total)
@@ -1495,8 +1719,17 @@ namespace DumyatRuntime
             ApplyTurnLimit(result);
             Debug.Log($"{LogPrefix} Turn {_state.turnCount}: action={result.Action}" +
                       (result.HasNewOffer ? $", newOffer={result.NewOfferAmount:0.#}" : "."));
-            ShowSubtitle(result.SpeechTranslationEnglish, result.MerchantSpeech);
-            _pendingLine = result.MerchantSpeech;
+
+            // A bundle sale does NOT close at acceptance — the per-fish SUMMARY and the player's confirmation
+            // come first, and only then is the deal sealed with a closing line (see Bt_RunSaleConfirmPhaseAsync).
+            // So swallow the model's premature "it's a deal" line/subtitle here; the summary speaks next.
+            bool bundleAcceptClose = IsBundleSale &&
+                (result.Action == MerchantAction.Accept || result.Action == MerchantAction.PlayerAccepted);
+            if (!bundleAcceptClose)
+            {
+                ShowSubtitle(result.SpeechTranslationEnglish, result.MerchantSpeech);
+                _pendingLine = result.MerchantSpeech;
+            }
 
             switch (result.Action)
             {
@@ -1612,20 +1845,16 @@ namespace DumyatRuntime
 
         private FishData ResolveFishToSell()
         {
-            // Prefer an IFishInventory (real inventory later, random test provider now); fall back to
-            // the Inspector debug fish so the flow is still exercisable without one.
+            // The fish comes from the player's real inventory (or the random test provider standing in for
+            // it). With no inventory / no fish there is nothing to sell — the caller declines cleanly.
             IFishInventory inventory = ResolveFishInventory();
             if (inventory != null && inventory.HasFish
                 && inventory.TryGetFishToSell(out FishData fish)
                 && fish != null && !string.IsNullOrWhiteSpace(fish.fishType))
                 return fish;
 
-            if (_debugFish == null || string.IsNullOrWhiteSpace(_debugFish.fishType))
-            {
-                Debug.LogWarning($"{LogPrefix} No fish inventory available and debug fish is unset.");
-                return null;
-            }
-            return _debugFish;
+            Debug.LogWarning($"{LogPrefix} No fish inventory available — nothing to sell.");
+            return null;
         }
 
         // The market catalog from the resolved inventory (species + weight bands), copied so the
@@ -1684,6 +1913,7 @@ namespace DumyatRuntime
             _voiceCapture.OnTranscription += HandleTranscriptionComplete;
             _voiceCapture.OnCaptureFailed += HandleTranscriptionFailed;
             _eventService?.Subscribe<FishFumbledEvent>(HandleFishFumbled);
+            _eventService?.Subscribe<ScaleContentsChangedEvent>(HandleScaleContentsChanged);
             _subscribed = true;
         }
 
@@ -1696,16 +1926,60 @@ namespace DumyatRuntime
                 _voiceCapture.OnCaptureFailed -= HandleTranscriptionFailed;
             }
             _eventService?.Unsubscribe<FishFumbledEvent>(HandleFishFumbled);
+            _eventService?.Unsubscribe<ScaleContentsChangedEvent>(HandleScaleContentsChanged);
             _subscribed = false;
         }
 
         // Flags a fumble to quip about — but only while awaiting fish placement (the only stage a funny
-        // "you dropped it" reaction makes sense). The awaiting-placement phase consumes it on its next turn.
+        // "you dropped it" reaction makes sense). Wakes the placement phase IMMEDIATELY so the quip plays
+        // the instant the fish is fumbled, instead of waiting for the player to next speak.
         private void HandleFishFumbled(FishFumbledEvent evt)
         {
             if (_state == null || _state.stage != NegotiationStage.AwaitingPlacement) return;
             _pendingFumble = evt.Reason;
             Debug.Log($"{LogPrefix} Fish fumbled ({evt.Reason}) while awaiting placement.");
+
+            // React immediately: wake an idle wait AND interrupt an in-flight "is that all?" listen, so the
+            // quip plays the instant the fish is fumbled rather than after the player's next answer.
+            WakePlacement();
+            TaskCompletionSource<string> listen = _listenTcs;
+            _listenTcs = null;
+            listen?.TrySetResult(null);
+        }
+
+        // Wakes a scale wait when the scale's contents change (a fish placed or removed). During PLACEMENT it
+        // notices fish loaded SILENTLY so the merchant can ask whether that's the whole catch; during
+        // SALE-CONFIRM it wakes the patient re-placement wait the instant the player puts a bumped-off fish
+        // back, instead of stalling for the idle timeout. Only wakes an IDLE wait (WakePlacement is a no-op
+        // when nothing is awaiting — e.g. an in-flight confirm-listen keeps waiting for the verbal answer).
+        // Our merchant's scale only.
+        private void HandleScaleContentsChanged(ScaleContentsChangedEvent evt)
+        {
+            if (_state == null) return;
+            if (_state.stage != NegotiationStage.AwaitingPlacement &&
+                _state.stage != NegotiationStage.AwaitingSaleConfirm) return;
+            if (_activeMerchant == null || !ReferenceEquals(evt.Scale, _activeMerchant.SellScale)) return;
+            WakePlacement();
+        }
+
+        // Unblocks an idle placement wait (WaitForPlacementActivityAsync) so it re-evaluates the scale now.
+        private void WakePlacement()
+        {
+            TaskCompletionSource<bool> signal = _placementSignal;
+            _placementSignal = null;
+            signal?.TrySetResult(true);
+        }
+
+        // Waits until the player does something placement-relevant (places/removes fish, or fumbles — both
+        // call WakePlacement) or the timeout elapses. Returns true if activity woke it, false on timeout.
+        // Does NOT arm the mic — it only watches the scale, so a silent player still times out and is nudged.
+        private async Task<bool> WaitForPlacementActivityAsync(float seconds)
+        {
+            _placementSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Task woke = _placementSignal.Task;
+            Task finished = await Task.WhenAny(woke, Task.Delay(TimeSpan.FromSeconds(seconds)));
+            _placementSignal = null;
+            return finished == woke;
         }
 
         // Announces a merchant line for display. Called the moment the line is settled and never waits

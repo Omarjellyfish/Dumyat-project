@@ -4,34 +4,32 @@ using UnityEngine.Serialization;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Detects the player entering this merchant's detection radius and gets a negotiation
-    /// started. Sits on the merchant GameObject next to <see cref="MerchantNPC"/> with a trigger
-    /// collider sized to the DETECTION range (how far away the merchant notices a potential
-    /// customer).
+    /// Notices the player coming within this merchant's detection range and gets a negotiation started.
+    /// Sits on the merchant GameObject next to <see cref="MerchantNPC"/>. Detection is a plain DISTANCE
+    /// check (measured every frame from the merchant to the player) — no trigger collider is involved, so
+    /// the range is easy to tune and visualise (see the gizmos) and doesn't depend on collider overlap.
     ///
-    /// With a <see cref="MerchantApproachMover"/> on the same GameObject the MERCHANT walks over
-    /// to the player and the negotiation starts on arrival; without one it starts immediately in
-    /// place (legacy behaviour). Either way the request routes through
-    /// <see cref="MerchantApproachCoordinator.PlayerInitiatesWithMerchant"/> so the coordinator's one-at-a-time
-    /// lock and fish check still apply.
+    /// With a <see cref="MerchantApproachMover"/> on the same GameObject the MERCHANT walks over to the
+    /// player and the negotiation starts on arrival; without one it starts immediately in place (legacy
+    /// behaviour). Either way the request routes through
+    /// <see cref="MerchantApproachCoordinator.PlayerInitiatesWithMerchant"/> so the coordinator's
+    /// one-at-a-time lock and fish check still apply.
     ///
     /// ONE CONVERSATION PER VISIT: the merchant engages the player exactly once per time they are in
-    /// range. After a negotiation ends, it will NOT start another while the player stays in range —
-    /// the player must LEAVE the range and come back to talk again. OnTriggerStay only keeps RE-TRYING
-    /// the single engagement until it actually starts (e.g. when the coordinator/mover was momentarily
-    /// busy at the moment of entry); it never starts a second one.
+    /// range. After a negotiation ends, it will NOT start another while the player stays in range — the
+    /// player must LEAVE the range and come back to talk again. While in range it keeps RE-TRYING the
+    /// single engagement until it actually starts (e.g. the coordinator/mover was momentarily busy); it
+    /// never starts a second one.
     ///
-    /// WALK-AWAY CANCEL: while THIS merchant is mid-negotiation, <see cref="Update"/> watches the
-    /// player's distance and cancels the sale (the merchant walks back to its spot) once they move
-    /// beyond <c>_conversationRange</c> for longer than the grace window. This is a plain distance
-    /// check — no extra collider or child object is needed, and the range is independent of (and
-    /// smaller than) the detection sphere, so the player doesn't have to leave detection range to end
-    /// the conversation.
+    /// WALK-AWAY CANCEL: while THIS merchant is mid-negotiation, moving beyond the detection range for
+    /// longer than <c>_exitGraceSeconds</c> cancels the sale (the merchant walks back to its spot). The
+    /// grace window absorbs momentary boundary/VR jitter; coming back in range before it elapses keeps the
+    /// conversation alive. Detection range is the SINGLE range — engagement and cancellation share it.
     /// </summary>
     [RequireComponent(typeof(MerchantNPC))]
     public class MerchantProximityTrigger : MonoBehaviour
     {
-        [Tooltip("Tag identifying the player object entering the trigger.")]
+        [Tooltip("Tag identifying the player object.")]
         [SerializeField] private string _playerTag = "Player";
 
         [Tooltip("Coordinator that owns the negotiation lock. Auto-resolved from the scene when empty.")]
@@ -41,29 +39,34 @@ namespace DumyatRuntime
                  "player when they come into range.")]
         [SerializeField] private bool _facePlayerOnApproach = true;
 
-        [Header("Conversation Range")]
-        [Tooltip("While THIS merchant is negotiating, if the player moves further than this from the " +
-                 "merchant the negotiation is cancelled and the merchant walks back to its spot. Must " +
-                 "be larger than the mover's stop distance (~1.7 m) so simply standing to haggle stays " +
-                 "in range. Smaller than the detection radius so walking off ends the sale.")]
-        [SerializeField, Min(0.5f)] private float _conversationRange = 3f;
+        [Header("Detection Range")]
+        [Tooltip("Horizontal distance (metres) at which the merchant notices the player and engages, and " +
+                 "— once negotiating — beyond which the sale is cancelled. Make it comfortably larger than " +
+                 "where the player stands to use the sell scale, so reaching the scale never ends the sale.")]
+        [SerializeField, Min(0.5f)] private float _detectionRange = 4f;
 
-        [Tooltip("Seconds the player must stay BEYOND the conversation range before the negotiation is " +
-                 "cancelled. A small value absorbs momentary boundary/VR jitter; 0 cancels instantly.")]
+        [Tooltip("Seconds the player must stay BEYOND the detection range before an in-progress " +
+                 "negotiation is cancelled. A small value absorbs momentary boundary/VR jitter; 0 cancels " +
+                 "instantly.")]
         [SerializeField, Min(0f)] private float _exitGraceSeconds = 0.75f;
+
+        [Header("Gizmos")]
+        [Tooltip("Draw the detection range and a live line to the player in the Scene view.")]
+        [SerializeField] private bool _drawGizmos = true;
+
+        [Tooltip("Height off the merchant's base to draw the range ring / distance line at, for clarity.")]
+        [SerializeField] private float _gizmoHeight = 1f;
 
         private MerchantNPC _merchant;
         private MerchantApproachMover _mover;
-
-        // Player transform, captured when they enter the detection range, so the conversation-range
-        // check can measure distance every frame while negotiating.
         private Transform _player;
-        // Seconds the player has continuously been beyond the conversation range this negotiation.
-        private float _outOfRangeTimer;
 
         // True once the merchant has engaged the player during the CURRENT time-in-range. Blocks any
-        // further engagement until the player leaves and re-enters (reset in OnTriggerExit).
+        // further engagement until the player leaves the range and comes back.
         private bool _engagedThisVisit;
+
+        // Seconds the player has continuously been beyond the detection range while this merchant negotiates.
+        private float _outOfRangeTimer;
 
         private void Awake()
         {
@@ -76,75 +79,49 @@ namespace DumyatRuntime
                                  "approaches will do nothing.");
         }
 
-        private void OnTriggerEnter(Collider other)
-        {
-            if (!other.CompareTag(_playerTag)) return;
-            _player = other.transform;   // remember the player for the conversation-range check
-            // Fresh entry into range: allow exactly one engagement this visit.
-            _engagedThisVisit = false;
-            TryEngage(other);
-        }
-
-        // While THIS merchant is the one negotiating, cancel the sale (merchant walks back) if the
-        // player wanders beyond the conversation range for longer than the grace window. This is a
-        // distance check, not a trigger, so it works with no extra colliders/child objects — the
-        // player never has to leave the (larger) detection sphere for the conversation to end.
         private void Update()
         {
-            if (_coordinator == null || _merchant == null) return;
-            if (_coordinator.ActiveMerchant != _merchant) { _outOfRangeTimer = 0f; return; }
+            if (_merchant == null || _coordinator == null) return;
 
             Transform player = ResolvePlayer();
             if (player == null) return;
 
-            Vector3 toPlayer = player.position - transform.position;
-            toPlayer.y = 0f;   // horizontal distance — VR head height must not affect it
-            if (toPlayer.magnitude <= _conversationRange)
+            if (HorizontalDistanceTo(player) <= _detectionRange)
             {
+                // In range: keep retrying the single engagement until it starts (coordinator/mover may be busy).
                 _outOfRangeTimer = 0f;
+                if (!_engagedThisVisit) TryEngage(player);
                 return;
             }
 
-            _outOfRangeTimer += Time.deltaTime;
-            if (_outOfRangeTimer < _exitGraceSeconds) return;
-
-            _outOfRangeTimer = 0f;
-            Debug.Log($"MerchantProximityTrigger: player left '{name}' conversation range " +
-                      $"({toPlayer.magnitude:0.#}m > {_conversationRange:0.#}m) — cancelling negotiation.");
-            _coordinator.PlayerLeftConversationArea(_merchant);
-        }
-
-        private Transform ResolvePlayer()
-        {
-            if (_player != null) return _player;
-            GameObject go = GameObject.FindWithTag(_playerTag);
-            if (go != null) _player = go.transform;
-            return _player;
-        }
-
-        // Keep RE-TRYING the single engagement only until it actually starts — the coordinator or mover may
-        // have been busy at the instant of entry. Once engaged, this is a no-op until the player leaves.
-        private void OnTriggerStay(Collider other)
-        {
-            if (_engagedThisVisit) return;
-            TryEngage(other);
-        }
-
-        private void OnTriggerExit(Collider other)
-        {
-            if (!other.CompareTag(_playerTag)) return;
-            // Player left the range: re-arm so a later re-entry can start a new conversation.
+            // Out of range: re-arm the once-per-visit engagement for a later return.
             _engagedThisVisit = false;
+
+            // While THIS merchant is mid-sale, staying out of range past the grace window cancels it.
+            if (_coordinator.ActiveMerchant == _merchant)
+            {
+                _outOfRangeTimer += Time.deltaTime;
+                if (_outOfRangeTimer >= _exitGraceSeconds)
+                {
+                    _outOfRangeTimer = 0f;
+                    Debug.Log($"MerchantProximityTrigger: player left '{name}' detection range " +
+                              $"({HorizontalDistanceTo(player):0.#}m > {_detectionRange:0.#}m) — cancelling negotiation.");
+                    _coordinator.PlayerLeftConversationArea(_merchant);
+                }
+            }
+            else
+            {
+                _outOfRangeTimer = 0f;
+            }
         }
 
-        private void TryEngage(Collider other)
+        private void TryEngage(Transform player)
         {
-            if (!other.CompareTag(_playerTag)) return;
-            if (_coordinator == null || _merchant == null) return;
+            if (_coordinator == null || _merchant == null || player == null) return;
             if (_engagedThisVisit) return;                 // already had this visit's one conversation
             // One NPC at a time: block while any merchant is negotiating OR already walking to/from the
-            // player. Checking the coordinator-wide state (not just this merchant's mover) is what stops two
-            // merchants from approaching together. OnTriggerStay retries once the coast is clear.
+            // player. Checking the coordinator-wide state (not just this merchant's mover) is what stops
+            // two merchants from approaching together. Update retries once the coast is clear.
             if (_coordinator.IsAnyMerchantEngaging()) return;
 
             // Mark engaged BEFORE starting so nothing can slip a second conversation in this visit.
@@ -153,24 +130,73 @@ namespace DumyatRuntime
             if (_mover != null)
             {
                 // The merchant walks to the player; the negotiation is initiated on arrival.
-                Debug.Log("Approaching player: " + other.gameObject.name);
-                _mover.ApproachAndInitiate(other.transform);
+                Debug.Log("Approaching player: " + player.name);
+                _mover.ApproachAndInitiate(player);
             }
             else
             {
                 // Legacy in-place start.
-                if (_facePlayerOnApproach) FaceToward(other.transform.position);
+                if (_facePlayerOnApproach) FaceToward(player.position);
                 _coordinator.PlayerInitiatesWithMerchant(_merchant);
             }
         }
 
-        // Yaw-only look-at so the merchant turns to the player without pitching the body.
+        // Finds and caches the player transform by tag.
+        private Transform ResolvePlayer()
+        {
+            if (_player != null) return _player;
+            GameObject go = GameObject.FindWithTag(_playerTag);
+            if (go != null) _player = go.transform;
+            return _player;
+        }
+
+        // Horizontal (ground-plane) distance so VR head height never affects range.
+        private float HorizontalDistanceTo(Transform player)
+        {
+            Vector3 d = player.position - transform.position;
+            d.y = 0f;
+            return d.magnitude;
+        }
+
+        // Yaw-only look-at so the merchant turns to the player without pitching the body. Rotates only
+        // the visual body (not the root), so siblings like the sell scale don't turn with him.
         private void FaceToward(Vector3 worldPoint)
         {
-            Vector3 flat = worldPoint - transform.position;
+            Transform facing = _merchant != null ? _merchant.CharacterRoot : transform;
+            Vector3 flat = worldPoint - facing.position;
             flat.y = 0f;
             if (flat.sqrMagnitude < 0.001f) return;
-            transform.rotation = Quaternion.LookRotation(flat.normalized, Vector3.up);
+            facing.rotation = Quaternion.LookRotation(flat.normalized, Vector3.up);
+        }
+
+        // Scene-view visualisation: the detection range ring plus a live line to the player showing the
+        // current distance (green = in range, red = out). Editor-only; stripped from player builds.
+        private void OnDrawGizmos()
+        {
+            if (!_drawGizmos) return;
+
+            Vector3 center = transform.position + Vector3.up * _gizmoHeight;
+            Transform player = Application.isPlaying
+                ? _player
+                : (string.IsNullOrEmpty(_playerTag) ? null : GameObject.FindWithTag(_playerTag)?.transform);
+
+            bool inRange = player != null && HorizontalDistanceTo(player) <= _detectionRange;
+
+            Gizmos.color = inRange ? Color.green : new Color(1f, 0.55f, 0f); // green in range, orange otherwise
+            Gizmos.DrawWireSphere(center, _detectionRange);
+
+            if (player == null) return;
+
+            Vector3 p = player.position;
+            p.y = center.y;   // draw the line on the same plane as the ring
+            Gizmos.color = inRange ? Color.green : Color.red;
+            Gizmos.DrawLine(center, p);
+            Gizmos.DrawWireSphere(p, 0.1f);
+#if UNITY_EDITOR
+            UnityEditor.Handles.color = Gizmos.color;
+            UnityEditor.Handles.Label((center + p) * 0.5f + Vector3.up * 0.15f,
+                $"{HorizontalDistanceTo(player):0.00} m / {_detectionRange:0.0} m");
+#endif
         }
     }
 }

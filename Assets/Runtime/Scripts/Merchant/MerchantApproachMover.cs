@@ -59,6 +59,7 @@ namespace DumyatRuntime
         private MerchantNPC _merchant;
         private NavMeshAgent _agent;
         private Transform _playerTarget;
+        private Transform _facing;          // the visual body we rotate (not the root), so the sell scale stays put
         private Vector3 _homePosition;
         private Quaternion _homeRotation;
         private State _state = State.AtHome;
@@ -72,8 +73,11 @@ namespace DumyatRuntime
             if (_animator == null) _animator = GetComponentInChildren<Animator>();
             if (_coordinator == null) _coordinator = FindFirstObjectByType<MerchantApproachCoordinator>();
 
+            // Rotate only the merchant's visual body, so siblings (the sell scale) don't turn with him.
+            _facing = _merchant != null ? _merchant.CharacterRoot : transform;
+
             _homePosition = transform.position;
-            _homeRotation = transform.rotation;
+            _homeRotation = _facing.rotation;
 
             ConfigureAgent();
             EnsureBodyCollider();
@@ -92,7 +96,9 @@ namespace DumyatRuntime
             _agent.acceleration = 8f;
             _agent.stoppingDistance = 0f;
             _agent.autoBraking = true;
-            _agent.updateRotation = true;
+            // We rotate the visual body ourselves (see FaceDirection) so the root — and the sell scale
+            // hanging off it — never yaws with the agent. The agent still drives POSITION.
+            _agent.updateRotation = false;
             _agent.updateUpAxis = true;
 
             if (!_agent.isOnNavMesh &&
@@ -180,6 +186,7 @@ namespace DumyatRuntime
 
             // Keep re-targeting so the merchant tracks the (possibly moving) player.
             DriveAgentTo(_playerTarget.position, toPlayer);
+            FaceTravel();
             EnsureAnimatorState(_walkState);
         }
 
@@ -207,13 +214,14 @@ namespace DumyatRuntime
             if (HasArrivedHome(toHome))
             {
                 StopAgent();
-                transform.rotation = _homeRotation;
+                _facing.rotation = _homeRotation;
                 _state = State.AtHome;
                 EnsureAnimatorState(_idleState);
                 return;
             }
 
             DriveAgentTo(_homePosition, toHome);
+            FaceTravel();
             EnsureAnimatorState(_walkState);
         }
 
@@ -252,14 +260,35 @@ namespace DumyatRuntime
 
         private bool UseAgent() => _agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh;
 
-        // Graceful degradation only: straight-line step toward the flat direction with a turn.
+        // Graceful degradation only: straight-line step toward the flat direction with a turn. Moves the
+        // root (position) but only turns the visual body, so the sell scale rides along without spinning.
         private void MoveStraightLine(Vector3 flatDirection)
         {
             if (flatDirection.sqrMagnitude < 0.0001f) return;
             Vector3 direction = flatDirection.normalized;
-            Quaternion look = Quaternion.LookRotation(direction, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, look, _turnSpeed * Time.deltaTime);
+            FaceDirection(direction);
             transform.position += direction * (_walkSpeed * Time.deltaTime);
+        }
+
+        // Turn the merchant's visual body (never the root) toward the agent's current travel direction.
+        // Called each walking frame because the NavMeshAgent's own rotation is disabled (ConfigureAgent).
+        private void FaceTravel()
+        {
+            if (!UseAgent()) return;   // the straight-line fallback already faces in MoveStraightLine
+            Vector3 v = _agent.velocity;
+            v.y = 0f;
+            FaceDirection(v);
+        }
+
+        // Rotates ONLY the visual body toward a flat world direction, smoothly by default or instantly
+        // (e.g. snapping to face the player on arrival). The root stays put so siblings don't rotate.
+        private void FaceDirection(Vector3 flatDirection, bool instant = false)
+        {
+            if (_facing == null || flatDirection.sqrMagnitude < 0.0001f) return;
+            Quaternion look = Quaternion.LookRotation(flatDirection.normalized, Vector3.up);
+            _facing.rotation = instant
+                ? look
+                : Quaternion.RotateTowards(_facing.rotation, look, _turnSpeed * Time.deltaTime);
         }
 
         // Invoke target: the coordinator rejected the approach (busy / no fish) if this merchant never
@@ -288,7 +317,7 @@ namespace DumyatRuntime
             if (toHome.magnitude <= _homeArriveDistance)
             {
                 StopAgent();
-                transform.rotation = _homeRotation;
+                _facing.rotation = _homeRotation;
                 _state = State.AtHome;
                 EnsureAnimatorState(_idleState);
                 return;
@@ -302,8 +331,7 @@ namespace DumyatRuntime
         {
             Vector3 flat = worldPoint - transform.position;
             flat.y = 0f;
-            if (flat.sqrMagnitude < 0.001f) return;
-            transform.rotation = Quaternion.LookRotation(flat.normalized, Vector3.up);
+            FaceDirection(flat, instant: true);
         }
 
         // Cross-fades to the named state unless the animator is already in (or blending to) it.

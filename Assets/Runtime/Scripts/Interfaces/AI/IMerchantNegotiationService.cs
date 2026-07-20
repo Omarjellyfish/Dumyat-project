@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace DumyatRuntime
@@ -44,18 +45,41 @@ namespace DumyatRuntime
 
         /// <summary>
         /// The SALE SUMMARY line: read back the fish on the scale with their per-fish prices
-        /// (aligned to <c>state.fishBundle</c>) and the total, and ask the player to confirm.
-        /// <paramref name="afterRemoval"/> re-reads a reduced deal after fish were taken off the scale.
-        /// Always returns a line (templated fallback on failure).
+        /// (aligned to <c>state.fishBundle</c>) and the total, and ask the player to confirm OR keep haggling.
+        /// <paramref name="addedFish"/> / <paramref name="removedFish"/> name any fish the player just put on
+        /// / took off since the last summary, so the merchant ACKNOWLEDGES the change and reads the updated
+        /// deal (either may be empty). Always returns a line (templated fallback on failure).
         /// </summary>
-        Task<MerchantTurnResult> GenerateSaleSummaryLine(NegotiationState state, float[] perFishPrices, float total, bool afterRemoval);
+        Task<MerchantTurnResult> GenerateSaleSummaryLine(NegotiationState state, float[] perFishPrices, float total,
+            IReadOnlyList<string> addedFish, IReadOnlyList<string> removedFish);
 
         /// <summary>
         /// A light-hearted line for when the player fumbles a fish while placing it. Always returns a line.
         /// </summary>
         Task<MerchantTurnResult> GenerateFumbleLine(NegotiationState state, FishFumbleReason reason);
 
-        /// <summary>Classifies the player's reply to a yes/no confirmation question.</summary>
-        Task<ConfirmationAnswer> InterpretConfirmation(string playerSpeechText);
+        /// <summary>
+        /// The CLOSING line, spoken only AFTER the player has confirmed the per-fish summary: the whole-catch
+        /// deal is now truly agreed at <paramref name="total"/>, so the merchant warmly seals it (it's a deal,
+        /// the sale is done, a blessing) and the conversation ends. Always returns a line (templated fallback).
+        /// </summary>
+        Task<MerchantTurnResult> GenerateSaleClosedLine(NegotiationState state, float total);
+
+        /// <summary>
+        /// The "is that your whole catch?" line: fish are on the scale, but before pricing them the
+        /// merchant asks the fisherman to confirm they have placed EVERYTHING they want to sell (a yes/no
+        /// answer) or add more. Always returns a line (templated fallback on failure).
+        /// </summary>
+        Task<MerchantTurnResult> GenerateAllPlacedPromptLine(NegotiationState state);
+
+        /// <summary>
+        /// Classifies the player's reply to a yes/no confirmation question. <paramref name="phase"/>
+        /// tells the classifier WHICH question was asked so the same words are judged against the right
+        /// intent (e.g. "this is all I have" = a "yes" in <see cref="MerchantPhase.PlacementConfirm"/> but
+        /// not necessarily in <see cref="MerchantPhase.SaleConfirm"/>). Only the two confirmation phases
+        /// are valid here.
+        /// </summary>
+        Task<ConfirmationAnswer> InterpretConfirmation(string playerSpeechText,
+            MerchantPhase phase = MerchantPhase.SaleConfirm);
     }
 }

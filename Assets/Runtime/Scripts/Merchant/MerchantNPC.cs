@@ -23,6 +23,11 @@ namespace DumyatRuntime
                  "from children if left empty.")]
         [SerializeField] private FishSellScale _sellScale;
 
+        [Tooltip("The visual body that should carry the merchant's facing rotation. Approach/turn logic " +
+                 "rotates THIS transform instead of the merchant root, so siblings like the sell scale " +
+                 "don't rotate with him. Auto-resolved to a child named 'Character', else the root.")]
+        [SerializeField] private Transform _characterRoot;
+
         /// <summary>The archetype configuration for this merchant.</summary>
         public MerchantConfig Config => _config;
 
@@ -34,6 +39,12 @@ namespace DumyatRuntime
         /// wired — in which case the negotiation falls back to the legacy single-fish path.
         /// </summary>
         public ISellScale SellScale => _sellScale;
+
+        /// <summary>
+        /// The transform that carries the merchant's facing rotation (his visual body), so siblings like
+        /// the sell scale stay put when he turns to face the player. Never null — falls back to the root.
+        /// </summary>
+        public Transform CharacterRoot => _characterRoot != null ? _characterRoot : transform;
 
         private int _conversationCount;
 
@@ -69,6 +80,23 @@ namespace DumyatRuntime
         {
             // Fall back to a scale nested under this merchant if the field was left unassigned.
             if (_sellScale == null) _sellScale = GetComponentInChildren<FishSellScale>(true);
+
+            // Rotate only the visual body when turning, so siblings (the sell scale) don't spin with him.
+            // 'Character' is nested under the rig, not a direct child, so search all descendants for it.
+            if (_characterRoot == null)
+            {
+                foreach (Transform t in GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name == "Character") { _characterRoot = t; break; }
+                }
+                if (_characterRoot == null)
+                {
+                    _characterRoot = transform;
+                    Debug.LogWarning($"MerchantNPC '{name}': no 'Character' child found — facing rotation " +
+                                     "will fall back to the root (the sell scale will rotate with him). " +
+                                     "Assign Character Root explicitly.");
+                }
+            }
 
             // The merchant's voice is defined by its config archetype, and stays fixed for this NPC's
             // lifetime so its voice never changes between TTS lines.

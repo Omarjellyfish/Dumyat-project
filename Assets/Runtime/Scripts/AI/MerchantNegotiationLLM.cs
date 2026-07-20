@@ -477,6 +477,12 @@ namespace DumyatRuntime
         private const string FumbleMissArabic = "يا ريس، السمكه على الارض مش على الميزان، خدها وحطها صح.";
         private const string FumbleMissEnglish = "Sir, the fish is on the ground, not on the scale — pick it up and place it properly.";
 
+        private const string AllPlacedFallbackArabic = "كده خلصت؟ ولا لسه في سمك عايز تبيعه؟ قوللي لما تحط كله على الميزان.";
+        private const string AllPlacedFallbackEnglish = "Is that everything, or do you still have fish to sell? Tell me when it's all on the scale.";
+
+        private const string SaleClosedFallbackArabic = "تمام يا ريس، اتفقنا خلاص، البيعة ليا والفلوس ليك، الله يبارك لك في رزقك.";
+        private const string SaleClosedFallbackEnglish = "Perfect, sir — it's a deal, the catch is mine and the money's yours. God bless your livelihood.";
+
         /// <summary>
         /// The merchant's WELCOME line for the scale flow: greet (optionally) and ask the fisherman to
         /// put the fish they want to sell on the scale, then talk back. No fish/price is named yet.
@@ -494,9 +500,9 @@ namespace DumyatRuntime
         /// after the player took fish off the scale.
         /// </summary>
         public Task<MerchantTurnResult> GenerateSaleSummaryLine(NegotiationState state, float[] perFishPrices,
-            float total, bool afterRemoval)
+            float total, IReadOnlyList<string> addedFish, IReadOnlyList<string> removedFish)
             => GenerateSpeechLine(
-                BuildSummaryPrompt(state, perFishPrices, total, afterRemoval),
+                BuildSummaryPrompt(state, perFishPrices, total, addedFish, removedFish),
                 SummaryFallbackArabic, SummaryFallbackEnglish);
 
         /// <summary>
@@ -510,16 +516,35 @@ namespace DumyatRuntime
                 reason == FishFumbleReason.HitMerchant ? FumbleHitEnglish : FumbleMissEnglish);
 
         /// <summary>
+        /// The "is that your whole catch?" line: fish are on the scale but not priced yet; ask the
+        /// fisherman to confirm they have loaded EVERYTHING they want to sell (a yes/no answer) or add more.
+        /// </summary>
+        public Task<MerchantTurnResult> GenerateAllPlacedPromptLine(NegotiationState state)
+            => GenerateSpeechLine(
+                BuildAllPlacedPrompt(state),
+                AllPlacedFallbackArabic, AllPlacedFallbackEnglish);
+
+        /// <summary>
+        /// The CLOSING line spoken once the player has confirmed the summary: the whole-catch deal is agreed
+        /// at <paramref name="total"/>, so the merchant warmly seals it and the conversation ends.
+        /// </summary>
+        public Task<MerchantTurnResult> GenerateSaleClosedLine(NegotiationState state, float total)
+            => GenerateSpeechLine(
+                BuildSaleClosedPrompt(state, total),
+                SaleClosedFallbackArabic, SaleClosedFallbackEnglish);
+
+        /// <summary>
         /// Classifies the player's reply to a yes/no confirmation (e.g. "shall we close the sale?").
         /// Returns <see cref="ConfirmationAnswer.Unclear"/> when the LLM is unavailable or the answer is
         /// ambiguous, so the caller can simply ask again.
         /// </summary>
-        public async Task<ConfirmationAnswer> InterpretConfirmation(string playerSpeechText)
+        public async Task<ConfirmationAnswer> InterpretConfirmation(string playerSpeechText,
+            MerchantPhase phase = MerchantPhase.SaleConfirm)
         {
             if (_llm == null || !_llm.HasAvailableModel || string.IsNullOrWhiteSpace(playerSpeechText))
                 return ConfirmationAnswer.Unclear;
 
-            string json = ExtractJsonObject(await SendPromptAsync(BuildConfirmationPrompt(playerSpeechText)));
+            string json = ExtractJsonObject(await SendPromptAsync(MerchantPhaseRules.BuildConfirmationPrompt(phase, playerSpeechText)));
             if (json == null) return ConfirmationAnswer.Unclear;
 
             ConfirmationDto dto;
@@ -582,47 +607,71 @@ namespace DumyatRuntime
         private string BuildWelcomePrompt(NegotiationState state, bool withGreeting)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
-            sb.AppendLine("A FISHERMAN has walked up to sell their catch. You have a SCALE where they place the fish they want to sell.");
+            MerchantPhaseRules.AppendRole(sb);
+            MerchantPhaseRules.AppendWelcomeSituation(sb);
             sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
             AppendPersonality(sb, state);
 
-            sb.AppendLine("THIS IS YOUR WELCOME LINE. Nothing is on your scale yet — you cannot see or price any fish.");
-            sb.AppendLine(withGreeting
-                ? "Greet the fisherman warmly (Egyptian market style: 'يا ريس' / 'اهلا يا معلم' / 'يا باشا'), then tell " +
-                  "them to put the fish they want to sell ON YOUR SCALE and talk to you again when they are done. Short and friendly."
-                : "You already know this fisherman — skip the greeting. Just tell them to put the fish they want to sell " +
-                  "ON YOUR SCALE and talk to you again when they are done. Short and natural.");
-            sb.AppendLine("Do NOT name any fish, weight, or price — nothing has been placed yet.");
+            MerchantPhaseRules.AppendWelcomeDirective(sb, withGreeting);
             sb.AppendLine();
             AppendSpeechOnlySchema(sb, "your welcome line asking them to load the scale, in Egyptian dialect");
             AppendSpeechOnlyHardRules(sb);
             return sb.ToString();
         }
 
-        private string BuildSummaryPrompt(NegotiationState state, float[] perFishPrices, float total, bool afterRemoval)
+        private string BuildSummaryPrompt(NegotiationState state, float[] perFishPrices, float total,
+            IReadOnlyList<string> addedFish, IReadOnlyList<string> removedFish)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
-            sb.AppendLine("You have agreed a TOTAL price with a FISHERMAN for the whole catch resting on your scale.");
+            MerchantPhaseRules.AppendRole(sb);
+            MerchantPhaseRules.AppendSummarySituation(sb, addedFish, removedFish);
             sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
             AppendPersonality(sb, state);
-
-            if (afterRemoval)
-                sb.AppendLine("NOTE: the fisherman took some fish BACK OFF the scale, so this is the UPDATED deal for what " +
-                              "REMAINS. Mention lightly that the deal changed because some fish were removed.");
 
             sb.AppendLine("Read the deal back to the fisherman. The catch on the scale and what you will pay for each " +
                           "(spell all numbers out as Egyptian words when you speak them):");
             sb.Append(BuildPricedFishList(state, perFishPrices));
             sb.AppendLine($"TOTAL you will pay for everything: {EGP(total)}.");
             sb.AppendLine($"Briefly run through the fish and their prices, clearly state the ONE TOTAL of {EGP(total)}, then " +
-                          "ask the fisherman to CONFIRM the sale (a clear yes / 'اتفقنا'). You may add that they can still " +
-                          "change the fish on the scale if they want. Keep it to a couple of natural sentences.");
+                          "ask the fisherman to CONFIRM the sale (a clear yes / 'اتفقنا') OR, if they are not happy, to keep " +
+                          "haggling or change the fish on the scale. Keep it to a couple of natural sentences.");
             sb.AppendLine();
             AppendSpeechOnlySchema(sb, "your summary of the fish + prices + total, then ask them to confirm, in Egyptian dialect");
+            AppendSpeechOnlyHardRules(sb);
+            return sb.ToString();
+        }
+
+        private string BuildSaleClosedPrompt(NegotiationState state, float total)
+        {
+            var sb = new StringBuilder();
+            MerchantPhaseRules.AppendRole(sb);
+            MerchantPhaseRules.AppendSaleClosedSituation(sb);
+            sb.AppendLine(BuildDialectInstruction());
+            sb.AppendLine();
+            AppendPersonality(sb, state);
+
+            sb.AppendLine($"TOTAL you have agreed to pay for the whole catch: {EGP(total)} (spell it out as Egyptian words if you say it).");
+            MerchantPhaseRules.AppendSaleClosedDirective(sb);
+            sb.AppendLine();
+            AppendSpeechOnlySchema(sb, "your warm closing line sealing the agreed sale, in Egyptian dialect");
+            AppendSpeechOnlyHardRules(sb);
+            return sb.ToString();
+        }
+
+        private string BuildAllPlacedPrompt(NegotiationState state)
+        {
+            var sb = new StringBuilder();
+            MerchantPhaseRules.AppendRole(sb);
+            MerchantPhaseRules.AppendPlacementConfirmSituation(sb);
+            sb.AppendLine(BuildDialectInstruction());
+            sb.AppendLine();
+            AppendPersonality(sb, state);
+
+            MerchantPhaseRules.AppendPlacementConfirmDirective(sb);
+            sb.AppendLine();
+            AppendSpeechOnlySchema(sb, "your question asking if that is all his fish or if he has more, in Egyptian dialect");
             AppendSpeechOnlyHardRules(sb);
             return sb.ToString();
         }
@@ -630,36 +679,16 @@ namespace DumyatRuntime
         private string BuildFumblePrompt(NegotiationState state, FishFumbleReason reason)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
-            sb.AppendLine("A FISHERMAN is trying to place fish on your scale to sell them, but just fumbled:");
-            sb.AppendLine(reason == FishFumbleReason.HitMerchant
-                ? "- They threw or dropped a fish and it HIT YOU."
-                : "- They dropped a fish on the GROUND next to the scale instead of ON it.");
+            MerchantPhaseRules.AppendRole(sb);
+            MerchantPhaseRules.AppendFumbleSituation(sb, reason);
             sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
             AppendPersonality(sb, state);
 
-            sb.AppendLine("React with ONE short, GOOD-NATURED, funny Egyptian market quip — tease them lightly, never truly " +
-                          "angry — then remind them to put the fish GENTLY on the scale. Keep it playful and brief. Do NOT " +
-                          "name a price.");
+            MerchantPhaseRules.AppendFumbleDirective(sb);
             sb.AppendLine();
             AppendSpeechOnlySchema(sb, "your playful reaction + reminder to place the fish on the scale, in Egyptian dialect");
             AppendSpeechOnlyHardRules(sb);
-            return sb.ToString();
-        }
-
-        private static string BuildConfirmationPrompt(string playerSpeechText)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine("A fisherman at a fish market was asked to CONFIRM a sale (a yes/no question). Decide whether " +
-                          "they are AGREEING to finalize the sale, based ONLY on what they said.");
-            sb.AppendLine($"What the fisherman said (Egyptian Arabic, transcribed): \"{playerSpeechText}\"");
-            sb.AppendLine("Reply as exactly one JSON object and nothing else:");
-            sb.AppendLine("{\"answer\": \"yes\" | \"no\" | \"unclear\"}");
-            sb.AppendLine("- \"yes\"  = they agree / confirm the sale (اه، ايوه، اكيد، اتفقنا، ماشي، تمام، خلاص بيعتهالك).");
-            sb.AppendLine("- \"no\"   = they decline, back out, or want to change something (لا، مش عايز، استنى، عايز اغير).");
-            sb.AppendLine("- \"unclear\" = anything ambiguous, unrelated, or empty.");
-            sb.AppendLine("Output ONLY the JSON object.");
             return sb.ToString();
         }
 
@@ -751,21 +780,8 @@ namespace DumyatRuntime
                 sb.AppendLine();
             }
 
-            sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
-            if (bundleMode)
-            {
-                sb.AppendLine("The player is a FISHERMAN who has put their fresh catch on YOUR SCALE to SELL it to you — " +
-                              "YOU are buying it from them.");
-                sb.AppendLine("You buy and haggle over the WHOLE catch on your scale (all the fish listed below) as ONE deal " +
-                              "for ONE total price. Nothing else is for sale and the player cannot buy anything from you. " +
-                              "If they say anything off-topic, steer them back to selling this catch (use ClarifyRequest).");
-            }
-            else
-            {
-                sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
-                sb.AppendLine("You ONLY buy and haggle over THIS one fish. Nothing else is for sale and the player cannot buy anything from you. " +
-                              "If they say anything off-topic, steer them back to selling this fish (use ClarifyRequest).");
-            }
+            MerchantPhaseRules.AppendRole(sb);
+            MerchantPhaseRules.AppendSellingFraming(sb, MerchantPhase.Haggle, bundleMode);
             sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
 
@@ -1122,19 +1138,8 @@ namespace DumyatRuntime
 
             var sb = new StringBuilder();
 
-            sb.AppendLine("You are an NPC fish MERCHANT (a buyer) at the El Borg fish auction market in Dumyat (Damietta), Egypt.");
-            if (bundleMode)
-            {
-                sb.AppendLine("The player is a FISHERMAN who has just loaded their fresh catch onto YOUR SCALE to SELL it " +
-                              "to you — YOU are buying it from them.");
-                sb.AppendLine("You buy the WHOLE catch on your scale as ONE lot for ONE total price.");
-            }
-            else
-            {
-                sb.AppendLine("The player is a FISHERMAN who just caught a fish and walked up to SELL it to you — YOU are buying it from them.");
-                sb.AppendLine("You ONLY buy and haggle over THIS one fish. Nothing else is for sale and the player cannot buy anything from you. " +
-                              "If they say anything off-topic, steer them back to selling this fish (use ClarifyRequest).");
-            }
+            MerchantPhaseRules.AppendRole(sb);
+            MerchantPhaseRules.AppendSellingFraming(sb, MerchantPhase.Opening, bundleMode);
             sb.AppendLine(BuildDialectInstruction());
             sb.AppendLine();
 

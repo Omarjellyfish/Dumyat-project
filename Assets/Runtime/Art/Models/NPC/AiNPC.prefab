@@ -153,6 +153,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantNPC
   _config: {fileID: 11400000, guid: c5627193fe8c4dc0a7ec50f990159d6f, type: 2}
   _isAvailable: 1
+  _sellScale: {fileID: 0}
 --- !u!82 &2820388223654796462
 AudioSource:
   m_ObjectHideFlags: 0
@@ -352,6 +353,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbe03c8b78a8e6844b4183b97f511137, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantApproachMover
+  _walkToPlayer: 1
   _walkSpeed: 1.4
   _turnSpeed: 360
   _stopDistance: 1.7
