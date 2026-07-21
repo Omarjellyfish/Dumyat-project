@@ -154,6 +154,12 @@ namespace DumyatRuntime
         private TaskCompletionSource<bool> _speakTcs;             // bridges one TTS line to an await
         private TaskCompletionSource<bool> _placementSignal;      // wakes the placement wait on a fumble / scale change
 
+        // A called-out price waiting to land on the summary card the instant the merchant's TTS finishes
+        // voicing it (armed by PublishOffer, flushed from PlayMerchantLine). Skipped when there is no live
+        // voice — then PublishOffer publishes at once. See PublishOffer / FlushPendingOffer.
+        private bool _offerPending;
+        private float _offerPendingAmount;
+
         /// <summary>True once a catch has been snapshotted from the scale — the scale-based bundle sale.</summary>
         private bool IsBundleSale => _state != null && _state.fishBundle != null && _state.fishBundle.Count > 0;
 
@@ -483,6 +489,7 @@ namespace DumyatRuntime
             string line = _pendingLine;
             _pendingLine = null;
             if (!string.IsNullOrEmpty(line)) await SpeakAsync(line);
+            else FlushPendingOffer();   // nothing to voice — don't strand an armed offer
             return _busy;
         }
 
@@ -528,6 +535,7 @@ namespace DumyatRuntime
 
                 // POINT 3: subtitle immediately; audio plays in parallel; listen once it finishes.
                 ShowSubtitle(opener.SpeechTranslationEnglish, opener.MerchantSpeech);
+                PublishOffer();   // the opening offer was just voiced — log it on the summary card
                 PlayMerchantLine(opener.MerchantSpeech, BeginListening);
             }
             catch (Exception e)
@@ -808,6 +816,9 @@ namespace DumyatRuntime
                     PlayMerchantLine(result.MerchantSpeech, () => EndWithStat(NegotiationPhase.Accepted));
                     break;
             }
+
+            // Surface the number to the market ticket only when the merchant actually voiced one.
+            if (result.HasNewOffer || result.Action == MerchantAction.PlayerAccepted) PublishOffer();
         }
 
         /// <summary>
@@ -1033,10 +1044,14 @@ namespace DumyatRuntime
         // never stalls on audio — the subtitle is already on screen (point 6).
         private void PlayMerchantLine(string arabicText, Action onDone)
         {
+            // Any offer armed for this line lands as its speech ends (see PublishOffer / FlushPendingOffer),
+            // so the summary card inks the price the moment the merchant stops voicing it.
+            Action done = () => { FlushPendingOffer(); onDone?.Invoke(); };
+
             if (_tts == null)
             {
                 Debug.LogWarning($"{LogPrefix} TTS manager unavailable; continuing on subtitle only.");
-                onDone?.Invoke();
+                done();
                 return;
             }
 
@@ -1055,11 +1070,11 @@ namespace DumyatRuntime
                                  "VoiceId on its MerchantConfig; TTS will fall back to subtitle only.");
             _tts.PlaySpeech(
                 voiceId, arabicText, _activeAudioSource,
-                onComplete: onDone,
+                onComplete: done,
                 onError: () =>
                 {
                     Debug.LogWarning($"{LogPrefix} TTS failed; continuing on subtitle only.");
-                    onDone?.Invoke();
+                    done();
                 },
                 voiceSettings: voiceSettings);
         }
@@ -1089,6 +1104,7 @@ namespace DumyatRuntime
             _lastTranscript = "";
             _lastResult = null;
             _pendingFumble = null;
+            _offerPending = false;
         }
 
         private void SetTerminal(NegotiationPhase phase)
@@ -1165,6 +1181,7 @@ namespace DumyatRuntime
                     if (!_busy || ack == null) return false;
 
                     ShowSubtitle(ack.SpeechTranslationEnglish, ack.MerchantSpeech);
+                    PublishOffer();   // the opening bundle total was just voiced — log it on the summary card
                     _pendingLine = ack.MerchantSpeech;
                     return true;
                 }
@@ -1185,6 +1202,7 @@ namespace DumyatRuntime
 
                 _state.state = NegotiationPhase.Negotiating;
                 ShowSubtitle(opener.SpeechTranslationEnglish, opener.MerchantSpeech);
+                PublishOffer();   // the opening offer was just voiced — log it on the summary card
                 _pendingLine = opener.MerchantSpeech;
                 return true;
             }
@@ -1376,14 +1394,20 @@ namespace DumyatRuntime
                     if (speakSummary)
                     {
                         float[] prices = _calculator.SplitBundlePrice(_state.fishBundle, _state.currentOffer);
-                        if (!await SpeakLineAsync(await _negotiation.GenerateSaleSummaryLine(
-                                _state, prices, _state.currentOffer, FishNames(added), FishNames(removed))))
-                            return false;
+                        MerchantTurnResult summary = await _negotiation.GenerateSaleSummaryLine(
+                            _state, prices, _state.currentOffer, FishNames(added), FishNames(removed));
+                        PublishOffer();   // the summary read-back voices the current total — lands as it finishes
+                        if (!await SpeakLineAsync(summary)) return false;
                         speakSummary = false;
                     }
 
-                    await ListenAsync();
+                    string said = await ListenAsync();
                     if (!_busy) return false;
+
+                    // Silence / failed capture: keep listening — never re-process the PREVIOUS utterance.
+                    // (Re-running the LLM on a stale transcript once let a quiet player accidentally re-roll
+                    // their last "yes" until it crossed the bar and sealed on silence.)
+                    if (string.IsNullOrWhiteSpace(said)) continue;
 
                     // Catch changed before/while the player spoke → acknowledge it with a fresh summary before
                     // treating their words as haggling ("tell me what changed the next time I speak").
@@ -1398,8 +1422,12 @@ namespace DumyatRuntime
                         return true;
                     }
 
+                    // The summary read-back IS the confirmation prompt, so score the reply against the lenient
+                    // "already asked point-blank" bar (AcceptConfirmedScoreThreshold) instead of the strict
+                    // unprompted one — a plain yes here should close, not be mistaken for more haggling.
+                    _state.awaitingAcceptConfirmation = true;
                     MerchantTurnResult result =
-                        await _negotiation.ProcessPlayerTurn(_state, _lastTranscript, _state.isDeceptive);
+                        await _negotiation.ProcessPlayerTurn(_state, said, _state.isDeceptive);
                     if (!_busy) return false;
                     if (result == null) { speakSummary = true; continue; }   // LLM glitch → just re-read the summary
 
@@ -1431,6 +1459,7 @@ namespace DumyatRuntime
                         float fs = SumFairValue(_state.fishBundle);
                         if (fs > 0f) rate = _state.currentOffer / fs;
                     }
+                    if (result.HasNewOffer && result.NewOfferAmount > 0f) PublishOffer();   // raised total, about to be voiced
                     if (!await SpeakLineAsync(result)) return false;
                 }
 
@@ -1635,6 +1664,7 @@ namespace DumyatRuntime
                 ShowSubtitle(line.SpeechTranslationEnglish, line.MerchantSpeech);
                 await SpeakAsync(line.MerchantSpeech);
             }
+            else FlushPendingOffer();   // nothing to voice — don't strand an armed offer
             return _busy;
         }
 
@@ -1662,6 +1692,7 @@ namespace DumyatRuntime
         {
             if (string.IsNullOrEmpty(_pendingLine))
             {
+                FlushPendingOffer();    // nothing to voice — don't strand an armed offer
                 _lineFinished = true;   // nothing queued to say — treat as immediately finished
                 return;
             }
@@ -1783,6 +1814,9 @@ namespace DumyatRuntime
                     CloseHaggleAccepted();
                     break;
             }
+
+            // Surface the number to the market ticket only when the merchant actually voiced one.
+            if (result.HasNewOffer || result.Action == MerchantAction.PlayerAccepted) PublishOffer();
         }
 
         // A price was agreed in the haggle. Legacy single-fish sale ends here (terminal Accepted). The
@@ -1994,6 +2028,52 @@ namespace DumyatRuntime
             if (_eventService == null || _activeMerchant == null) return;
             _eventService.Publish(new MerchantSpokeEvent(_activeMerchant, english, arabic));
         }
+
+        // Announces the price the merchant has just called out, so a scale-side readout (the market
+        // ticket) can show only the number he has actually voiced — never the hidden fair value, and
+        // never before he says it. Emitted alongside the spoken offer line; no-op until there is one.
+        private void PublishOffer()
+        {
+            if (_eventService == null || _activeMerchant == null || _state == null) return;
+            if (_state.currentOffer <= 0f) return;
+
+            // Keep the card in lockstep with the voice: when the line will be spoken aloud, DEFER the publish
+            // until that line's TTS finishes (flushed from PlayMerchantLine) so the price is inked in the
+            // instant he stops saying it — not while he is still voicing the number. With no live voice
+            // (TTS missing/failed, or subtitle-only) there is nothing to wait on, so publish immediately.
+            if (IsVoiceLive)
+            {
+                _offerPending = true;
+                _offerPendingAmount = _state.currentOffer;
+            }
+            else
+            {
+                PublishOfferNow(_state.currentOffer);
+            }
+        }
+
+        // Publishes an offer armed by PublishOffer, once its voicing line has finished speaking. Invoked from
+        // the TTS-completion path (PlayMerchantLine) so the card updates exactly as the merchant falls silent.
+        private void FlushPendingOffer()
+        {
+            if (!_offerPending) return;
+            _offerPending = false;
+            PublishOfferNow(_offerPendingAmount);
+        }
+
+        private void PublishOfferNow(float amount)
+        {
+            if (_eventService == null || _activeMerchant == null || amount <= 0f) return;
+            _eventService.Publish(new MerchantOfferedPriceEvent(
+                _activeMerchant, _activeMerchant.SellScale, amount));
+        }
+
+        // Whether this merchant's next line will actually be spoken aloud (so an offer should land as the
+        // speech ends) rather than shown subtitle-only. A missing TTS service or a blank voice id means the
+        // request is subtitle-only — treated as no live voice, so offers publish at once.
+        private bool IsVoiceLive =>
+            _tts != null && _activeMerchant != null &&
+            !string.IsNullOrWhiteSpace(_activeMerchant.AssignedVoiceId);
 
         private void ShowThinkingCue()
         {

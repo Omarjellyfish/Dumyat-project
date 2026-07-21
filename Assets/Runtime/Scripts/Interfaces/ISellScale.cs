@@ -24,5 +24,11 @@ namespace DumyatRuntime
 
         /// <summary>True while at least one fish is resting on the scale.</summary>
         bool HasFish { get; }
+
+        /// <summary>
+        /// Combined honest weight (kg) of every fish currently resting on the scale. Live view; sums
+        /// <c>Fish.Weight</c> over <see cref="FishOnScale"/>. Zero when the scale is empty.
+        /// </summary>
+        float TotalWeightKg { get; }
     }
 }

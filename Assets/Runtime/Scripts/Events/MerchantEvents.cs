@@ -117,6 +117,32 @@ namespace DumyatRuntime
         }
     }
 
+    /// <summary>
+    /// Published by <c>NegotiationFlowController</c> the moment the merchant VOICES a bundle price — a
+    /// raise, an acceptance, or a sale-confirm summary read-back. Lets a scale-side readout (the market
+    /// ticket) show ONLY the number the merchant has actually called out: never the hidden fair value,
+    /// and never before he says it. Carries the scale so a per-scale listener can match its own, exactly
+    /// like <see cref="ScaleContentsChangedEvent"/> (every merchant publishes on the same channel).
+    /// </summary>
+    public readonly struct MerchantOfferedPriceEvent : IGameEvent
+    {
+        /// <summary>The merchant voicing the price (filter key — all merchants share the channel).</summary>
+        public readonly MerchantNPC Merchant;
+
+        /// <summary>The merchant's sell scale, so a per-scale ticket can match its own.</summary>
+        public readonly ISellScale Scale;
+
+        /// <summary>The bundle total the merchant just called out, in whole Egyptian Pounds.</summary>
+        public readonly float Amount;
+
+        public MerchantOfferedPriceEvent(MerchantNPC merchant, ISellScale scale, float amount)
+        {
+            Merchant = merchant;
+            Scale = scale;
+            Amount = amount;
+        }
+    }
+
     /// <summary>Why a fish counted as a fumble (drives the merchant's funny reaction line).</summary>
     public enum FishFumbleReason
     {

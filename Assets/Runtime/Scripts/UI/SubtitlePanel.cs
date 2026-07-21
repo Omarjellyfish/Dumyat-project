@@ -22,6 +22,16 @@ namespace DumyatRuntime
                  "parent if left empty.")]
         [SerializeField] private RectTransform _background;
 
+        [Tooltip("The panel's visible content, hidden between lines. Toggled instead of this whole " +
+                 "GameObject so anything composed ONTO the panel root (e.g. a nested SummaryCard in the " +
+                 "SubtitlePanelWithSummary variant) stays active and keeps its event subscriptions alive. " +
+                 "Auto-resolved to the background if left empty.")]
+        [SerializeField] private GameObject _contentRoot;
+
+        [Tooltip("Optional accent label for the speaker's name, shown above the line in small caps " +
+                 "(e.g. \"AM SAYED\"). Hidden whenever no speaker is supplied; the name is auto-uppercased.")]
+        [SerializeField] private TextMeshProUGUI _speakerLabel;
+
         [Header("Layout")]
         [Tooltip("Space between the text and the edge of the background, per side, in the panel's " +
                  "local units.")]
@@ -38,6 +48,14 @@ namespace DumyatRuntime
         [Tooltip("Turn to face the camera each frame, staying upright.")]
         [SerializeField] private bool _faceCamera = true;
 
+        [Header("Outline")]
+        [Tooltip("Give the caption a crisp dark outline so it stays legible over bright water. Applied to " +
+                 "a per-object material instance, so the shared font material (used by the ticket and " +
+                 "floating text) is never affected.")]
+        [SerializeField] private bool _applyOutline = true;
+        [SerializeField] private Color _outlineColor = Color.black;
+        [SerializeField, Range(0f, 1f)] private float _outlineWidth = 0.2f;
+
         private Camera _camera;
         private Coroutine _typing;
 
@@ -49,10 +67,23 @@ namespace DumyatRuntime
             if (_text == null) _text = GetComponentInChildren<TextMeshProUGUI>(true);
             if (_background == null && _text != null)
                 _background = _text.rectTransform.parent as RectTransform;
+            if (_contentRoot == null && _background != null) _contentRoot = _background.gameObject;
 
             if (_text == null)
                 Debug.LogWarning($"{nameof(SubtitlePanel)} on '{name}' has no TextMeshProUGUI — " +
                                  "it cannot show subtitles.", this);
+
+            if (_applyOutline && _text != null)
+            {
+                // fontMaterial returns an instance unique to this text object, so the shared font
+                // material is left untouched. Outline is a core SDF property — no shader keyword needed.
+                Material mat = _text.fontMaterial;
+                mat.SetFloat(ShaderUtilities.ID_OutlineWidth, _outlineWidth);
+                mat.SetColor(ShaderUtilities.ID_OutlineColor, _outlineColor);
+                _text.UpdateMeshPadding();
+            }
+
+            if (_speakerLabel != null) _speakerLabel.gameObject.SetActive(false);
         }
 
         private void OnEnable()
@@ -71,10 +102,33 @@ namespace DumyatRuntime
         }
 
         /// <summary>Shows a line, revealing it at <see cref="_charactersPerSecond"/>.</summary>
-        public void Show(string text) => Display(text, instant: _charactersPerSecond <= 0f);
+        public void Show(string text) => Show(text, null);
+
+        /// <summary>Shows a line under a named speaker, revealing it at <see cref="_charactersPerSecond"/>.</summary>
+        public void Show(string text, string speaker)
+        {
+            SetSpeaker(speaker);
+            Display(text, instant: _charactersPerSecond <= 0f);
+        }
 
         /// <summary>Shows a line in full immediately, with no typing.</summary>
-        public void ShowInstant(string text) => Display(text, instant: true);
+        public void ShowInstant(string text) => ShowInstant(text, null);
+
+        /// <summary>Shows a line under a named speaker in full immediately, with no typing.</summary>
+        public void ShowInstant(string text, string speaker)
+        {
+            SetSpeaker(speaker);
+            Display(text, instant: true);
+        }
+
+        // Fills the accent label with the speaker's name (upper-cased) or hides it when none is given.
+        private void SetSpeaker(string speaker)
+        {
+            if (_speakerLabel == null) return;
+            bool has = !string.IsNullOrWhiteSpace(speaker);
+            _speakerLabel.gameObject.SetActive(has);
+            if (has) _speakerLabel.text = speaker.ToUpperInvariant();
+        }
 
         /// <summary>Reveals the rest of the current line at once.</summary>
         public void CompleteTyping()
@@ -88,7 +142,16 @@ namespace DumyatRuntime
         public void Hide()
         {
             StopTyping();
-            gameObject.SetActive(false);
+            SetContentActive(false);
+        }
+
+        // Shows/hides the caption's visuals WITHOUT touching this GameObject, so the panel root — and
+        // anything nested under it — stays active and keeps running (see _contentRoot). Falls back to the
+        // whole GameObject only if no content root could be resolved.
+        private void SetContentActive(bool active)
+        {
+            if (_contentRoot != null) _contentRoot.SetActive(active);
+            else gameObject.SetActive(active);
         }
 
         private void Display(string text, bool instant)
@@ -103,7 +166,7 @@ namespace DumyatRuntime
                 return;
             }
 
-            gameObject.SetActive(true);
+            SetContentActive(true);
             Resize(text);
 
             if (instant || !isActiveAndEnabled)

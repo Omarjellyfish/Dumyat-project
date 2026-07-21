@@ -57,6 +57,18 @@ namespace DumyatRuntime
         /// <summary>True if <paramref name="fish"/> is currently resting on the scale.</summary>
         public bool Contains(Fish fish) => fish != null && _resting.Contains(fish);
 
+        public float TotalWeightKg
+        {
+            get
+            {
+                Prune();
+                float total = 0f;
+                foreach (Fish fish in _resting)
+                    if (fish != null) total += fish.Weight;
+                return total;
+            }
+        }
+
         public IReadOnlyList<FishData> FishDataOnScale
         {
             get

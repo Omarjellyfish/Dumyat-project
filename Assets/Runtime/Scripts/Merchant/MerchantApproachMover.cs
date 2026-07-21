@@ -17,6 +17,11 @@ namespace DumyatRuntime
     /// is available at runtime the mover degrades gracefully to a straight-line walk so the merchant
     /// still functions. The Animator is cross-faded between the Walk and Idle states; the greeting
     /// Wave on arrival stays <see cref="MerchantAnimationDriver"/>'s job.
+    ///
+    /// With walking turned OFF the agent is DISABLED outright rather than merely left unused: an enabled
+    /// agent owns the transform's HEIGHT (it snaps to the baked surface and pins it there), which silently
+    /// lifted stationary merchants off the ground wherever the NavMesh was carved out from under them.
+    /// See ConfigureAgent.
     /// </summary>
     [RequireComponent(typeof(MerchantNPC))]
     [RequireComponent(typeof(NavMeshAgent))]
@@ -91,6 +96,18 @@ namespace DumyatRuntime
             _agent = GetComponent<NavMeshAgent>();
             if (_agent == null) _agent = gameObject.AddComponent<NavMeshAgent>();
 
+            // A merchant that never walks has no use for the agent — and leaving it enabled COSTS him his
+            // authored height: the agent snaps to the nearest baked NavMesh point and then pins the
+            // transform at that surface every frame (updatePosition). Where the NavMesh is carved out from
+            // under a stall, the nearest point is a raised ledge beside it, so the merchant stands in the
+            // air (measured: +0.44 m on one, +0.11 m on another, while merchants with NavMesh directly
+            // beneath them were fine). Disabling it keeps the transform exactly as placed.
+            if (!_walkToPlayer)
+            {
+                _agent.enabled = false;
+                return;
+            }
+
             _agent.speed = _walkSpeed;
             _agent.angularSpeed = _turnSpeed;
             _agent.acceleration = 8f;
@@ -104,6 +121,16 @@ namespace DumyatRuntime
             if (!_agent.isOnNavMesh &&
                 NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
             {
+                // Pathfinding REQUIRES the agent to be on the mesh, so the snap stands — but a large one
+                // (especially vertical) means this merchant was placed off the baked NavMesh, and the
+                // silent lift is exactly what reads in-game as "the NPC floats". Say so instead.
+                Vector3 delta = hit.position - transform.position;
+                if (Mathf.Abs(delta.y) > 0.05f || delta.magnitude > 0.5f)
+                    Debug.LogWarning($"MerchantApproachMover: '{name}' is not on the baked NavMesh — " +
+                                     $"snapping {delta.magnitude:0.##} m (Δy {delta.y:0.###}) to the " +
+                                     "nearest point, which will change his height. Re-bake the NavMesh so " +
+                                     "it covers this spot at floor level, or move him onto valid NavMesh.",
+                                     this);
                 _agent.Warp(hit.position);
             }
         }

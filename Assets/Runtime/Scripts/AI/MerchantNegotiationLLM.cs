@@ -238,6 +238,14 @@ namespace DumyatRuntime
         private const string CoercedConfirmAcceptEnglish =
             "Alright sir — so we're agreed and you'll sell it to me? Tell me yes or no so I can confirm the sale.";
 
+        // Acceptance in a BUNDLE sale, where the per-fish summary read-back follows immediately and is
+        // itself the confirmation ("...اتفقنا؟"). Asking to confirm here too would make the player agree
+        // twice for one deal, so this line only acknowledges the agreement and hands over to that tally.
+        private const string CoercedAcceptToSummaryArabic =
+            "تمام يا ريس، اتفقنا. استنى احسبهالك بالتفصيل.";
+        private const string CoercedAcceptToSummaryEnglish =
+            "Alright sir, we're agreed. Hold on, let me tally it up for you.";
+
         // Scripted closing line for the coerced acceptance: the merchant has already spent its one
         // confirmation, so the agreement it was told about is simply applied and the deal is warmly closed.
         private const string CoercedAcceptFarewellArabic =
@@ -1459,11 +1467,19 @@ namespace DumyatRuntime
             // the player is agreeing (acceptanceScore); the game DECIDES here. This overrides whatever
             // action the model chose — including a merchant that keeps haggling after a clear "yes" (the
             // reported bug) — and also intercepts an explicit Accept, so EVERY acceptance is confirmed once
-            // before the sale is locked in. It is only meaningful once a real, PRICED offer is on the table
-            // (fish + weight disclosed): before that there is nothing to accept, and a stray "yes/ok" must
-            // never close a sale on an unknown, unpriced fish.
-            bool offerOnTable = !string.IsNullOrWhiteSpace(state.disclosedFishType)
-                                && state.disclosedWeightKg > 0f && state.currentOffer > 0f;
+            // before the sale is locked in. It is only meaningful once a real, PRICED offer is on the table:
+            // before that there is nothing to accept, and a stray "yes/ok" must never close a sale on an
+            // unknown, unpriced fish. Two ways an offer is priced:
+            //   • BUNDLE sale — the catch rests on the scale and carries a live total (fishBundle + offer).
+            //     The single-fish disclosure fields are never filled here (nothing is disclosed by voice),
+            //     so requiring them stranded every bundle acceptance in an endless haggle — the reported bug.
+            //   • LEGACY single-fish sale — the player disclosed the fish type + weight by voice, and it is
+            //     priced.
+            bool bundlePriced = state.fishBundle != null && state.fishBundle.Count > 0
+                                && state.currentOffer > 0f;
+            bool singleFishPriced = !string.IsNullOrWhiteSpace(state.disclosedFishType)
+                                    && state.disclosedWeightKg > 0f && state.currentOffer > 0f;
+            bool offerOnTable = bundlePriced || singleFishPriced;
             if (offerOnTable)
             {
                 if (state.awaitingAcceptConfirmation)
@@ -1491,6 +1507,24 @@ namespace DumyatRuntime
                 {
                     float dealPrice = ComputeAcceptPrice(state, parsed.PlayerAskedPrice);
                     state.pendingAcceptPrice = dealPrice;
+
+                    // A BUNDLE sale already has a confirmation step of its own — the per-fish summary
+                    // read-back ends by asking "اتفقنا؟" and only a yes there pays out. Asking to confirm
+                    // HERE as well made the player agree twice for one deal, so acceptance simply closes
+                    // the haggle and the flow moves straight to that summary (see CloseHaggleAccepted ->
+                    // AwaitingSaleConfirm). The legacy single-fish sale has no summary, so for it this
+                    // confirm stays the one and only gate before the sale locks in.
+                    if (bundlePriced)
+                    {
+                        Debug.Log($"MerchantNegotiationLLM: player is agreeing to sell " +
+                                  $"(acceptanceScore {parsed.AcceptanceScore:0}, action '{parsed.Action}') " +
+                                  $"— closing the haggle at {dealPrice:0}; the summary read-back confirms it.");
+                        CoerceLine(parsed, MerchantAction.Accept, CoercedAcceptToSummaryArabic, CoercedAcceptToSummaryEnglish);
+                        parsed.NewOfferAmount = dealPrice;   // the agreed total the summary is built from
+                        result = parsed;
+                        return true;
+                    }
+
                     Debug.Log($"MerchantNegotiationLLM: player is agreeing to sell " +
                               $"(acceptanceScore {parsed.AcceptanceScore:0}, action '{parsed.Action}') " +
                               $"— asking to confirm before closing at {dealPrice:0}.");
