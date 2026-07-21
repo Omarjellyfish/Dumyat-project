@@ -63,12 +63,20 @@ namespace DumyatRuntime
             containerBuilder.RegisterType(typeof(PlayerPersistenceService), new[] { typeof(IPlayerPersistenceService) },
                 Lifetime.Singleton, Resolution.Lazy);
 
+            // Narrative engine — stack-based dialogue with interruption/resume.
+            containerBuilder.RegisterType(typeof(NarrativeService), new[] { typeof(INarrativeService) },
+                Lifetime.Singleton, Resolution.Lazy);
+
             // Global game-state machine. Eager so it exists for the whole app lifetime.
             containerBuilder.RegisterType(typeof(GameStateService), new[] { typeof(IGameStateService) },
                 Lifetime.Singleton, Resolution.Eager);
 
             // Event bus for global pub/sub. Eager so it exists for the whole app lifetime.
             containerBuilder.RegisterType(typeof(EventService), new[] { typeof(IEventService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Scene orchestrator for VR loading flows. Eager so it can listen/dispatch immediately.
+            containerBuilder.RegisterType(typeof(SceneLoadService), new[] { typeof(ISceneLoadService) },
                 Lifetime.Singleton, Resolution.Eager);
 
             // Global MonoBehaviour services — registered as values.

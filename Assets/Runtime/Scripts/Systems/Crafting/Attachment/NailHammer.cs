@@ -12,17 +12,12 @@ namespace DumyatRuntime
         [Header("Settings")]
         [SerializeField] private NailHammerSettingsSO _settings;
 
-        private ISoundService _sound;
-        private IHapticService _haptics;
+        private ISoundService _soundService;
+        private IHapticService _hapticsService;
         private IEventService _eventService;
 
-        [Inject]
-        private void Inject(ISoundService sound, IHapticService haptics, IEventService eventService)
-        {
-            _sound = sound;
-            _haptics = haptics;
-            _eventService = eventService;
-        }
+
+
 
         private XRGrabInteractable _grabInteractable;
         private Rigidbody _rb;
@@ -75,7 +70,7 @@ namespace DumyatRuntime
             float speed = _currentVelocity.magnitude;
             if (speed < _settings.minImpactVelocity) return;
 
-            _haptics?.TriggerVibration(
+            _hapticsService?.TriggerVibration(
                 _settings.generalImpactHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
 
             Rigidbody plankABody = collision.rigidbody;
@@ -137,9 +132,9 @@ namespace DumyatRuntime
             joint.breakTorque = _settings.jointBreakTorque;
             IgnoreCollisionsBetween(plankA.gameObject, plankB.gameObject);
             SpawnNailVisual(contact, plankA.transform, plankA, plankB);
-            _sound?.PlayRandomSoundFxAtPosition(
+            _soundService?.PlayRandomSoundFxAtPosition(
                 _settings.nailInClips, transform, _settings.sfxVolume);
-            _haptics?.TriggerVibration(
+            _hapticsService?.TriggerVibration(
                 _settings.nailInHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Attached '{plankA.name}' ↔ '{plankB.name}' at {contact.point}");
             _eventService.Publish(new NailAttachedEvent(contact.point, plankA.gameObject, plankB.gameObject));
@@ -154,9 +149,9 @@ namespace DumyatRuntime
                 RestoreCollisionsBetween(bodyA.gameObject, bodyB.gameObject);
             }
             DestroyClosestNailVisual(bodyA, bodyB, contact.point);
-            _sound?.PlayRandomSoundFxAtPosition(
+            _soundService?.PlayRandomSoundFxAtPosition(
                 _settings.nailOutClips, transform, _settings.sfxVolume);
-            _haptics?.TriggerVibration(
+            _hapticsService?.TriggerVibration(
                 _settings.nailOutHapticProfile, XRInteractionUtils.GetGrabbingHand(_grabInteractable));
             Debug.Log($"[NailHammer] Detached '{bodyA.name}' ↔ '{bodyB.name}' at {contact.point}");
             _eventService.Publish(new NailRemovedEvent(contact.point, bodyA.gameObject, bodyB.gameObject));
