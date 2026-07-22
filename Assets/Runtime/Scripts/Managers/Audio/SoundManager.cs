@@ -100,7 +100,26 @@ namespace DumyatRuntime
 
         public void PlayVoiceLine(AudioClip clip, Transform targetTransform, float volume, AudioMixerGroup mixerGroup = null)
         {
-            PlaySoundFxAtPosition(clip, targetTransform, volume, mixerGroup);
+            if (clip == null) return;
+
+            AudioSource source = AudioPool.Get();
+
+            if (targetTransform != null)
+            {
+                source.transform.position = targetTransform.position;
+                source.spatialBlend = 1f; // 3D positional
+            }
+            else
+            {
+                source.spatialBlend = 0f; // 2D global fallback
+            }
+
+            source.clip = clip;
+            source.volume = volume;
+            source.outputAudioMixerGroup = mixerGroup != null ? mixerGroup : _defaultMixerGroup;
+            source.Play();
+
+            StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
         }
         #endregion
 

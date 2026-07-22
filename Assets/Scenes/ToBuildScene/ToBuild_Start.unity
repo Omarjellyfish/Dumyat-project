@@ -411,6 +411,124 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
   m_PrefabInstance: {fileID: 1780253302}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1081110334
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1081110337}
+  - component: {fileID: 1081110336}
+  - component: {fileID: 1081110335}
+  m_Layer: 0
+  m_Name: NarrativeTriggerZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1081110335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081110334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c734aa2d8b759e4c8324d6daea1ee72, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.NarrativeTriggerZone
+  _dialogueSequence: {fileID: 11400000, guid: 10721b5d7ba981e4da5fd18d9cc36661, type: 2}
+  _priority: 1
+  _triggerOnce: 1
+--- !u!65 &1081110336
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081110334}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 27.401999, y: 10.100996, z: 19.671272}
+  m_Center: {x: -13.200999, y: 4.550498, z: -9.335636}
+--- !u!4 &1081110337
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081110334}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 13.22, y: -0.79, z: 12.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1133163139
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1133163141}
+  - component: {fileID: 1133163140}
+  m_Layer: 0
+  m_Name: Narrative Engine
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1133163140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1133163139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d213e42c48fb16f40adf87ee6d884f0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.Testing.NarrativeVoiceLineTest
+  _mainSequence: {fileID: 11400000, guid: 10721b5d7ba981e4da5fd18d9cc36661, type: 2}
+  _interruptSequence: {fileID: 11400000, guid: 4bfc18c5284aa964bba89b1b8eb0382b, type: 2}
+  _voiceVolume: 1
+  _autoAdvance: 1
+  _autoAdvanceDelay: 0.1
+--- !u!4 &1133163141
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1133163139}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.38498, y: -0.79, z: 13.19338}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1676999938
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -465,7 +583,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6598815579406187037, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -490,7 +608,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4.3623176
+      value: -11.13
       objectReference: {fileID: 0}
     - target: {fileID: 1380012867250562407, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
       propertyPath: m_LocalRotation.w
@@ -805,3 +923,5 @@ SceneRoots:
   - {fileID: 1780253302}
   - {fileID: 1942114629}
   - {fileID: 3226843516693427456}
+  - {fileID: 1081110337}
+  - {fileID: 1133163141}
