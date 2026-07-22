@@ -19,6 +19,8 @@ namespace DumyatRuntime
         [SerializeField] private ItemDatabase _itemDatabase;
         [Tooltip("Recipe database, injected into CraftingService.")]
         [SerializeField] private RecipeDatabase _recipeDatabase;
+        [Tooltip("Quest database, injected into QuestService.")]
+        [SerializeField] private QuestDatabaseSO _questDatabase;
 
         [Header("Global MonoBehaviour Services (Prefabs)")]
         [Tooltip("Pooled positional SFX prefab. Will be instantiated on launch.")]
@@ -62,6 +64,17 @@ namespace DumyatRuntime
             // Player persistence keys — constructed from ISaveService.
             containerBuilder.RegisterType(typeof(PlayerPersistenceService), new[] { typeof(IPlayerPersistenceService) },
                 Lifetime.Singleton, Resolution.Lazy);
+
+            // Quest database asset for QuestService.
+            if (_questDatabase != null)
+                containerBuilder.RegisterValue(_questDatabase, new[] { typeof(QuestDatabaseSO) });
+            else
+                Debug.LogWarning("GameInstaller: QuestDatabase is not assigned; QuestService will fail to construct.");
+
+            // Quest tracking — constructed from ISaveService + IEventService + QuestDatabaseSO.
+            // Eager so event subscriptions (including SceneLoadCompleteEvent) are live immediately.
+            containerBuilder.RegisterType(typeof(QuestService), new[] { typeof(IQuestService) },
+                Lifetime.Singleton, Resolution.Eager);
 
             // Narrative engine — stack-based dialogue with interruption/resume.
             containerBuilder.RegisterType(typeof(NarrativeService), new[] { typeof(INarrativeService) },

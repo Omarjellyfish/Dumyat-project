@@ -77,6 +77,8 @@ namespace DumyatRuntime
             Debug.Log($"Caught {data.fishName}");
             Debug.Log($"Weight: {currentWeight}");
             Debug.Log($"Value: {currentValue}");
+
+            _eventService.Publish(new FishCaughtEvent(data.fishName, currentWeight, currentValue));
         }
     }
 }
