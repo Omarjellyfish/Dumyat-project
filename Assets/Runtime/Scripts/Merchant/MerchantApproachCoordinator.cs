@@ -116,6 +116,12 @@ namespace DumyatRuntime
         {
             ResolveRoster();
             ValidateRoster();
+
+#if UNITY_EDITOR
+            // Editor-only test convenience — the helper below is compiled out of player builds, so the
+            // call has to be guarded too or the build fails with CS0103.
+            if (_giveTestFishOnStart) GiveTestFishToPlayer();
+#endif
         }
 
         // --- Roster ----------------------------------------------------------------
@@ -139,6 +145,11 @@ namespace DumyatRuntime
         // --- Testing helper (Editor only) ------------------------------------------
 
         [Header("Testing (Editor only)")]
+        [Tooltip("TEST ONLY: automatically give the player test fish when entering Play mode. Leave off " +
+                 "to play with a real inventory — you can still give fish on demand by right-clicking " +
+                 "this component ▸ 'Give Test Fish To Player'.")]
+        [SerializeField] private bool _giveTestFishOnStart;
+
         [Tooltip("TEST ONLY: inventory item ID given by 'Give Test Fish To Player'. Defaults to the " +
                  "generic fish item (5). You then DROP them yourself from the inventory UI and grab " +
                  "each onto a merchant's sell scale.")]
@@ -156,7 +167,7 @@ namespace DumyatRuntime
         /// scale. Play mode only — the inventory service is resolved from the scene DI container.
         /// </summary>
         [ContextMenu("Give Test Fish To Player")]
-        public void GiveTestFishToPlayer()
+        private void GiveTestFishToPlayer()
         {
             if (!Application.isPlaying)
             {

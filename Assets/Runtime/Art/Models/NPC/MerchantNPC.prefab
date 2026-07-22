@@ -36,7 +36,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.57374084, z: -0, w: -0.81903696}
   m_LocalPosition: {x: 3.51, y: 0, z: -1.49}
-  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1330065638638297776}
@@ -695,7 +695,7 @@ GameObject:
   - component: {fileID: 3276115876599328908}
   - component: {fileID: 2862680214156563478}
   - component: {fileID: 4892513993666692974}
-  - component: {fileID: 5669418257916283897}
+  - component: {fileID: 3603294493072794636}
   m_Layer: 0
   m_Name: SellScale
   m_TagString: Untagged
@@ -712,7 +712,7 @@ Transform:
   m_GameObject: {fileID: 2312476528614366217}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.04599595, z: -0, w: 0.99894166}
-  m_LocalPosition: {x: 1, y: 0.06266087, z: 0.13700023}
+  m_LocalPosition: {x: 1, y: 0.007, z: 0.13700023}
   m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -732,6 +732,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1b9fc01ba7090445985833fe80971dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.FishSellScale
+  _recheckInterval: 0.2
   _placeSound: {fileID: 8300000, guid: b2fb6427be5be0e4bb5a5dfe021e1415, type: 3}
   _audioSource: {fileID: 4892513993666692974}
 --- !u!82 &4892513993666692974
@@ -831,8 +832,8 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!136 &5669418257916283897
-CapsuleCollider:
+--- !u!65 &3603294493072794636
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -849,11 +850,9 @@ CapsuleCollider:
   m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.39865386
-  m_Height: 0.37951607
-  m_Direction: 1
-  m_Center: {x: 0.00000013411045, y: 0.18975803, z: -4.440892e-16}
+  serializedVersion: 3
+  m_Size: {x: 0.7374, y: 0.7095, z: 0.5884}
+  m_Center: {x: 0, y: 0.37475, z: 0}
 --- !u!1 &2380163142763140211
 GameObject:
   m_ObjectHideFlags: 0

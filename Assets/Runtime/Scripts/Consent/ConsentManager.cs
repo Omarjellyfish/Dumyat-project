@@ -216,8 +216,8 @@ namespace DumyatRuntime
 
         private void LoadConsent()
         {
-            micConsentGranted = (ConsentStatus)PlayerPrefs.GetInt(MIC_CONSENT_KEY, (int)ConsentStatus.NotAsked);
-            internetConsentGranted = (ConsentStatus)PlayerPrefs.GetInt(INTERNET_CONSENT_KEY, (int)ConsentStatus.NotAsked);
+            //micConsentGranted = (ConsentStatus)PlayerPrefs.GetInt(MIC_CONSENT_KEY, (int)ConsentStatus.NotAsked);
+            //internetConsentGranted = (ConsentStatus)PlayerPrefs.GetInt(INTERNET_CONSENT_KEY, (int)ConsentStatus.NotAsked);
         }
 
         private void SaveConsent()

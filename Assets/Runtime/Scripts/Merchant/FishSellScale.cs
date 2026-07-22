@@ -8,19 +8,36 @@ namespace DumyatRuntime
 {
     /// <summary>
     /// A merchant's physical fish scale. Its trigger collider identifies the <see cref="Fish"/> making
-    /// contact and tracks which of them are actually RESTING on it (released from the hand, not merely
-    /// waved through while held). This live set is the source of truth the negotiation reads to know
-    /// the catch, and to re-verify the fish are still present before paying out.
+    /// contact and tracks which of them are actually RESTING IN it (released from the hand and settled
+    /// inside the basket, not merely waved through while held or draped over the rim). This live set is
+    /// the source of truth the negotiation reads to know the catch, and to re-verify the fish are still
+    /// present before paying out.
     ///
     /// Placement model (mirrors <see cref="InventoryStashZone"/>): while a fish overlaps the trigger it
-    /// is "tracked"; it counts as resting only while it is NOT being grabbed. Grabbing a resting fish
-    /// drops it from the set; carrying it out of the volume removes it entirely. Identity is resolved
-    /// via the <see cref="Fish"/> component (never <c>ItemPickup</c>), so a scale never contends with an
-    /// inventory stash zone over the same object.
+    /// is "tracked"; it counts as resting only while it is NOT being grabbed AND its centre of mass lies
+    /// inside the trigger volume. Grabbing a resting fish drops it from the set; carrying it out of the
+    /// volume removes it entirely. Identity is resolved via the <see cref="Fish"/> component (never
+    /// <c>ItemPickup</c>), so a scale never contends with an inventory stash zone over the same object.
+    ///
+    /// The trigger is deliberately a tall box over the basket's interior rather than a hull of the basket
+    /// mesh: overlap alone cannot see a fish stacked on top of another, so the volume extends well above
+    /// the rim to take in the whole pile. Strictness comes from the centre-of-mass test in
+    /// <see cref="IsInsideVolume"/>, not from the collider silhouette — a fish that is merely brushing
+    /// the volume, or balanced half-outside the basket, does not count.
+    ///
+    /// The basket's footprint is an ellipse, so the acceptance region is the ellipse INSCRIBED in the
+    /// trigger box, not the box itself. A box tight enough to hold the ellipse still leaves four corners
+    /// of dead space beside the basket, and a fish set down there would otherwise have counted. The box
+    /// remains the (cheap) broadphase that decides what is tracked; the ellipse decides what sells.
     /// </summary>
-    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(BoxCollider))]
     public class FishSellScale : MonoBehaviour, ISellScale
     {
+        [Header("Placement")]
+        [Tooltip("How often (seconds) to re-check that tracked fish are still inside the volume. Piles " +
+                 "settle and shift after landing, so membership cannot be decided on trigger events alone.")]
+        [SerializeField, Min(0.02f)] private float _recheckInterval = 0.2f;
+
         [Header("Feedback (optional)")]
         [Tooltip("Played when a fish comes to rest on the scale.")]
         [SerializeField] private AudioClip _placeSound;
@@ -38,11 +55,21 @@ namespace DumyatRuntime
             _haptics = haptics;
         }
 
-        // Fish whose colliders currently overlap the trigger (grab listeners registered for these).
-        private readonly HashSet<Fish> _tracked = new HashSet<Fish>();
+        // The trigger box whose inscribed elliptical cylinder is the acceptance volume.
+        private BoxCollider _volume;
 
-        // The subset of tracked fish that are released and resting — the sellable set.
+        // Fish whose colliders currently overlap the trigger, mapped to HOW MANY of their colliders are
+        // inside. A fish built from several colliders raises multiple enter/exit pairs; without the count
+        // the first exit would untrack a fish that is still sitting in the basket.
+        private readonly Dictionary<Fish, int> _tracked = new Dictionary<Fish, int>();
+
+        // The subset of tracked fish that are released and inside — the sellable set.
         private readonly List<Fish> _resting = new List<Fish>();
+
+        // Scratch buffer so the periodic re-check can mutate _tracked while iterating it.
+        private readonly List<Fish> _evaluationBuffer = new List<Fish>();
+
+        private float _recheckTimer;
 
         public IReadOnlyList<Fish> FishOnScale
         {
@@ -89,67 +116,180 @@ namespace DumyatRuntime
             // Fall back to an AudioSource on this GameObject so placement audio works without manual wiring.
             if (_audioSource == null) TryGetComponent(out _audioSource);
 
-            if (TryGetComponent(out Collider col) && !col.isTrigger)
-                Debug.LogWarning($"FishSellScale on '{name}': its Collider is not set as a trigger — " +
-                                 "fish placement will not be detected. Enable 'Is Trigger'.", this);
+            ResolveVolume();
         }
 
         private void OnDestroy()
         {
             // Drop every grab listener we registered so we never call back into a destroyed scale.
-            foreach (Fish fish in _tracked)
-            {
-                if (fish != null && fish.TryGetComponent(out XRGrabInteractable grab))
-                {
-                    grab.selectEntered.RemoveListener(OnTrackedFishGrabbed);
-                    grab.selectExited.RemoveListener(OnTrackedFishReleased);
-                }
-            }
+            foreach (Fish fish in _tracked.Keys)
+                Unsubscribe(fish);
             _tracked.Clear();
             _resting.Clear();
+        }
+
+        // Piles settle, roll and shift long after the trigger events stop firing, so membership is
+        // re-derived on a slow tick rather than trusted from enter/exit alone.
+        private void Update()
+        {
+            if (_tracked.Count == 0) return;
+
+            _recheckTimer += Time.deltaTime;
+            if (_recheckTimer < _recheckInterval) return;
+            _recheckTimer = 0f;
+
+            _evaluationBuffer.Clear();
+            foreach (Fish fish in _tracked.Keys) _evaluationBuffer.Add(fish);
+
+            foreach (Fish fish in _evaluationBuffer)
+            {
+                if (fish == null) { Untrack(fish); continue; }
+                Evaluate(fish);
+            }
         }
 
         private void OnTriggerEnter(Collider other)
         {
             Fish fish = Fish.FromCollider(other);
-            if (fish == null || !_tracked.Add(fish)) return;   // null, or already tracked (extra collider)
+            if (fish == null) return;
 
-            if (fish.TryGetComponent(out XRGrabInteractable grab))
+            if (_tracked.TryGetValue(fish, out int overlaps))
             {
-                grab.selectEntered.AddListener(OnTrackedFishGrabbed);
-                grab.selectExited.AddListener(OnTrackedFishReleased);
-                // Dropped straight in (not held) → resting immediately. Held → wait for the release.
-                if (!grab.isSelected) SetResting(fish, true);
+                _tracked[fish] = overlaps + 1;      // another collider of an already-tracked fish
             }
             else
             {
-                SetResting(fish, true);   // no grab component — treat as placed
+                _tracked[fish] = 1;
+                if (fish.TryGetComponent(out XRGrabInteractable grab))
+                {
+                    grab.selectEntered.AddListener(OnTrackedFishGrabbed);
+                    grab.selectExited.AddListener(OnTrackedFishReleased);
+                }
             }
+
+            Evaluate(fish);
         }
 
         private void OnTriggerExit(Collider other)
         {
             Fish fish = Fish.FromCollider(other);
-            if (fish == null || !_tracked.Remove(fish)) return;
+            if (fish == null || !_tracked.TryGetValue(fish, out int overlaps)) return;
 
-            if (fish.TryGetComponent(out XRGrabInteractable grab))
+            if (overlaps > 1)
             {
-                grab.selectEntered.RemoveListener(OnTrackedFishGrabbed);
-                grab.selectExited.RemoveListener(OnTrackedFishReleased);
+                _tracked[fish] = overlaps - 1;      // still has other colliders inside
+                Evaluate(fish);
+                return;
             }
-            SetResting(fish, false);
+
+            Untrack(fish);
         }
 
         // Grabbed while over the scale — no longer resting (the player is taking it back).
         private void OnTrackedFishGrabbed(SelectEnterEventArgs args)
         {
-            if (FishOf(args) is Fish fish) SetResting(fish, false);
+            if (FishOf(args) is Fish fish) Evaluate(fish);
         }
 
-        // Released while still over the scale (an exit would have removed tracking first) — now resting.
+        // Released while still over the scale (an exit would have removed tracking first) — may now rest.
         private void OnTrackedFishReleased(SelectExitEventArgs args)
         {
-            if (FishOf(args) is Fish fish && _tracked.Contains(fish)) SetResting(fish, true);
+            if (FishOf(args) is Fish fish) Evaluate(fish);
+        }
+
+        /// <summary>
+        /// Single decision point for membership: a tracked fish counts only while it is released AND its
+        /// centre of mass is inside the acceptance volume.
+        /// </summary>
+        private void Evaluate(Fish fish)
+        {
+            if (fish == null) return;
+
+            bool held = fish.TryGetComponent(out XRGrabInteractable grab) && grab.isSelected;
+            SetResting(fish, _tracked.ContainsKey(fish) && !held && IsInsideVolume(fish));
+        }
+
+        /// <summary>
+        /// Containment test: is the fish inside the elliptical cylinder inscribed in the trigger box?
+        /// Uses the fish's centre of mass (its body, not the tip of a fin) so a fish merely brushing the
+        /// volume, hanging over the rim, or sitting in a corner beside the round basket does not count.
+        /// </summary>
+        private bool IsInsideVolume(Fish fish)
+        {
+            if (_volume == null) return true;   // no volume resolved — fall back to plain overlap
+
+            Rigidbody body = fish.GetComponent<Rigidbody>();
+            return IsPointInside(body != null ? body.worldCenterOfMass : fish.transform.position);
+        }
+
+        /// <summary>
+        /// True if <paramref name="worldPoint"/> lies within the scale's acceptance volume — the
+        /// elliptical cylinder inscribed in the trigger box. Public so placement aids and diagnostics
+        /// can ask the same question the sale does, rather than re-deriving the shape.
+        /// </summary>
+        public bool IsPointInside(Vector3 worldPoint)
+        {
+            if (_volume == null) ResolveVolume();
+            if (_volume == null) return false;
+
+            // Work in the box's own space, so the test follows the basket's rotation and scale for free.
+            Vector3 local = transform.InverseTransformPoint(worldPoint) - _volume.center;
+            Vector3 half = _volume.size * 0.5f;
+
+            if (half.x <= 0f || half.y <= 0f || half.z <= 0f) return false;
+            if (Mathf.Abs(local.y) > half.y) return false;               // below the floor / above the pile
+
+            // Normalising by the half-extents turns the ellipse into a unit circle.
+            float x = local.x / half.x;
+            float z = local.z / half.z;
+            return x * x + z * z <= 1f;
+        }
+
+        /// <summary>
+        /// Picks the acceptance volume out of the box colliders on this GameObject, preferring a trigger.
+        /// Deliberately not a bare <c>TryGetComponent</c>: <c>[RequireComponent]</c> hands us a default
+        /// 1x1x1 box whenever the requirement looks unsatisfied (e.g. after the attribute changes), and
+        /// silently adopting that would both shrink the volume to a meaningless cube and — since the
+        /// added box is NOT a trigger — drop a solid metre-wide collider onto the merchant's basket.
+        /// </summary>
+        private void ResolveVolume()
+        {
+            _volume = null;
+            var boxes = GetComponents<BoxCollider>();
+
+            foreach (BoxCollider box in boxes)
+            {
+                if (!box.isTrigger) continue;
+                if (_volume == null) { _volume = box; continue; }
+                Debug.LogWarning($"FishSellScale on '{name}': more than one trigger BoxCollider — using " +
+                                 $"the first (size {_volume.size}). Remove the spares.", this);
+                break;
+            }
+
+            if (_volume == null)
+                Debug.LogWarning($"FishSellScale on '{name}': no trigger BoxCollider found — fish placement " +
+                                 "will not be detected. Enable 'Is Trigger' on the acceptance volume.", this);
+
+            foreach (BoxCollider box in boxes)
+                if (!box.isTrigger)
+                    Debug.LogWarning($"FishSellScale on '{name}': a NON-trigger BoxCollider is present and " +
+                                     "will physically block fish from entering the basket. Remove it.", this);
+        }
+
+        private void Untrack(Fish fish)
+        {
+            _tracked.Remove(fish);
+            Unsubscribe(fish);
+            SetResting(fish, false);
+        }
+
+        private void Unsubscribe(Fish fish)
+        {
+            if (fish != null && fish.TryGetComponent(out XRGrabInteractable grab))
+            {
+                grab.selectEntered.RemoveListener(OnTrackedFishGrabbed);
+                grab.selectExited.RemoveListener(OnTrackedFishReleased);
+            }
         }
 
         private void SetResting(Fish fish, bool resting)
@@ -186,5 +326,36 @@ namespace DumyatRuntime
             => args.interactableObject is XRGrabInteractable grab && grab.TryGetComponent(out Fish fish)
                 ? fish
                 : null;
+
+#if UNITY_EDITOR
+        // Draws the elliptical acceptance volume — NOT the box — so what is drawn is what actually counts.
+        // Size the box handles until this cylinder matches the basket interior and clears the tallest pile.
+        private void OnDrawGizmosSelected()
+        {
+            BoxCollider box = null;
+            foreach (BoxCollider candidate in GetComponents<BoxCollider>())
+                if (candidate.isTrigger) { box = candidate; break; }
+            if (box == null) return;
+
+            Gizmos.matrix = transform.localToWorldMatrix;
+            Gizmos.color = new Color(0.2f, 0.9f, 0.4f, 1f);
+
+            Vector3 half = box.size * 0.5f;
+            const int segments = 32;
+
+            for (int i = 0; i < segments; i++)
+            {
+                float a = (i / (float)segments) * Mathf.PI * 2f;
+                float b = ((i + 1) / (float)segments) * Mathf.PI * 2f;
+                var from = new Vector3(Mathf.Cos(a) * half.x, 0f, Mathf.Sin(a) * half.z);
+                var to = new Vector3(Mathf.Cos(b) * half.x, 0f, Mathf.Sin(b) * half.z);
+                Vector3 up = Vector3.up * half.y;
+
+                Gizmos.DrawLine(box.center + from - up, box.center + to - up);   // floor ring
+                Gizmos.DrawLine(box.center + from + up, box.center + to + up);   // top ring
+                if (i % 8 == 0) Gizmos.DrawLine(box.center + from - up, box.center + from + up);
+            }
+        }
+#endif
     }
 }
