@@ -21,6 +21,8 @@ namespace DumyatRuntime
         [SerializeField] private RecipeDatabase _recipeDatabase;
         [Tooltip("Quest database, injected into QuestService.")]
         [SerializeField] private QuestDatabaseSO _questDatabase;
+        [Tooltip("Achievement database, injected into AchievementService.")]
+        [SerializeField] private AchievementDatabaseSO _achievementDatabase;
 
         [Header("Global MonoBehaviour Services (Prefabs)")]
         [Tooltip("Pooled positional SFX prefab. Will be instantiated on launch.")]
@@ -75,6 +77,16 @@ namespace DumyatRuntime
             // Eager so event subscriptions (including SceneLoadCompleteEvent) are live immediately.
             containerBuilder.RegisterType(typeof(QuestService), new[] { typeof(IQuestService) },
                 Lifetime.Singleton, Resolution.Eager);
+
+            // Achievement database
+            if (_achievementDatabase != null)
+                containerBuilder.RegisterValue(_achievementDatabase, new[] { typeof(AchievementDatabaseSO) });
+            else
+                Debug.LogWarning("GameInstaller: AchievementDatabase is not assigned; AchievementService will fail to construct.");
+
+            // Achievement tracking
+            containerBuilder.RegisterType(typeof(AchievementService), new[] { typeof(IAchievementService) },
+                Lifetime.Singleton, Resolution.Lazy);
 
             // Narrative engine — stack-based dialogue with interruption/resume.
             containerBuilder.RegisterType(typeof(NarrativeService), new[] { typeof(INarrativeService) },

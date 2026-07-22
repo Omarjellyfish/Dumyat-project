@@ -33,13 +33,20 @@ namespace DumyatRuntime
         [Min(1)]
         public int targetCount = 1;
 
-        [Header("Filters (leave empty for 'any')")]
-        [Tooltip("Optional name filter — e.g. a specific fish name, recipe name, or item name. " +
-                 "If empty, any event of the trigger type counts.")]
-        public string targetName;
+        [Header("Target (leave empty for 'any')")]
+        [Tooltip("Drag any ScriptableObject that implements IQuestTarget (ItemData, CraftingRecipe). " +
+                 "The service reads TargetID from this to filter events. Leave empty to match any event of the trigger type.")]
+        public ScriptableObject targetAsset;
+
+        [Tooltip("Fallback string filter for targets that aren't ScriptableObjects (e.g. fish names). " +
+                 "Ignored if targetAsset is set.")]
+        public string targetNameFallback;
 
         [Header("Rewards")]
-        [Tooltip("Player-facing reward text (actual reward granting is a future extension).")]
+        [Tooltip("Player-facing reward text.")]
         public string rewardDescription;
+
+        [Tooltip("Optional reward to grant on completion. Create via Dumyat > Quests > Rewards.")]
+        public QuestRewardSO reward;
     }
 }

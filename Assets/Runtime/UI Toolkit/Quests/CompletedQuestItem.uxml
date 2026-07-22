@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ui="UnityEngine.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd"
+>
+    <ui:VisualElement class="completed-item">
+        <ui:Label name="TitleLabel" text="Quest Title" class="completed-item-title" />
+        <ui:Label name="DescLabel" text="Quest Description" class="completed-item-desc" />
+    </ui:VisualElement>
+</ui:UXML>

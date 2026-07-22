@@ -20,13 +20,26 @@ namespace DumyatRuntime
         private readonly IEventService _eventService;
         private readonly QuestDatabaseSO _questDatabase;
         private readonly QuestSaveData _questData;
+        private readonly QuestRewardContext _rewardContext;
 
-        public QuestService(ISaveService saveService, IEventService eventService, QuestDatabaseSO questDatabase)
+        public QuestService(
+            ISaveService saveService,
+            IEventService eventService,
+            QuestDatabaseSO questDatabase,
+            ICraftingService craftingService,
+            IInventoryService inventoryService)
         {
             _saveService = saveService;
             _eventService = eventService;
             _questDatabase = questDatabase;
             _questData = _saveService.CurrentSaveData.questData;
+
+            _rewardContext = new QuestRewardContext
+            {
+                EventService = eventService,
+                CraftingService = craftingService,
+                InventoryService = inventoryService
+            };
 
             SubscribeToGameplayEvents();
 
@@ -194,8 +207,25 @@ namespace DumyatRuntime
         // -------------------------------------------------------------------
 
         /// <summary>
+        /// Resolves the target filter string from a quest definition.
+        /// Prefers the SO reference (<see cref="IQuestTarget.TargetID"/>), falls back
+        /// to the plain string <c>targetNameFallback</c> for non-SO targets (e.g. fish).
+        /// Returns <c>null</c> if no filter is set (matches any event).
+        /// </summary>
+        private static string ResolveTargetID(QuestDefinitionSO def)
+        {
+            if (def.targetAsset is IQuestTarget questTarget)
+                return questTarget.TargetID;
+
+            if (!string.IsNullOrEmpty(def.targetNameFallback))
+                return def.targetNameFallback;
+
+            return null;
+        }
+
+        /// <summary>
         /// Scans all active quests for the given <paramref name="triggerType"/>.
-        /// If a quest's optional <c>targetName</c> is set, it must match <paramref name="eventName"/>.
+        /// If a quest has a target set (SO or string), it must match <paramref name="eventName"/>.
         /// Increments progress by 1, publishes <see cref="QuestProgressedEvent"/>,
         /// and completes the quest when the target is reached.
         /// </summary>
@@ -211,9 +241,11 @@ namespace DumyatRuntime
                 if (def == null) continue;
                 if (def.triggerType != triggerType) continue;
 
-                // Optional name filter: if the quest targets a specific thing, the event must match.
-                if (!string.IsNullOrEmpty(def.targetName) &&
-                    !string.Equals(def.targetName, eventName, System.StringComparison.OrdinalIgnoreCase))
+                // Resolve the target filter: SO reference first, then string fallback.
+                string targetID = ResolveTargetID(def);
+
+                if (targetID != null &&
+                    !string.Equals(targetID, eventName, System.StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -245,6 +277,13 @@ namespace DumyatRuntime
 
             _eventService.Publish(new QuestCompletedEvent(questID));
             Debug.Log($"[QuestService] Quest COMPLETED: '{def.displayName}' ({questID})");
+
+            // Grant reward if one is assigned.
+            if (def.reward != null)
+            {
+                def.reward.GrantReward(_rewardContext);
+                Debug.Log($"[QuestService] Reward granted for '{def.displayName}'.");
+            }
         }
     }
 }

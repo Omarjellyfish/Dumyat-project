@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd"
+>
+    <ui:Style src="WristQuestTracker.uss" />
+
+    <ui:VisualElement class="wrist-tracker-container">
+        <ui:Label text="CURRENT QUESTS" class="wrist-tracker-header" />
+        
+        <ui:ScrollView class="wrist-tracker-scroll-view" show-vertical-scroller="false">
+            <ui:VisualElement name="QuestListContainer" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>
