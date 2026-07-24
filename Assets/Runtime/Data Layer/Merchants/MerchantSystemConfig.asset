@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb6a8768562415f41bb627410671645b, type: 3}
+  m_Name: MerchantSystemConfig
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantSystemConfig
+  _merchantCount: 2
+  _merchantConfigs:
+  - {fileID: 11400000, guid: 60c89643934b67644a7f88ae3aa8200e, type: 2}
+  - {fileID: 11400000, guid: 6b333e2628ec3cd4683aadcf222fa9ad, type: 2}
+  - {fileID: 11400000, guid: ea929589c2d747868c905ad4e3777b7d, type: 2}
+  - {fileID: 11400000, guid: c5627193fe8c4dc0a7ec50f990159d6f, type: 2}
+  - {fileID: 11400000, guid: ba8619a725cf402ea82eae550ea6f2ed, type: 2}
+  _basePriceRangeMin: 0.9
+  _basePriceRangeMax: 1.1
+  _cooldownBetweenApproaches: 5

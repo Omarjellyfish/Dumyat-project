@@ -17,10 +17,13 @@ namespace DumyatRuntime
         [SerializeField] private Color _successColor = new Color(0.0f, 0.9f, 0.46f, 1f);
         [SerializeField] private Color _failColor = new Color(1f, 0.09f, 0.26f, 1f);
         [SerializeField] private Color _idleColor = new Color(0.21f, 0.27f, 0.31f, 1f);
-        
+
         [Header("Icons")]
         [SerializeField] private Texture2D _successIcon;
         [SerializeField] private Texture2D _failureIcon;
+        [SerializeField] private DialogueSequenceSO _afterMakingChairSequence;
+        [SerializeField] private DialoguePriority _priority = DialoguePriority.Normal;
+
 
         private UIDocument _uiDocument;
         private Label _statusTitle;
@@ -71,7 +74,7 @@ namespace DumyatRuntime
         private void OnDisable()
         {
             _eventService.Unsubscribe<CraftingValidatedEvent>(HandleValidationResult);
-            
+
             if (_validateButton != null)
                 _validateButton.clicked -= OnValidateClick;
 
@@ -116,6 +119,7 @@ namespace DumyatRuntime
                 {
                     _qualityScore.text = $"Quality: {result.QualityScore * 100f:F0}%";
                     _qualityScore.style.display = DisplayStyle.Flex;
+                    _eventService.Publish(new PlayDialogueEvent(_afterMakingChairSequence, _priority));
                 }
                 else
                 {
@@ -151,11 +155,11 @@ namespace DumyatRuntime
         {
             switch (reason)
             {
-                case FailReason.Oversized:   return "\u2B06";
-                case FailReason.Undersized:  return "\u2B07";
-                case FailReason.OffCenter:   return "\u2194";
+                case FailReason.Oversized: return "\u2B06";
+                case FailReason.Undersized: return "\u2B07";
+                case FailReason.OffCenter: return "\u2194";
                 case FailReason.MissingPart: return "\u2753";
-                default:                     return "\u26A0";
+                default: return "\u26A0";
             }
         }
 
@@ -167,7 +171,7 @@ namespace DumyatRuntime
             var controller = new CraftingDiagnosticItemUI(itemRoot);
             Color itemColor = isSuccess ? _successColor : _failColor;
             Texture2D icon = isSuccess ? _successIcon : _failureIcon;
-            
+
             controller.Setup(message, itemColor, icon);
         }
 

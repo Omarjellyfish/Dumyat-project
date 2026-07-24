@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ui="UnityEngine.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd"
+>
+    <ui:VisualElement class="quest-item">
+        <ui:Label name="TitleLabel" text="Quest Title" class="quest-item-title" />
+        <ui:Label name="ProgressLabel" text="0/1" class="quest-item-progress-text" />
+        <ui:ProgressBar name="ProgressBar" value="0" high-value="1" class="quest-item-progress-bar" />
+    </ui:VisualElement>
+</ui:UXML>
