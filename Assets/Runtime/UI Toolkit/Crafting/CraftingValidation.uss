@@ -20,10 +20,10 @@
     height: 55%;
     min-height: 300px;
     max-height: 560px;
-    background-color: rgba(18, 22, 30, 0.92);
+    background-color: rgba(50, 40, 30, 0.95);
     border-radius: 14px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(139, 90, 43, 0.5);
     padding: 3%;
     flex-direction: column;
     overflow: hidden;
@@ -85,6 +85,8 @@
     font-size: 13px;
     -unity-font-style: bold;
     border-width: 0;
+    border-bottom-width: 4px;
+    border-bottom-color: rgba(0, 0, 0, 0.4);
     transition-duration: 0.15s;
 }
 

@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 4322427816483664268}
   - component: {fileID: 937035603814120956}
   - component: {fileID: 424662693637326117}
+  - component: {fileID: 5926580147650425489}
   m_Layer: 31
   m_Name: Inventory Stash Zone
   m_TagString: Untagged
@@ -309,6 +310,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.9, y: 0.9, z: 0.9}
   m_Center: {x: -0.00000047683716, y: -0.00000047683716, z: 0.0000009536743}
+--- !u!114 &5926580147650425489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3323212746291416620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: Inventory
 --- !u!1 &8609265882103413561
 GameObject:
   m_ObjectHideFlags: 0

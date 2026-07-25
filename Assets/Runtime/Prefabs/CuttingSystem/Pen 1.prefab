@@ -213,9 +213,10 @@ GameObject:
   - component: {fileID: 1886754577400463337}
   - component: {fileID: 3862457174410590595}
   - component: {fileID: 4057587704098017535}
+  - component: {fileID: 7321968565700238896}
   m_Layer: 0
-  m_Name: Pen
-  m_TagString: Untagged
+  m_Name: Pen 1
+  m_TagString: T_Pen
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -443,6 +444,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PaintBrush
   _brushTexture: {fileID: 2800000, guid: c3fd374711185fd4da798eece120c657, type: 3}
   _brushMaterial: {fileID: 2100000, guid: 4e8e8e4c6bf891c4fb3ecf4bb4c6c868, type: 2}
+--- !u!114 &7321968565700238896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5101026488185995106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: Pen
 --- !u!1 &7089041419396340366
 GameObject:
   m_ObjectHideFlags: 0

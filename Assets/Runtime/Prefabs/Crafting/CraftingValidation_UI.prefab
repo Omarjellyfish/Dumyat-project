@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7658042354574277968}
   - component: {fileID: 2983157280112872536}
   - component: {fileID: 8791656671776976388}
+  - component: {fileID: 4741581377172234882}
   m_Layer: 5
   m_Name: CraftingValidation_UI
   m_TagString: Untagged
@@ -76,6 +77,8 @@ MonoBehaviour:
   _idleColor: {r: 0.21, g: 0.27, b: 0.31, a: 1}
   _successIcon: {fileID: 2800000, guid: db3e7b7c8db355e499429545071a0321, type: 3}
   _failureIcon: {fileID: 4456449167576933126, guid: 511976cd788ea5442a20b479849b0cef, type: 3}
+  _afterMakingChairSequence: {fileID: 11400000, guid: 57cc133c0e31cd94dbab69330e6f23db, type: 2}
+  _priority: 1
 --- !u!114 &8791656671776976388
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -95,3 +98,16 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RaycastTriggerInteraction: 1
+--- !u!114 &4741581377172234882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7752122688464455922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ValidationBoard

@@ -112,6 +112,10 @@ namespace DumyatRuntime
             containerBuilder.RegisterType(typeof(SceneLoadService), new[] { typeof(ISceneLoadService) },
                 Lifetime.Singleton, Resolution.Eager);
 
+            // Tutorial tracking — persists completion state, manages active sequences.
+            containerBuilder.RegisterType(typeof(TutorialService), new[] { typeof(ITutorialService) },
+                Lifetime.Singleton, Resolution.Lazy);
+
             // Global MonoBehaviour services — registered as values.
             // Reflex does NOT instantiate the ProjectScope prefab. It only reads from it.
             // Therefore, we must manually Instantiate these prefabs to create real scene objects.
