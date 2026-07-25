@@ -21,10 +21,10 @@
     height: 60%;
     min-height: 360px;
     max-height: 640px;
-    background-color: rgba(18, 22, 30, 0.92);
+    background-color: rgba(50, 40, 30, 0.95);
     border-radius: 14px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(139, 90, 43, 0.5);
     padding: 3%;
     flex-direction: column;
     overflow: hidden;
@@ -42,7 +42,7 @@
 
 .crafting-title {
     font-size: 22px;
-    color: #E8EAF0;
+    color: #F5E6D3;
     -unity-font-style: bold;
     letter-spacing: 3px;
     -unity-text-align: middle-center;
@@ -58,19 +58,19 @@
 /* ── Individual blueprint card ── */
 .blueprint-card {
     flex-direction: column;
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: rgba(100, 70, 40, 0.15);
     border-radius: 8px;
     margin-bottom: 8px;
     padding: 10px 12px;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(139, 90, 43, 0.2);
     transition-property: background-color, border-color;
     transition-duration: 0.15s;
 }
 
 .blueprint-card:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(100, 70, 40, 0.3);
+    border-color: rgba(139, 90, 43, 0.5);
 }
 
 .blueprint-card-top {
@@ -108,6 +108,8 @@
     padding: 6px 14px;
     border-radius: 6px;
     border-width: 0;
+    border-bottom-width: 4px;
+    border-bottom-color: rgba(0, 0, 0, 0.4);
     font-size: 13px;
     -unity-font-style: bold;
     color: #FFFFFF;
