@@ -37,6 +37,9 @@ namespace DumyatRuntime
         [Tooltip("Optional icon displayed on the hover panel")]
         public Sprite Icon;
 
+        [Tooltip("Optional video played on the hover panel (overrides Icon if set)")]
+        public UnityEngine.Video.VideoClip Video;
+
         [Header("Completion")]
         public TutorialCompletionType CompletionType;
 
