@@ -12,7 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _MATERIALCOUNT_TWO
+  - _MATERIALCOUNT_THREE
   m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
@@ -26,39 +26,39 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _Mat1_Color_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: e2f992c57687ae847afde61fcd6e0181, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat1_Mask_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 8b403cfc0c67e24498a6b502b75df869, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat1_Normal_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 4c342863471dca8478179ea16b70a78c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat2_Color_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 1cd8659a1f72e54438efc85ce3fe347e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat2_Mask_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: e8073f81e358bd44383bae917121a770, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat2_Normal_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 5b33cdd07e8af09499089d5f7d8a7c4b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat3_Color_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 3085365ba609dec4abe335de0c78561e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat3_Mask_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: fe951887f4efa8741abc8de0f318e13c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat3_Normal_Map:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 8414f2b47362faa4eafc0e724123f25e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mat4_Color_Map:
@@ -99,10 +99,25 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _MATERIALCOUNT: 0
+    - _MATERIALCOUNT: 1
+    - _Mat1_Normal_Strength: 1
+    - _Mat1_roughness_l7d_matofrg: 0.4
+    - _Mat2_Normal_Strength: 1
+    - _Mat2_roughness_l7d_matofrg: 0.4
+    - _Mat3_Normal_Strength: 1
+    - _Mat3_roughness_l7d_matofrg: 0.4
     - _QueueControl: 0
     - _QueueOffset: 0
-    m_Colors: []
+    m_Colors:
+    - _Mat1_Color_Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat1_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat1_Tilling: {r: 1, g: 1, b: 0, a: 0}
+    - _Mat2_Color_Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat2_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat2_Tilling: {r: 1, g: 1, b: 0, a: 0}
+    - _Mat3_Color_Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat3_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat3_Tilling: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3406348310757841123
