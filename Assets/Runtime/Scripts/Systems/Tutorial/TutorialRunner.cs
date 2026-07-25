@@ -276,9 +276,9 @@ namespace DumyatRuntime
                 .GetMethod(nameof(IEventService.Subscribe))
                 ?.MakeGenericMethod(eventType);
 
-            // Create a delegate of the correct Action<T> type
-            var actionType = typeof(Action<>).MakeGenericType(eventType);
-            var handler = Delegate.CreateDelegate(actionType, this, nameof(OnEventFired));
+            // // Create a delegate of the correct Action<T> type
+            // var actionType = typeof(Action<>).MakeGenericType(eventType);
+            // var handler = Delegate.CreateDelegate(actionType, this, nameof(OnEventFired));
 
             // Store for cleanup
             _eventCompletionHandler = (Action<object>)((obj) => OnStepCompleted());
