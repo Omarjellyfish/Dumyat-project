@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -12,11 +14,34 @@ namespace DumyatRuntime
         [SerializeField] private Transform mouthPoint; // drag mouth empty/bone here in Inspector
 
         public Transform MouthPoint => mouthPoint;
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable _interactable;
+        [SerializeField] private DialogueSequenceSO _dialogueSequence;
+        [SerializeField] private DialoguePriority _priority = DialoguePriority.Normal;
+        private IEventService _eventService;
+        private bool hasTriggered = false;
+        [SerializeField] private bool _triggerOnce = true;
+
+        [Inject]
+        private void Inject(IEventService eventService)
+        {
+            _eventService = eventService;
+        }
 
         private void Start()
         {
             Animator fishAnimator = GetComponentInChildren<Animator>();
             fishAnimator.SetBool("isHooked", false);
+            _interactable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+            _interactable.selectEntered.AddListener(OnSelectEntered);
+        }
+
+        private void OnSelectEntered(SelectEnterEventArgs args)
+        {
+            if (_triggerOnce && hasTriggered) return;
+            hasTriggered = true;
+            Debug.Log("Fish selected");
+            _eventService.Publish(new PlayDialogueEvent(_dialogueSequence, _priority));
+
         }
         public void StopAnimation()
         {
@@ -52,6 +77,8 @@ namespace DumyatRuntime
             Debug.Log($"Caught {data.fishName}");
             Debug.Log($"Weight: {currentWeight}");
             Debug.Log($"Value: {currentValue}");
+
+            _eventService.Publish(new FishCaughtEvent(data.fishName, currentWeight, currentValue));
         }
     }
 }

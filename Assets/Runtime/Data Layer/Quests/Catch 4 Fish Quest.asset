@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a010ad0c88c72e043aaa325262b851ca, type: 3}
+  m_Name: Catch 4 Fish Quest
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.QuestDefinitionSO
+  questID: catch_4_fish
+  displayName: Catch 4 fish
+  description: 'you have to catch 3 fish and put it in inventory
+
+'
+  sceneName: ToBuild_El_manara
+  triggerType: 4
+  targetCount: 4
+  targetAsset: {fileID: 11400000, guid: 3285a763850db3049842c74a3d2a7df3, type: 2}
+  targetNameFallback: Fish
+  rewardDescription: get kanba recipe
+  reward: {fileID: 11400000, guid: 05e5c2eeb2dcbe746b83411768a4047a, type: 2}

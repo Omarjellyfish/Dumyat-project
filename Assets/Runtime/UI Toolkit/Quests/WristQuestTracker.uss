@@ -1,0 +1,62 @@
+.wrist-tracker-container {
+    width: 300px;
+    height: 400px;
+    background-color: rgba(30, 30, 30, 0.85);
+    border-radius: 12px;
+    padding: 10px;
+    border-width: 2px;
+    border-color: rgba(100, 100, 100, 0.5);
+    flex-direction: column;
+}
+
+.wrist-tracker-header {
+    color: white;
+    font-size: 18px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-bottom: 10px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+    padding-bottom: 5px;
+}
+
+.wrist-tracker-scroll-view {
+    flex-grow: 1;
+}
+
+/* Quest Item Styles */
+.quest-item {
+    background-color: rgba(50, 50, 50, 0.7);
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.quest-item-title {
+    color: #e0e0e0;
+    font-size: 14px;
+    -unity-font-style: bold;
+    margin-bottom: 4px;
+}
+
+.quest-item-progress-text {
+    color: #a0a0a0;
+    font-size: 12px;
+    -unity-text-align: middle-right;
+}
+
+.quest-item-progress-bar {
+    height: 8px;
+    margin-top: 4px;
+}
+
+.quest-item-progress-bar .unity-progress-bar__background {
+    background-color: rgba(20, 20, 20, 0.8);
+    border-radius: 4px;
+    border-width: 0;
+}
+
+.quest-item-progress-bar .unity-progress-bar__progress {
+    background-color: #4caf50;
+    border-radius: 4px;
+}

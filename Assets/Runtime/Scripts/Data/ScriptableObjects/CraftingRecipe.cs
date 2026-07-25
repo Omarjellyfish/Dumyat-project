@@ -30,7 +30,7 @@ namespace DumyatRuntime
     }
 
     [CreateAssetMenu(fileName = "NewCraftingRecipe", menuName = "Dumyat/Crafting/Recipe")]
-    public class CraftingRecipe : ScriptableObject
+    public class CraftingRecipe : ScriptableObject, IQuestTarget
     {
         [SerializeField] private string _recipeName;
 
@@ -45,6 +45,9 @@ namespace DumyatRuntime
         public GameObject RootPrefab => _rootPrefab;
         public GameObject HologramPrefab => _hologramPrefab;
         public PartBlueprint[] RequiredParts => _requiredParts;
+
+        /// <inheritdoc />
+        public string TargetID => _recipeName;
 
 #if UNITY_EDITOR
         public void Editor_SetData(string recipeName, GameObject rootPrefab, PartBlueprint[] parts)

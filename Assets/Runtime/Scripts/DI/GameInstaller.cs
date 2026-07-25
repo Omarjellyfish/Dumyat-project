@@ -19,6 +19,10 @@ namespace DumyatRuntime
         [SerializeField] private ItemDatabase _itemDatabase;
         [Tooltip("Recipe database, injected into CraftingService.")]
         [SerializeField] private RecipeDatabase _recipeDatabase;
+        [Tooltip("Quest database, injected into QuestService.")]
+        [SerializeField] private QuestDatabaseSO _questDatabase;
+        [Tooltip("Achievement database, injected into AchievementService.")]
+        [SerializeField] private AchievementDatabaseSO _achievementDatabase;
 
         [Header("Global MonoBehaviour Services (Prefabs)")]
         [Tooltip("Pooled positional SFX prefab. Will be instantiated on launch.")]
@@ -65,6 +69,27 @@ namespace DumyatRuntime
             containerBuilder.RegisterType(typeof(PlayerPersistenceService), new[] { typeof(IPlayerPersistenceService) },
                 Lifetime.Singleton, Resolution.Lazy);
 
+            // Quest database asset for QuestService.
+            if (_questDatabase != null)
+                containerBuilder.RegisterValue(_questDatabase, new[] { typeof(QuestDatabaseSO) });
+            else
+                Debug.LogWarning("GameInstaller: QuestDatabase is not assigned; QuestService will fail to construct.");
+
+            // Quest tracking — constructed from ISaveService + IEventService + QuestDatabaseSO.
+            // Eager so event subscriptions (including SceneLoadCompleteEvent) are live immediately.
+            containerBuilder.RegisterType(typeof(QuestService), new[] { typeof(IQuestService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Achievement database
+            if (_achievementDatabase != null)
+                containerBuilder.RegisterValue(_achievementDatabase, new[] { typeof(AchievementDatabaseSO) });
+            else
+                Debug.LogWarning("GameInstaller: AchievementDatabase is not assigned; AchievementService will fail to construct.");
+
+            // Achievement tracking
+            containerBuilder.RegisterType(typeof(AchievementService), new[] { typeof(IAchievementService) },
+                Lifetime.Singleton, Resolution.Lazy);
+
             // Narrative engine — stack-based dialogue with interruption/resume.
             containerBuilder.RegisterType(typeof(NarrativeService), new[] { typeof(INarrativeService) },
                 Lifetime.Singleton, Resolution.Eager);
@@ -88,6 +113,10 @@ namespace DumyatRuntime
             // Scene orchestrator for VR loading flows. Eager so it can listen/dispatch immediately.
             containerBuilder.RegisterType(typeof(SceneLoadService), new[] { typeof(ISceneLoadService) },
                 Lifetime.Singleton, Resolution.Eager);
+
+            // Tutorial tracking — persists completion state, manages active sequences.
+            containerBuilder.RegisterType(typeof(TutorialService), new[] { typeof(ITutorialService) },
+                Lifetime.Singleton, Resolution.Lazy);
 
             // Global MonoBehaviour services — registered as values.
             // Reflex does NOT instantiate the ProjectScope prefab. It only reads from it.

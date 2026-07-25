@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ui="UnityEngine.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd"
+>
+    <ui:VisualElement class="achievement-item">
+        <ui:VisualElement name="IconElement" class="achievement-icon" />
+        <ui:VisualElement class="achievement-details">
+            <ui:Label name="TitleLabel" text="Achievement Title" class="achievement-title" />
+            <ui:Label name="DescLabel" text="Description goes here." class="achievement-desc" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

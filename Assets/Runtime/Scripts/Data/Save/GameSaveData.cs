@@ -11,5 +11,7 @@ namespace DumyatRuntime
         public PersistenceSaveData persistenceData = new PersistenceSaveData();
         public CraftingSaveData craftingData = new CraftingSaveData();
         public SalesSaveData salesData = new SalesSaveData();
+        public AchievementSaveData achievementData = new AchievementSaveData();
+        public TutorialSaveData tutorialData = new TutorialSaveData();
     }
 }

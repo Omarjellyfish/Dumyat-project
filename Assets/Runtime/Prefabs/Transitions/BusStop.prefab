@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 871988678790602921}
   m_Layer: 0
   m_Name: BusStop
-  m_TagString: Untagged
+  m_TagString: T_TravelBoard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -129,8 +129,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.BusStation
   _pickupPoint: {fileID: 3201064477634635426}
   _destinations:
-  - {fileID: 11400000, guid: d5747cdf50c62234b9c43baf75442e81, type: 2}
-  - {fileID: 11400000, guid: 7fbbf3deaded4984dad3305eff6a1841, type: 2}
+  - {fileID: 11400000, guid: e396014813a2929409163e7beedac876, type: 2}
+  - {fileID: 11400000, guid: 1be1bef139c5f784e99e1990636e57ae, type: 2}
+  - {fileID: 11400000, guid: 253cda07b3063d943981b705d54f0bb0, type: 2}
   _playerTag: Player
   _carTag: PlayerCar
 --- !u!1 &6270779726518705797

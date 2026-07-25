@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faab39427066832489fca51809ed474f, type: 3}
+  m_Name: Casting Tutorial
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DialogueSequenceSO
+  SequenceId: 6
+  Priority: 1
+  CanBeInterrupted: 1
+  ResumeAfterInterruption: 1
+  Lines:
+  - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
+    VoiceLineKey: 15
+    SubtitleText: bos yabny lazm tmsk el senara gamed
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 1
+  ChoicePoints: []

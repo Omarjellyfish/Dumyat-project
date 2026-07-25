@@ -423,6 +423,8 @@ MonoBehaviour:
   _dialogueSequence: {fileID: 11400000, guid: 10721b5d7ba981e4da5fd18d9cc36661, type: 2}
   _priority: 1
   _triggerOnce: 1
+  _persistenceKey: 
+  _requireKeyToTrigger: 0
 --- !u!65 &1081110336
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -508,67 +510,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1676999938
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -31.936687
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.78999
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -30.33402
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187037, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_Name
-      value: XR Device Simulator
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187037, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
 --- !u!1001 &1780253302
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -620,6 +561,10 @@ PrefabInstance:
     - target: {fileID: 3309285002930837712, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
       propertyPath: m_Name
       value: XR Origin (XR Rig)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7592668055181980100, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -684,7 +629,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8585213064526799703, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
 --- !u!1001 &2880904847918374818
 PrefabInstance:
@@ -833,7 +781,6 @@ SceneRoots:
   - {fileID: 381937516}
   - {fileID: 1780253302}
   - {fileID: 1942114629}
-  - {fileID: 1676999938}
   - {fileID: 3226843516693427456}
   - {fileID: 1081110337}
   - {fileID: 1133163141}

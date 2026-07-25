@@ -4139,6 +4139,7 @@ Transform:
   m_Children:
   - {fileID: 317711334107658327}
   - {fileID: 1480644912596775229}
+  - {fileID: 7592668055181980106}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7737146696654120590
@@ -5661,6 +5662,7 @@ GameObject:
   - component: {fileID: 1417767187420989840}
   - component: {fileID: 3328599264196046979}
   - component: {fileID: 5948655770438844271}
+  - component: {fileID: 6740292228289790068}
   m_Layer: 0
   m_Name: Right Controller
   m_TagString: Untagged
@@ -5845,6 +5847,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.RayToggleOnButton
   _lineVisualObject: {fileID: 1254062691531340851}
   _toggleAction: {fileID: 788219673501280435, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+--- !u!114 &6740292228289790068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4976776950776594127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: Hands
 --- !u!1 &5017821205765953743
 GameObject:
   m_ObjectHideFlags: 0
@@ -8070,6 +8085,7 @@ GameObject:
   - component: {fileID: 4281156050414912419}
   - component: {fileID: 6771905372102141687}
   - component: {fileID: 8822502843768829090}
+  - component: {fileID: 4059015429897021226}
   m_Layer: 0
   m_Name: Left Controller
   m_TagString: Untagged
@@ -8241,6 +8257,19 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
+--- !u!114 &4059015429897021226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8989068768926566254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: Hands
 --- !u!1001 &691584779998832634
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8391,6 +8420,72 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 141466980049140221, guid: b3ed8a0a703ebd34a9e44ed3d9f1fcf6, type: 3}
   m_PrefabInstance: {fileID: 2920002907231528244}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &3660617878765456345
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1380012867250562407}
+    m_Modifications:
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -34.381344
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.25999004
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -34.69634
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187037, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_Name
+      value: XR Device Simulator
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598815579406187037, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+--- !u!4 &7592668055181980106 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6598815579406187027, guid: 9d604c9f2cdcba341b456cb11a5cc79b, type: 3}
+  m_PrefabInstance: {fileID: 3660617878765456345}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6617814247924892815
 PrefabInstance:
