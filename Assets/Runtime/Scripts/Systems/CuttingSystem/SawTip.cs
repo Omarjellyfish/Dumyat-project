@@ -84,7 +84,7 @@ namespace DumyatRuntime
             if (_bladeDirectionReference == null)
             {
                 Debug.LogError("SawTip: Blade Direction Reference is not assigned.");
-               // ShowFloatingText("Missing blade ref");
+                ShowFloatingText("Missing blade ref");
                 ResetStrokeTracking();
                 return;
             }
@@ -127,7 +127,7 @@ namespace DumyatRuntime
 
 
 
-                //ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
+                ShowFloatingText($"{_strokeCount}/{_settings.strokesNeededToCut}");
                 
                 _soundService?.PlayRandomSoundFxAtPosition(
                     _settings.sawStrokeClips, transform, _settings.sfxVolume);
@@ -144,7 +144,7 @@ namespace DumyatRuntime
                 {
                     if (_woodSlicer != null)
                         _woodSlicer.PerformCut(_hitPoints, _currentDirection, woodToCut);
-                    //ShowFloatingText("Cut!");
+                    ShowFloatingText("Cut!");
 
                     _soundService?.PlayRandomSoundFxAtPosition(
                         _settings.cutCompleteClips, transform, _settings.sfxVolume);
@@ -234,11 +234,11 @@ namespace DumyatRuntime
                 ? _bladeMid.transform.position + _floatingTextOffset
                 : transform.position + _floatingTextOffset;
 
-            // if (_activeFloatingText == null || !_activeFloatingText.gameObject.activeSelf)
-            // {
-            //     _activeFloatingText = _floatingTextService.Show(position, text);
-            //     return;
-            // }
+            if (_activeFloatingText == null || !_activeFloatingText.gameObject.activeSelf)
+            {
+                _activeFloatingText = _floatingTextService.Show(position, text);
+                return;
+            }
 
             _activeFloatingText.SetPosition(position, Vector3.zero);
             _activeFloatingText.SetText(text);

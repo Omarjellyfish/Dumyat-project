@@ -33,6 +33,8 @@ namespace DumyatRuntime
         [SerializeField] private HapticFeedback _hapticFeedbackPrefab;
         [Tooltip("Audio mixer volume control prefab. Will be instantiated on launch.")]
         [SerializeField] private SoundMixerManager _soundMixerManagerPrefab;
+        [Tooltip("Floating world-space text/damage-number pool prefab. Will be instantiated on launch.")]
+        [SerializeField] private FloatingUIManager _floatingUIManagerPrefab;
 
         [Header("Other Global Prefabs (No DI)")]
         [Tooltip("Standard Unity/XR prefabs (EventSystem, XR UI Toolkit) to spawn globally. These don't get DI registered, they just live forever.")]
@@ -154,6 +156,18 @@ namespace DumyatRuntime
             }
             else
                 Debug.LogWarning("GameInstaller: SoundMixerManager prefab is not assigned.");
+            if (_floatingUIManagerPrefab != null)
+            {
+                var instance = Instantiate(_floatingUIManagerPrefab);
+                DontDestroyOnLoad(instance.gameObject);
+                containerBuilder.RegisterValue(instance, new[] { typeof(IFloatingTextService) });
+            }
+            else
+                Debug.LogWarning("GameInstaller: FloatingUIManager prefab is not assigned.");
+
+            // Fade transition — plain C# service, constructor-injected.
+            containerBuilder.RegisterType(typeof(FadeTransitionHandler), new[] { typeof(IFadeTransitionService) },
+                Lifetime.Singleton, Resolution.Eager);
 
             // Standard prefabs (UI Toolkit, EventSystem, etc.) that just need to exist globally
             if (_otherGlobalPrefabs != null)
