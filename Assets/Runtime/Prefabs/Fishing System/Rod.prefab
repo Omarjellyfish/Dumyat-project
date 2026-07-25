@@ -788,6 +788,7 @@ GameObject:
   - component: {fileID: 9164314124306605700}
   - component: {fileID: 7235739946662963625}
   - component: {fileID: 1849417574271934731}
+  - component: {fileID: 7281839219264156870}
   m_Layer: 0
   m_Name: Reel
   m_TagString: Untagged
@@ -964,6 +965,19 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+--- !u!114 &7281839219264156870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6292621842732600025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ReelWheel
 --- !u!1 &6411311627964066723
 GameObject:
   m_ObjectHideFlags: 0
@@ -1200,6 +1214,8 @@ GameObject:
   - component: {fileID: 2779499451226317864}
   - component: {fileID: 6652565646149860051}
   - component: {fileID: 7473994981737354157}
+  - component: {fileID: 830305937762628054}
+  - component: {fileID: 3037436898992222196}
   m_Layer: 0
   m_Name: Rod
   m_TagString: Untagged
@@ -1401,6 +1417,34 @@ MonoBehaviour:
   m_LimitAngularVelocity: 0
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
+--- !u!114 &830305937762628054
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7801197442702505875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed759791d012eb340880d7524f060a53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialFire
+  _dialogueSequence: {fileID: 11400000, guid: f560812060382ab43a75358a83a3c937, type: 2}
+  _priority: 1
+  _triggerOnce: 1
+--- !u!114 &3037436898992222196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7801197442702505875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: FishingRod
 --- !u!1 &7855720446633524620
 GameObject:
   m_ObjectHideFlags: 0
