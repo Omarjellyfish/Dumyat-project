@@ -214,10 +214,9 @@ namespace DumyatRuntime
             Transform anchor = TutorialAnchorRegistry.GetPrimaryAnchor(step.PrimaryAnchorId);
 
             _hoverUI.ShowStep(
-                step.InstructionText,
+                step,
                 _currentStepIndex,
                 _activeSequence.Steps.Count,
-                step.Icon,
                 anchor,
                 step.AnchorOffset);
         }

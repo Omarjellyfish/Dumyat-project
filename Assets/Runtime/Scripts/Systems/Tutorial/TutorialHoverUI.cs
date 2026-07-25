@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.Video;
 using Reflex.Attributes;
 
 namespace DumyatRuntime
@@ -31,6 +32,9 @@ namespace DumyatRuntime
         private Coroutine _animationCoroutine;
         private bool _isVisible;
 
+        private VideoPlayer _videoPlayer;
+        private RenderTexture _videoTexture;
+
         [Inject]
         private void Inject(ITutorialService tutorialService)
         {
@@ -40,6 +44,12 @@ namespace DumyatRuntime
         private void Awake()
         {
             _uiDocument = GetComponent<UIDocument>();
+            
+            _videoPlayer = gameObject.AddComponent<VideoPlayer>();
+            _videoPlayer.playOnAwake = false;
+            _videoPlayer.isLooping = true;
+            _videoPlayer.renderMode = VideoRenderMode.RenderTexture;
+            _videoPlayer.audioOutputMode = VideoAudioOutputMode.None;
         }
 
         private void OnEnable()
@@ -89,8 +99,7 @@ namespace DumyatRuntime
         /// <summary>
         /// Display a tutorial step on the hover panel.
         /// </summary>
-        public void ShowStep(string instructionText, int stepIndex, int totalSteps,
-            Sprite icon, Transform anchor, Vector3 offset)
+        public void ShowStep(TutorialStepSO step, int stepIndex, int totalSteps, Transform anchor, Vector3 offset)
         {
             // Update anchor tracking
             _currentAnchor = anchor;
@@ -105,7 +114,7 @@ namespace DumyatRuntime
             // Update content
             if (_instructionLabel != null)
             {
-                _instructionLabel.text = instructionText;
+                _instructionLabel.text = step.InstructionText;
             }
 
             if (_stepCounterLabel != null)
@@ -116,8 +125,8 @@ namespace DumyatRuntime
             // Update progress dots
             UpdateProgressDots(stepIndex, totalSteps);
 
-            // Update icon
-            UpdateIcon(icon);
+            // Update media
+            UpdateMedia(step.Icon, step.Video);
 
             // Animate in
             if (!_isVisible)
@@ -200,20 +209,45 @@ namespace DumyatRuntime
             }
         }
 
-        private void UpdateIcon(Sprite icon)
+        private void UpdateMedia(Sprite icon, VideoClip video)
         {
             if (_iconContainer == null) return;
 
             _iconContainer.Clear();
+            _iconContainer.style.backgroundImage = default;
 
-            if (icon != null)
+            if (video != null)
             {
                 _iconContainer.style.display = DisplayStyle.Flex;
+                _iconContainer.AddToClassList("media-container--video");
+                
+                if (_videoTexture == null || (int)_videoTexture.width != (int)video.width || (int)_videoTexture.height != (int)video.height)
+                {
+                    if (_videoTexture != null) _videoTexture.Release();
+                    _videoTexture = new RenderTexture((int)video.width, (int)video.height, 0);
+                }
+
+                if (_videoPlayer.clip != video || !_videoPlayer.isPlaying)
+                {
+                    _videoPlayer.clip = video;
+                    _videoPlayer.targetTexture = _videoTexture;
+                    _videoPlayer.Play();
+                }
+
+                _iconContainer.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(_videoTexture));
+            }
+            else if (icon != null)
+            {
+                _iconContainer.style.display = DisplayStyle.Flex;
+                _iconContainer.RemoveFromClassList("media-container--video");
                 _iconContainer.style.backgroundImage = new StyleBackground(icon);
+                _videoPlayer.Stop();
             }
             else
             {
                 _iconContainer.style.display = DisplayStyle.None;
+                _iconContainer.RemoveFromClassList("media-container--video");
+                _videoPlayer.Stop();
             }
         }
 
@@ -234,6 +268,17 @@ namespace DumyatRuntime
             if (_skipButton != null)
             {
                 _skipButton.clicked -= OnSkipClicked;
+            }
+            
+            _videoPlayer?.Stop();
+        }
+
+        private void OnDestroy()
+        {
+            if (_videoTexture != null)
+            {
+                _videoTexture.Release();
+                _videoTexture = null;
             }
         }
     }
