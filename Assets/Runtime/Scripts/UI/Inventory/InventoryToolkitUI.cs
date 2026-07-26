@@ -42,6 +42,8 @@ namespace DumyatRuntime
             // The main container in your UI Builder document where slots will be added
             _slotContainer = _root.Q<VisualElement>("SlotContainer");
 
+            if (_eventService == null) return;
+
             _eventService.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
 
             _root.style.display = _startOpen ? DisplayStyle.Flex : DisplayStyle.None;
@@ -54,6 +56,8 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
+            if (_eventService == null) return;
+
             _eventService.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
