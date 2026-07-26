@@ -13,13 +13,16 @@ namespace DumyatRuntime
     {
         [Header("Station Config")]
         [SerializeField] private List<TravelDestination> _destinations;
+        [SerializeField] private List<DialogueSequenceSO> _transitionVoiceLines;
 
         private IFadeTransitionService _fadeTransition;
+        private INarrativeService _narrativeService;
 
         [Inject]
-        private void Inject(IFadeTransitionService fadeTransition)
+        private void Inject(IFadeTransitionService fadeTransition, INarrativeService narrativeService)
         {
             _fadeTransition = fadeTransition;
+            _narrativeService = narrativeService;
         }
 
         /// <summary>
@@ -44,6 +47,21 @@ namespace DumyatRuntime
             {
                 Debug.LogError("BusStation: IFadeTransitionService not injected.");
                 return;
+            }
+
+            if (_narrativeService != null)
+            {
+                _narrativeService.CancelCurrent();
+
+                if (_transitionVoiceLines != null && _transitionVoiceLines.Count > 0)
+                {
+                    int randomIndex = Random.Range(0, _transitionVoiceLines.Count);
+                    var selectedLine = _transitionVoiceLines[randomIndex];
+                    if (selectedLine != null)
+                    {
+                        _narrativeService.PlayDialogue(selectedLine, DialoguePriority.High);
+                    }
+                }
             }
 
             _fadeTransition.StartTransition(destination.SceneName);
