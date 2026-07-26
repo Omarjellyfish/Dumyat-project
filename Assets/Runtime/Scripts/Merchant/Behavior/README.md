@@ -17,10 +17,17 @@ package). This file is the build recipe.
 
 ## Custom nodes (already compiled — appear in the editor's Add-node menu)
 
-Conditions (`Conditions/Merchant`): **Voice Mode Available**, **Negotiation Ongoing**.
+Conditions (`Conditions/Merchant`): **Voice Mode Available**, **Negotiation Ongoing**,
+**Use Online Selling**.
 Actions (`Action/Merchant`): **Setup Negotiation**, **Run Placement Phase**, **Generate Opening
 Line**, **Speak Merchant Line**, **Listen For Player**, **Process Player Turn**, **Apply Turn
-Result**, **Recover Turn**, **Run Sale Confirm Phase**, **Resolve Negotiation**, **Scripted Fallback**.
+Result**, **Recover Turn**, **Run Sale Confirm Phase**, **Resolve Negotiation**, **Scripted Fallback**,
+**Run Offline Sale**.
+
+**Use Online Selling** / **Run Offline Sale** are the online↔offline switch pair (see the switch shape
+below). **Use Online Selling** is true when the AI/online sale should run (voice available AND Force
+Scripted Mode off); **Run Offline Sale** runs the whole scripted (button-based, no-AI) sale to
+completion and does its own teardown, so it needs no **Resolve Negotiation** after it.
 
 **Run Placement Phase** and **Run Sale Confirm Phase** are the scale-flow phases below. Each is one
 async node that drives its own listen/speak turns internally (a conversational loop that is awkward to
@@ -60,6 +67,42 @@ Why this shape:
   Ongoing** false so the loop exits into **Run Sale Confirm Phase**.
 - **Run Sale Confirm Phase** always ends in a terminal state (paid out / declined), so **Resolve
   Negotiation** tears down and notifies the coordinator.
+
+## Graph shape — ONLINE / OFFLINE SWITCH (recommended root)
+
+The graph OWNS the online↔offline decision now — `NegotiationFlowController.BeginNegotiation` always
+starts the graph when one is assigned (it no longer pre-routes offline). Wrap the AI scale sale in a
+Sequence guarded by **Use Online Selling**, and make **Run Offline Sale** the Selector's fallback:
+
+```
+Selector (root)
+├─ Sequence  "Online / AI sale"
+│   ├─ [Condition] Use Online Selling      (voice available AND Force Scripted Mode off)
+│   ├─ Setup Negotiation
+│   ├─ Run Placement Phase
+│   ├─ Generate Opening Line
+│   ├─ Speak Merchant Line
+│   ├─ Repeat While: Negotiation Ongoing   (the haggle loop — see the scale-flow shape above)
+│   │    └─ … turn / recover / speak …
+│   ├─ Run Sale Confirm Phase
+│   └─ Resolve Negotiation
+└─ Run Offline Sale                         (scripted button sale — welcome → I'm done → quote →
+                                             Accept/Decline; self-contained teardown, NO Resolve after)
+```
+
+Why this shape:
+- **Use Online Selling** false (offline / consent declined / Force Scripted Mode on) → the online
+  Sequence fails at the condition → the Selector falls through to **Run Offline Sale**.
+- **Run Offline Sale** awaits the whole scripted sale (`Bt_RunScriptedSaleAsync`) and tears itself down
+  (pay-out + coordinator notify) on Accept/Decline/walk-away — so do **not** add a **Resolve
+  Negotiation** after it, and do **not** guard it with a condition (it IS the fallback).
+- You can still keep the old **Scripted Fallback** node as a deeper safety net inside the online
+  Sequence (e.g. if the player never loads the scale), but the switch's offline branch is **Run Offline
+  Sale**.
+
+> If you build/keep an online-only graph with no offline branch, an offline player (declined consent)
+> falls through the root Selector with no sale and the conversation ends — always include **Run Offline
+> Sale**.
 
 ## Graph shape — LEGACY single-fish (merchants with NO scale wired)
 

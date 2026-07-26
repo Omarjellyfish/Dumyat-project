@@ -272,4 +272,36 @@ namespace DumyatRuntime
             return Status.Success;
         }
     }
+
+    /// <summary>
+    /// OFFLINE selling, ALL-IN-ONE: runs the entire scripted (button-based, no-AI) sale to completion by
+    /// awaiting <see cref="NegotiationFlowController.Bt_RunScriptedSaleAsync"/> — the offline twin of
+    /// "Run Bundle Sale". Success when the sale closes Accepted, Failure otherwise (declined / walked
+    /// away). It does its OWN teardown, so place it as the offline branch of the root Selector with NO
+    /// Resolve node after it. Pair it with the "Use Online Selling" condition to switch AI vs offline.
+    /// </summary>
+    [Serializable, GeneratePropertyBag]
+    [NodeDescription(name: "Run Offline Sale", story: "Run offline sale",
+        category: "Action/Merchant", id: "c2a1000d-4b20-4c30-8d40-00000000000d")]
+    public partial class RunOfflineSaleAction : Action
+    {
+        private Task<bool> _task;
+
+        protected override Status OnStart()
+        {
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
+            if (c == null) return Status.Failure;
+            _task = c.Bt_RunScriptedSaleAsync();
+            return Status.Running;
+        }
+
+        protected override Status OnUpdate()
+        {
+            if (_task == null) return Status.Failure;
+            if (!_task.IsCompleted) return Status.Running;
+            return _task.Result ? Status.Success : Status.Failure;
+        }
+
+        protected override void OnEnd() => _task = null;
+    }
 }

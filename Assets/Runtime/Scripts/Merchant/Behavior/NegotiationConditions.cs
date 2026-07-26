@@ -43,4 +43,27 @@ namespace DumyatRuntime
             return c != null && c.NegotiationOngoing;
         }
     }
+
+    /// <summary>
+    /// Behavior-graph CONDITION — the ONLINE/OFFLINE selling SWITCH. True when the AI/ONLINE selling
+    /// system should run: scripted mode is not forced AND voice mode (mic + internet consent +
+    /// connectivity) is available. Guard the AI branch of the root Selector with it; when it is false the
+    /// Selector falls through to the "Run Offline Sale" branch. This is a superset of "Voice Mode
+    /// Available" (it also honours the Force Scripted Mode toggle). Delegates to
+    /// <see cref="NegotiationFlowController.Bt_ShouldUseOnlineSelling"/>.
+    /// </summary>
+    [Serializable, GeneratePropertyBag]
+    [Condition(
+        name: "Use Online Selling",
+        story: "Use online selling",
+        category: "Conditions/Merchant",
+        id: "b1f2a3c4-0003-4a10-9b20-0000000000a3")]
+    public partial class UseOnlineSellingCondition : Condition
+    {
+        public override bool IsTrue()
+        {
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
+            return c != null && c.Bt_ShouldUseOnlineSelling();
+        }
+    }
 }

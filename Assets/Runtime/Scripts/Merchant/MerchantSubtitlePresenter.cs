@@ -63,7 +63,8 @@ namespace DumyatRuntime
         {
             if (evt.Merchant != _merchant || _panel == null) return;
             string speaker = _merchant.Config != null ? _merchant.Config.MerchantName : null;
-            _panel.Show(evt.English, speaker);
+            if (evt.Instant) _panel.ShowInstant(evt.English, speaker);   // no voice to pace the type-out
+            else _panel.Show(evt.English, speaker);
         }
 
         private void HandleMerchantStopped(MerchantStoppedSpeakingEvent evt)

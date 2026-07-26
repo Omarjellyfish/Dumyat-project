@@ -95,6 +95,22 @@ namespace DumyatRuntime
         [Tooltip("Name of the debug log file written (UTF-8, appended) under Application.persistentDataPath.")]
         [SerializeField] private string _logFileName = "stt_debug_log.txt";
 
+        [Header("Debug UI")]
+        [Tooltip("Show a temporary on-screen + in-headset overlay to inspect and drive mic capture — " +
+                 "device list, OS permission, session state, and a live input-level meter (see " +
+                 "VoiceCaptureDebugUI). Can be toggled at runtime. Leave OFF for normal play.")]
+        [SerializeField] private bool _showDebugUI;
+
+        private VoiceCaptureDebugUI _debugUI;
+        private bool _debugUIApplied;
+
+        /// <summary>Toggle the temporary voice-capture debug overlay (see <see cref="VoiceCaptureDebugUI"/>).</summary>
+        public bool ShowDebugUI
+        {
+            get => _showDebugUI;
+            set { _showDebugUI = value; ApplyDebugUI(); }
+        }
+
         /// <summary>Fires with the final transcript of a captured utterance.</summary>
         public event Action<string> OnTranscription;
 
@@ -162,6 +178,25 @@ namespace DumyatRuntime
             _inputSystem.Player.PushToTalk.started += OnTalkPressed;
             _inputSystem.Player.PushToTalk.canceled += OnTalkReleased;
             _lastCaptureMode = _captureMode;
+            ApplyDebugUI();   // spawn/enable the debug overlay if the checkbox is on
+        }
+
+        // Spawns (or enables/disables) the temporary debug overlay to match the Show Debug UI checkbox.
+        // The overlay lives in its own component (VoiceCaptureDebugUI) so this controller stays focused;
+        // the checkbox just drives it. Safe to call repeatedly (it syncs the component's enabled state).
+        private void ApplyDebugUI()
+        {
+            _debugUIApplied = _showDebugUI;
+            if (_showDebugUI)
+            {
+                if (_debugUI == null) _debugUI = GetComponent<VoiceCaptureDebugUI>();
+                if (_debugUI == null) _debugUI = gameObject.AddComponent<VoiceCaptureDebugUI>();
+                _debugUI.enabled = true;
+            }
+            else if (_debugUI != null)
+            {
+                _debugUI.enabled = false;
+            }
         }
 
         private void OnEnable() => _inputSystem?.Enable();
@@ -238,6 +273,10 @@ namespace DumyatRuntime
 
         private void Update()
         {
+            // React to the Show Debug UI checkbox being toggled at runtime (before the source guard, so
+            // the overlay works even when no capture source has been resolved yet).
+            if (_showDebugUI != _debugUIApplied) ApplyDebugUI();
+
             if (_source == null) return;
 
             // Handle a runtime capture-mode switch: stop any capture left running by the previous mode

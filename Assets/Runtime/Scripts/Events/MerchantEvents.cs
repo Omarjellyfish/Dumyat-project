@@ -17,11 +17,23 @@ namespace DumyatRuntime
         /// <summary>Egyptian Arabic — what the merchant actually says through TTS.</summary>
         public readonly string Arabic;
 
+        /// <summary>
+        /// When true, the subtitle should appear in FULL at once instead of typing character-by-character.
+        /// The scripted (offline) sale sets this for its long per-fish price read-back, which has no voice
+        /// to pace the type-out against. The AI path leaves it false (the default), so the caption keeps
+        /// typing in step with the merchant's speech.
+        /// </summary>
+        public readonly bool Instant;
+
         public MerchantSpokeEvent(MerchantNPC merchant, string english, string arabic)
+            : this(merchant, english, arabic, false) { }
+
+        public MerchantSpokeEvent(MerchantNPC merchant, string english, string arabic, bool instant)
         {
             Merchant = merchant;
             English = english;
             Arabic = arabic;
+            Instant = instant;
         }
     }
 
@@ -171,6 +183,63 @@ namespace DumyatRuntime
         {
             Fish = fish;
             Reason = reason;
+        }
+    }
+
+    /// <summary>
+    /// One button the SCRIPTED (offline) merchant sale can present to the player. The scripted flow reads
+    /// player intent ONLY from these explicit choices — never from parsed text — so the button IS the
+    /// decision (see CLAUDE.md's no-keyword-intent rule).
+    /// </summary>
+    public enum ScriptedChoice
+    {
+        /// <summary>"I'm done" — the player has finished loading the scale and wants a price.</summary>
+        ConfirmPlacement,
+
+        /// <summary>The player accepts the merchant's flat quote; the sale closes.</summary>
+        Accept,
+
+        /// <summary>The player declines the quote and ends the sale (to try another merchant).</summary>
+        Decline
+    }
+
+    /// <summary>
+    /// Published by <c>ScriptedSaleController</c> when it needs the player to choose from a set of on-screen
+    /// buttons. The scripted sale's button panel (<c>ScriptedSalePanel</c>) shows exactly
+    /// <see cref="Options"/> and hides everything else. Empty <see cref="Options"/> means "hide all buttons".
+    /// Filter on <see cref="Merchant"/> — every merchant shares the channel.
+    /// </summary>
+    public readonly struct ScriptedChoiceRequestedEvent : IGameEvent
+    {
+        /// <summary>The merchant asking for a choice (filter key).</summary>
+        public readonly MerchantNPC Merchant;
+
+        /// <summary>The buttons to show, in display order. Empty = hide all.</summary>
+        public readonly ScriptedChoice[] Options;
+
+        public ScriptedChoiceRequestedEvent(MerchantNPC merchant, ScriptedChoice[] options)
+        {
+            Merchant = merchant;
+            Options = options;
+        }
+    }
+
+    /// <summary>
+    /// Published by <c>ScriptedSalePanel</c> when the player clicks one of the scripted-sale buttons.
+    /// <c>ScriptedSaleController</c> listens (filtering on its own merchant) and advances the flow.
+    /// </summary>
+    public readonly struct ScriptedChoiceMadeEvent : IGameEvent
+    {
+        /// <summary>The merchant whose panel was clicked (filter key).</summary>
+        public readonly MerchantNPC Merchant;
+
+        /// <summary>The choice the player made.</summary>
+        public readonly ScriptedChoice Choice;
+
+        public ScriptedChoiceMadeEvent(MerchantNPC merchant, ScriptedChoice choice)
+        {
+            Merchant = merchant;
+            Choice = choice;
         }
     }
 }

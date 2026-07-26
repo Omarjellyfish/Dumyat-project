@@ -129,6 +129,19 @@ namespace DumyatRuntime
                  "If empty, one is searched for in the scene; otherwise the debug fish below is used.")]
         [SerializeField] private MonoBehaviour _fishInventorySource;
 
+        [Header("Scripted (offline) fallback")]
+        [Tooltip("ON: skip the AI voice flow entirely and always run the SCRIPTED (button-based, no-AI) sale. " +
+                 "Use for offline builds or to test the scripted path with consent/network available.")]
+        [SerializeField] private bool _forceScriptedMode;
+
+        [Tooltip("Scripted-sale service that takes over when the AI voice flow is unavailable (consent " +
+                 "declined, offline, mic/LLM/STT failure) or when Force Scripted Mode is on. Auto-resolved " +
+                 "from the scene if left empty; if none exists the negotiation just ends cleanly.")]
+        [SerializeField] private MonoBehaviour _scriptedSaleSource;
+
+        private IScriptedSaleService _scriptedSale;
+        private bool _scriptedSaleResolved;
+
         private PriceNegotiationCalculator _calculator;
         private NegotiationState _state;
         private MerchantNPC _activeMerchant;
@@ -238,22 +251,37 @@ namespace DumyatRuntime
             _activeAudioSource = merchant.GetComponent<AudioSource>();
             if (_activeAudioSource == null) _activeAudioSource = _fallbackAudioSource;
 
-            // BEHAVIOR-GRAPH PATH: hand control to the Behavior graph, whose nodes call the Bt_* steps
-            // below. Fish resolution, consent gating, opening, the turn loop and recovery all live in
-            // the graph now. (Falls through to the legacy coded flow when no graph is assigned.)
+            // FORCE-SCRIPTED (no graph): skip the AI stack and run the button-based scripted sale directly.
+            // When a Behavior graph is assigned it OWNS this decision instead — its "Use Online Selling"
+            // condition already honours Force Scripted Mode — so only short-circuit here when there is no
+            // graph to make the call.
+            if (_forceScriptedMode && !UseBehaviorGraph)
+            {
+                _busy = true;
+                Debug.Log($"{LogPrefix} Force-scripted mode — scripted sale for '{NameOf(merchant)}'.");
+                TriggerScriptedFallback(merchant, null);
+                return;
+            }
+
+            // BEHAVIOR-GRAPH PATH: the graph owns the ONLINE/OFFLINE switch. Its "Use Online Selling"
+            // condition guards the AI branch and falls through to the "Run Offline Sale" branch (the
+            // scripted, button-based sale via Bt_RunScriptedSaleAsync) when online selling isn't available
+            // or is force-disabled. Start the graph and let it decide; the nodes call the Bt_* steps below.
+            // IMPORTANT: the graph MUST include that offline branch, or an offline player falls through with
+            // no sale — see Merchant/Behavior/README.md for the required shape.
             if (UseBehaviorGraph)
             {
                 _busy = true;
                 Subscribe();
-                _agent.Restart();   // run the graph from the root; nodes call the Bt_* steps below
+                _agent.Restart();
                 Debug.Log($"{LogPrefix} Begin BT negotiation with '{NameOf(merchant)}'.");
                 return;
             }
 
-            // SCALE-BASED BUNDLE PATH (no graph, but the merchant HAS a sell scale): run the multi-fish
-            // scale flow in code by driving the same Bt_* steps the Behavior graph would. The catch comes
-            // from the scale (resolved once the player loads it), so there is NO single fish to resolve
-            // up front. Merchants without a scale keep the legacy single-fish flow below.
+            // CODED PATH (no graph). SCALE-BASED BUNDLE when the merchant has a sell scale; otherwise the
+            // legacy single-fish flow. The catch comes from the scale, so there is NO single fish to resolve
+            // up front for a bundle. The consent gate below routes voice-unavailable to the scripted
+            // fallback, so the offline case still sells even without a graph.
             bool bundle = merchant.SellScale != null;
 
             FishData fish = null;
@@ -268,7 +296,7 @@ namespace DumyatRuntime
                 }
             }
 
-            // Voice-ready / no-voice continuations, so the one consent gate below serves both paths.
+            // Voice-ready / no-voice continuations, so the one consent gate below serves both coded paths.
             void ProceedVoice()
             {
                 if (bundle) StartBundleNegotiationCoded(merchant);
@@ -276,7 +304,7 @@ namespace DumyatRuntime
             }
             void ProceedNoVoice()
             {
-                if (bundle) TriggerScriptedFallback(merchant, null);
+                if (bundle) TriggerScriptedFallback(merchant, fish);
                 else FallbackAfterVoiceUnavailable(merchant, fish);
             }
 
@@ -833,6 +861,11 @@ namespace DumyatRuntime
 
             Debug.Log($"{LogPrefix} Negotiation with '{NameOf(merchant)}' cancelled — player left the conversation area.");
 
+            // If a scripted (offline) sale is running it owns the flow — cancel it and let its onEnded
+            // callback drive Cleanup. Cleanup is idempotent, so the fall-through below is a safe no-op.
+            if (_scriptedSale != null && _scriptedSale.IsRunning)
+                _scriptedSale.Cancel(merchant);
+
             // Silence any merchant line still playing so it doesn't keep talking to an empty spot.
             if (_activeAudioSource != null) _activeAudioSource.Stop();
 
@@ -938,14 +971,56 @@ namespace DumyatRuntime
             TriggerScriptedFallback(_activeMerchant, fish);
         }
 
-        // STUB for the later scripted-dialogue task. For now it logs a clear TODO and ends cleanly so
-        // the coordinator can proceed; the real system should take over the negotiation here instead.
+        // Hands the sale to the SCRIPTED (offline, button-based) flow when the AI voice path is unavailable
+        // or force-scripted. The scripted service drives its own catch → quote → accept/decline loop and
+        // reports the outcome back through the onEnded callback, which routes to Cleanup — the same teardown
+        // the AI path uses. Falls back to ending cleanly only when no scripted service can run.
         private void TriggerScriptedFallback(MerchantNPC merchant, FishData fish)
         {
+            IScriptedSaleService scripted = ResolveScriptedSale();
+            if (scripted != null && merchant != null && merchant.SellScale != null)
+            {
+                // Drop the AI voice capture / event subscriptions before the scripted flow takes over so a
+                // late transcript can't drive an already-handed-off negotiation. The scripted controller
+                // manages its own subscriptions.
+                Unsubscribe();
+                _voiceCapture?.CloseSession();
+
+                // Own the negotiation while the scripted sale runs. Some entry paths reach here with _busy
+                // still false (voice-unavailable gate, no-consent), and CancelNegotiation early-returns on
+                // !_busy — so without this, walking away mid-scripted-sale would silently do nothing.
+                _busy = true;
+
+                Debug.Log($"{LogPrefix} Handing '{NameOf(merchant)}' to the scripted (offline) sale.");
+                if (scripted.BeginScriptedSale(merchant, phase => Cleanup(phase)))
+                    return;
+            }
+
+            // No scripted service (or the merchant has no scale) — end cleanly so the player isn't stuck.
             string fishName = fish != null ? fish.fishType : "<no fish>";
-            Debug.LogWarning($"{LogPrefix} TODO scripted fallback: '{NameOf(merchant)}' / {fishName} " +
-                             "(scripted dialogue system not implemented yet). Ending cleanly so the player isn't stuck.");
+            Debug.LogWarning($"{LogPrefix} Scripted fallback unavailable for '{NameOf(merchant)}' / {fishName} " +
+                             "— ending cleanly.");
             Cleanup(NegotiationPhase.Declined);
+        }
+
+        // Resolves the scripted-sale service: the serialized reference, else a ScriptedSaleController in the
+        // scene. Cached (including a null result) so the scene is searched at most once.
+        private IScriptedSaleService ResolveScriptedSale()
+        {
+            if (_scriptedSaleResolved) return _scriptedSale;
+            _scriptedSaleResolved = true;
+
+            if (_scriptedSaleSource is IScriptedSaleService fromField)
+            {
+                _scriptedSale = fromField;
+                return _scriptedSale;
+            }
+
+            _scriptedSale = FindFirstObjectByType<ScriptedSaleController>();
+            if (_scriptedSale == null)
+                Debug.LogWarning($"{LogPrefix} No ScriptedSaleController in the scene — the offline fallback " +
+                                 "will end negotiations cleanly instead of running a scripted sale.");
+            return _scriptedSale;
         }
 
         // --- Resolution (point 7) --------------------------------------------------
@@ -1613,38 +1688,11 @@ namespace DumyatRuntime
         }
 
         // Records a sale per fish still on the scale and removes each from the world (fish "disappear").
+        // Delegates to the shared BundleSaleSettler so the AI and scripted flows pay out identically.
         private void PayoutBundle(ISellScale scale, Dictionary<FishData, float> priceByFish)
         {
-            IFishInventory inventory = ResolveFishInventory();
-            var soldFish = new List<Fish>(scale.FishOnScale);   // copy — MarkFishSold destroys them
-            float total = 0f;
-            int count = 0;
-
-            foreach (Fish fish in soldFish)
-            {
-                if (fish == null) continue;
-                FishData data = fish.ToFishData();
-                if (data == null || !priceByFish.TryGetValue(data, out float price)) continue;  // not part of the deal
-
-                float fair = data.fairMarketValue;
-                var record = new FishSaleRecord
-                {
-                    fishType = data.fishType,
-                    fishTypeArabic = data.fishTypeArabic,
-                    weight = data.weight,
-                    agreedPrice = Mathf.Round(price),
-                    fairMarketValue = fair,
-                    successRate = _calculator.CalculateSuccessRate(price, fair)
-                };
-                _playerStats?.RecordSale(record);          // currency seam: fires FishSaleRecordedEvent per fish
-                total += record.agreedPrice;
-                count++;
-
-                inventory?.MarkFishSold(data);             // removes from inventory + destroys the world fish
-                if (fish != null) Destroy(fish.gameObject); // safety if the fish was not inventory-tracked
-            }
-
-            Debug.Log($"{LogPrefix} Bundle SOLD {count} fish for {total:0} EGP total (removed from the scale).");
+            BundleSaleSettler.Payout(scale, priceByFish, ResolveFishInventory(), _playerStats,
+                _calculator, out _);
         }
 
         private static bool ContainsByRef(IReadOnlyList<FishData> list, FishData fish)
@@ -1861,6 +1909,60 @@ namespace DumyatRuntime
         /// <summary>Fallback step: hand to the scripted fallback + tear down (early-failure branch).</summary>
         public void Bt_ScriptedFallback() =>
             TriggerScriptedFallback(_activeMerchant, _state != null ? _state.fishBeingSold : null);
+
+        /// <summary>
+        /// Condition helper for the graph's online/offline SWITCH: true when the ONLINE (AI voice) selling
+        /// system should run — scripted mode is not forced AND voice mode (mic + internet consent +
+        /// connectivity) is available. When this is false the graph should run the OFFLINE scripted sale
+        /// instead (<see cref="Bt_RunScriptedSaleAsync"/>). Backed by the "Use Online Selling" condition node.
+        /// </summary>
+        public bool Bt_ShouldUseOnlineSelling() =>
+            !_forceScriptedMode && _consent != null && _consent.IsVoiceModeAvailable();
+
+        /// <summary>
+        /// Runs the OFFLINE (scripted, button-based) sale end-to-end as ONE awaitable graph step — the
+        /// offline twin of <see cref="Bt_RunBundleSaleAsync"/>. Starts the scripted sale, awaits its
+        /// outcome, and does its own teardown (the sale's onEnded routes to <see cref="Cleanup"/>, which
+        /// notifies the coordinator), so NO separate Resolve node is needed after it. Returns true only if
+        /// the sale closed Accepted; false on decline / walk-away / when no scripted service or sell scale
+        /// is available. Backed by the "Run Offline Sale" action node; use it as the offline branch of the
+        /// root Selector.
+        /// </summary>
+        public Task<bool> Bt_RunScriptedSaleAsync()
+        {
+            IScriptedSaleService scripted = ResolveScriptedSale();
+            if (scripted == null || _activeMerchant == null || _activeMerchant.SellScale == null)
+            {
+                Debug.LogWarning($"{LogPrefix} Offline sale unavailable for '{NameOf(_activeMerchant)}' " +
+                                 "(no scripted service or sell scale) — ending cleanly.");
+                if (_busy) Cleanup(NegotiationPhase.Declined);
+                return Task.FromResult(false);
+            }
+
+            // Drop AI voice capture / event subscriptions before the scripted flow owns the merchant, and
+            // take ownership so CancelNegotiation (player walks away) isn't a no-op — see TriggerScriptedFallback.
+            Unsubscribe();
+            _voiceCapture?.CloseSession();
+            _busy = true;
+
+            MerchantNPC merchant = _activeMerchant;
+            Debug.Log($"{LogPrefix} Running the offline scripted sale for '{NameOf(merchant)}' (graph branch).");
+
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            bool started = scripted.BeginScriptedSale(merchant, phase =>
+            {
+                SetTerminal(phase);   // record the outcome for the graph/observers
+                Cleanup(phase);       // teardown + notify the coordinator (idempotent)
+                tcs.TrySetResult(phase == NegotiationPhase.Accepted);
+            });
+
+            if (!started)
+            {
+                if (_busy) Cleanup(NegotiationPhase.Declined);
+                return Task.FromResult(false);
+            }
+            return tcs.Task;
+        }
 
         // --- Helpers / stubs -------------------------------------------------------
 

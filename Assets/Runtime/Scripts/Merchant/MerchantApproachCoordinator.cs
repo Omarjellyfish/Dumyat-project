@@ -1,10 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using Reflex.Attributes;
-using UnityEngine;
-#if UNITY_EDITOR
 using Reflex.Extensions;
-#endif
+using UnityEngine;
 
 namespace DumyatRuntime
 {
@@ -117,11 +115,10 @@ namespace DumyatRuntime
             ResolveRoster();
             ValidateRoster();
 
-#if UNITY_EDITOR
-            // Editor-only test convenience — the helper below is compiled out of player builds, so the
-            // call has to be guarded too or the build fails with CS0103.
+            // Test convenience: optionally stock the player's inventory on entering Play. Kept in player
+            // builds too, so the selling flow can be exercised ON-DEVICE (e.g. standalone VR, where the
+            // Inspector/right-click helper isn't reachable). Off by default — leave off for real play.
             if (_giveTestFishOnStart) GiveTestFishToPlayer();
-#endif
         }
 
         // --- Roster ----------------------------------------------------------------
@@ -141,13 +138,12 @@ namespace DumyatRuntime
                       $"{_merchants.Count} merchant(s) in the scene.");
         }
 
-#if UNITY_EDITOR
-        // --- Testing helper (Editor only) ------------------------------------------
+        // --- Testing helper --------------------------------------------------------
 
-        [Header("Testing (Editor only)")]
-        [Tooltip("TEST ONLY: automatically give the player test fish when entering Play mode. Leave off " +
-                 "to play with a real inventory — you can still give fish on demand by right-clicking " +
-                 "this component ▸ 'Give Test Fish To Player'.")]
+        [Header("Testing")]
+        [Tooltip("TEST ONLY: automatically give the player test fish when entering Play mode. Works in " +
+                 "player builds too (for on-device/VR testing), so leave OFF for real play. In the Editor " +
+                 "you can also give fish on demand by right-clicking this component ▸ 'Give Test Fish To Player'.")]
         [SerializeField] private bool _giveTestFishOnStart;
 
         [Tooltip("TEST ONLY: inventory item ID given by 'Give Test Fish To Player'. Defaults to the " +
@@ -215,7 +211,6 @@ namespace DumyatRuntime
                 return null;
             }
         }
-#endif
 
         // MerchantSystemConfig is read purely as a design-time guard: warn when a scene merchant is
         // mis-authored so it surfaces in the Console instead of silently changing who can approach.

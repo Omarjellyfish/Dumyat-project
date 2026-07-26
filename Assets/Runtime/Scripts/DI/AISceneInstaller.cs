@@ -26,6 +26,7 @@ namespace DumyatRuntime
         [SerializeField] private PlayerStats _playerStats;
         [SerializeField] private MerchantNegotiationLLM _negotiationLLM;
         [SerializeField] private NegotiationFlowController _flow;
+        [SerializeField] private ScriptedSaleController _scriptedSale;
 
         public override void InstallBindings(ContainerBuilder containerBuilder)
         {
@@ -38,6 +39,7 @@ namespace DumyatRuntime
             Register<PlayerStats, IPlayerStatsService>(containerBuilder, _playerStats);
             Register<MerchantNegotiationLLM, IMerchantNegotiationService>(containerBuilder, _negotiationLLM);
             Register<NegotiationFlowController, INegotiationService>(containerBuilder, _flow);
+            Register<ScriptedSaleController, IScriptedSaleService>(containerBuilder, _scriptedSale);
         }
     }
 }

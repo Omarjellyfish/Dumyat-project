@@ -184,6 +184,31 @@ namespace DumyatRuntime
             return Mathf.Max(1f, Mathf.Round((maxOffer - openingOffer) * RaiseStepFraction));
         }
 
+        /// <summary>
+        /// A merchant's flat TAKE-IT-OR-LEAVE-IT rate — the fraction of fair market value it pays when
+        /// there is no haggling (the scripted / offline sale). Rolled from the SAME honest/deceptive
+        /// bands the negotiated flow uses, so a scripted quote sits inside the range a player could have
+        /// haggled to: the rate lands at <paramref name="envelopePosition"/> (0..1) between where that
+        /// merchant would have OPENED and the ceiling it could have been argued up to. A deceptive roll
+        /// therefore quotes lower than an honest one, exactly like the negotiated opening.
+        ///
+        /// Meant to be rolled ONCE per merchant and cached (see <c>ScriptedPriceBook</c>) so re-approaching
+        /// with the same catch quotes the same number. Unlike <see cref="GenerateOpeningOffer"/> this is a
+        /// unitless fraction, not an amount — the caller multiplies it by the catch's summed fair value.
+        /// </summary>
+        public float GenerateFlatRate(bool deceiving, float envelopePosition)
+        {
+            float opening = deceiving
+                ? RandomInRange(DeceptiveOpeningMin, DeceptiveOpeningMax)
+                : RandomInRange(HonestOpeningMin, HonestOpeningMax);
+            float ceiling = deceiving
+                ? RandomInRange(DeceptiveMaxMin, DeceptiveMaxMax)
+                : HonestMaxFraction;
+
+            // ceiling can dip below opening on an unlucky deceptive roll — clamp so Lerp stays forward.
+            return Mathf.Lerp(opening, Mathf.Max(opening, ceiling), Mathf.Clamp01(envelopePosition));
+        }
+
         // --- Bundle (multi-fish) pricing -------------------------------------------
         //
         // The scale-based sale haggles the WHOLE catch as one total. Because the per-fish math above is
