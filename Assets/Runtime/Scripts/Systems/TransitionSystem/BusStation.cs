@@ -1,22 +1,29 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
     /// <summary>
     /// Placed at each bus station in every scene. Holds a list of available
     /// <see cref="TravelDestination"/> options. When the player selects one,
-    /// this component finds the persistent car and tells it to pick them up.
+    /// it triggers a fade transition to the destination scene.
     /// </summary>
     public class BusStation : MonoBehaviour
     {
         [Header("Station Config")]
-        [SerializeField] private Transform _pickupPoint;
         [SerializeField] private List<TravelDestination> _destinations;
+        [SerializeField] private List<DialogueSequenceSO> _transitionVoiceLines;
 
-        [Header("Tags")]
-        [SerializeField] private string _playerTag = "Player";
-        [SerializeField] private string _carTag = "PlayerCar";
+        private IFadeTransitionService _fadeTransition;
+        private INarrativeService _narrativeService;
+
+        [Inject]
+        private void Inject(IFadeTransitionService fadeTransition, INarrativeService narrativeService)
+        {
+            _fadeTransition = fadeTransition;
+            _narrativeService = narrativeService;
+        }
 
         /// <summary>
         /// Returns the list of available destinations from this station.
@@ -36,29 +43,28 @@ namespace DumyatRuntime
                 return;
             }
 
-            GameObject playerObj = GameObject.FindWithTag(_playerTag);
-            GameObject carObj = GameObject.FindWithTag(_carTag);
-
-            if (playerObj == null)
+            if (_fadeTransition == null)
             {
-                Debug.LogWarning("BusStation: No GameObject with tag 'Player' found.");
+                Debug.LogError("BusStation: IFadeTransitionService not injected.");
                 return;
             }
 
-            if (carObj == null)
+            if (_narrativeService != null)
             {
-                Debug.LogWarning("BusStation: No GameObject with tag 'PlayerCar' found.");
-                return;
+                _narrativeService.CancelCurrent();
+
+                if (_transitionVoiceLines != null && _transitionVoiceLines.Count > 0)
+                {
+                    int randomIndex = Random.Range(0, _transitionVoiceLines.Count);
+                    var selectedLine = _transitionVoiceLines[randomIndex];
+                    if (selectedLine != null)
+                    {
+                        _narrativeService.PlayDialogue(selectedLine, DialoguePriority.High);
+                    }
+                }
             }
 
-            var carHandler = carObj.GetComponent<CarTransitionHandler>();
-            if (carHandler == null)
-            {
-                Debug.LogWarning("BusStation: Car is missing CarTransitionHandler component.");
-                return;
-            }
-
-            carHandler.RequestPickup(_pickupPoint, playerObj.transform, destination.SceneName);
+            _fadeTransition.StartTransition(destination.SceneName);
         }
 
         /// <summary>

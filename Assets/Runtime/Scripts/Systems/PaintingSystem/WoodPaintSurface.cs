@@ -5,8 +5,8 @@ namespace DumyatRuntime
     public class WoodPaintSurface : MonoBehaviour
     {
         RenderTexture _renderTexture;
-        [SerializeField] private int _width = 512;
-        [SerializeField] private int _height = 512;
+        [SerializeField] private int _width = 2048;
+        [SerializeField] private int _height = 2048;
         public RenderTexture PaintTexture => _renderTexture;
 
         void Awake()

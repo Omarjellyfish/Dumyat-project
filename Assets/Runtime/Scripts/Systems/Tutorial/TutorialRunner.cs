@@ -32,8 +32,7 @@ namespace DumyatRuntime
         private bool _isRunning;
         private Coroutine _delayCoroutine;
 
-        // Cached delegate for event-based completion so we can unsubscribe cleanly
-        private Action<object> _eventCompletionHandler;
+
         private TutorialZoneSensor _activeZoneSensor;
 
         public bool IsRunning => _isRunning;
@@ -276,13 +275,6 @@ namespace DumyatRuntime
                 .GetMethod(nameof(IEventService.Subscribe))
                 ?.MakeGenericMethod(eventType);
 
-            // // Create a delegate of the correct Action<T> type
-            // var actionType = typeof(Action<>).MakeGenericType(eventType);
-            // var handler = Delegate.CreateDelegate(actionType, this, nameof(OnEventFired));
-
-            // Store for cleanup
-            _eventCompletionHandler = (Action<object>)((obj) => OnStepCompleted());
-
             // We need a concrete typed delegate — use a lambda wrapper via DynamicInvoke approach
             var typedHandler = CreateEventHandler(eventType);
             subscribeMethod?.Invoke(_eventService, new object[] { typedHandler });
@@ -316,11 +308,6 @@ namespace DumyatRuntime
             OnStepCompleted();
         }
 
-        // Dummy target for delegate creation — not called directly
-        private void OnEventFired(object evt)
-        {
-            OnStepCompleted();
-        }
 
         private void CleanupEventTrigger()
         {
