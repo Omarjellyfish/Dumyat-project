@@ -19,11 +19,15 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
+            if (_eventService == null) return;
+
             _eventService.Subscribe<ItemDroppedEvent>(HandlePlayerDrop);
         }
 
         private void OnDisable()
         {
+            if (_eventService == null) return;
+
             _eventService.Unsubscribe<ItemDroppedEvent>(HandlePlayerDrop);
         }
 
