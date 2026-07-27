@@ -79,8 +79,8 @@ MonoBehaviour:
           rid: 4833587709264003074
         BlackboardGroupReferences: []
         Root:
-          rid: 4833587818902323446
-        m_VersionTimestamp: 639205884233878370
+          rid: 4833587870345461862
+        m_VersionTimestamp: 639207282886194484
     - rid: 4833587709264003074
       type: {class: BlackboardReference, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
@@ -91,8 +91,8 @@ MonoBehaviour:
       type: {class: Blackboard, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         m_Variables:
-        - rid: 4833587818902323448
-    - rid: 4833587818902323446
+        - rid: 4833587870345461864
+    - rid: 4833587870345461862
       type: {class: Start, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -103,10 +103,10 @@ MonoBehaviour:
         m_Parent:
           rid: -2
         m_Child:
-          rid: 4833587818902323447
+          rid: 4833587870345461863
         Repeat: 0
         AllowMultipleRepeatsPerTick: 0
-    - rid: 4833587818902323447
+    - rid: 4833587870345461863
       type: {class: BranchingConditionComposite, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -115,22 +115,22 @@ MonoBehaviour:
         Graph:
           rid: 4833587709264003073
         m_Parent:
-          rid: 4833587818902323446
+          rid: 4833587870345461862
         m_Children:
-        - rid: 4833587818902323449
-        - rid: 4833587818902323450
+        - rid: 4833587870345461865
+        - rid: 4833587870345461866
         m_RegisteredObservers: []
         m_Conditions:
-        - rid: 4833587818902323451
+        - rid: 4833587870345461867
         m_RequiresAllConditions: 0
         True:
-          rid: 4833587818902323449
+          rid: 4833587870345461865
         False:
-          rid: 4833587818902323450
+          rid: 4833587870345461866
         m_CurrentChild:
           rid: -2
         m_ObserverType: 0
-    - rid: 4833587818902323448
+    - rid: 4833587870345461864
       type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
@@ -138,7 +138,7 @@ MonoBehaviour:
           m_Value1: 0
         Name: Self
         m_Value: {fileID: 0}
-    - rid: 4833587818902323449
+    - rid: 4833587870345461865
       type: {class: RunBundleSaleAction, ns: DumyatRuntime, asm: Project.Runtime}
       data:
         ID:
@@ -147,8 +147,8 @@ MonoBehaviour:
         Graph:
           rid: 4833587709264003073
         m_Parent:
-          rid: 4833587818902323447
-    - rid: 4833587818902323450
+          rid: 4833587870345461863
+    - rid: 4833587870345461866
       type: {class: RunOfflineSaleAction, ns: DumyatRuntime, asm: Project.Runtime}
       data:
         ID:
@@ -157,8 +157,8 @@ MonoBehaviour:
         Graph:
           rid: 4833587709264003073
         m_Parent:
-          rid: 4833587818902323447
-    - rid: 4833587818902323451
+          rid: 4833587870345461863
+    - rid: 4833587870345461867
       type: {class: UseOnlineSellingCondition, ns: DumyatRuntime, asm: Project.Runtime}
       data:
         Graph:
@@ -201,7 +201,7 @@ MonoBehaviour:
   - rid: 4833587818902323411
   - rid: 4833587818902323412
   - rid: 4833587818902323437
-  m_VersionTimestamp: 639205884233878370
+  m_VersionTimestamp: 639207282886194484
   m_SerializedVersion: 3
   m_DebugInfo: {fileID: -1429066853182821179}
   m_RuntimeGraph: {fileID: -1279495821062000234}

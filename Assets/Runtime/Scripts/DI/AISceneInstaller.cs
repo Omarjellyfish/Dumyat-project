@@ -27,6 +27,7 @@ namespace DumyatRuntime
         [SerializeField] private MerchantNegotiationLLM _negotiationLLM;
         [SerializeField] private NegotiationFlowController _flow;
         [SerializeField] private ScriptedSaleController _scriptedSale;
+        [SerializeField] private NotificationHudManager _notifications;
 
         public override void InstallBindings(ContainerBuilder containerBuilder)
         {
@@ -40,6 +41,7 @@ namespace DumyatRuntime
             Register<MerchantNegotiationLLM, IMerchantNegotiationService>(containerBuilder, _negotiationLLM);
             Register<NegotiationFlowController, INegotiationService>(containerBuilder, _flow);
             Register<ScriptedSaleController, IScriptedSaleService>(containerBuilder, _scriptedSale);
+            Register<NotificationHudManager, INotificationService>(containerBuilder, _notifications);
         }
     }
 }

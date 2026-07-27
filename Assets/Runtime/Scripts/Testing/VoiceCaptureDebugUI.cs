@@ -70,6 +70,7 @@ namespace DumyatRuntime
         private readonly List<string> _events = new List<string>();
         private const int MaxEvents = 8;
         private Vector2 _scroll;
+        private string _lastPartial = "";   // rolling live partial transcript (cleared on final)
 
         // World-space panel (built lazily).
         private Transform _worldRoot;
@@ -80,6 +81,7 @@ namespace DumyatRuntime
         private TextMeshProUGUI _modeLabel;
         private TextMeshProUGUI _autoLabel;
         private TextMeshProUGUI _deviceLabel;
+        private TextMeshProUGUI _autoSensLabel;
         private TextMeshProUGUI _vadLabel;
         private TextMeshProUGUI _monitorLabel;
         private bool _bodyVisible = true;
@@ -114,6 +116,7 @@ namespace DumyatRuntime
             if (_controller != null)
             {
                 _controller.OnTranscription += HandleTranscript;
+                _controller.OnPartialTranscription += HandlePartial;
                 _controller.OnCaptureFailed += HandleFailed;
             }
             if (_showWorldPanel && _worldRoot == null) BuildWorldPanel();
@@ -140,6 +143,7 @@ namespace DumyatRuntime
             if (_controller != null)
             {
                 _controller.OnTranscription -= HandleTranscript;
+                _controller.OnPartialTranscription -= HandlePartial;
                 _controller.OnCaptureFailed -= HandleFailed;
             }
             if (_summonButton != null && _summonButton.action != null)
@@ -191,8 +195,14 @@ namespace DumyatRuntime
 
         // --- Event capture ---------------------------------------------------------
 
-        private void HandleTranscript(string t) =>
+        private void HandleTranscript(string t)
+        {
+            _lastPartial = "";   // final arrived — the rolling partial is done
             PushEvent("TRANSCRIPT: " + (string.IsNullOrEmpty(t) ? "<empty>" : t));
+        }
+
+        // Live partial (mid-utterance). Display only; never drives any decision.
+        private void HandlePartial(string t) => _lastPartial = t ?? "";
 
         private void HandleFailed(string reason) => PushEvent("FAILED: " + reason);
 
@@ -218,7 +228,8 @@ namespace DumyatRuntime
                 string dev = _controller.MicrophoneDevice;
                 _deviceLabel.text = "Mic: " + (string.IsNullOrEmpty(dev) ? "default" : dev);
             }
-            if (_vadLabel != null) _vadLabel.text = "VAD gate: " + _controller.VadAmplitudeThreshold.ToString("0.000");
+            if (_autoSensLabel != null) _autoSensLabel.text = "Auto Sens: " + (_controller.AutoAdjustSensitivity ? "On" : "Off");
+            if (_vadLabel != null) _vadLabel.text = "Manual gate: " + _controller.VadAmplitudeThreshold.ToString("0.000");
             if (_monitorLabel != null) _monitorLabel.text = _monitorActive ? "Mic Test: ON (stop)" : "Mic Test (direct)";
         }
 
@@ -260,26 +271,33 @@ namespace DumyatRuntime
             float lvl = _controller.CurrentInputLevel;
             sb.Append("Input level: ").Append(lvl.ToString("0.0000")).Append("  ").Append(LevelBar(lvl)).Append('\n');
 
-            // In voice-activity mode only audio ABOVE this gate is treated as speech and streamed — show
-            // it next to the level so a too-high gate silently eating normal speech is obvious.
+            // In voice-activity mode only audio ABOVE the gate is treated as speech and streamed — show the
+            // EFFECTIVE gate (adaptive or manual) next to the level so a gate silently eating speech is obvious.
             if (_controller.Mode == VoiceCaptureController.CaptureMode.VoiceActivity)
             {
-                float gate = _controller.VadAmplitudeThreshold;
-                sb.Append("VAD gate: ≥ ").Append(gate.ToString("0.000"))
+                float gate = _controller.CurrentGateThreshold;
+                bool auto = _controller.AutoAdjustSensitivity;
+                sb.Append(auto ? "Gate (auto): ≥ " : "Gate (manual): ≥ ").Append(gate.ToString("0.000"))
                   .Append(lvl >= gate ? "   VOICED" : "   (below gate — silent)").Append('\n');
+                if (auto)
+                    sb.Append("Noise floor: ").Append(_controller.CurrentNoiseFloor.ToString("0.0000")).Append('\n');
             }
 
             sb.Append("Status: ").Append(_controller.StatusText).Append('\n');
             if (!string.IsNullOrEmpty(_controller.LastError)) sb.Append("Last error: ").Append(_controller.LastError).Append('\n');
             if (!string.IsNullOrEmpty(_controller.LastTranscript)) sb.Append("Heard: ").Append(_controller.LastTranscript).Append('\n');
+            if (!string.IsNullOrEmpty(_lastPartial)) sb.Append("Partial: ").Append(_lastPartial).Append('\n');
 
             if (includeHint && _controller.IsCapturing && lvl <= 0.0001f)
                 sb.Append(">> Capturing but level 0 — mic not delivering audio (permission/device).\n");
             else if (includeHint && _controller.IsCapturing && lvl > 0.0001f
                      && _controller.Mode == VoiceCaptureController.CaptureMode.VoiceActivity
-                     && lvl < _controller.VadAmplitudeThreshold)
-                sb.Append(">> Mic works but level is BELOW the VAD gate — nothing streams. Lower VAD " +
-                          "threshold or switch to Push-To-Talk.\n");
+                     && lvl < _controller.CurrentGateThreshold)
+                sb.Append(_controller.AutoAdjustSensitivity
+                    ? ">> Mic works but level is BELOW the auto gate — it will re-calibrate as the noise floor " +
+                      "settles; if it persists, lower Auto Sensitivity margin or switch to Push-To-Talk.\n"
+                    : ">> Mic works but level is BELOW the manual gate — nothing streams. Turn Auto Sens On, " +
+                      "lower the gate, or switch to Push-To-Talk.\n");
             else if (includeHint && _controller.IsSessionOpen && !_controller.IsCapturing)
                 sb.Append(">> Session open but NOT capturing — press Capture (or AutoReArm On) to stream, " +
                           "else the server closes it idle (1000 NormalClosure).\n");
@@ -312,6 +330,11 @@ namespace DumyatRuntime
         private void OnToggleAutoReArm()
         {
             if (_controller != null) _controller.AutoReArm = !_controller.AutoReArm;
+        }
+
+        private void OnToggleAutoSensitivity()
+        {
+            if (_controller != null) _controller.AutoAdjustSensitivity = !_controller.AutoAdjustSensitivity;
         }
 
         private void OnOpenSession() => _controller?.OpenSession();
@@ -447,11 +470,15 @@ namespace DumyatRuntime
             var row3 = AddHorizontalGroup(bodyT, spacing: 8, minHeight: 56);
             _deviceLabel = MakeButton(row3, "Mic: default", OnCycleDevice, flexibleWidth: 1f).label;
 
-            // VAD gate tuning — lets an in-headset tester lower the voice-activity threshold live.
+            // Discord-style automatic input sensitivity toggle — self-calibrates the gate per mic/room.
+            var rowAuto = AddHorizontalGroup(bodyT, spacing: 8, minHeight: 56);
+            _autoSensLabel = MakeButton(rowAuto, "Auto Sens: On", OnToggleAutoSensitivity, flexibleWidth: 1f).label;
+
+            // Manual gate tuning — the fallback when Auto Sens is Off; lets a tester lower the gate live.
             var row4 = AddHorizontalGroup(bodyT, spacing: 8, minHeight: 56);
-            MakeButton(row4, "VAD -", OnVadDown, minWidth: 130f);
-            _vadLabel = MakeLabel(row4, "VAD gate: 0.000", 24f, TextAlignmentOptions.Center, flexibleWidth: 1f);
-            MakeButton(row4, "VAD +", OnVadUp, minWidth: 130f);
+            MakeButton(row4, "Gate -", OnVadDown, minWidth: 130f);
+            _vadLabel = MakeLabel(row4, "Manual gate: 0.000", 24f, TextAlignmentOptions.Center, flexibleWidth: 1f);
+            MakeButton(row4, "Gate +", OnVadUp, minWidth: 130f);
 
             // Direct mic test — reads the OS mic straight, bypassing consent/STT/socket/VAD.
             var row5 = AddHorizontalGroup(bodyT, spacing: 8, minHeight: 56);
@@ -583,8 +610,8 @@ namespace DumyatRuntime
             if (_worldRoot != null) Destroy(_worldRoot.gameObject);
             _worldRoot = null;
             _worldBody = null;
-            _worldText = _toggleLabel = _permLabel = _modeLabel = _autoLabel = _deviceLabel = _vadLabel =
-                _monitorLabel = null;
+            _worldText = _toggleLabel = _permLabel = _modeLabel = _autoLabel = _deviceLabel = _autoSensLabel =
+                _vadLabel = _monitorLabel = null;
         }
 
         // --- OnGUI overlay (desktop extra: Editor / PCVR Link mirror) --------------
@@ -626,6 +653,13 @@ namespace DumyatRuntime
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Mode: " + _controller.Mode)) OnToggleMode();
             if (GUILayout.Button("AutoReArm: " + _controller.AutoReArm)) OnToggleAutoReArm();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Auto Sens: " + (_controller.AutoAdjustSensitivity ? "On" : "Off")))
+                OnToggleAutoSensitivity();
+            if (GUILayout.Button("Gate -")) OnVadDown();
+            if (GUILayout.Button("Gate +")) OnVadUp();
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();

@@ -69,8 +69,13 @@ namespace DumyatRuntime
         [SerializeField, Min(0f)] private float _pttReleaseTailSeconds = 0.35f;
 
         [Header("Voice-Activity Tuning")]
+        [Tooltip("Discord-style automatic input sensitivity: the source tracks the ambient noise floor and " +
+                 "rides the voice gate above it, self-calibrating per microphone/room. When on, the fixed " +
+                 "threshold below is ignored (kept as a fallback). ON by default.")]
+        [SerializeField] private bool _autoAdjustSensitivity = true;
+
         [Tooltip("Peak amplitude (0-1) below which audio is treated as silence. Applied to the source " +
-                 "on each capture.")]
+                 "on each capture. Only used when Auto Adjust Sensitivity is OFF.")]
         [SerializeField, Range(0f, 0.5f)] private float _vadAmplitudeThreshold = 0.02f;
 
         [Tooltip("Seconds of continuous silence after speech before the utterance is finalized.")]
@@ -114,6 +119,12 @@ namespace DumyatRuntime
         /// <summary>Fires with the final transcript of a captured utterance.</summary>
         public event Action<string> OnTranscription;
 
+        /// <summary>
+        /// Fires repeatedly mid-utterance with the latest partial (not-yet-final) transcript, for a live
+        /// caption. Display only — never route it into the negotiation decision.
+        /// </summary>
+        public event Action<string> OnPartialTranscription;
+
         /// <summary>Fires with a human-readable reason when a capture/transcription fails.</summary>
         public event Action<string> OnCaptureFailed;
 
@@ -143,6 +154,13 @@ namespace DumyatRuntime
         public string ControlBinding { get => _controlBinding; set => _controlBinding = value; }
         public float ReleaseTailSeconds { get => _pttReleaseTailSeconds; set => _pttReleaseTailSeconds = Mathf.Max(0f, value); }
         public float VadAmplitudeThreshold { get => _vadAmplitudeThreshold; set => _vadAmplitudeThreshold = Mathf.Clamp(value, 0f, 0.5f); }
+        /// <summary>Discord-style auto input sensitivity (adaptive noise-floor gate). Pushed to the source live
+        /// and re-applied each utterance. Bind this from a settings menu or the debug panel.</summary>
+        public bool AutoAdjustSensitivity
+        {
+            get => _autoAdjustSensitivity;
+            set { _autoAdjustSensitivity = value; if (_source != null) _source.AutoAdjustSensitivity = value; }
+        }
         public float VadSilenceSeconds { get => _vadSilenceSeconds; set => _vadSilenceSeconds = Mathf.Max(0.1f, value); }
         public float ReconnectCooldownSeconds { get => _reconnectCooldownSeconds; set => _reconnectCooldownSeconds = Mathf.Max(0f, value); }
         /// <summary>Hard cap on one utterance, in seconds; 0 = no cap. See <see cref="_maxSpeechSeconds"/>.</summary>
@@ -167,6 +185,10 @@ namespace DumyatRuntime
         public bool IsSessionOpen => _source != null && _source.IsSessionOpen;
         public bool IsCapturing => _source != null && _source.MicrophoneEnabled;
         public float CurrentInputLevel => _source != null ? _source.CurrentInputLevel : 0f;
+        /// <summary>Tracked ambient noise floor from the source (0 when idle). For the debug readout.</summary>
+        public float CurrentNoiseFloor => _source != null ? _source.CurrentNoiseFloor : 0f;
+        /// <summary>The effective voice gate the source is comparing the level against (adaptive or manual).</summary>
+        public float CurrentGateThreshold => _source != null ? _source.CurrentGateThreshold : _vadAmplitudeThreshold;
         public string LastTranscript => _lastTranscript;
         public string LastError => _lastError;
         public string StatusText => _status;
@@ -395,7 +417,8 @@ namespace DumyatRuntime
             else
             {
                 _source.AutoStopOnSilence = true;
-                _source.SilenceAmplitudeThreshold = _vadAmplitudeThreshold;
+                _source.AutoAdjustSensitivity = _autoAdjustSensitivity;
+                _source.SilenceAmplitudeThreshold = _vadAmplitudeThreshold;   // manual fallback when auto is off
                 _source.SilenceThresholdSeconds = _vadSilenceSeconds;
             }
         }
@@ -447,6 +470,7 @@ namespace DumyatRuntime
             if (_source != null)
             {
                 _source.OnTranscriptionComplete += HandleSourceTranscription;
+                _source.OnPartialTranscript += HandleSourcePartial;
                 _source.OnTranscriptionFailed += HandleSourceFailed;
                 _sourceSubscribed = true;
             }
@@ -456,9 +480,13 @@ namespace DumyatRuntime
         {
             if (!_sourceSubscribed || _source == null) return;
             _source.OnTranscriptionComplete -= HandleSourceTranscription;
+            _source.OnPartialTranscript -= HandleSourcePartial;
             _source.OnTranscriptionFailed -= HandleSourceFailed;
             _sourceSubscribed = false;
         }
+
+        // Re-raise a live partial for any UI (debug overlay / player caption). Display only.
+        private void HandleSourcePartial(string text) => OnPartialTranscription?.Invoke(text);
 
         private void HandleSourceTranscription(string text)
         {

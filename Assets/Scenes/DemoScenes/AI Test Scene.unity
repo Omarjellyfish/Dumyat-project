@@ -909,7 +909,7 @@ MonoBehaviour:
   _controlBinding: PushToTalk
   _pttReleaseTailSeconds: 0.35
   _vadAmplitudeThreshold: 0.1
-  _vadSilenceSeconds: 1.2
+  _vadSilenceSeconds: 0.7
   _reconnectCooldownSeconds: 2
   _logToFile: 1
   _logFileName: stt_debug_log.txt
@@ -1675,7 +1675,7 @@ MonoBehaviour:
   _silenceAmplitudeThreshold: 0.02
   _connectionTimeoutSeconds: 5
   _responseTimeoutSeconds: 15
-  _transcriptSettleSeconds: 1.5
+  _transcriptSettleSeconds: 0
   _transcriptSettleMaxSeconds: 3
   _verboseLogging: 1
   _dumpSttAudio: 1

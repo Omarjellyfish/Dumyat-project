@@ -24,10 +24,12 @@ namespace DumyatRuntime
         /// </summary>
         public static float Payout(ISellScale scale, IReadOnlyDictionary<FishData, float> priceByFish,
             IFishInventory inventory, IPlayerStatsService playerStats,
-            PriceNegotiationCalculator calculator, out int soldCount)
+            PriceNegotiationCalculator calculator, out int soldCount, out float sellScore)
         {
             soldCount = 0;
+            sellScore = 0f;
             float total = 0f;
+            float fairTotal = 0f;
             if (scale == null || priceByFish == null) return 0f;
 
             // Copy first — MarkFishSold / Destroy mutate the scale's live resting set as we go.
@@ -52,13 +54,20 @@ namespace DumyatRuntime
 
                 playerStats?.RecordSale(record);        // currency seam: fires FishSaleRecordedEvent per fish
                 total += record.agreedPrice;
+                fairTotal += fair;
                 soldCount++;
 
                 inventory?.MarkFishSold(data);          // removes from inventory + destroys the tracked world fish
                 if (fish != null) Object.Destroy(fish.gameObject);   // safety if the fish was not inventory-tracked
             }
 
-            Debug.Log($"[BundleSale] SOLD {soldCount} fish for {total:0} EGP total (removed from the scale).");
+            // Aggregate selling score for the whole deal (how close the total came to max fair value).
+            sellScore = calculator != null && fairTotal > 0f
+                ? calculator.CalculateSuccessRate(total, fairTotal)
+                : 0f;
+
+            Debug.Log($"[BundleSale] SOLD {soldCount} fish for {total:0} EGP total " +
+                      $"(score {sellScore:0}/100 vs {fairTotal:0} fair; removed from the scale).");
             return total;
         }
     }

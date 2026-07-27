@@ -139,6 +139,12 @@ namespace DumyatRuntime
                  "from the scene if left empty; if none exists the negotiation just ends cleanly.")]
         [SerializeField] private MonoBehaviour _scriptedSaleSource;
 
+        [Header("Live captions")]
+        [Tooltip("Publish the player's live PARTIAL speech transcript as a player-side caption while they " +
+                 "talk (PlayerPartialTranscriptEvent → PlayerCaptionPresenter). Display only — never feeds " +
+                 "the negotiation decision. Needs an Arabic-capable font on the caption panel; off by default.")]
+        [SerializeField] private bool _showPlayerPartials;
+
         private IScriptedSaleService _scriptedSale;
         private bool _scriptedSaleResolved;
 
@@ -598,6 +604,7 @@ namespace DumyatRuntime
             if (!_busy) return;
 
             _lastTranscript = text ?? "";
+            ClearPlayerPartial();   // the final arrived — the live caption's job is done
 
             // Scale-flow phases await one utterance via ListenAsync — complete that await and skip the
             // flag/legacy paths below (the awaiting phase drives what happens next).
@@ -1062,6 +1069,9 @@ namespace DumyatRuntime
                 else
                     Debug.LogWarning($"{LogPrefix} PlayerStats missing; sale of {record.fishType} not recorded.");
 
+                // One selling-score notification for this (single-fish) sale.
+                _eventService?.Publish(new SellScoreEvent(record.successRate, record.agreedPrice, 1));
+
                 // Remove/consume the sold fish from the inventory (no-op for the random test provider).
                 ResolveFishInventory()?.MarkFishSold(fish);
 
@@ -1313,6 +1323,7 @@ namespace DumyatRuntime
                 if (!await SpeakLineAsync(await _negotiation.GenerateWelcomeLine(_state, greet))) return false;
 
                 int prompts = 0;
+                bool askAllPlaced = true;   // false for the one round after a "no" (a keep-placing line already asked)
                 while (_busy && _state.stage == NegotiationStage.AwaitingPlacement)
                 {
                     // React to a fumble the INSTANT it happens (HandleFishFumbled wakes this loop), rather
@@ -1344,8 +1355,11 @@ namespace DumyatRuntime
                     }
 
                     // Scale HAS fish: do NOT price yet — confirm the fisherman has placed his WHOLE catch,
-                    // so he can keep loading more before we snapshot the bundle.
-                    if (!await SpeakLineAsync(await _negotiation.GenerateAllPlacedPromptLine(_state))) return false;
+                    // so he can keep loading more before we snapshot the bundle. (Skipped for the one round right
+                    // after a "no", where a keep-placing line already invited him — go straight to listening.)
+                    if (askAllPlaced && !await SpeakLineAsync(await _negotiation.GenerateAllPlacedPromptLine(_state)))
+                        return false;
+                    askAllPlaced = true;
 
                     // Listen for the yes/no answer WITHOUT a premature timeout that could drop a late reply.
                     // Plain ListenAsync waits until the player speaks OR the STT socket idle-closes; on a
@@ -1376,15 +1390,21 @@ namespace DumyatRuntime
                         return true;
                     }
 
-                    // Not "yes" (more to add, unclear, or silent): don't spin re-asking — give up after too
-                    // many rounds, otherwise wait for them to change the scale before asking again.
+                    // Not "yes": give up after too many rounds; otherwise KEEP THE CONVERSATION ALIVE instead of
+                    // the old silent wait that left the mic off ~15s. A clear "no, more to add" gets a warm
+                    // "take your time" line and we listen again (he was asked to say when he's set); an Unclear /
+                    // mis-heard reply simply re-asks the all-placed question and listens again — never dead air.
                     if (++prompts > _maxPlacementPrompts)
                     {
                         Debug.LogWarning($"{LogPrefix} No 'that's all my fish' confirmation after {prompts} rounds — giving up.");
                         return false;
                     }
-                    await WaitForPlacementActivityAsync(_placementIdleSeconds);
-                    if (!_busy) return false;
+                    if (answered == ConfirmationAnswer.No)
+                    {
+                        if (!await SpeakLineAsync(await _negotiation.GenerateKeepPlacingLine(_state))) return false;
+                        askAllPlaced = false;   // the keep-placing line already prompted him — listen, don't re-ask
+                    }
+                    // else Unclear/silent: fall through — the loop re-asks the all-placed prompt and re-listens.
                 }
 
                 return _state.stage == NegotiationStage.Negotiating;
@@ -1691,8 +1711,10 @@ namespace DumyatRuntime
         // Delegates to the shared BundleSaleSettler so the AI and scripted flows pay out identically.
         private void PayoutBundle(ISellScale scale, Dictionary<FishData, float> priceByFish)
         {
-            BundleSaleSettler.Payout(scale, priceByFish, ResolveFishInventory(), _playerStats,
-                _calculator, out _);
+            float total = BundleSaleSettler.Payout(scale, priceByFish, ResolveFishInventory(), _playerStats,
+                _calculator, out int soldCount, out float sellScore);
+            if (soldCount > 0)
+                _eventService?.Publish(new SellScoreEvent(sellScore, total, soldCount));
         }
 
         private static bool ContainsByRef(IReadOnlyList<FishData> list, FishData fish)
@@ -2047,6 +2069,7 @@ namespace DumyatRuntime
             EnsureVoiceCapture();
             if (_voiceCapture == null) return;
             _voiceCapture.OnTranscription += HandleTranscriptionComplete;
+            _voiceCapture.OnPartialTranscription += HandlePartialTranscript;
             _voiceCapture.OnCaptureFailed += HandleTranscriptionFailed;
             _eventService?.Subscribe<FishFumbledEvent>(HandleFishFumbled);
             _eventService?.Subscribe<ScaleContentsChangedEvent>(HandleScaleContentsChanged);
@@ -2059,11 +2082,28 @@ namespace DumyatRuntime
             if (_voiceCapture != null)
             {
                 _voiceCapture.OnTranscription -= HandleTranscriptionComplete;
+                _voiceCapture.OnPartialTranscription -= HandlePartialTranscript;
                 _voiceCapture.OnCaptureFailed -= HandleTranscriptionFailed;
             }
             _eventService?.Unsubscribe<FishFumbledEvent>(HandleFishFumbled);
             _eventService?.Unsubscribe<ScaleContentsChangedEvent>(HandleScaleContentsChanged);
             _subscribed = false;
+            ClearPlayerPartial();   // drop any lingering live caption when the flow detaches
+        }
+
+        // Live player partial (mid-utterance) → a player-side caption, ONLY when opted in. Display only:
+        // the negotiation decision always uses the final transcript from HandleTranscriptionComplete.
+        private void HandlePartialTranscript(string text)
+        {
+            if (_showPlayerPartials)
+                _eventService?.Publish(new PlayerPartialTranscriptEvent(text));
+        }
+
+        // Clears the player caption (empty text = hide). No-op when the feature is off.
+        private void ClearPlayerPartial()
+        {
+            if (_showPlayerPartials)
+                _eventService?.Publish(new PlayerPartialTranscriptEvent(string.Empty));
         }
 
         // Flags a fumble to quip about — but only while awaiting fish placement (the only stage a funny

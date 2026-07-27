@@ -52,6 +52,50 @@ namespace DumyatRuntime
     }
 
     /// <summary>
+    /// Published once when a sale completes (accepted deal), carrying the aggregate SELLING SCORE — how close
+    /// the final total was to the catch's maximum fair value: <c>Σ agreedPrice / Σ fairMarketValue × 100</c>,
+    /// clamped 0–100. One event per sale (a multi-fish bundle is scored as a whole, not per fish).
+    /// <see cref="SaleScoreNotifier"/> maps the score to a rank notification.
+    /// </summary>
+    public readonly struct SellScoreEvent : IGameEvent
+    {
+        /// <summary>0–100: how close the sale total came to the maximum fair value.</summary>
+        public readonly float Score;
+
+        /// <summary>Total paid for the sale, whole Egyptian Pounds.</summary>
+        public readonly float Total;
+
+        /// <summary>Number of fish in the sale.</summary>
+        public readonly int FishCount;
+
+        public SellScoreEvent(float score, float total, int fishCount)
+        {
+            Score = score;
+            Total = total;
+            FishCount = fishCount;
+        }
+    }
+
+    /// <summary>
+    /// Published by <c>NegotiationFlowController</c> with the player's live PARTIAL speech transcript while
+    /// they are still talking, so a player-side caption can show what they're saying in real time. Display
+    /// only — the negotiation decision ALWAYS uses the final transcript, never this rolling guess. An empty
+    /// or whitespace <see cref="Text"/> means "clear the caption" (the turn ended or the final arrived).
+    /// The text is the player's own words in the capture language (Egyptian Arabic), so rendering it needs
+    /// an Arabic-capable font.
+    /// </summary>
+    public readonly struct PlayerPartialTranscriptEvent : IGameEvent
+    {
+        /// <summary>The latest partial transcript, or empty/whitespace to clear the caption.</summary>
+        public readonly string Text;
+
+        public PlayerPartialTranscriptEvent(string text)
+        {
+            Text = text;
+        }
+    }
+
+    /// <summary>
     /// Published by <see cref="Fish.OnCaught"/> the moment a fish is hooked. Lets the player's fish
     /// inventory take ownership of the catch without the fishing system knowing the inventory exists
     /// — the first half of the catch → sell loop that <see cref="FishSaleRecordedEvent"/> closes.

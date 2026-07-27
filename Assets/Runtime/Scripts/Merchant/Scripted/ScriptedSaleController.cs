@@ -205,9 +205,11 @@ namespace DumyatRuntime
 
             // Pay out BEFORE the closing line, so a confirmed deal is honoured even if the player walks off
             // while the farewell shows (mirrors the AI SealBundleSaleAsync ordering).
-            BundleSaleSettler.Payout(scale, priceByFish, ResolveFishInventory(), _playerStats,
-                _calculator, out int soldCount);
+            float paid = BundleSaleSettler.Payout(scale, priceByFish, ResolveFishInventory(), _playerStats,
+                _calculator, out int soldCount, out float sellScore);
             Debug.Log($"{LogPrefix} '{NameOf(_merchant)}' accepted: sold {soldCount} fish for {total:0} EGP.");
+            if (soldCount > 0)
+                _events?.Publish(new SellScoreEvent(sellScore, paid, soldCount));
 
             SpeakThenFinish(_lines.RandomAccepted(), NegotiationPhase.Accepted);
         }

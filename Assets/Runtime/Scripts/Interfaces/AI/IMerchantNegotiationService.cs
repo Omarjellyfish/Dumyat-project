@@ -73,6 +73,13 @@ namespace DumyatRuntime
         Task<MerchantTurnResult> GenerateAllPlacedPromptLine(NegotiationState state);
 
         /// <summary>
+        /// The "take your time" line for when the fisherman answers the all-placed prompt with "no" (he has
+        /// more to add): acknowledges it and invites him to load the rest and say when he's done, so the
+        /// merchant keeps the conversation alive instead of going silent. Always returns a line.
+        /// </summary>
+        Task<MerchantTurnResult> GenerateKeepPlacingLine(NegotiationState state);
+
+        /// <summary>
         /// Classifies the player's reply to a yes/no confirmation question. <paramref name="phase"/>
         /// tells the classifier WHICH question was asked so the same words are judged against the right
         /// intent (e.g. "this is all I have" = a "yes" in <see cref="MerchantPhase.PlacementConfirm"/> but

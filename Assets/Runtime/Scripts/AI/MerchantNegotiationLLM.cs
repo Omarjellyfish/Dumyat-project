@@ -212,6 +212,15 @@ namespace DumyatRuntime
         // speaks with the merchant's own canned voice instead of inventing a second farewell line.
         public const string CoercedWalkAwayArabic = "خلاص يا ريس، مفيش اتفاق النهاردة، ربنا يوفقك في السوق.";
         public const string CoercedWalkAwayEnglish = "That's it, sir — no deal today, good luck in the market.";
+
+        // Walk-away spoken when the player CLEARLY withdraws AFTER the merchant already gave its final
+        // ultimatum (walkAwayWarningGiven). Out of patience at its ceiling, the merchant does NOT beg the
+        // player to reconsider — it leaves, rejecting the deal because the haggling dragged on and the
+        // player won't meet its price. Colloquial Egyptian, no diacritics, numbers spelled out — TTS-safe.
+        private const string CoercedFedUpWalkAwayArabic =
+            "خلاص يا ريس، تعبتني في المفاصلة والسعر اللي انت عايزه مش نافع، انا ماشي وربنا يوفقك.";
+        private const string CoercedFedUpWalkAwayEnglish =
+            "That's enough, sir — you've worn me out haggling and the price you want won't work. I'm off, good luck to you.";
         private const string CoercedBargainAcceptArabic = "ماشي يا ريس، اتفقنا خلاص، هدهالك بالسعر اللي انت طالبه.";
         private const string CoercedBargainAcceptEnglish = "Alright sir, deal — I'll take it at the price you asked.";
 
@@ -488,6 +497,9 @@ namespace DumyatRuntime
         private const string AllPlacedFallbackArabic = "كده خلصت؟ ولا لسه في سمك عايز تبيعه؟ قوللي لما تحط كله على الميزان.";
         private const string AllPlacedFallbackEnglish = "Is that everything, or do you still have fish to sell? Tell me when it's all on the scale.";
 
+        private const string KeepPlacingFallbackArabic = "خد راحتك يا ريس، كمّل حط باقي السمك اللي عايز تبيعه، وقوللي لما تخلص.";
+        private const string KeepPlacingFallbackEnglish = "Take your time, sir — add the rest of the fish you want to sell, and tell me when you're done.";
+
         private const string SaleClosedFallbackArabic = "تمام يا ريس، اتفقنا خلاص، البيعة ليا والفلوس ليك، الله يبارك لك في رزقك.";
         private const string SaleClosedFallbackEnglish = "Perfect, sir — it's a deal, the catch is mine and the money's yours. God bless your livelihood.";
 
@@ -531,6 +543,16 @@ namespace DumyatRuntime
             => GenerateSpeechLine(
                 BuildAllPlacedPrompt(state),
                 AllPlacedFallbackArabic, AllPlacedFallbackEnglish);
+
+        /// <summary>
+        /// The "take your time" line: the fisherman just said he is NOT done placing (answered "no" to the
+        /// all-placed prompt). Warmly acknowledge it, invite him to add the rest of his catch, and ask him to
+        /// say when he's finished — instead of the merchant going silent while waiting for more fish.
+        /// </summary>
+        public Task<MerchantTurnResult> GenerateKeepPlacingLine(NegotiationState state)
+            => GenerateSpeechLine(
+                BuildKeepPlacingPrompt(state),
+                KeepPlacingFallbackArabic, KeepPlacingFallbackEnglish);
 
         /// <summary>
         /// The CLOSING line spoken once the player has confirmed the summary: the whole-catch deal is agreed
@@ -680,6 +702,26 @@ namespace DumyatRuntime
             MerchantPhaseRules.AppendPlacementConfirmDirective(sb);
             sb.AppendLine();
             AppendSpeechOnlySchema(sb, "your question asking if that is all his fish or if he has more, in Egyptian dialect");
+            AppendSpeechOnlyHardRules(sb);
+            return sb.ToString();
+        }
+
+        private string BuildKeepPlacingPrompt(NegotiationState state)
+        {
+            var sb = new StringBuilder();
+            MerchantPhaseRules.AppendRole(sb);
+            MerchantPhaseRules.AppendPlacementConfirmSituation(sb);
+            sb.AppendLine(BuildDialectInstruction());
+            sb.AppendLine();
+            AppendPersonality(sb, state);
+
+            sb.AppendLine("The fisherman just told you he is NOT finished yet — he still has more fish he wants to " +
+                          "add to the scale. Warmly tell him to take his time, put the rest of his catch on the " +
+                          "scale, and to just say the word when he's done. Do NOT ask 'is that all?' again here, and " +
+                          "do NOT rush him or price anything yet.");
+            sb.AppendLine();
+            AppendSpeechOnlySchema(sb, "your warm, brief line telling him to take his time adding the rest and to " +
+                                       "tell you when he's done, in Egyptian dialect");
             AppendSpeechOnlyHardRules(sb);
             return sb.ToString();
         }
@@ -1455,6 +1497,22 @@ namespace DumyatRuntime
             }
             else if (parsed.RejectionScore >= WithdrawalScoreThreshold)
             {
+                // SPECIAL CASE — the player withdraws AFTER the merchant already gave its final ultimatum
+                // (walkAwayWarningGiven: it reached its ceiling and spent its patience). It must NOT ask
+                // "are you sure you don't want to sell?" — begging the player to reconsider makes no sense
+                // once the merchant itself is fed up. Instead it WALKS AWAY, rejecting the deal because the
+                // haggling dragged on and the player won't meet its price. No confirm step is needed: the
+                // ultimatum already warned the player, which is the safeguard the confirm turn provides.
+                if (state.walkAwayWarningGiven)
+                {
+                    Debug.Log($"MerchantNegotiationLLM: player withdrew after the ultimatum " +
+                              $"(rejectionScore {parsed.RejectionScore:0} >= {WithdrawalScoreThreshold:0}, " +
+                              "already warned) — merchant walks away instead of asking to confirm.");
+                    CoerceLine(parsed, MerchantAction.WalkAway, CoercedFedUpWalkAwayArabic, CoercedFedUpWalkAwayEnglish);
+                    result = parsed;
+                    return true;
+                }
+
                 Debug.Log($"MerchantNegotiationLLM: player is ending the sale " +
                           $"(rejectionScore {parsed.RejectionScore:0} >= {WithdrawalScoreThreshold:0}) " +
                           "— asking them to confirm before it is applied.");
