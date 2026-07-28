@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Reflex.Attributes;
+using Reflex.Extensions;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -24,7 +25,7 @@ namespace DumyatRuntime
     /// approaches. Merchant GameObjects are assumed to already exist in the scene (each
     /// with a <see cref="MerchantNPC"/>); this never instantiates new ones.
     /// </summary>
-    public class MerchantSpawner : MonoBehaviour
+    public class MerchantApproachCoordinator : MonoBehaviour
     {
         // Injected negotiation orchestrator (replaces the former NegotiationFlowController.Singleton).
         private INegotiationService _negotiation;
@@ -40,18 +41,22 @@ namespace DumyatRuntime
         [SerializeField] private ApproachOrder _approachOrder = ApproachOrder.Random;
 
         [Header("Scene References")]
-        [Tooltip("Merchant NPCs already placed in the market scene. The spawner picks from these.")]
+        [Tooltip("Merchants that may approach the player. LEAVE EMPTY to use every MerchantNPC in the " +
+                 "scene (the normal case). Assign some to narrow the roster to just those.")]
         [SerializeField] private List<MerchantNPC> _merchants = new List<MerchantNPC>();
 
         [Tooltip("Tag used to identify the player when they enter the market trigger volume.")]
         [SerializeField] private string _playerTag = "Player";
 
-        // STUB SEAM: real integration should query the inventory system, e.g.
-        // InventorySystem.GetFishItems().Count > 0. Until that's wired, this serialized
-        // toggle drives fish detection so the approach orchestration can be exercised
-        // in-editor. Replace PlayerHasFish() body when connecting the inventory.
+        [Tooltip("Optional: a component implementing IFishInventory, used to check whether the player " +
+                 "is carrying fish worth approaching about. If empty, one is searched for in the " +
+                 "scene; if there is none, the debug toggle below is used instead.")]
+        [SerializeField] private MonoBehaviour _fishInventorySource;
+
         [Header("Stubs (temporary)")]
-        [Tooltip("STUB: stands in for InventorySystem.GetFishItems(). Remove once inventory is wired.")]
+        [Tooltip("FALLBACK for scenes with no IFishInventory: stands in for the player's catch so the " +
+                 "approach orchestration can still be exercised in-editor. Ignored once an inventory " +
+                 "is present.")]
         [SerializeField] private bool _debugPlayerHasFish = true;
 
         // --- State lock: only ONE merchant may approach/negotiate at any time. ---
@@ -64,6 +69,7 @@ namespace DumyatRuntime
         private int _sequentialIndex;
         private MerchantNPC _lastApproached;
         private Coroutine _cooldownRoutine;
+        private IFishInventory _fishInventory;
 
         // Cached approach-movers for the roster (null entries allowed for merchants without one), so
         // IsAnyMerchantEngaging can cheaply check whether ANY merchant is currently in motion.
@@ -106,46 +112,136 @@ namespace DumyatRuntime
 
         private void Start()
         {
-            ValidateRosterAgainstConfig();
+            ResolveRoster();
+            ValidateRoster();
+
+            // Test convenience: optionally stock the player's inventory on entering Play. Kept in player
+            // builds too, so the selling flow can be exercised ON-DEVICE (e.g. standalone VR, where the
+            // Inspector/right-click helper isn't reachable). Off by default — leave off for real play.
+            if (_giveTestFishOnStart) GiveTestFishToPlayer();
         }
 
-        // --- Roster validation (point 1) -------------------------------------------
+        // --- Roster ----------------------------------------------------------------
 
-        // The scene NPC list is the live roster (point 2 requires using pre-placed
-        // NPCs). MerchantSystemConfig is read here purely as a design-time guard: warn
-        // when the scene doesn't match the authored config so misconfiguration surfaces
-        // in the Console instead of silently changing who can approach.
-        private void ValidateRosterAgainstConfig()
+        // The roster IS the scene's merchants. An explicit list wins (a designer can hand-pick who may
+        // approach — the AI test scene narrows it to one NPC); otherwise every MerchantNPC in the scene
+        // is the roster. Auto-discovery is the default because the roster is a fact about the scene, not
+        // a tuning value: leaving it unassigned used to silently disable every merchant, and there is no
+        // authored count to disagree with any more.
+        private void ResolveRoster()
         {
+            _merchants.RemoveAll(m => m == null);   // drop empty Inspector slots
+            if (_merchants.Count > 0) return;
+
+            _merchants.AddRange(FindObjectsByType<MerchantNPC>(FindObjectsSortMode.None));
+            Debug.Log($"MerchantApproachCoordinator: roster left empty — auto-discovered " +
+                      $"{_merchants.Count} merchant(s) in the scene.");
+        }
+
+        // --- Testing helper --------------------------------------------------------
+
+        [Header("Testing")]
+        [Tooltip("TEST ONLY: automatically give the player test fish when entering Play mode. Works in " +
+                 "player builds too (for on-device/VR testing), so leave OFF for real play. In the Editor " +
+                 "you can also give fish on demand by right-clicking this component ▸ 'Give Test Fish To Player'.")]
+        [SerializeField] private bool _giveTestFishOnStart;
+
+        [Tooltip("TEST ONLY: inventory item ID given by 'Give Test Fish To Player'. Defaults to the " +
+                 "generic fish item (5). You then DROP them yourself from the inventory UI and grab " +
+                 "each onto a merchant's sell scale.")]
+        [SerializeField] private string _testFishItemId = "5";
+
+        [Tooltip("TEST ONLY: how many batches of fish to add. Each batch adds a random quantity (1-4) " +
+                 "of the item above, so you get roughly a handful to place on the scale.")]
+        [SerializeField, Min(1)] private int _testFishBatches = 3;
+
+        /// <summary>
+        /// TEST HELPER (right-click the component ▸ "Give Test Fish To Player", or call at runtime):
+        /// adds fish to the player's real item inventory (<see cref="IInventoryService"/>) in a few
+        /// batches of a random quantity (1-4) each, so the scale-based selling flow can be exercised
+        /// end-to-end: you DROP them yourself from the inventory UI and grab each onto a merchant's sell
+        /// scale. Play mode only — the inventory service is resolved from the scene DI container.
+        /// </summary>
+        [ContextMenu("Give Test Fish To Player")]
+        private void GiveTestFishToPlayer()
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogWarning("MerchantApproachCoordinator: 'Give Test Fish' only works in Play mode.");
+                return;
+            }
+            if (string.IsNullOrEmpty(_testFishItemId))
+            {
+                Debug.LogWarning("MerchantApproachCoordinator: set 'Test Fish Item Id' (e.g. 5) first.");
+                return;
+            }
+
+            IInventoryService inventory = ResolveInventoryService();
+            if (inventory == null)
+            {
+                Debug.LogWarning("MerchantApproachCoordinator: no IInventoryService reachable — can't give test " +
+                                 "fish. Does the scene have a SceneScope, and is the fish item in the ItemDatabase?");
+                return;
+            }
+
+            int total = 0;
+            for (int batch = 0; batch < _testFishBatches; batch++)
+            {
+                int qty = Random.Range(1, 5);   // 1..4 inclusive
+                inventory.AddItemToInventory(_testFishItemId, qty);
+                total += qty;
+            }
+
+            Debug.Log($"MerchantApproachCoordinator: gave {total} test fish (item '{_testFishItemId}') to the " +
+                      "player across " + _testFishBatches + " batches. Drop them from the inventory UI and place " +
+                      "each on a merchant's sell scale.");
+        }
+
+        // Resolves IInventoryService off the scene DI container (which delegates to the root container
+        // where the service is registered). Editor test only.
+        private IInventoryService ResolveInventoryService()
+        {
+            try
+            {
+                return gameObject.scene.GetSceneContainer().Resolve<IInventoryService>();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"MerchantApproachCoordinator: could not resolve IInventoryService — {e.Message}");
+                return null;
+            }
+        }
+
+        // MerchantSystemConfig is read purely as a design-time guard: warn when a scene merchant is
+        // mis-authored so it surfaces in the Console instead of silently changing who can approach.
+        private void ValidateRoster()
+        {
+            if (_merchants.Count == 0)
+            {
+                Debug.LogWarning("MerchantApproachCoordinator: no MerchantNPC in the scene — " +
+                                 "no merchant can ever approach the player.");
+                return;
+            }
+
             if (_systemConfig == null)
             {
-                Debug.LogWarning("MerchantSpawner: no MerchantSystemConfig assigned — " +
+                Debug.LogWarning("MerchantApproachCoordinator: no MerchantSystemConfig assigned — " +
                                  "using scene NPC list unchecked, and cooldown defaults to 0.");
                 return;
             }
 
-            int sceneCount = 0;
             foreach (MerchantNPC merchant in _merchants)
             {
-                if (merchant == null) continue;
-                sceneCount++;
-
                 if (merchant.Config == null)
                 {
-                    Debug.LogWarning($"MerchantSpawner: scene merchant '{merchant.name}' has no " +
+                    Debug.LogWarning($"MerchantApproachCoordinator: scene merchant '{merchant.name}' has no " +
                                      "MerchantConfig assigned.");
                 }
                 else if (!ConfigIsRegistered(merchant.Config))
                 {
-                    Debug.LogWarning($"MerchantSpawner: scene merchant '{NameOf(merchant)}' uses a " +
+                    Debug.LogWarning($"MerchantApproachCoordinator: scene merchant '{NameOf(merchant)}' uses a " +
                                      "MerchantConfig not listed in MerchantSystemConfig.MerchantConfigs.");
                 }
-            }
-
-            if (sceneCount != _systemConfig.MerchantCount)
-            {
-                Debug.LogWarning($"MerchantSpawner: scene has {sceneCount} merchant(s) but " +
-                                 $"MerchantSystemConfig.MerchantCount is {_systemConfig.MerchantCount}.");
             }
         }
 
@@ -192,7 +288,7 @@ namespace DumyatRuntime
             MerchantNPC next = PickNextMerchant();
             if (next == null)
             {
-                Debug.LogWarning("MerchantSpawner: no available merchant to approach.");
+                Debug.LogWarning("MerchantApproachCoordinator: no available merchant to approach.");
                 return;
             }
 
@@ -208,7 +304,7 @@ namespace DumyatRuntime
         {
             if (merchant == null)
             {
-                Debug.LogWarning("MerchantSpawner: PlayerInitiatesWithMerchant called with null merchant.");
+                Debug.LogWarning("MerchantApproachCoordinator: PlayerInitiatesWithMerchant called with null merchant.");
                 return;
             }
 
@@ -221,14 +317,14 @@ namespace DumyatRuntime
             // interaction system can simply let the player try again once the merchant frees up.
             if (IsNegotiationActive)
             {
-                Debug.Log($"MerchantSpawner: rejecting direct approach to " +
+                Debug.Log($"MerchantApproachCoordinator: rejecting direct approach to " +
                           $"'{NameOf(merchant)}' — '{NameOf(_activeMerchant)}' is mid-negotiation.");
                 return;
             }
 
             if (!PlayerHasFish())
             {
-                Debug.Log("MerchantSpawner: player initiated contact but is carrying no fish to sell.");
+                Debug.Log("MerchantApproachCoordinator: player initiated contact but is carrying no fish to sell.");
                 return;
             }
 
@@ -244,7 +340,7 @@ namespace DumyatRuntime
         {
             if (merchant == null || merchant != _activeMerchant) return;
 
-            Debug.Log($"MerchantSpawner: player left '{NameOf(merchant)}' conversation area — cancelling negotiation.");
+            Debug.Log($"MerchantApproachCoordinator: player left '{NameOf(merchant)}' conversation area — cancelling negotiation.");
             if (_negotiation != null)
                 _negotiation.CancelNegotiation(merchant);
             else
@@ -269,8 +365,8 @@ namespace DumyatRuntime
             else
             {
                 // Without a controller the negotiation would never end and the lock would stick,
-                // wedging the spawner. Fail loud and release immediately so the player isn't stuck.
-                Debug.LogWarning("MerchantSpawner: no INegotiationService injected; " +
+                // wedging the coordinator. Fail loud and release immediately so the player isn't stuck.
+                Debug.LogWarning("MerchantApproachCoordinator: no INegotiationService injected; " +
                                  "ending negotiation immediately to avoid a stuck state lock.");
                 merchant.EndNegotiation(NegotiationPhase.Declined);
             }
@@ -285,7 +381,7 @@ namespace DumyatRuntime
                 _activeMerchant = null;          // releases the state lock
             }
 
-            Debug.Log($"MerchantSpawner: negotiation with '{NameOf(merchant)}' ended ({outcome}). " +
+            Debug.Log($"MerchantApproachCoordinator: negotiation with '{NameOf(merchant)}' ended ({outcome}). " +
                       $"No new approach until the player leaves the market and returns.");
 
             // A conversation is one-per-visit: we do NOT auto-start another while the player lingers.
@@ -343,12 +439,40 @@ namespace DumyatRuntime
             return available;
         }
 
-        // --- Fish detection (stub seam) -------------------------------------------
+        // --- Fish detection --------------------------------------------------------
 
+        // Whether the player is carrying anything worth approaching about. Falls back to the debug
+        // toggle only when the scene has no fish inventory at all (e.g. the merchant-only test scenes),
+        // so those keep behaving as they did before the inventory existed.
         private bool PlayerHasFish()
         {
-            // STUB: replace with InventorySystem.GetFishItems().Count > 0 once available.
-            return _debugPlayerHasFish;
+            IFishInventory inventory = ResolveFishInventory();
+            return inventory != null ? inventory.HasFish : _debugPlayerHasFish;
+        }
+
+        // Resolves an IFishInventory: the serialized reference, else any component in the scene that
+        // implements it. Cached after the first successful resolve.
+        // NOTE: NegotiationFlowController.ResolveFishInventory does the same thing — if a third caller
+        // ever needs this, lift it into a shared helper rather than copying it again.
+        private IFishInventory ResolveFishInventory()
+        {
+            if (_fishInventory != null) return _fishInventory;
+
+            if (_fishInventorySource is IFishInventory fromField)
+            {
+                _fishInventory = fromField;
+                return _fishInventory;
+            }
+
+            foreach (MonoBehaviour mb in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            {
+                if (mb is IFishInventory inv)
+                {
+                    _fishInventory = inv;
+                    return _fishInventory;
+                }
+            }
+            return null;
         }
 
         private static string NameOf(MerchantNPC merchant)
