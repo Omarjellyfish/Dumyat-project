@@ -5820,7 +5820,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -15687,11 +15687,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.NotificationHudManager
   _view: {fileID: 0}
-  _holdSeconds: 7
+  _holdSeconds: 12
   _distance: 1.6
   _rightOffset: 1.05
   _upOffset: 0.72
   _canvasScale: 0.0017
+  _followDeadzoneDeg: 30
+  _followSmoothTime: 0.18
 --- !u!4 &1074024784
 Transform:
   m_ObjectHideFlags: 0
@@ -22116,8 +22118,8 @@ GameObject:
   - component: {fileID: 1524774764}
   - component: {fileID: 1524774763}
   - component: {fileID: 1524774762}
-  - component: {fileID: 1524774761}
   - component: {fileID: 1524774760}
+  - component: {fileID: 1524774761}
   - component: {fileID: 1524774765}
   m_Layer: 0
   m_Name: Negotiation
@@ -22166,7 +22168,7 @@ MonoBehaviour:
   _maxSpeechSeconds: 20
   _logToFile: 1
   _logFileName: stt_debug_log.txt
-  _showDebugUI: 1
+  _showDebugUI: 0
 --- !u!82 &1524774761
 AudioSource:
   m_ObjectHideFlags: 0
