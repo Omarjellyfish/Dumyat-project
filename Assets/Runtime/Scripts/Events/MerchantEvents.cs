@@ -96,22 +96,6 @@ namespace DumyatRuntime
     }
 
     /// <summary>
-    /// Published by <see cref="Fish.OnCaught"/> the moment a fish is hooked. Lets the player's fish
-    /// inventory take ownership of the catch without the fishing system knowing the inventory exists
-    /// — the first half of the catch → sell loop that <see cref="FishSaleRecordedEvent"/> closes.
-    /// </summary>
-    public readonly struct FishCaughtEvent : IGameEvent
-    {
-        /// <summary>The fish that was just caught. Its species/weight/value are already decided.</summary>
-        public readonly Fish Fish;
-
-        public FishCaughtEvent(Fish fish)
-        {
-            Fish = fish;
-        }
-    }
-
-    /// <summary>
     /// Published by <see cref="PlayerStats"/> when a fish sale is recorded (an accepted deal). Carries
     /// the authoritative sale record so the sell process / inventory / UI can react (credit money,
     /// remove the fish, refresh HUD). Replaces the former static <c>PlayerStats.OnSaleRecorded</c>.

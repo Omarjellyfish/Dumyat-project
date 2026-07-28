@@ -1,7 +1,6 @@
 using Reflex.Attributes;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
-using Reflex.Attributes;
 using UnityEngine.Serialization;
 
 namespace DumyatRuntime
@@ -24,7 +23,6 @@ namespace DumyatRuntime
         [Tooltip("The fish's mouth (empty/bone) — where the hook attaches.")]
         [SerializeField, FormerlySerializedAs("mouthPoint")] private Transform _mouthPoint;
 
-        public Transform MouthPoint => mouthPoint;
         private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable _interactable;
         [SerializeField] private DialogueSequenceSO _dialogueSequence;
         [SerializeField] private DialoguePriority _priority = DialoguePriority.Normal;
@@ -54,6 +52,7 @@ namespace DumyatRuntime
 
         public bool IsCaught => _isCaught;
 
+        /// <summary>The fish's mouth (empty/bone) — where the hook attaches.</summary>
         public Transform MouthPoint => _mouthPoint;
 
         /// <summary>
@@ -64,19 +63,26 @@ namespace DumyatRuntime
         /// </summary>
         public static Fish FromCollider(Collider other)
         {
-            Animator fishAnimator = GetComponentInChildren<Animator>();
-            fishAnimator.SetBool("isHooked", false);
-            _interactable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-            _interactable.selectEntered.AddListener(OnSelectEntered);
+            if (other == null) return null;
+            if (other.TryGetComponent(out Fish fish)) return fish;
+            Rigidbody rb = other.attachedRigidbody;
+            return rb != null ? rb.GetComponent<Fish>() : null;
         }
 
         private void OnSelectEntered(SelectEnterEventArgs args)
         {
             if (_triggerOnce && hasTriggered) return;
-            hasTriggered = true;
-            Debug.Log("Fish selected");
-            _eventService.Publish(new PlayDialogueEvent(_dialogueSequence, _priority));
+            if (_dialogueSequence == null) return;
 
+            if (_eventService == null)
+            {
+                Debug.LogWarning($"Fish '{name}' was grabbed but no IEventService was injected — " +
+                                 "its dialogue will not play. Does this scene have a ContainerScope?", this);
+                return;
+            }
+
+            hasTriggered = true;
+            _eventService.Publish(new PlayDialogueEvent(_dialogueSequence, _priority));
         }
 
         private void Awake()
@@ -97,6 +103,14 @@ namespace DumyatRuntime
         private void Start()
         {
             SetHooked(false);
+
+            _interactable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+            if (_interactable != null) _interactable.selectEntered.AddListener(OnSelectEntered);
+        }
+
+        private void OnDestroy()
+        {
+            if (_interactable != null) _interactable.selectEntered.RemoveListener(OnSelectEntered);
         }
 
         public void StopAnimation()

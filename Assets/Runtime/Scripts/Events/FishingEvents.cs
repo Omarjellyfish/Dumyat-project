@@ -1,20 +1,20 @@
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Published by <see cref="Fish.OnCaught"/> when a fish is successfully caught.
-    /// Consumed by <see cref="QuestService"/> (and any future fishing-stats tracker).
+    /// Published by <see cref="Fish.OnCaught"/> the moment a fish is hooked. Lets the player's fish
+    /// inventory take ownership of the catch without the fishing system knowing the inventory exists
+    /// — the first half of the catch → sell loop that <see cref="FishSaleRecordedEvent"/> closes.
+    /// Also consumed by <see cref="QuestService"/> for <see cref="QuestTriggerType.FishCaught"/>
+    /// quests, which read the species off the carried <see cref="Fish"/>.
     /// </summary>
     public readonly struct FishCaughtEvent : IGameEvent
     {
-        public readonly string FishName;
-        public readonly float Weight;
-        public readonly float Value;
+        /// <summary>The fish that was just caught. Its species/weight/value are already decided.</summary>
+        public readonly Fish Fish;
 
-        public FishCaughtEvent(string fishName, float weight, float value)
+        public FishCaughtEvent(Fish fish)
         {
-            FishName = fishName;
-            Weight = weight;
-            Value = value;
+            Fish = fish;
         }
     }
 }
