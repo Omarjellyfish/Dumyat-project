@@ -14,6 +14,11 @@ namespace DumyatRuntime
 
         private void Awake()
         {
+            if(!_floatingTextPrefab)
+            {
+                Debug.LogError("FloatingTextPrefab is not assigned");
+                return ;
+            }
             for (int i = 0; i < _initialPoolSize; i++)
                 CreatePooledInstance();
         }

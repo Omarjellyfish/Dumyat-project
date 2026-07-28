@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.AI;
 
 namespace DumyatRuntime
@@ -7,7 +8,7 @@ namespace DumyatRuntime
     /// Walks the merchant to the player and back. When <see cref="ApproachAndInitiate"/> is called
     /// (by <see cref="MerchantProximityTrigger"/> when the player comes into detection range), the
     /// merchant walks to the player, stops at conversation distance, faces them and starts the
-    /// negotiation through <see cref="MerchantSpawner.PlayerInitiatesWithMerchant"/> — so the
+    /// negotiation through <see cref="MerchantApproachCoordinator.PlayerInitiatesWithMerchant"/> — so the
     /// one-at-a-time lock and fish check still apply. When the negotiation ends (any outcome), the
     /// merchant walks back to the position/rotation it had at startup and idles there.
     ///
@@ -16,6 +17,11 @@ namespace DumyatRuntime
     /// is available at runtime the mover degrades gracefully to a straight-line walk so the merchant
     /// still functions. The Animator is cross-faded between the Walk and Idle states; the greeting
     /// Wave on arrival stays <see cref="MerchantAnimationDriver"/>'s job.
+    ///
+    /// With walking turned OFF the agent is DISABLED outright rather than merely left unused: an enabled
+    /// agent owns the transform's HEIGHT (it snaps to the baked surface and pins it there), which silently
+    /// lifted stationary merchants off the ground wherever the NavMesh was carved out from under them.
+    /// See ConfigureAgent.
     /// </summary>
     [RequireComponent(typeof(MerchantNPC))]
     [RequireComponent(typeof(NavMeshAgent))]
@@ -24,6 +30,11 @@ namespace DumyatRuntime
         private enum State { AtHome, WalkingToPlayer, Engaged, WalkingHome }
 
         [Header("Locomotion")]
+        [Tooltip("When ON, the merchant WALKS to the player and the conversation starts on arrival. " +
+                 "When OFF, the merchant stays put and engages IN PLACE as soon as the player is in " +
+                 "range — no walking, and no NavMesh needed.")]
+        [SerializeField] private bool _walkToPlayer = true;
+
         [Tooltip("Walk speed in metres per second.")]
         [SerializeField, Min(0.1f)] private float _walkSpeed = 1.4f;
 
@@ -47,12 +58,13 @@ namespace DumyatRuntime
         [SerializeField] private string _idleState = "Idle";
 
         [Header("Wiring")]
-        [Tooltip("Spawner that owns the negotiation lock. Auto-resolved from the scene when empty.")]
-        [SerializeField] private MerchantSpawner _spawner;
+        [Tooltip("Coordinator that owns the negotiation lock. Auto-resolved from the scene when empty.")]
+        [SerializeField, FormerlySerializedAs("_spawner")] private MerchantApproachCoordinator _coordinator;
 
         private MerchantNPC _merchant;
         private NavMeshAgent _agent;
         private Transform _playerTarget;
+        private Transform _facing;          // the visual body we rotate (not the root), so the sell scale stays put
         private Vector3 _homePosition;
         private Quaternion _homeRotation;
         private State _state = State.AtHome;
@@ -64,10 +76,13 @@ namespace DumyatRuntime
         {
             _merchant = GetComponent<MerchantNPC>();
             if (_animator == null) _animator = GetComponentInChildren<Animator>();
-            if (_spawner == null) _spawner = FindFirstObjectByType<MerchantSpawner>();
+            if (_coordinator == null) _coordinator = FindFirstObjectByType<MerchantApproachCoordinator>();
+
+            // Rotate only the merchant's visual body, so siblings (the sell scale) don't turn with him.
+            _facing = _merchant != null ? _merchant.CharacterRoot : transform;
 
             _homePosition = transform.position;
-            _homeRotation = transform.rotation;
+            _homeRotation = _facing.rotation;
 
             ConfigureAgent();
             EnsureBodyCollider();
@@ -81,17 +96,41 @@ namespace DumyatRuntime
             _agent = GetComponent<NavMeshAgent>();
             if (_agent == null) _agent = gameObject.AddComponent<NavMeshAgent>();
 
+            // A merchant that never walks has no use for the agent — and leaving it enabled COSTS him his
+            // authored height: the agent snaps to the nearest baked NavMesh point and then pins the
+            // transform at that surface every frame (updatePosition). Where the NavMesh is carved out from
+            // under a stall, the nearest point is a raised ledge beside it, so the merchant stands in the
+            // air (measured: +0.44 m on one, +0.11 m on another, while merchants with NavMesh directly
+            // beneath them were fine). Disabling it keeps the transform exactly as placed.
+            if (!_walkToPlayer)
+            {
+                _agent.enabled = false;
+                return;
+            }
+
             _agent.speed = _walkSpeed;
             _agent.angularSpeed = _turnSpeed;
             _agent.acceleration = 8f;
             _agent.stoppingDistance = 0f;
             _agent.autoBraking = true;
-            _agent.updateRotation = true;
+            // We rotate the visual body ourselves (see FaceDirection) so the root — and the sell scale
+            // hanging off it — never yaws with the agent. The agent still drives POSITION.
+            _agent.updateRotation = false;
             _agent.updateUpAxis = true;
 
             if (!_agent.isOnNavMesh &&
                 NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
             {
+                // Pathfinding REQUIRES the agent to be on the mesh, so the snap stands — but a large one
+                // (especially vertical) means this merchant was placed off the baked NavMesh, and the
+                // silent lift is exactly what reads in-game as "the NPC floats". Say so instead.
+                Vector3 delta = hit.position - transform.position;
+                if (Mathf.Abs(delta.y) > 0.05f || delta.magnitude > 0.5f)
+                    Debug.LogWarning($"MerchantApproachMover: '{name}' is not on the baked NavMesh — " +
+                                     $"snapping {delta.magnitude:0.##} m (Δy {delta.y:0.###}) to the " +
+                                     "nearest point, which will change his height. Re-bake the NavMesh so " +
+                                     "it covers this spot at floor level, or move him onto valid NavMesh.",
+                                     this);
                 _agent.Warp(hit.position);
             }
         }
@@ -123,13 +162,21 @@ namespace DumyatRuntime
 
         /// <summary>
         /// Starts walking to <paramref name="player"/>; on arrival the negotiation is initiated
-        /// through the spawner. Ignored while already walking or engaged.
+        /// through the coordinator. Ignored while already walking or engaged.
         /// </summary>
         public void ApproachAndInitiate(Transform player)
         {
             if (_state != State.AtHome || player == null) return;
 
             _playerTarget = player;
+
+            // Walking disabled: skip the walk and start the conversation where the merchant stands.
+            if (!_walkToPlayer)
+            {
+                EngageInPlace();
+                return;
+            }
+
             _state = State.WalkingToPlayer;
             DriveAgentTo(player.position);
         }
@@ -160,22 +207,30 @@ namespace DumyatRuntime
 
             if (toPlayer.magnitude <= _stopDistance)
             {
-                StopAgent();
-                FaceToward(_playerTarget.position);
-                _state = State.Engaged;
-                EnsureAnimatorState(_idleState);
-
-                // Route through the spawner (lock + fish check). If it rejects, no negotiation
-                // starts and OnNegotiationEnded never fires — verify shortly after and go home.
-                if (_spawner != null) _spawner.PlayerInitiatesWithMerchant(_merchant);
-                CancelInvoke(nameof(VerifyEngaged));
-                Invoke(nameof(VerifyEngaged), 0.25f);
+                EngageInPlace();
                 return;
             }
 
             // Keep re-targeting so the merchant tracks the (possibly moving) player.
             DriveAgentTo(_playerTarget.position, toPlayer);
+            FaceTravel();
             EnsureAnimatorState(_walkState);
+        }
+
+        // Stop, face the player, and hand off to the coordinator (its one-at-a-time lock + fish check
+        // still apply). Used both on ARRIVAL when walking, and IMMEDIATELY when walking is disabled. If
+        // the coordinator rejects the approach, OnNegotiationEnded never fires — VerifyEngaged catches
+        // that shortly after and walks/settles the merchant back home.
+        private void EngageInPlace()
+        {
+            StopAgent();
+            if (_playerTarget != null) FaceToward(_playerTarget.position);
+            _state = State.Engaged;
+            EnsureAnimatorState(_idleState);
+
+            if (_coordinator != null) _coordinator.PlayerInitiatesWithMerchant(_merchant);
+            CancelInvoke(nameof(VerifyEngaged));
+            Invoke(nameof(VerifyEngaged), 0.25f);
         }
 
         private void UpdateWalkHome()
@@ -186,13 +241,14 @@ namespace DumyatRuntime
             if (HasArrivedHome(toHome))
             {
                 StopAgent();
-                transform.rotation = _homeRotation;
+                _facing.rotation = _homeRotation;
                 _state = State.AtHome;
                 EnsureAnimatorState(_idleState);
                 return;
             }
 
             DriveAgentTo(_homePosition, toHome);
+            FaceTravel();
             EnsureAnimatorState(_walkState);
         }
 
@@ -231,22 +287,43 @@ namespace DumyatRuntime
 
         private bool UseAgent() => _agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh;
 
-        // Graceful degradation only: straight-line step toward the flat direction with a turn.
+        // Graceful degradation only: straight-line step toward the flat direction with a turn. Moves the
+        // root (position) but only turns the visual body, so the sell scale rides along without spinning.
         private void MoveStraightLine(Vector3 flatDirection)
         {
             if (flatDirection.sqrMagnitude < 0.0001f) return;
             Vector3 direction = flatDirection.normalized;
-            Quaternion look = Quaternion.LookRotation(direction, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, look, _turnSpeed * Time.deltaTime);
+            FaceDirection(direction);
             transform.position += direction * (_walkSpeed * Time.deltaTime);
         }
 
-        // Invoke target: the spawner rejected the approach (busy / no fish) if this merchant never
+        // Turn the merchant's visual body (never the root) toward the agent's current travel direction.
+        // Called each walking frame because the NavMeshAgent's own rotation is disabled (ConfigureAgent).
+        private void FaceTravel()
+        {
+            if (!UseAgent()) return;   // the straight-line fallback already faces in MoveStraightLine
+            Vector3 v = _agent.velocity;
+            v.y = 0f;
+            FaceDirection(v);
+        }
+
+        // Rotates ONLY the visual body toward a flat world direction, smoothly by default or instantly
+        // (e.g. snapping to face the player on arrival). The root stays put so siblings don't rotate.
+        private void FaceDirection(Vector3 flatDirection, bool instant = false)
+        {
+            if (_facing == null || flatDirection.sqrMagnitude < 0.0001f) return;
+            Quaternion look = Quaternion.LookRotation(flatDirection.normalized, Vector3.up);
+            _facing.rotation = instant
+                ? look
+                : Quaternion.RotateTowards(_facing.rotation, look, _turnSpeed * Time.deltaTime);
+        }
+
+        // Invoke target: the coordinator rejected the approach (busy / no fish) if this merchant never
         // became the active one — walk back instead of standing at the player forever.
         private void VerifyEngaged()
         {
             if (_state != State.Engaged) return;
-            if (_spawner == null || _spawner.ActiveMerchant != _merchant)
+            if (_coordinator == null || _coordinator.ActiveMerchant != _merchant)
             {
                 Debug.Log($"MerchantApproachMover: '{name}' approach was rejected; returning home.");
                 StartWalkingHome();
@@ -267,7 +344,7 @@ namespace DumyatRuntime
             if (toHome.magnitude <= _homeArriveDistance)
             {
                 StopAgent();
-                transform.rotation = _homeRotation;
+                _facing.rotation = _homeRotation;
                 _state = State.AtHome;
                 EnsureAnimatorState(_idleState);
                 return;
@@ -281,8 +358,7 @@ namespace DumyatRuntime
         {
             Vector3 flat = worldPoint - transform.position;
             flat.y = 0f;
-            if (flat.sqrMagnitude < 0.001f) return;
-            transform.rotation = Quaternion.LookRotation(flat.normalized, Vector3.up);
+            FaceDirection(flat, instant: true);
         }
 
         // Cross-fades to the named state unless the animator is already in (or blending to) it.

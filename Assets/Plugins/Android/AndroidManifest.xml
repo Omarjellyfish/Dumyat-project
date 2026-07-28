@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.unity3d.player" xmlns:tools="http://schemas.android.com/tools">
+  <application android:usesCleartextTraffic="false" android:allowBackup="false">
+    <activity android:name="com.unity3d.player.appui.AppUIGameActivity" android:theme="@style/BaseUnityGameActivityTheme" android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+      <meta-data android:name="android.app.lib_name" android:value="game" />
+    </activity>
+  </application>
+  <uses-permission android:name="android.permission.VIBRATE" />
+  <!-- Voice capture for the AI merchant negotiation. Android will NOT show a runtime permission
+       dialog for a permission that is not declared here, so MicrophonePermission.Request would
+       silently do nothing and Microphone.devices would stay empty. -->
+  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+  <!-- Cloud LLM / STT / TTS calls. This custom manifest REPLACES Unity's generated one, so the
+       permission Unity would normally add automatically has to be declared explicitly. -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-feature android:name="android.hardware.microphone" android:required="true" />
+</manifest>

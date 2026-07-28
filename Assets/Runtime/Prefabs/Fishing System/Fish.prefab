@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6347684363668041811}
   - component: {fileID: 3782302496308827466}
   - component: {fileID: 379044034080301257}
+  - component: {fileID: 6775979057138280565}
   m_Layer: 0
   m_Name: Fish
   m_TagString: Fish
@@ -63,7 +64,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 64
   m_CollisionDetection: 0
 --- !u!114 &3085736924295094215
@@ -78,14 +79,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 144f90d6c04085e4db5027ebc334df26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.Fish
-  data:
-    fishName: Nimo
-    minWeight: 0.5
-    maxWeight: 2
-    pricePerKg: 100
-  currentWeight: 0
-  currentValue: 0
-  mouthPoint: {fileID: 8772536495441265128}
+  _species: {fileID: 11400000, guid: b4e3e75d6d2554848b4cb369b8a06b61, type: 2}
+  _mouthPoint: {fileID: 8772536495441265128}
   _dialogueSequence: {fileID: 11400000, guid: 740e1da83b58b9c4a9dd036b9a3eed88, type: 2}
   _priority: 1
   _triggerOnce: 1
@@ -282,11 +277,24 @@ MonoBehaviour:
   fishArea: {fileID: 0}
   patrolSpeed: 1.5
   patrolPointReachDistance: 0.5
-  swimToHookSpeed: 3
+  swimToHookSpeed: 6
   stoppingDistance: 0.005
   biteChance: 1
   minReactionDelay: 0
   maxReactionDelay: 0
+--- !u!114 &6775979057138280565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3256871146256090849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: Fish
 --- !u!1001 &6839782929536139823
 PrefabInstance:
   m_ObjectHideFlags: 0

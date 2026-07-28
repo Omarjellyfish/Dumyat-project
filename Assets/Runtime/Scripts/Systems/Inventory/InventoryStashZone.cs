@@ -66,23 +66,18 @@ namespace DumyatRuntime
 
             if (_inventoryUI != null)
             {
-                _inventoryUI.OpenUI();
-                Debug.Log("InventoryStashZone: Opened UI successfully.");
+                _inventoryUI.ToggleUI();
+                Debug.Log("InventoryStashZone: Toggled UI successfully.");
             }
             else
             {
-                Debug.LogError("InventoryStashZone: Cannot open UI! _inventoryUI reference is missing in the Inspector.");
+                Debug.LogError("InventoryStashZone: Cannot toggle UI! _inventoryUI reference is missing in the Inspector.");
             }
         }
 
         private void OnStashReleased(SelectExitEventArgs args)
         {
             Debug.Log("InventoryStashZone: Stash was released.");
-
-            if (_inventoryUI != null)
-            {
-                _inventoryUI.CloseUI();
-            }
         }
 
         private void OnTriggerEnter(Collider other)
@@ -140,7 +135,7 @@ namespace DumyatRuntime
 
             _haptics?.TriggerVibration(0.6f, 0.15f, 0.8f, HapticHand.Both);
 
-            Debug.Log($"InventoryStashZone: Physical item '{pickup.ItemID}' stashed.");
+            //Debug.Log($"InventoryStashZone: Physical item '{pickup.ItemID}' stashed.");
 
             pickup.Collect();
         }

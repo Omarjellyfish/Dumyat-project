@@ -183,6 +183,12 @@ or changing code, prefer the option that keeps pieces decoupled and reusable:
   practical).
 - Every asset/script has a paired `.meta` file — when moving or deleting files, move/delete the
   `.meta` too so Unity GUID references stay intact.
+- **Never decide player intent with string/keyword/look-alike matching.** For any rule that hinges on
+  what the player *meant* — a confirmation, an acceptance/decline, an intent to haggle, etc. — the
+  decision MUST come from the LLM's scored judgment (e.g. `MerchantTurnResult.AcceptanceScore` /
+  `RejectionScore` against the thresholds in `MerchantNegotiationLLM`), never from matching words in a
+  transcript. Transcripts (especially Egyptian-Arabic STT) are noisy and locale-fragile, so keyword
+  checks are brittle and wrong; adjust the scoring context or thresholds instead of pattern-matching text.
 
 ## Gotchas
 - The only **build-enabled scene**, `Assets/Runtime/Art/Scenes/carpentar_room.unity`, is **missing on

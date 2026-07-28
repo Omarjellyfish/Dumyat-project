@@ -1,0 +1,160 @@
+/* ─────────────────────────────────────────────────────────
+   TutorialHoverPanel.uss
+   World-space VR hover panel for tutorial steps.
+   Uses fixed pixel sizes suitable for world-space UIDocument
+   at ~0.3m physical scale (readable at arm's length in VR).
+   Color palette matches the project's warm-tone UI style.
+   ───────────────────────────────────────────────────────── */
+
+/* ── Panel container ── */
+.tutorial-panel {
+    width: 420px;
+    padding: 20px 24px;
+    background-color: rgba(40, 32, 24, 0.94);
+    border-radius: 16px;
+    border-width: 1.5px;
+    border-color: rgba(180, 130, 70, 0.45);
+    flex-direction: column;
+    align-items: stretch;
+
+    /* Animation properties */
+    transition-property: scale, opacity;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+    scale: 1;
+    opacity: 1;
+}
+
+/* ── Visibility states ── */
+.tutorial-panel--hidden {
+    scale: 0;
+    opacity: 0;
+}
+
+.tutorial-panel--visible {
+    scale: 1;
+    opacity: 1;
+}
+
+/* ── Step transition pulse ── */
+.tutorial-panel--transitioning {
+    scale: 0.95;
+    transition-duration: 0.1s;
+}
+
+/* ── Header row ── */
+.tutorial-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Progress dots ── */
+.progress-dots-row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.progress-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    margin-right: 6px;
+    transition-property: background-color, scale;
+    transition-duration: 0.2s;
+}
+
+.progress-dot--completed {
+    background-color: rgba(180, 130, 70, 0.8);
+    scale: 1;
+}
+
+.progress-dot--active {
+    background-color: #E8A840;
+    scale: 1.2;
+}
+
+.progress-dot--inactive {
+    background-color: rgba(255, 255, 255, 0.15);
+    scale: 1;
+}
+
+/* ── Step counter ── */
+.step-counter {
+    font-size: 14px;
+    color: rgba(200, 180, 150, 0.6);
+    -unity-font-style: normal;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+/* ── Icon container ── */
+.icon-container {
+    width: 48px;
+    height: 48px;
+    align-self: center;
+    margin-bottom: 12px;
+    -unity-background-scale-mode: scale-to-fit;
+    display: none;
+}
+
+.media-container--video {
+    width: 360px;
+    height: 202px; /* 16:9 aspect ratio roughly */
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(0, 0, 0, 0.5); /* dark background while video loads */
+}
+
+/* ── Instruction text ── */
+.instruction-text {
+    font-size: 22px;
+    color: #F5E6D3;
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+}
+
+/* ── Footer ── */
+.tutorial-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    padding-top: 8px;
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Skip button ── */
+.skip-button {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border-width: 0;
+    border-bottom-width: 3px;
+    border-bottom-color: rgba(0, 0, 0, 0.35);
+    background-color: rgba(120, 80, 40, 0.35);
+    color: rgba(220, 200, 170, 0.7);
+    font-size: 15px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    transition-property: background-color, color, scale;
+    transition-duration: 0.15s;
+}
+
+.skip-button:hover {
+    background-color: rgba(160, 100, 50, 0.5);
+    color: #F5E6D3;
+    scale: 1.04;
+}
+
+.skip-button:active {
+    scale: 0.96;
+}

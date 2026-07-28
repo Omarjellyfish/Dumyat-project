@@ -182,7 +182,13 @@ namespace DumyatRuntime
 
         private void OnFishCaught(FishCaughtEvent evt)
         {
-            AdvanceMatchingQuests(QuestTriggerType.FishCaught, evt.FishName);
+            // The catch carries the Fish itself; its species is the name quests filter on
+            // (matches FishSaleRecord.fishType, so catch- and sell-quests target the same string).
+            string fishName = evt.Fish != null && evt.Fish.Species != null
+                ? evt.Fish.Species.FishType
+                : null;
+
+            AdvanceMatchingQuests(QuestTriggerType.FishCaught, fishName);
         }
 
         private void OnFishSaleRecorded(FishSaleRecordedEvent evt)

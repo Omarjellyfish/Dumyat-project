@@ -30,7 +30,7 @@ namespace DumyatRuntime
             CurrentProgress = 0f;
 
             // 1. Broadcast that loading is starting
-            // Listeners (UI, Audio, CarTransitionHandler) react to this
+            // Listeners (UI, Audio, FadeTransitionHandler) react to this
             _eventService.Publish(new SceneLoadBeginEvent { TargetSceneName = targetSceneName });
 
             // 2. Wait a moment for systems (Audio/Haptics/UI) to finish their fade out

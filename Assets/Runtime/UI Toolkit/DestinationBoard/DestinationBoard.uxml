@@ -1,9 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/DestinationBoard/DestinationBoard.uss" />
+    <Style src="project://database/Assets/Runtime/UI%20Toolkit/DestinationBoard/DestinationBoard.uss?fileID=7433441132597879392&amp;guid=a0597e905f6b7d74980894d2d4b58eba&amp;type=3#DestinationBoard"/>
     <ui:VisualElement name="DestinationRoot" class="destination-root">
         <ui:VisualElement class="destination-header-container">
-            <ui:Label name="HeaderLabel" text="AVAILABLE DESTINATIONS" class="destination-header" />
+            <ui:Label name="HeaderLabel" text="AVAILABLE DESTINATIONS" class="destination-header" style="-unity-text-generator: advanced; -unity-font-definition: url(&quot;project://database/Assets/Runtime/UI%20Toolkit/Fonts/Cairo-VariableFont_slnt,wght.ttf?fileID=12800000&amp;guid=7d8050dfeb2d6c64ab82de5bd3f91742&amp;type=3#Cairo-VariableFont_slnt,wght&quot;);"/>
         </ui:VisualElement>
-        <ui:ScrollView name="DestinationContainer" class="destination-scroll" />
+        <ui:ScrollView name="DestinationContainer" class="destination-scroll"/>
     </ui:VisualElement>
 </ui:UXML>
