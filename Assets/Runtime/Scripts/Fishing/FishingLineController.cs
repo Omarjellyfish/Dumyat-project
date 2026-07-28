@@ -39,6 +39,16 @@ namespace DumyatRuntime
         SpringJoint springJoint;
         private bool isFreeCasting;
 
+        [Header("Audio")]
+        [SerializeField] private AudioClip _reelInSound;
+        private SoundManager _soundManager;
+        [SerializeField] private Transform _reelPos;
+
+        private void Awake()
+        {
+            _soundManager = FindAnyObjectByType<SoundManager>();
+        }
+
 
         void Start()
         {
@@ -267,6 +277,8 @@ namespace DumyatRuntime
                 whatIsHangingFromTheRope.GetComponent<Rigidbody>().WakeUp();
 
                 hasChangedRope = true;
+
+                _soundManager.PlaySoundFxAtPosition(_reelInSound, _reelPos, 1f);
             }
             // Reel turned backward
             else if (deltaRotation < 0f && ropeLength > minRopeLength)
@@ -277,6 +289,7 @@ namespace DumyatRuntime
 
                 whatIsHangingFromTheRope.GetComponent<Rigidbody>().WakeUp();
 
+                _soundManager.PlaySoundFxAtPosition(_reelInSound, _reelPos, 1f);
 
                 hasChangedRope = true;
             }
