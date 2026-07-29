@@ -41,6 +41,12 @@ namespace DumyatRuntime
                  "away from the negotiation.")]
         [SerializeField] private int _patienceLevel = 3;
 
+        [Header("Scripted (offline) fallback")]
+        [Tooltip("OPTIONAL per-merchant dialogue bank for the SCRIPTED (no-AI) sale. Leave empty to use " +
+                 "the market-wide bank on MerchantSystemConfig. Set it only to give THIS merchant its own " +
+                 "distinct scripted lines.")]
+        [SerializeField] private ScriptedMerchantLinesSO _scriptedLines;
+
         [Header("Voice")]
         // The ElevenLabs voice every NPC using this config speaks with — MerchantNPC reads its
         // AssignedVoiceId straight from here. The archetype owns the voice; there is no per-NPC
@@ -105,6 +111,12 @@ namespace DumyatRuntime
 
         /// <summary>Chance (0-1) the merchant lowballs / deceives on a given offer.</summary>
         public float DeceptionRate => _deceptionRate;
+
+        /// <summary>
+        /// This merchant's own scripted-sale dialogue bank, or null to fall back to the market-wide bank on
+        /// <see cref="MerchantSystemConfig.ScriptedLines"/>. Used by the no-AI offline sale only.
+        /// </summary>
+        public ScriptedMerchantLinesSO ScriptedLines => _scriptedLines;
 
         /// <summary>Number of player counter-offers tolerated before walking away.</summary>
         public int PatienceLevel => _patienceLevel;

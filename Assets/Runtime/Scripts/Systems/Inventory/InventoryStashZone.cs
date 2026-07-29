@@ -135,7 +135,7 @@ namespace DumyatRuntime
 
             _haptics?.TriggerVibration(0.6f, 0.15f, 0.8f, HapticHand.Both);
 
-            Debug.Log($"InventoryStashZone: Physical item '{pickup.ItemID}' stashed.");
+            //Debug.Log($"InventoryStashZone: Physical item '{pickup.ItemID}' stashed.");
 
             pickup.Collect();
         }

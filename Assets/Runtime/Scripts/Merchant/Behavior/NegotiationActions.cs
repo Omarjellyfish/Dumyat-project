@@ -27,6 +27,95 @@ namespace DumyatRuntime
         }
     }
 
+    /// <summary>
+    /// Scale flow: welcome the player, wait for them to load the fish scale, then snapshot the priced
+    /// bundle (async). Reacts to fumbles with a funny line. Success once the catch is on the scale.
+    /// </summary>
+    [Serializable, GeneratePropertyBag]
+    [NodeDescription(name: "Run Placement Phase", story: "Run placement phase",
+        category: "Action/Merchant", id: "c2a1000a-4b20-4c30-8d40-00000000000a")]
+    public partial class RunPlacementPhaseAction : Action
+    {
+        private Task<bool> _task;
+
+        protected override Status OnStart()
+        {
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
+            if (c == null) return Status.Failure;
+            _task = c.Bt_RunPlacementPhaseAsync();
+            return Status.Running;
+        }
+
+        protected override Status OnUpdate()
+        {
+            if (_task == null) return Status.Failure;
+            if (!_task.IsCompleted) return Status.Running;
+            return _task.Result ? Status.Success : Status.Failure;
+        }
+
+        protected override void OnEnd() => _task = null;
+    }
+
+    /// <summary>
+    /// Scale flow: after a bundle price is agreed, read the per-fish summary, confirm, re-verify the
+    /// scale and pay out (async). Always resolves to a terminal state, so the following Resolve node runs.
+    /// </summary>
+    [Serializable, GeneratePropertyBag]
+    [NodeDescription(name: "Run Sale Confirm Phase", story: "Run sale confirm phase",
+        category: "Action/Merchant", id: "c2a1000b-4b20-4c30-8d40-00000000000b")]
+    public partial class RunSaleConfirmPhaseAction : Action
+    {
+        private Task<bool> _task;
+
+        protected override Status OnStart()
+        {
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
+            if (c == null) return Status.Failure;
+            _task = c.Bt_RunSaleConfirmPhaseAsync();
+            return Status.Running;
+        }
+
+        protected override Status OnUpdate()
+        {
+            if (_task == null) return Status.Failure;
+            if (!_task.IsCompleted) return Status.Running;
+            return _task.Result ? Status.Success : Status.Failure;
+        }
+
+        protected override void OnEnd() => _task = null;
+    }
+
+    /// <summary>
+    /// Scale flow, ALL-IN-ONE: runs the entire bundle sale (consent gate → placement → opening → haggle →
+    /// sale-confirm → resolve) in a single node by awaiting <see cref="NegotiationFlowController.Bt_RunBundleSaleAsync"/>.
+    /// Use this as the whole graph body (Start → Run Bundle Sale) when you don't want to author the fully
+    /// decomposed tree — the controller owns the sequencing and always ends in a terminal state.
+    /// </summary>
+    [Serializable, GeneratePropertyBag]
+    [NodeDescription(name: "Run Bundle Sale", story: "Run bundle sale",
+        category: "Action/Merchant", id: "c2a1000c-4b20-4c30-8d40-00000000000c")]
+    public partial class RunBundleSaleAction : Action
+    {
+        private Task<bool> _task;
+
+        protected override Status OnStart()
+        {
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
+            if (c == null) return Status.Failure;
+            _task = c.Bt_RunBundleSaleAsync();
+            return Status.Running;
+        }
+
+        protected override Status OnUpdate()
+        {
+            if (_task == null) return Status.Failure;
+            if (!_task.IsCompleted) return Status.Running;
+            return _task.Result ? Status.Success : Status.Failure;
+        }
+
+        protected override void OnEnd() => _task = null;
+    }
+
     /// <summary>Deterministic opening offer + deception roll, then LLM phrasing (async).</summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(name: "Generate Opening Line", story: "Generate opening line",
@@ -154,7 +243,7 @@ namespace DumyatRuntime
         }
     }
 
-    /// <summary>Record the outcome + tear down (notifies the spawner). Runs after the loop resolves.</summary>
+    /// <summary>Record the outcome + tear down (notifies the coordinator). Runs after the loop resolves.</summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(name: "Resolve Negotiation", story: "Resolve negotiation",
         category: "Action/Merchant", id: "c2a10008-4b20-4c30-8d40-000000000008")]
@@ -182,5 +271,37 @@ namespace DumyatRuntime
             c.Bt_ScriptedFallback();
             return Status.Success;
         }
+    }
+
+    /// <summary>
+    /// OFFLINE selling, ALL-IN-ONE: runs the entire scripted (button-based, no-AI) sale to completion by
+    /// awaiting <see cref="NegotiationFlowController.Bt_RunScriptedSaleAsync"/> — the offline twin of
+    /// "Run Bundle Sale". Success when the sale closes Accepted, Failure otherwise (declined / walked
+    /// away). It does its OWN teardown, so place it as the offline branch of the root Selector with NO
+    /// Resolve node after it. Pair it with the "Use Online Selling" condition to switch AI vs offline.
+    /// </summary>
+    [Serializable, GeneratePropertyBag]
+    [NodeDescription(name: "Run Offline Sale", story: "Run offline sale",
+        category: "Action/Merchant", id: "c2a1000d-4b20-4c30-8d40-00000000000d")]
+    public partial class RunOfflineSaleAction : Action
+    {
+        private Task<bool> _task;
+
+        protected override Status OnStart()
+        {
+            NegotiationFlowController c = GameObject == null ? null : GameObject.GetComponent<NegotiationFlowController>();
+            if (c == null) return Status.Failure;
+            _task = c.Bt_RunScriptedSaleAsync();
+            return Status.Running;
+        }
+
+        protected override Status OnUpdate()
+        {
+            if (_task == null) return Status.Failure;
+            if (!_task.IsCompleted) return Status.Running;
+            return _task.Result ? Status.Success : Status.Failure;
+        }
+
+        protected override void OnEnd() => _task = null;
     }
 }

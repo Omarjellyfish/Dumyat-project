@@ -73,8 +73,17 @@ namespace DumyatRuntime
         [Header("Silence Detection")]
         [Tooltip("Seconds of continuous silence after speech before the utterance is finalized.")]
         [SerializeField, Min(0.1f)] private float _silenceThresholdSeconds = 1.2f;
-        [Tooltip("Peak sample amplitude (0-1) below which audio is considered silence.")]
+        [Tooltip("Peak sample amplitude (0-1) below which audio is considered silence. Only used when " +
+                 "auto-sensitivity is OFF (the manual gate).")]
         [SerializeField, Range(0f, 0.5f)] private float _silenceAmplitudeThreshold = 0.02f;
+        // Discord-style automatic input sensitivity (adaptive noise-floor gate). Deliberately NOT serialized:
+        // the VoiceCaptureController owns this toggle and pushes it here each utterance (ConfigureSourceForMode),
+        // so there is exactly one Inspector control. Defaults true so the client still self-calibrates if used
+        // standalone with no controller driving it.
+        private bool _autoAdjustSensitivity = true;
+        [Tooltip("Head-room the auto gate keeps above the tracked noise floor (gate ≈ floor × this). Higher " +
+                 "= less sensitive (rejects more noise), lower = more sensitive. Advanced tuning.")]
+        [SerializeField, Range(1.5f, 6f)] private float _autoSensitivityMargin = 2.5f;
 
         [Header("Reliability")]
         [Tooltip("Seconds to wait for the WebSocket to connect before failing.")]
@@ -115,6 +124,12 @@ namespace DumyatRuntime
         /// refining it (see the Transcript Settling fields). Session stays open after.
         /// </summary>
         public event Action<string> OnTranscriptionComplete;
+
+        /// <summary>
+        /// Fires repeatedly mid-utterance with the latest partial (not-yet-committed) transcript, for a
+        /// live caption. Display only — never feed it to the LLM / accept-decline scoring.
+        /// </summary>
+        public event Action<string> OnPartialTranscript;
 
         /// <summary>
         /// Fires with a human-readable reason when transcription cannot be completed
@@ -172,6 +187,26 @@ namespace DumyatRuntime
             set => _silenceAmplitudeThreshold = Mathf.Clamp(value, 0f, 0.5f);
         }
 
+        /// <summary>
+        /// Discord-style automatic input sensitivity. When true the voice gate is derived from a
+        /// continuously-tracked ambient noise floor (self-calibrating per mic/room) instead of the fixed
+        /// <see cref="SilenceAmplitudeThreshold"/>. Only applies in voice-activity mode.
+        /// </summary>
+        public bool AutoAdjustSensitivity
+        {
+            get => _autoAdjustSensitivity;
+            set => _autoAdjustSensitivity = value;
+        }
+
+        /// <summary>The tracked ambient noise floor (0-1, peak domain). 0 when idle / not calibrated.</summary>
+        public float CurrentNoiseFloor => _noiseFloor;
+
+        /// <summary>
+        /// The effective voice gate the level is currently compared against: the adaptive open-gate when
+        /// auto-sensitivity is on, otherwise the fixed <see cref="SilenceAmplitudeThreshold"/>.
+        /// </summary>
+        public float CurrentGateThreshold => _autoAdjustSensitivity ? _openGate : _silenceAmplitudeThreshold;
+
         // The Scribe server rejects a commit with less than 0.3s of uncommitted audio. Require a bit
         // more so a too-short blip is discarded locally instead of triggering a server error.
         private const float MinCommitSeconds = 0.4f;
@@ -216,6 +251,13 @@ namespace DumyatRuntime
         private float _lastVoiceTime;
         private int _captureSampleRate;
         private int _streamedSampleCount;   // samples streamed to the server for the current utterance
+
+        // --- Adaptive input sensitivity (Discord-style noise-floor tracking, peak domain) ---
+        private float _smoothedLevel;         // envelope-followed input level (instant attack, slow release)
+        private float _noiseFloor;            // tracked ambient baseline; the auto gate rides just above it
+        private float _openGate;              // adaptive threshold to OPEN the gate (start capturing)
+        private float _closeGate;             // lower threshold to keep it open (hysteresis, anti-chatter)
+        private bool _noiseFloorInitialized;  // false until the first chunk of a fresh session seeds the floor
 
         // --- Per-utterance finalization / timeout state (main-thread only) ---
         private bool _awaitingFinal;
@@ -333,6 +375,18 @@ namespace DumyatRuntime
         {
             if (MicrophoneEnabled) return;
 
+            // Android needs the RECORD_AUDIO runtime grant before Microphone.devices is populated —
+            // without it the device check below fails and capture never starts. The consent flow secures
+            // it up front for the negotiation path, but a caller that bypasses consent (e.g. the STT test
+            // harness) can reach here without it. Request it and bail this attempt: the async grant can't
+            // retroactively fill this call, so the next mic-enable proceeds once it is allowed.
+            if (!MicrophonePermission.IsGranted)
+            {
+                MicrophonePermission.Request(_ => { });
+                NotifyFailed("Microphone permission not granted yet — requested it; try again once allowed.");
+                return;
+            }
+
             // Auto-open the session on first use, then validate the mic device.
             if (!IsSessionOpen && !OpenSession()) return;
 
@@ -353,11 +407,17 @@ namespace DumyatRuntime
             _streamedSampleCount = 0;
             _utterancePcm.Clear();
             _captureSampleRate = _micClip.frequency;
+            // Re-calibrate the adaptive gate from scratch for this session (new mic / room can differ).
+            _smoothedLevel = 0f;
+            _noiseFloor = 0f;
+            _openGate = 0f;
+            _closeGate = 0f;
+            _noiseFloorInitialized = false;
             MicrophoneEnabled = true;
 
             Log($"Microphone ENABLED — {(AutoStopOnSilence ? "armed (voice-activity)" : "capturing")} " +
-                $"on '{_micDevice}' (session {(_socketOpen ? "open" : "connecting")}, " +
-                $"silence: {_silenceThresholdSeconds}s @ amp<{_silenceAmplitudeThreshold}).");
+                $"on '{_micDevice}' (session {(_socketOpen ? "open" : "connecting")}, silence: {_silenceThresholdSeconds}s, " +
+                $"gate: {(_autoAdjustSensitivity ? $"auto x{_autoSensitivityMargin:0.0} over noise floor" : $"manual amp<{_silenceAmplitudeThreshold}")}).");
         }
 
         // Explicit mic-off (push-to-talk release, or the master toggle turning off): commit any
@@ -378,7 +438,9 @@ namespace DumyatRuntime
         // mic is already stopped.
         private void FinalizeUtterance(bool keepMicOpen)
         {
-            int rate = _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate;
+            // Streamed audio is always resampled to 16 kHz before sending (see CaptureAndStreamAudio),
+            // so _streamedSampleCount / _utterancePcm are in the 16 kHz domain — NOT _captureSampleRate.
+            int rate = RequiredSampleRate;
             float streamedSeconds = _streamedSampleCount / (float)rate;
 
             if (_streamedSampleCount > 0 && streamedSeconds < MinCommitSeconds)
@@ -577,23 +639,58 @@ namespace DumyatRuntime
                 if (abs > peak) peak = abs;
             }
             _lastReadPos = currentPos;
-            CurrentInputLevel = peak;
+
+            // Envelope-follow the peak: snap up instantly, decay slowly — a steady level (and meter) instead
+            // of frame-to-frame jitter. Still peak domain, so the manual gate stays comparable.
+            _smoothedLevel = peak >= _smoothedLevel ? peak : Mathf.Lerp(_smoothedLevel, peak, 0.15f);
+            CurrentInputLevel = _smoothedLevel;
+
+            // Effective voice gate. AUTO: derive it from a tracked ambient noise floor so it self-calibrates
+            // per mic/room (Discord-style automatic sensitivity). MANUAL: the fixed serialized threshold.
+            // Hysteresis (open > close) stops the gate chattering on the quiet dips between words.
+            float openGate, closeGate;
+            if (_autoAdjustSensitivity)
+            {
+                if (!_noiseFloorInitialized) { _noiseFloor = _smoothedLevel; _noiseFloorInitialized = true; }
+                _openGate = Mathf.Clamp(_noiseFloor * _autoSensitivityMargin + 0.006f, 0.008f, 0.2f);
+                _closeGate = _openGate * 0.6f;
+                openGate = _openGate;
+                closeGate = _closeGate;
+            }
+            else
+            {
+                openGate = closeGate = _silenceAmplitudeThreshold;
+            }
+
+            // Once speaking, hold the gate open down to the lower close-gate; before speech, require the open-gate.
+            bool voiced = _speechStarted ? _smoothedLevel >= closeGate : _smoothedLevel >= openGate;
+
+            // Track the noise floor ONLY while the gate is closed (silence), so speech bursts don't inflate it:
+            // rise slowly toward a creeping ambient level, fall quickly when the room gets quieter.
+            if (_autoAdjustSensitivity && !voiced)
+            {
+                float rate = _smoothedLevel > _noiseFloor ? 0.02f : 0.2f;
+                _noiseFloor = Mathf.Lerp(_noiseFloor, _smoothedLevel, rate);
+            }
 
             // In voice-activity mode (AutoStopOnSilence) capture begins at the FIRST voiced chunk and
             // then streams the utterance CONTIGUOUSLY until the silence-commit — so the natural sub-
             // threshold dips between syllables/words are kept and the audio isn't fragmented. Only the
             // idle audio BEFORE speech starts (leading dead air / background silence) is dropped. In
             // push-to-talk mode the full held audio is streamed.
-            bool voiced = peak >= _silenceAmplitudeThreshold;
             bool sendChunk = !AutoStopOnSilence || _speechStarted || voiced;
 
             // Stream only what passes the gate — no leading/idle silence, just the utterance.
             // (Skip while awaiting the final result after a commit.)
             if (!_awaitingFinal && sendChunk)
             {
-                byte[] pcm = FloatsToPcm16(chunk);
+                // We declared audio_format=pcm_16000, but Unity often opens the mic at the device's
+                // native rate (e.g. 48 kHz on a Quest), so resample to 16 kHz before sending — otherwise
+                // Scribe decodes the PCM at the wrong speed and returns a completely wrong transcript.
+                float[] sendSamples = ResampleTo16k(chunk, _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate);
+                byte[] pcm = FloatsToPcm16(sendSamples);
                 EnqueueAudioChunk(pcm, commit: false);
-                _streamedSampleCount += chunk.Length;
+                _streamedSampleCount += sendSamples.Length;
                 // Keep a copy of EXACTLY what we send, for the optional .wav debug dump.
                 if (_dumpSttAudio) _utterancePcm.AddRange(pcm);
             }
@@ -601,10 +698,11 @@ namespace DumyatRuntime
             // Voice-activity segmentation: capture "starts" on the first voiced chunk and "stops"
             // after _silenceThresholdSeconds of quiet, which commits the utterance WITHOUT closing
             // the mic — it stays open (armed) for the next utterance.
-            if (peak >= _silenceAmplitudeThreshold)
+            if (voiced)
             {
                 if (!_speechStarted)
-                    Log($"Speech DETECTED (peak {peak:F3} >= {_silenceAmplitudeThreshold}) — capturing.");
+                    Log($"Speech DETECTED (level {_smoothedLevel:F3} >= gate {openGate:F3}, floor {_noiseFloor:F3}, " +
+                        $"{(_autoAdjustSensitivity ? "auto" : "manual")}) — capturing.");
                 _speechStarted = true;
                 _lastVoiceTime = Time.unscaledTime;
             }
@@ -614,6 +712,29 @@ namespace DumyatRuntime
                 Log($"Silence for {_silenceThresholdSeconds}s after speech — committing (mic stays open).");
                 FinalizeUtterance(keepMicOpen: true);
             }
+        }
+
+        // Linear-resamples a mono float chunk to 16 kHz. ElevenLabs Scribe is told audio_format=pcm_16000,
+        // so whatever rate Unity actually opened the mic at, the PCM we send must be 16 kHz or Scribe
+        // decodes it at the wrong speed (garbage transcript on otherwise-clear audio). Per-chunk linear
+        // interpolation: the tiny boundary artifact every frame is inaudible to the STT model, unlike a
+        // 3x speed error. src[0]→dst[0] and src[last]→dst[last] so overall duration is preserved.
+        private static float[] ResampleTo16k(float[] src, int srcRate)
+        {
+            if (srcRate == RequiredSampleRate || srcRate <= 0 || src.Length < 2) return src;
+
+            int outLen = Mathf.Max(1, Mathf.RoundToInt(src.Length * (float)RequiredSampleRate / srcRate));
+            var dst = new float[outLen];
+            float step = (float)(src.Length - 1) / Mathf.Max(1, outLen - 1);
+            for (int i = 0; i < outLen; i++)
+            {
+                float pos = i * step;
+                int i0 = (int)pos;
+                int i1 = i0 + 1 < src.Length ? i0 + 1 : src.Length - 1;
+                float frac = pos - i0;
+                dst[i] = src[i0] * (1f - frac) + src[i1] * frac;
+            }
+            return dst;
         }
 
         private static byte[] FloatsToPcm16(float[] samples)
@@ -636,7 +757,7 @@ namespace DumyatRuntime
                 message_type = "input_audio_chunk",
                 audio_base_64 = pcm.Length > 0 ? Convert.ToBase64String(pcm) : string.Empty,
                 commit = commit,
-                sample_rate = _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate
+                sample_rate = RequiredSampleRate   // audio is resampled to 16 kHz before enqueue
             };
             _outgoing.Enqueue(JsonUtility.ToJson(chunk));
         }
@@ -786,8 +907,14 @@ namespace DumyatRuntime
             switch (msg.message_type)
             {
                 case MsgPartialTranscript:
+                    // Live partial (not committed) — surface for a caption only. Epoch-guarded + on the
+                    // main thread, and entirely isolated from the committed/settle path.
+                    string partial = msg.text;
+                    PostToMainThread(() => { if (epoch == _sessionEpoch) OnPartialTranscript?.Invoke(partial); });
+                    break;
+
                 case MsgSessionStarted:
-                    // Partials/handshake: nothing to surface yet.
+                    // Handshake: nothing to surface.
                     break;
 
                 case MsgCommittedTranscript:

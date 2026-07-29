@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR;
+using Reflex;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -27,6 +29,14 @@ namespace DumyatRuntime
         private float bestSpeed;
 
         private bool previousPrimaryButtonState;
+        [SerializeField] private AudioClip castSound;
+        private ISoundService _soundService;
+
+        [Inject]
+        private void Inject(ISoundService soundService)
+        {
+            _soundService = soundService;
+        }
 
         private void Start()
         {
@@ -118,6 +128,8 @@ namespace DumyatRuntime
             hookRb.angularVelocity = Vector3.zero;
 
             bestSpeed = 0f;
+
+            _soundService.PlaySoundFxAtPosition(castSound, transform, 1f);
         }
 
 

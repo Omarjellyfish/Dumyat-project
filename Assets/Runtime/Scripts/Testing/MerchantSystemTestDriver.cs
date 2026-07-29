@@ -1,6 +1,7 @@
 using System.Collections;
 using Reflex.Attributes;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DumyatRuntime
 {
@@ -26,8 +27,8 @@ namespace DumyatRuntime
         }
 
         [Header("Wiring")]
-        [Tooltip("Spawner that owns the one-at-a-time lock; the negotiation is routed through it.")]
-        [SerializeField] private MerchantSpawner _spawner;
+        [Tooltip("Coordinator that owns the one-at-a-time lock; the negotiation is routed through it.")]
+        [SerializeField, FormerlySerializedAs("_spawner")] private MerchantApproachCoordinator _coordinator;
 
         [Tooltip("Merchant the test negotiation is started with.")]
         [SerializeField] private MerchantNPC _merchant;
@@ -95,19 +96,19 @@ namespace DumyatRuntime
                 return;
             }
 
-            if (_spawner != null)
+            if (_coordinator != null)
             {
-                Debug.Log($"[TestDriver] Starting negotiation with '{_merchant.name}' via MerchantSpawner.");
-                _spawner.PlayerInitiatesWithMerchant(_merchant);
+                Debug.Log($"[TestDriver] Starting negotiation with '{_merchant.name}' via MerchantApproachCoordinator.");
+                _coordinator.PlayerInitiatesWithMerchant(_merchant);
             }
             else if (_negotiation != null)
             {
-                Debug.Log($"[TestDriver] No spawner set; starting directly with '{_merchant.name}'.");
+                Debug.Log($"[TestDriver] No coordinator set; starting directly with '{_merchant.name}'.");
                 _negotiation.BeginNegotiation(_merchant);
             }
             else
             {
-                Debug.LogWarning("[TestDriver] No MerchantSpawner or NegotiationFlowController available.");
+                Debug.LogWarning("[TestDriver] No MerchantApproachCoordinator or NegotiationFlowController available.");
             }
         }
     }

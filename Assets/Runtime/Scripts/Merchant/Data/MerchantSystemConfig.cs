@@ -12,10 +12,6 @@ namespace DumyatRuntime
     public class MerchantSystemConfig : ScriptableObject
     {
         [Header("Roster")]
-        [Tooltip("Total number of merchant NPCs configured for the market. " +
-                 "Intended to match the length of Merchant Configs.")]
-        [SerializeField] private int _merchantCount;
-
         [Tooltip("Every merchant archetype available in the market.")]
         [SerializeField] private List<MerchantConfig> _merchantConfigs = new List<MerchantConfig>();
 
@@ -33,8 +29,11 @@ namespace DumyatRuntime
                  "again after a negotiation ends.")]
         [SerializeField] private float _cooldownBetweenApproaches = 5f;
 
-        /// <summary>Total number of merchant NPCs configured for the market.</summary>
-        public int MerchantCount => _merchantCount;
+        [Header("Scripted (offline) fallback")]
+        [Tooltip("Market-wide dialogue bank used by the SCRIPTED (no-AI) merchant sale. A merchant may " +
+                 "override this with its own bank on its MerchantConfig; when neither is set the scripted " +
+                 "sale still runs using built-in fallback lines.")]
+        [SerializeField] private ScriptedMerchantLinesSO _scriptedLines;
 
         /// <summary>Every merchant archetype available in the market.</summary>
         public IReadOnlyList<MerchantConfig> MerchantConfigs => _merchantConfigs;
@@ -47,5 +46,11 @@ namespace DumyatRuntime
 
         /// <summary>Cooldown in seconds before the player can approach a merchant again.</summary>
         public float CooldownBetweenApproaches => _cooldownBetweenApproaches;
+
+        /// <summary>
+        /// Market-wide scripted-sale dialogue bank (the no-AI fallback), or null if none is assigned. A
+        /// <see cref="MerchantConfig.ScriptedLines"/> override takes precedence for that merchant.
+        /// </summary>
+        public ScriptedMerchantLinesSO ScriptedLines => _scriptedLines;
     }
 }

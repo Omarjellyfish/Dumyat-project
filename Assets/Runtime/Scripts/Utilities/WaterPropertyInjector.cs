@@ -63,7 +63,7 @@ namespace DumyatRuntime
                 SyncWithPrefix(oceanMaterial, barzakhMaterial, "Ocean_");
             }
 
-            Debug.Log("<color=cyan>[Water Sync]</color> Synced prefixes successfully!");
+            //Debug.Log("<color=cyan>[Water Sync]</color> Synced prefixes successfully!");
             #endif
         }
 
