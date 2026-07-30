@@ -118,9 +118,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: aa58bf05abe2dcf4d83959b48ec4435a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3338240439965443250}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: aa58bf05abe2dcf4d83959b48ec4435a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4873438542085834832}
   m_SourcePrefab: {fileID: 100100000, guid: aa58bf05abe2dcf4d83959b48ec4435a, type: 3}
 --- !u!1 &436490815572581247 stripped
 GameObject:
@@ -322,19 +319,6 @@ MonoBehaviour:
   _woodLayerMask:
     serializedVersion: 2
     m_Bits: 1077936128
---- !u!114 &4873438542085834832
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 436490815572581247}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
-  AnchorId: Glue
 --- !u!4 &956287839012438469 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aa58bf05abe2dcf4d83959b48ec4435a, type: 3}

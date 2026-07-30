@@ -87,14 +87,6 @@ namespace DumyatRuntime
             _tutorialService?.SkipTutorial();
         }
 
-        private void LateUpdate()
-        {
-            // Follow the anchor in world space
-            if (_isVisible && _currentAnchor != null)
-            {
-                transform.position = _currentAnchor.position + _currentOffset;
-            }
-        }
 
         /// <summary>
         /// Display a tutorial step on the hover panel.
