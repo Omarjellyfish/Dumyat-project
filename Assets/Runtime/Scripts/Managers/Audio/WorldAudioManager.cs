@@ -68,6 +68,7 @@ namespace DumyatRuntime
         {
             fadeIn.clip = newClip;
             fadeIn.volume = 0f;
+            fadeIn.loop = true;
             fadeIn.Play();
 
             float startVolumeFadeOut = fadeOut.volume;

@@ -59,11 +59,6 @@ namespace DumyatRuntime
         {
             HandleRotation();
             CurrentRotationExposed = CurrentRotation;
-            // if (CurrentRotationExposed <= 0)
-            // {
-            //     CurrentRotationExposed = 0;
-            // }
-
         }
 
         private void OnGrabbed(SelectEnterEventArgs args)

@@ -11,7 +11,7 @@ namespace DumyatEditor
     /// One-shot, idempotent scene-wiring tool for the AI Test Scene:
     /// turns the AiNPC character into the merchant NPC (config, spatial audio, proximity
     /// trigger, greeting animation, lip sync), moves it away from the player, retargets the
-    /// MerchantSpawner roster at it (disabling the placeholder booth merchants and the
+    /// MerchantApproachCoordinator roster at it (disabling the placeholder booth merchants and the
     /// market-wide auto-approach trigger), stops the test driver from auto-granting consent /
     /// auto-starting a negotiation, and adds the UI Toolkit consent prompt.
     ///
@@ -54,7 +54,7 @@ namespace DumyatEditor
             }
 
             MerchantNPC merchant = WireNpc(npc);
-            WireSpawner(merchant);
+            WireCoordinator(merchant);
             DisablePlaceholderBooths(merchant);
             WireTestDriver(merchant);
             WireConsentUi();
@@ -123,28 +123,28 @@ namespace DumyatEditor
                 npc.transform.rotation = Quaternion.LookRotation(toPlayer.normalized, Vector3.up);
         }
 
-        // --- Spawner: roster = AiNPC only; no market-volume auto-approach -----------
+        // --- Coordinator: roster = AiNPC only; no market-volume auto-approach -----------
 
-        private static void WireSpawner(MerchantNPC merchant)
+        private static void WireCoordinator(MerchantNPC merchant)
         {
-            MerchantSpawner spawner = Object.FindFirstObjectByType<MerchantSpawner>();
-            if (spawner == null)
+            MerchantApproachCoordinator coordinator = Object.FindFirstObjectByType<MerchantApproachCoordinator>();
+            if (coordinator == null)
             {
-                Debug.LogWarning("[SceneSetup] No MerchantSpawner in scene; skipped roster wiring.");
+                Debug.LogWarning("[SceneSetup] No MerchantApproachCoordinator in scene; skipped roster wiring.");
                 return;
             }
 
             // The market-wide trigger box auto-started approaches on entry; negotiations must now
             // start from the NPC's own proximity trigger instead.
-            var marketTrigger = spawner.GetComponent<BoxCollider>();
+            var marketTrigger = coordinator.GetComponent<BoxCollider>();
             if (marketTrigger != null) marketTrigger.enabled = false;
 
-            var so = new SerializedObject(spawner);
+            var so = new SerializedObject(coordinator);
             SerializedProperty roster = so.FindProperty("_merchants");
             roster.arraySize = 1;
             roster.GetArrayElementAtIndex(0).objectReferenceValue = merchant;
             so.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(spawner);
+            EditorUtility.SetDirty(coordinator);
         }
 
         private static void DisablePlaceholderBooths(MerchantNPC keep)

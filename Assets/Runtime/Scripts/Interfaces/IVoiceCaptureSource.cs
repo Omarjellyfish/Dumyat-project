@@ -20,6 +20,13 @@ namespace DumyatRuntime
         /// <summary>Fires once with the final transcribed utterance. The session stays open after.</summary>
         event Action<string> OnTranscriptionComplete;
 
+        /// <summary>
+        /// Fires repeatedly mid-utterance with the latest PARTIAL (not-yet-committed) transcript, for a
+        /// live caption. Display only — it is a rolling best-guess in the capture language and must never
+        /// drive an accept/decline decision (use <see cref="OnTranscriptionComplete"/> for that).
+        /// </summary>
+        event Action<string> OnPartialTranscript;
+
         /// <summary>Fires with a human-readable reason when transcription cannot be completed.</summary>
         event Action<string> OnTranscriptionFailed;
 
@@ -48,8 +55,21 @@ namespace DumyatRuntime
         /// <summary>Seconds of silence (after speech) before a voice-activity utterance auto-finalises.</summary>
         float SilenceThresholdSeconds { get; set; }
 
-        /// <summary>Peak amplitude (0-1) below which audio counts as silence for voice-activity detection.</summary>
+        /// <summary>Peak amplitude (0-1) below which audio counts as silence for voice-activity detection.
+        /// Used only when <see cref="AutoAdjustSensitivity"/> is false (the manual gate / fallback).</summary>
         float SilenceAmplitudeThreshold { get; set; }
+
+        /// <summary>
+        /// Discord-style automatic input sensitivity: when true the voice gate self-calibrates from a
+        /// tracked ambient noise floor instead of the fixed <see cref="SilenceAmplitudeThreshold"/>.
+        /// </summary>
+        bool AutoAdjustSensitivity { get; set; }
+
+        /// <summary>The tracked ambient noise floor (0-1); 0 when idle / not yet calibrated. For a live readout.</summary>
+        float CurrentNoiseFloor { get; }
+
+        /// <summary>The effective gate the input level is compared against right now (adaptive or manual).</summary>
+        float CurrentGateThreshold { get; }
 
         /// <summary>Opens the persistent session (idempotent). Returns false if it cannot start.</summary>
         bool OpenSession();
