@@ -44,7 +44,7 @@ namespace DumyatRuntime
         private void Awake()
         {
             _uiDocument = GetComponent<UIDocument>();
-            
+
             _videoPlayer = gameObject.AddComponent<VideoPlayer>();
             _videoPlayer.playOnAwake = false;
             _videoPlayer.isLooping = true;
@@ -212,7 +212,7 @@ namespace DumyatRuntime
             {
                 _iconContainer.style.display = DisplayStyle.Flex;
                 _iconContainer.AddToClassList("media-container--video");
-                
+
                 if (_videoTexture == null || (int)_videoTexture.width != (int)video.width || (int)_videoTexture.height != (int)video.height)
                 {
                     if (_videoTexture != null) _videoTexture.Release();
@@ -261,7 +261,7 @@ namespace DumyatRuntime
             {
                 _skipButton.clicked -= OnSkipClicked;
             }
-            
+
             _videoPlayer?.Stop();
         }
 
