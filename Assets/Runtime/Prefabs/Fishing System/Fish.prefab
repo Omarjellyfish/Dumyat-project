@@ -64,7 +64,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 64
   m_CollisionDetection: 0
 --- !u!114 &3085736924295094215
@@ -79,14 +79,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 144f90d6c04085e4db5027ebc334df26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.Fish
-  data:
-    fishName: Nimo
-    minWeight: 0.5
-    maxWeight: 2
-    pricePerKg: 100
-  currentWeight: 0
-  currentValue: 0
-  mouthPoint: {fileID: 8772536495441265128}
+  _species: {fileID: 11400000, guid: b4e3e75d6d2554848b4cb369b8a06b61, type: 2}
+  _mouthPoint: {fileID: 8772536495441265128}
   _dialogueSequence: {fileID: 11400000, guid: 740e1da83b58b9c4a9dd036b9a3eed88, type: 2}
   _priority: 1
   _triggerOnce: 1

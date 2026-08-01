@@ -28485,13 +28485,34 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 436490815572581247, guid: 47623828a1fc305499adb69da9762baa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 827755259}
   m_SourcePrefab: {fileID: 100100000, guid: 47623828a1fc305499adb69da9762baa, type: 3}
 --- !u!4 &827755257 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 956287839012438469, guid: 47623828a1fc305499adb69da9762baa, type: 3}
   m_PrefabInstance: {fileID: 827755256}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &827755258 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 436490815572581247, guid: 47623828a1fc305499adb69da9762baa, type: 3}
+  m_PrefabInstance: {fileID: 827755256}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &827755259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 827755258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: Glue
 --- !u!1001 &829376849
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -61954,6 +61975,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SceneScope
       objectReference: {fileID: 0}
+    - target: {fileID: 6964795130779203123, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
+      propertyPath: _animationDuration
+      value: 0.255
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -76831,6 +76856,26 @@ PrefabInstance:
       propertyPath: _spawnPointHologram
       value: 
       objectReference: {fileID: 406343512}
+    - target: {fileID: 454234298418069389, guid: 90ff9d9d86c0bc145a1c28c6c6f5c740, type: 3}
+      propertyPath: _spawnClips.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 454234298418069389, guid: 90ff9d9d86c0bc145a1c28c6c6f5c740, type: 3}
+      propertyPath: '_spawnClips.Array.data[0]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 05e33d613d5bf594d9d23ece08539ad6, type: 3}
+    - target: {fileID: 454234298418069389, guid: 90ff9d9d86c0bc145a1c28c6c6f5c740, type: 3}
+      propertyPath: _availableRecipes.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 454234298418069389, guid: 90ff9d9d86c0bc145a1c28c6c6f5c740, type: 3}
+      propertyPath: '_availableRecipes.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: c8508af0502b871489f59dd9b09b7ead, type: 2}
+    - target: {fileID: 454234298418069389, guid: 90ff9d9d86c0bc145a1c28c6c6f5c740, type: 3}
+      propertyPath: '_availableRecipes.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 3c9ca2ea65a0eac47b067e03f502b9fc, type: 2}
     - target: {fileID: 3483384146054133041, guid: 90ff9d9d86c0bc145a1c28c6c6f5c740, type: 3}
       propertyPath: _floatingTextPrefab
       value: 

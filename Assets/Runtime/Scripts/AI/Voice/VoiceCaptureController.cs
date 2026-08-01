@@ -69,8 +69,13 @@ namespace DumyatRuntime
         [SerializeField, Min(0f)] private float _pttReleaseTailSeconds = 0.35f;
 
         [Header("Voice-Activity Tuning")]
+        [Tooltip("Discord-style automatic input sensitivity: the source tracks the ambient noise floor and " +
+                 "rides the voice gate above it, self-calibrating per microphone/room. When on, the fixed " +
+                 "threshold below is ignored (kept as a fallback). ON by default.")]
+        [SerializeField] private bool _autoAdjustSensitivity = true;
+
         [Tooltip("Peak amplitude (0-1) below which audio is treated as silence. Applied to the source " +
-                 "on each capture.")]
+                 "on each capture. Only used when Auto Adjust Sensitivity is OFF.")]
         [SerializeField, Range(0f, 0.5f)] private float _vadAmplitudeThreshold = 0.02f;
 
         [Tooltip("Seconds of continuous silence after speech before the utterance is finalized.")]
@@ -79,6 +84,12 @@ namespace DumyatRuntime
         [Tooltip("After a session drop, wait this long before auto-reconnecting (voice-activity), so a " +
                  "failing reconnect backs off instead of hammering every frame.")]
         [SerializeField, Min(0f)] private float _reconnectCooldownSeconds = 2f;
+
+        [Header("Speech Limit")]
+        [Tooltip("Hard cap on ONE player utterance, in seconds. On reaching it the mic commits early " +
+                 "(the audio captured so far is still transcribed) so a long ramble cannot burn " +
+                 "unbounded STT usage. Applies to both capture modes. 0 = no cap.")]
+        [SerializeField, Min(0f)] private float _maxSpeechSeconds = 20f;
 
         [Header("Debug Log File")]
         [Tooltip("Write transcripts + status/errors (and, via AppendLog, merchant lines) to a UTF-8 " +
@@ -89,8 +100,30 @@ namespace DumyatRuntime
         [Tooltip("Name of the debug log file written (UTF-8, appended) under Application.persistentDataPath.")]
         [SerializeField] private string _logFileName = "stt_debug_log.txt";
 
+        [Header("Debug UI")]
+        [Tooltip("Show a temporary on-screen + in-headset overlay to inspect and drive mic capture — " +
+                 "device list, OS permission, session state, and a live input-level meter (see " +
+                 "VoiceCaptureDebugUI). Can be toggled at runtime. Leave OFF for normal play.")]
+        [SerializeField] private bool _showDebugUI;
+
+        private VoiceCaptureDebugUI _debugUI;
+        private bool _debugUIApplied;
+
+        /// <summary>Toggle the temporary voice-capture debug overlay (see <see cref="VoiceCaptureDebugUI"/>).</summary>
+        public bool ShowDebugUI
+        {
+            get => _showDebugUI;
+            set { _showDebugUI = value; ApplyDebugUI(); }
+        }
+
         /// <summary>Fires with the final transcript of a captured utterance.</summary>
         public event Action<string> OnTranscription;
+
+        /// <summary>
+        /// Fires repeatedly mid-utterance with the latest partial (not-yet-final) transcript, for a live
+        /// caption. Display only — never route it into the negotiation decision.
+        /// </summary>
+        public event Action<string> OnPartialTranscription;
 
         /// <summary>Fires with a human-readable reason when a capture/transcription fails.</summary>
         public event Action<string> OnCaptureFailed;
@@ -109,6 +142,7 @@ namespace DumyatRuntime
         private bool _pttStopPending;        // PTT released; committing after the tail delay
         private float _pttStopTime;          // unscaled time at which the delayed PTT stop fires
         private float _reconnectAllowedTime; // earliest time we may auto-reconnect after a drop
+        private float _utteranceStartTime;   // unscaled time the current utterance started (speech cap)
         private CaptureMode _lastCaptureMode;
         private string _status = "Idle.";
         private string _lastTranscript = "";
@@ -120,8 +154,17 @@ namespace DumyatRuntime
         public string ControlBinding { get => _controlBinding; set => _controlBinding = value; }
         public float ReleaseTailSeconds { get => _pttReleaseTailSeconds; set => _pttReleaseTailSeconds = Mathf.Max(0f, value); }
         public float VadAmplitudeThreshold { get => _vadAmplitudeThreshold; set => _vadAmplitudeThreshold = Mathf.Clamp(value, 0f, 0.5f); }
+        /// <summary>Discord-style auto input sensitivity (adaptive noise-floor gate). Pushed to the source live
+        /// and re-applied each utterance. Bind this from a settings menu or the debug panel.</summary>
+        public bool AutoAdjustSensitivity
+        {
+            get => _autoAdjustSensitivity;
+            set { _autoAdjustSensitivity = value; if (_source != null) _source.AutoAdjustSensitivity = value; }
+        }
         public float VadSilenceSeconds { get => _vadSilenceSeconds; set => _vadSilenceSeconds = Mathf.Max(0.1f, value); }
         public float ReconnectCooldownSeconds { get => _reconnectCooldownSeconds; set => _reconnectCooldownSeconds = Mathf.Max(0f, value); }
+        /// <summary>Hard cap on one utterance, in seconds; 0 = no cap. See <see cref="_maxSpeechSeconds"/>.</summary>
+        public float MaxSpeechSeconds { get => _maxSpeechSeconds; set => _maxSpeechSeconds = Mathf.Max(0f, value); }
         public bool LogToFile { get => _logToFile; set => _logToFile = value; }
         /// <summary>Log file name; only takes effect before the first log line is written.</summary>
         public string LogFileName { get => _logFileName; set => _logFileName = value; }
@@ -142,6 +185,10 @@ namespace DumyatRuntime
         public bool IsSessionOpen => _source != null && _source.IsSessionOpen;
         public bool IsCapturing => _source != null && _source.MicrophoneEnabled;
         public float CurrentInputLevel => _source != null ? _source.CurrentInputLevel : 0f;
+        /// <summary>Tracked ambient noise floor from the source (0 when idle). For the debug readout.</summary>
+        public float CurrentNoiseFloor => _source != null ? _source.CurrentNoiseFloor : 0f;
+        /// <summary>The effective voice gate the source is comparing the level against (adaptive or manual).</summary>
+        public float CurrentGateThreshold => _source != null ? _source.CurrentGateThreshold : _vadAmplitudeThreshold;
         public string LastTranscript => _lastTranscript;
         public string LastError => _lastError;
         public string StatusText => _status;
@@ -153,6 +200,25 @@ namespace DumyatRuntime
             _inputSystem.Player.PushToTalk.started += OnTalkPressed;
             _inputSystem.Player.PushToTalk.canceled += OnTalkReleased;
             _lastCaptureMode = _captureMode;
+            ApplyDebugUI();   // spawn/enable the debug overlay if the checkbox is on
+        }
+
+        // Spawns (or enables/disables) the temporary debug overlay to match the Show Debug UI checkbox.
+        // The overlay lives in its own component (VoiceCaptureDebugUI) so this controller stays focused;
+        // the checkbox just drives it. Safe to call repeatedly (it syncs the component's enabled state).
+        private void ApplyDebugUI()
+        {
+            _debugUIApplied = _showDebugUI;
+            if (_showDebugUI)
+            {
+                if (_debugUI == null) _debugUI = GetComponent<VoiceCaptureDebugUI>();
+                if (_debugUI == null) _debugUI = gameObject.AddComponent<VoiceCaptureDebugUI>();
+                _debugUI.enabled = true;
+            }
+            else if (_debugUI != null)
+            {
+                _debugUI.enabled = false;
+            }
         }
 
         private void OnEnable() => _inputSystem?.Enable();
@@ -229,6 +295,10 @@ namespace DumyatRuntime
 
         private void Update()
         {
+            // React to the Show Debug UI checkbox being toggled at runtime (before the source guard, so
+            // the overlay works even when no capture source has been resolved yet).
+            if (_showDebugUI != _debugUIApplied) ApplyDebugUI();
+
             if (_source == null) return;
 
             // Handle a runtime capture-mode switch: stop any capture left running by the previous mode
@@ -241,6 +311,24 @@ namespace DumyatRuntime
                 _pttStopPending = false;
                 if (_source.MicrophoneEnabled) _source.SetMicrophoneEnabled(false);
                 _status = $"Switched to {_captureMode}.";
+            }
+
+            // Speech cap: commit the utterance early once it runs too long, so one rambling answer
+            // cannot stream unbounded audio to STT. Checked BEFORE the mode branches because the
+            // voice-activity branch returns below and would never reach a check placed after it.
+            //
+            // EndCapture() (not StopPushToTalkCapture()) is deliberate: it disarms as well as
+            // committing. Merely stopping the mic would leave _armed set, and the voice-activity
+            // re-arm below would start a fresh utterance on the very next frame — letting the player
+            // talk forever in back-to-back capped chunks, which is exactly what the cap must prevent.
+            // The flow re-arms for the next turn via BeginListening -> BeginCapture.
+            if (_startedCapture && _maxSpeechSeconds > 0f
+                && Time.unscaledTime - _utteranceStartTime >= _maxSpeechSeconds)
+            {
+                EndCapture();
+                _status = $"Speech limit ({_maxSpeechSeconds:0}s) reached — sending.";
+                AppendLog("STT", $"Player hit the {_maxSpeechSeconds:0}s speech cap; committing early.");
+                return;
             }
 
             if (_captureMode == CaptureMode.VoiceActivity)
@@ -301,6 +389,7 @@ namespace DumyatRuntime
             ConfigureSourceForMode();
             _lastError = "";
             _startedCapture = true;
+            _utteranceStartTime = Time.unscaledTime;   // starts this utterance's speech-cap clock
             _status = _captureMode == CaptureMode.PushToTalk
                 ? "Capturing… release to send."
                 : "Armed — speak; auto-stops on silence.";
@@ -328,7 +417,8 @@ namespace DumyatRuntime
             else
             {
                 _source.AutoStopOnSilence = true;
-                _source.SilenceAmplitudeThreshold = _vadAmplitudeThreshold;
+                _source.AutoAdjustSensitivity = _autoAdjustSensitivity;
+                _source.SilenceAmplitudeThreshold = _vadAmplitudeThreshold;   // manual fallback when auto is off
                 _source.SilenceThresholdSeconds = _vadSilenceSeconds;
             }
         }
@@ -380,6 +470,7 @@ namespace DumyatRuntime
             if (_source != null)
             {
                 _source.OnTranscriptionComplete += HandleSourceTranscription;
+                _source.OnPartialTranscript += HandleSourcePartial;
                 _source.OnTranscriptionFailed += HandleSourceFailed;
                 _sourceSubscribed = true;
             }
@@ -389,9 +480,13 @@ namespace DumyatRuntime
         {
             if (!_sourceSubscribed || _source == null) return;
             _source.OnTranscriptionComplete -= HandleSourceTranscription;
+            _source.OnPartialTranscript -= HandleSourcePartial;
             _source.OnTranscriptionFailed -= HandleSourceFailed;
             _sourceSubscribed = false;
         }
+
+        // Re-raise a live partial for any UI (debug overlay / player caption). Display only.
+        private void HandleSourcePartial(string text) => OnPartialTranscription?.Invoke(text);
 
         private void HandleSourceTranscription(string text)
         {

@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace DumyatRuntime
 {
     /// <summary>
@@ -15,5 +17,12 @@ namespace DumyatRuntime
 
         /// <summary>Serialises <see cref="CurrentSaveData"/> to disk asynchronously.</summary>
         void SaveAsync();
+
+        /// <summary>
+        /// Completes once every requested save has reached disk. <see cref="SaveAsync"/> coalesces
+        /// writes, so the newest state can still be pending when the game shuts down; await this to
+        /// guarantee it is durable. Safe to call when nothing is pending (completes immediately).
+        /// </summary>
+        Task FlushAsync();
     }
 }

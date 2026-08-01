@@ -20,7 +20,10 @@ namespace DumyatRuntime
         private void OnTriggerEnter(Collider other)
         {
             if (other.CompareTag("Player"))
+            {
+                Debug.Log("Player entered ambient zone");
                 _worldAudio?.PlayAmbient(zoneAmbience, fadeDuration);
+            }
         }
     }
 }

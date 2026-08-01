@@ -6,7 +6,7 @@ namespace DumyatRuntime
     /// <summary>
     /// Thin component placed on each pre-existing merchant GameObject in the market
     /// scene. For now it only carries the merchant's <see cref="MerchantConfig"/> and
-    /// exposes the seams the <see cref="MerchantSpawner"/> needs to orchestrate
+    /// exposes the seams the <see cref="MerchantApproachCoordinator"/> needs to orchestrate
     /// approaches. The actual negotiation logic is intentionally NOT here yet — it
     /// will be added in the next step and will drive <see cref="EndNegotiation"/>.
     /// </summary>
@@ -15,14 +15,36 @@ namespace DumyatRuntime
         [Tooltip("Archetype/config that defines this merchant's personality and economics.")]
         [SerializeField] private MerchantConfig _config;
 
-        [Tooltip("If false, the spawner will skip this merchant when picking who approaches next.")]
+        [Tooltip("If false, the coordinator will skip this merchant when picking who approaches next.")]
         [SerializeField] private bool _isAvailable = true;
+
+        [Tooltip("This merchant's physical fish scale — the source of truth for which fish the player " +
+                 "is selling. The merchant can only recognize and buy fish resting on it. Auto-resolved " +
+                 "from children if left empty.")]
+        [SerializeField] private FishSellScale _sellScale;
+
+        [Tooltip("The visual body that should carry the merchant's facing rotation. Approach/turn logic " +
+                 "rotates THIS transform instead of the merchant root, so siblings like the sell scale " +
+                 "don't rotate with him. Auto-resolved to a child named 'Character', else the root.")]
+        [SerializeField] private Transform _characterRoot;
 
         /// <summary>The archetype configuration for this merchant.</summary>
         public MerchantConfig Config => _config;
 
         /// <summary>Whether this merchant can currently be picked to approach the player.</summary>
         public bool IsAvailable => _isAvailable;
+
+        /// <summary>
+        /// This merchant's sell scale (source of truth for the fish being sold), or null if none is
+        /// wired — in which case the negotiation falls back to the legacy single-fish path.
+        /// </summary>
+        public ISellScale SellScale => _sellScale;
+
+        /// <summary>
+        /// The transform that carries the merchant's facing rotation (his visual body), so siblings like
+        /// the sell scale stay put when he turns to face the player. Never null — falls back to the root.
+        /// </summary>
+        public Transform CharacterRoot => _characterRoot != null ? _characterRoot : transform;
 
         private int _conversationCount;
 
@@ -37,7 +59,7 @@ namespace DumyatRuntime
 
         /// <summary>
         /// Raised when a negotiation with this merchant ends, carrying the final outcome.
-        /// The spawner subscribes to this to release its state lock and start the cooldown.
+        /// The coordinator subscribes to this to release its state lock and start the cooldown.
         /// </summary>
         public event Action<MerchantNPC, NegotiationPhase> OnNegotiationEnded;
 
@@ -56,6 +78,26 @@ namespace DumyatRuntime
 
         private void Awake()
         {
+            // Fall back to a scale nested under this merchant if the field was left unassigned.
+            if (_sellScale == null) _sellScale = GetComponentInChildren<FishSellScale>(true);
+
+            // Rotate only the visual body when turning, so siblings (the sell scale) don't spin with him.
+            // 'Character' is nested under the rig, not a direct child, so search all descendants for it.
+            if (_characterRoot == null)
+            {
+                foreach (Transform t in GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name == "Character") { _characterRoot = t; break; }
+                }
+                if (_characterRoot == null)
+                {
+                    _characterRoot = transform;
+                    Debug.LogWarning($"MerchantNPC '{name}': no 'Character' child found — facing rotation " +
+                                     "will fall back to the root (the sell scale will rotate with him). " +
+                                     "Assign Character Root explicitly.");
+                }
+            }
+
             // The merchant's voice is defined by its config archetype, and stays fixed for this NPC's
             // lifetime so its voice never changes between TTS lines.
             AssignedVoiceId = _config != null ? _config.VoiceId : null;
@@ -70,7 +112,7 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Called by the spawner to tell this merchant to begin approaching/greeting the
+        /// Called by the coordinator to tell this merchant to begin approaching/greeting the
         /// player. Notifies cosmetic listeners via <see cref="OnApproachStarted"/> (the
         /// negotiation itself is driven by <see cref="NegotiationFlowController"/>).
         /// </summary>
@@ -84,7 +126,7 @@ namespace DumyatRuntime
         /// <summary>
         /// Ends the current negotiation with the given outcome and notifies subscribers.
         /// Temporary seam: the negotiation system (next step) will call this. Exposed now
-        /// so the spawner's cooldown/lock flow can be wired and tested.
+        /// so the coordinator's cooldown/lock flow can be wired and tested.
         /// </summary>
         public void EndNegotiation(NegotiationPhase outcome)
         {
