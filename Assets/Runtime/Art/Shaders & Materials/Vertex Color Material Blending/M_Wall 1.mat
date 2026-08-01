@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Wall 1
+  m_Shader: {fileID: -6465566751694194690, guid: f8b02f3d4923e624092d22ae2a830f7d, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _MATERIALCOUNT_THREE
+  m_InvalidKeywords: []
+  m_LightmapFlags: 2
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Mat1_Color_Map:
+        m_Texture: {fileID: 2800000, guid: e39ccfa6df61f594a94212fb01a4d299, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat1_Mask_Map:
+        m_Texture: {fileID: 2800000, guid: 9dba4a35fb171194282ecc3863b87aeb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat1_Normal_Map:
+        m_Texture: {fileID: 2800000, guid: 6ee24b7f8a02edc4e9112e91f775a6c2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat2_Color_Map:
+        m_Texture: {fileID: 2800000, guid: e39ccfa6df61f594a94212fb01a4d299, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat2_Mask_Map:
+        m_Texture: {fileID: 2800000, guid: 9dba4a35fb171194282ecc3863b87aeb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat2_Normal_Map:
+        m_Texture: {fileID: 2800000, guid: 6ee24b7f8a02edc4e9112e91f775a6c2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat3_Color_Map:
+        m_Texture: {fileID: 2800000, guid: 25839ca3fe0fc884f80df49a37f5d572, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat3_Mask_Map:
+        m_Texture: {fileID: 2800000, guid: 444a25e1665932f4c90a625732639675, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mat3_Normal_Map:
+        m_Texture: {fileID: 2800000, guid: e8ad632ae17422242a10d3ed40ffda55, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _MATERIALCOUNT: 1
+    - _Mat1_Normal_Strength: 1
+    - _Mat1_roughness_l7d_matofrg: 0.4
+    - _Mat2_Normal_Strength: 1
+    - _Mat2_roughness_l7d_matofrg: 0.4
+    - _Mat3_Normal_Strength: 1
+    - _Mat3_roughness_l7d_matofrg: 0.4
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    m_Colors:
+    - _Mat1_Color_Tint: {r: 0.03631186, g: 0.2579519, b: 0.4528302, a: 1}
+    - _Mat1_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat1_Tilling: {r: 1, g: 1, b: 0, a: 0}
+    - _Mat2_Color_Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat2_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat2_Tilling: {r: 1, g: 1, b: 0, a: 0}
+    - _Mat3_Color_Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _Mat3_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Mat3_Tilling: {r: 1, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!114 &6702170341661033752
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10
