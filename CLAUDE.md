@@ -119,6 +119,46 @@ Content/config are ScriptableObjects: `ItemData`/`CraftingRecipe` assets with `I
 `RecipeDatabase` lookups (e.g. `RecipeDatabase.GetRecipeByName`), plus tuning SOs (`SawSettingsSO`,
 `NailHammerSettingsSO`, `HapticProfileSO`, `PerformanceBudgetSettingSO`).
 
+### UI theme — "Delta" (the project's standard look)
+All new UI in this project — in-game panels **and** any design mockup/artifact produced for it —
+should use the **Delta** treatment unless the user asks otherwise. It is a frosted deep-water glass
+look, chosen for VR legibility and for fitting Dumyat's Mediterranean-port setting. The reference
+implementation is the inventory panel:
+[InventoryStyles.uss](Assets/Runtime/UI%20Toolkit/styles/InventoryStyles.uss).
+
+| Role | Value |
+|---|---|
+| Panel ground | `rgba(8, 26, 34, 0.84)`, `border-radius: 22px` |
+| Hairline / border | `rgba(120, 228, 236, 0.42)`; dividers at `0.14–0.2` alpha |
+| Primary text | `#EAF8FB` · Muted/label text `rgba(214, 246, 250, 0.55)` |
+| Accent (cyan) | `#67DDE8` — quantities, hover states, active row bar |
+| Money (jade) | `#8DEBAF` — EGP balances, positive deltas |
+| Destructive (coral) | `#FF9B8A` — Drop, refusals, negative deltas |
+
+Principles that matter more than the hex values:
+- **Hairline dividers, not cards.** Rows read as one continuous list; no per-row background boxes.
+- **Ghost buttons.** Transparent fill with a coloured outline, filling in on hover — a wall of solid
+  red reads badly at high item counts. Rectangular with a slight `border-radius: 8px`; **not** pills.
+- **Restraint in the type.** Non-bold titles carrying wide `letter-spacing`; weight comes from size
+  and spacing, not from bolding everything.
+- **Data, not badges.** Numeric readouts (balances, counts) are right-aligned with a small uppercase
+  label above, rather than wrapped in pills.
+
+**VR sizing floor** (world-space panels): body text ≥ 26 px, headers ≥ 32 px, and any ray-clickable
+control ≥ 64 px tall — measured against a 900 × 620 panel. Below that it is unreadable in a headset.
+
+**UI Toolkit cannot do**: `box-shadow`, gradients, `backdrop-filter`, `text-transform`, `clip-path`,
+or `::before`/`::after`. The frosted effect is opacity only (it does **not** blur what is behind it),
+and uppercase strings must be authored uppercase in the UXML.
+
+### Head-anchored world-space UI — lazy follow
+World-space panels that follow the player must use **`LazyFollowYaw`**
+([Assets/Runtime/Scripts/UI/LazyFollowYaw.cs](Assets/Runtime/Scripts/UI/LazyFollowYaw.cs)) — never
+parent UI to a controller or hard-`LookAt` the camera every frame. The panel anchors to a *world*
+yaw and holds still while the head turns inside a comfort cone (±30° default), then eases after it
+once it would leave view. Drop **`LazyFollowAnchor`** on any panel to get this; `NotificationHudManager`
+uses the same solver, so both behave identically.
+
 ### VR interaction systems (`Assets/Runtime/Scripts/`)
 - **CuttingSystem** — `WoodSlicer` slices meshes via EzySlice, driven by `SawTip`/`SawBladePoint`.
 - **Crafting** — `CraftingStation` + `StructuralPiece`/`DecorationPiece`; validated by

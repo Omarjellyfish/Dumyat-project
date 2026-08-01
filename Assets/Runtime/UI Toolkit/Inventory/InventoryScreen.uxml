@@ -1,7 +1,21 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/InventoryStyles.uss" />
     <ui:VisualElement name="MainCanvas" class="inventory-panel">
-        <ui:Label text="INVENTORY" class="inventory-title" />
-        <ui:ScrollView name="SlotContainer" class="inventory-scrollview" />
+
+        <ui:VisualElement name="HeaderBar" class="inventory-header">
+            <ui:Label text="INVENTORY" class="inventory-title" />
+
+            <!-- Wallet readout. Currency sits ABOVE the number (Delta treatment), so it is first
+                 in document order. WalletBalance is the only element bound from code; WalletCurrency
+                 is static text so it can be localised here (EGP -> ج.م, the Cairo font covers it). -->
+            <ui:VisualElement name="WalletChip" class="wallet-chip">
+                <ui:Label name="WalletCurrency" text="EGP" class="wallet-currency" />
+                <ui:Label name="WalletBalance" text="0" class="wallet-balance" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:ScrollView name="SlotContainer" class="inventory-scrollview" mode="Vertical" />
+
+        <ui:Label name="EmptyHint" text="Your bag is empty." class="inventory-empty-hint" />
     </ui:VisualElement>
 </ui:UXML>

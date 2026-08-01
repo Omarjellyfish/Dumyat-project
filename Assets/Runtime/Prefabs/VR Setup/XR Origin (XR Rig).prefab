@@ -4117,6 +4117,7 @@ GameObject:
   - component: {fileID: 7030976687044835332}
   - component: {fileID: 5522710961565367264}
   - component: {fileID: 5470959634670399383}
+  - component: {fileID: 4172830596611238475}
   m_Layer: 2
   m_Name: XR Origin (XR Rig)
   m_TagString: Player
@@ -4124,6 +4125,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &4172830596611238475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3309285002930837712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e10d618d2426814f8cf39970eb08037, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.WalletAudioFeedback
+  _moneyAddedClip: {fileID: 0}
+  _moneySpentClip: {fileID: 0}
+  _insufficientFundsClip: {fileID: 0}
+  _volume: 0.8
+  _mixerGroup: {fileID: 0}
 --- !u!4 &1380012867250562407
 Transform:
   m_ObjectHideFlags: 0
@@ -4140,6 +4158,7 @@ Transform:
   - {fileID: 317711334107658327}
   - {fileID: 1480644912596775229}
   - {fileID: 7592668055181980106}
+  - {fileID: 3840634287862328838}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7737146696654120590
@@ -8110,7 +8129,6 @@ Transform:
   - {fileID: 7248313856975152059}
   - {fileID: 1448934879146031131}
   - {fileID: 169980673738341338}
-  - {fileID: 3840634287862328838}
   m_Father: {fileID: 317711334107658327}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7786621884826685377
@@ -8276,7 +8294,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 8571214899404045420}
+    m_TransformParent: {fileID: 1380012867250562407}
     m_Modifications:
     - target: {fileID: 190245443742673548, guid: ebb8c2254ba734747bef9e5706b57770, type: 3}
       propertyPath: m_Name
@@ -8284,15 +8302,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4383599169904675324, guid: ebb8c2254ba734747bef9e5706b57770, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.8194439
+      value: 0.065
       objectReference: {fileID: 0}
     - target: {fileID: 4383599169904675324, guid: ebb8c2254ba734747bef9e5706b57770, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.57464033
+      value: 0.065
       objectReference: {fileID: 0}
     - target: {fileID: 4383599169904675324, guid: ebb8c2254ba734747bef9e5706b57770, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.71009
+      value: 0.065
       objectReference: {fileID: 0}
     - target: {fileID: 4383599169904675324, guid: ebb8c2254ba734747bef9e5706b57770, type: 3}
       propertyPath: m_LocalPosition.x

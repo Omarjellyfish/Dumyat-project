@@ -55,6 +55,12 @@ namespace DumyatRuntime
             containerBuilder.RegisterType(typeof(InventoryService), new[] { typeof(IInventoryService) },
                 Lifetime.Singleton, Resolution.Lazy);
 
+            // Player EGP balance — constructed from ISaveService + IEventService.
+            // EAGER because it self-subscribes to SellScoreEvent: it must exist before the first sale,
+            // not lazily on the first UI query, or a sale made before the bag is opened is lost.
+            containerBuilder.RegisterType(typeof(WalletService), new[] { typeof(IWalletService) },
+                Lifetime.Singleton, Resolution.Eager);
+
             // Recipe database asset for CraftingService.
             if (_recipeDatabase != null)
                 containerBuilder.RegisterValue(_recipeDatabase, new[] { typeof(RecipeDatabase) });
