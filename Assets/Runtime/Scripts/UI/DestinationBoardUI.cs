@@ -17,9 +17,14 @@ namespace DumyatRuntime
         private ScrollView _destinationContainer;
         private Label _headerLabel;
         private IEventService _eventService;
+        private IPlayerPersistenceService _persistenceService;
 
         [Inject]
-        private void Inject(IEventService eventService) => _eventService = eventService;
+        private void Inject(IEventService eventService, IPlayerPersistenceService persistenceService)
+        {
+            _eventService = eventService;
+            _persistenceService = persistenceService;
+        }
 
         private void OnEnable()
         {
@@ -36,13 +41,24 @@ namespace DumyatRuntime
             }
 
             if (_eventService != null)
+            {
                 _eventService.Subscribe<SceneLoadBeginEvent>(OnSceneLoadBegin);
+                _eventService.Subscribe<KeyUnlockedEvent>(OnKeyUnlocked);
+            }
         }
 
         private void OnDisable()
         {
             if (_eventService != null)
+            {
                 _eventService.Unsubscribe<SceneLoadBeginEvent>(OnSceneLoadBegin);
+                _eventService.Unsubscribe<KeyUnlockedEvent>(OnKeyUnlocked);
+            }
+        }
+
+        private void OnKeyUnlocked(KeyUnlockedEvent evt)
+        {
+            PopulateDestinations();
         }
 
         private void Start()
@@ -69,7 +85,21 @@ namespace DumyatRuntime
             foreach (var destination in destinations)
             {
                 if (destination == null) continue;
+
+                if (!string.IsNullOrEmpty(destination.RequiredPersistenceKey) && 
+                    (_persistenceService == null || !_persistenceService.HasKey(destination.RequiredPersistenceKey)))
+                {
+                    continue; // Skip this destination since the player doesn't have the required key
+                }
+
                 _destinationContainer.Add(CreateDestinationCard(destination));
+            }
+
+            if (_destinationContainer.childCount == 0)
+            {
+                var emptyLabel = new Label("No destinations available.");
+                emptyLabel.AddToClassList("destination-empty");
+                _destinationContainer.Add(emptyLabel);
             }
         }
 

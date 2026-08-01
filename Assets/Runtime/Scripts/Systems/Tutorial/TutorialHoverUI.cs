@@ -25,6 +25,7 @@ namespace DumyatRuntime
         private VisualElement _progressDotsContainer;
         private VisualElement _iconContainer;
         private Button _skipButton;
+        private Button _nextButton;
 
         private ITutorialService _tutorialService;
         private Transform _currentAnchor;
@@ -58,7 +59,7 @@ namespace DumyatRuntime
 
             _root = _uiDocument.rootVisualElement;
             CacheElements();
-            SetupSkipButton();
+            SetupButtons();
 
             // Start hidden
             _panel?.AddToClassList("tutorial-panel--hidden");
@@ -72,13 +73,18 @@ namespace DumyatRuntime
             _progressDotsContainer = _root.Q<VisualElement>("ProgressDots");
             _iconContainer = _root.Q<VisualElement>("IconContainer");
             _skipButton = _root.Q<Button>("SkipButton");
+            _nextButton = _root.Q<Button>("NextButton");
         }
 
-        private void SetupSkipButton()
+        private void SetupButtons()
         {
             if (_skipButton != null)
             {
                 _skipButton.clicked += OnSkipClicked;
+            }
+            if (_nextButton != null)
+            {
+                _nextButton.clicked += OnNextClicked;
             }
         }
 
@@ -87,6 +93,10 @@ namespace DumyatRuntime
             _tutorialService?.SkipTutorial();
         }
 
+        private void OnNextClicked()
+        {
+            _tutorialService?.SkipCurrentStep();
+        }
 
         /// <summary>
         /// Display a tutorial step on the hover panel.
@@ -260,6 +270,10 @@ namespace DumyatRuntime
             if (_skipButton != null)
             {
                 _skipButton.clicked -= OnSkipClicked;
+            }
+            if (_nextButton != null)
+            {
+                _nextButton.clicked -= OnNextClicked;
             }
 
             _videoPlayer?.Stop();

@@ -13,9 +13,10 @@
         <!-- Instruction text -->
         <ui:Label name="InstructionText" text="Tutorial instruction goes here" class="instruction-text" />
 
-        <!-- Footer: skip button -->
-        <ui:VisualElement class="tutorial-footer">
+        <!-- Footer: skip and next button -->
+        <ui:VisualElement class="tutorial-footer" style="flex-direction: row; justify-content: space-between;">
             <ui:Button name="SkipButton" text="Skip ▸" class="skip-button" />
+            <ui:Button name="NextButton" text="Next ▸" class="skip-button" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

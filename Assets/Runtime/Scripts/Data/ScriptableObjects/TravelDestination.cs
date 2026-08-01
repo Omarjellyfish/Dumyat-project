@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace DumyatRuntime
 {
@@ -18,5 +18,8 @@ namespace DumyatRuntime
         [TextArea(2, 4)]
         [Tooltip("Optional description shown in the selection UI")]
         public string Description;
+
+        [Tooltip("Optional persistence key required to see this destination in the list")]
+        public string RequiredPersistenceKey;
     }
 }
