@@ -214,6 +214,46 @@ or changing code, prefer the option that keeps pieces decoupled and reusable:
   via `ISaveService`/`PlayerPersistence`, haptics via `IHapticService`). Extend the shared system
   rather than duplicating it.
 
+## File architecture — decide where a script lives before you write it
+
+**Never drop a script into a folder root and move on.** Every new file needs a deliberate home, and
+every folder you touch should be left better organised than you found it. This is not cosmetic: a
+flat folder of thirty scripts hides duplication, makes ownership unclear, and is the main reason
+people re-implement something that already exists two files away.
+
+Rules:
+
+- **Place by feature, not by type.** Group scripts by the thing they serve (`UI/Subtitles/`,
+  `UI/Notifications/`), not by Unity concept (`Managers/`, `Behaviours/`). A folder should read as
+  a feature someone could own.
+- **A folder root holds folders, not loose scripts.** `Scripts/UI/` contains only subfolders. If you
+  add the *first* file of a new concern, create the folder for it rather than leaving it at the root.
+- **Two or three related files justify a folder.** A view + its data struct + its controller belong
+  together. A single unrelated file at a root does not.
+- **Reorganise when you notice drift.** If a task takes you into a folder that has accumulated loose
+  files, tidy it as part of that task — do not add to the mess and leave. Say so in your summary.
+- **Move with `git mv`, and always move the `.meta` alongside the `.cs`.** The `.meta` carries the
+  GUID, so moving both keeps every scene and prefab reference intact and git records a rename rather
+  than a delete + add. After any move, force a reimport and confirm no scene shows missing scripts.
+- **Namespaces do not follow folders here.** Nearly all runtime code is the single `DumyatRuntime`
+  namespace, so moving a file never requires touching `using` directives — which is exactly why
+  reorganising is cheap and there is no excuse for skipping it.
+
+Current `Assets/Runtime/Scripts/UI/` layout — extend it, don't flatten it:
+
+| Folder | Holds |
+|---|---|
+| `Placement/` | Shared world-space placement primitives (`LazyFollowAnchor`, `LazyFollowYaw`) |
+| `Menus/` | Main menu, pause menu, shared settings page, pause input relay |
+| `Loading/` | Loading overlay view + presenter |
+| `Subtitles/` | `SubtitlePanel`, `PlayerCaptionPresenter` |
+| `Notifications/` | HUD manager + card views + data |
+| `FloatingText/` | Pooled world-space popups |
+| `Inventory/`, `Crafting/`, `Quests/`, `Achievements/` | Per-system panels |
+| `Sales/` | Merchant sale panel + summary card |
+| `Travel/`, `Consent/`, `Testing/` | Destination board, consent prompt, dev harnesses |
+| `Legacy/` | The **superseded uGUI menu prototype** (`MenuManager`, `MenuLocation`, `PauseManager`, `SettingsManager`, `SettingsUI`). Used only by `Testing_MainMenu.unity`. Do not extend, depend on, or delete it — the UI Toolkit system in `Menus/` replaces it, and the two are merged deliberately, not incidentally. |
+
 ## Conventions
 
 - Private serialized fields use `_camelCase` with `[SerializeField]`; expose read-only access via
