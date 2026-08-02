@@ -31,6 +31,9 @@ namespace DumyatRuntime
         [Tooltip("The instruction text shown on the hover UI panel")]
         public string InstructionText;
 
+        [Tooltip("Optional audio for the tutorial step")]
+        public AudioClip Audio;
+
         [Tooltip("Optional voice line played when this step activates")]
         public DialogueSequenceSO VoiceLine;
 

@@ -17,6 +17,12 @@ namespace DumyatRuntime
         [Header("Animation")]
         [SerializeField, Range(0.05f, 0.5f)] private float _animationDuration = 0.2f;
 
+        [Header("Positioning")]
+        [SerializeField] private float _collisionCheckRadius = 0.5f;
+        [SerializeField] private float _positionLerpSpeed = 15f;
+        [SerializeField] private float _moveUpStep = 0.2f;
+        [SerializeField] private int _maxClippingAttempts = 15;
+
         private UIDocument _uiDocument;
         private VisualElement _root;
         private VisualElement _panel;
@@ -110,7 +116,7 @@ namespace DumyatRuntime
             // Position immediately if we have an anchor
             if (anchor != null)
             {
-                transform.position = anchor.position + offset;
+                transform.position = CalculateSafePosition();
             }
 
             // Update content
@@ -263,6 +269,50 @@ namespace DumyatRuntime
             {
                 _panel.RemoveFromClassList("tutorial-panel--transitioning");
             }).ExecuteLater((long)(_animationDuration * 1000));
+        }
+
+        private void LateUpdate()
+        {
+            if (!_isVisible || _currentAnchor == null) return;
+
+            Vector3 safePosition = CalculateSafePosition();
+            transform.position = Vector3.Lerp(transform.position, safePosition, Time.deltaTime * _positionLerpSpeed);
+        }
+
+        private Vector3 CalculateSafePosition()
+        {
+            if (_currentAnchor == null) return transform.position;
+
+            Vector3 targetPosition = _currentAnchor.position + _currentOffset;
+            int attempts = 0;
+
+            while (attempts < _maxClippingAttempts)
+            {
+                bool isClipping = false;
+                Collider[] hits = Physics.OverlapSphere(targetPosition, _collisionCheckRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                
+                foreach (var hit in hits)
+                {
+                    // Ignore the anchor object itself (e.g., player) to prevent UI from running away
+                    if (!hit.transform.IsChildOf(_currentAnchor.root))
+                    {
+                        isClipping = true;
+                        break;
+                    }
+                }
+
+                if (isClipping)
+                {
+                    targetPosition.y += _moveUpStep; // Always aim to move up to avoid clipping
+                    attempts++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return targetPosition;
         }
 
         private void OnDisable()
