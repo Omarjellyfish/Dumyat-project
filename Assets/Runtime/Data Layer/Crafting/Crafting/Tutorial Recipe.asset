@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1983f9c7ef6777c488c4df2e4661f496, type: 3}
+  m_Name: Tutorial Recipe
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CraftingRecipe
+  _recipeName: plank_1.5M_.5M_A1
+  _rootPrefab: {fileID: 4985614163403643564, guid: 570697008ab88414ca7d1bc00a164bf7, type: 3}
+  _hologramPrefab: {fileID: 3117606419128825610, guid: 7f68f41f199b8d34c9e1b967691b64d0, type: 3}
+  _requiredParts:
+  - SlotName: plank_1.5M_.5M_A1_1
+    ExpectedLocalPosition: {x: 0, y: 0, z: 0}
+    ExpectedLocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+    PositionTolerance: 0.1
+    RotationTolerance: 15
+    IgnoreRotation: 1
+    ExpectedSize: {x: 0, y: 0, z: 0}
+    SizeTolerance: {x: 0.02, y: 0.05, z: 0.02}

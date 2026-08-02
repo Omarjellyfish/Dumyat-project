@@ -1,0 +1,2099 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2097231165305210467
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3055566647098843321}
+  - component: {fileID: 6984967216060433036}
+  m_Layer: 0
+  m_Name: Male_Brow_2_Extracted0
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3055566647098843321
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2097231165305210467}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4410381676739658126}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!137 &6984967216060433036
+SkinnedMeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2097231165305210467}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 3
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 474f1081edf945f48b52046bc67c4d60, type: 2}
+  - {fileID: 2100000, guid: c87b6827cc79f3744a5824b1409a6aa6, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  serializedVersion: 2
+  m_Quality: 0
+  m_UpdateWhenOffscreen: 0
+  m_SkinnedMotionVectors: 1
+  m_Mesh: {fileID: 4300000, guid: cd06958fac74a2b4ea22318f72a3e2a7, type: 2}
+  m_Bones:
+  - {fileID: 2685334621420599236}
+  m_BlendShapeWeights: []
+  m_RootBone: {fileID: 2685334621420599236}
+  m_AABB:
+    m_Center: {x: 0.00021148473, y: 0.0862244, z: 0.086171955}
+    m_Extent: {x: 0.057096727, y: 0.01689858, z: 0.022653386}
+  m_DirtyAABB: 0
+--- !u!1001 &4232939146169607781
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8194516504669914355, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300000, guid: d2931d4998130eb47946e092ea4f2921, type: 2}
+    - target: {fileID: -8194516504669914355, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8194516504669914355, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8194516504669914355, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f3e937ee6a2959040bddb3fe5c1c7eb5, type: 2}
+    - target: {fileID: 919132149155446097, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      propertyPath: m_Name
+      value: Character_5
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3055566647098843321}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8304175215116285622, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8982908058927099229}
+  m_SourcePrefab: {fileID: 100100000, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+--- !u!4 &1011618369529705933 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3798669969103459240, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1480751351143550593 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3328938836001532132, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2685334621420599236 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2304244481032835489, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2990583905837462321 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -7836584897551936172, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &3817171349443059048 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -8194516504669914355, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4410381676739658126 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5296286924759306451 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8304175215116285622, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8982908058927099229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5296286924759306451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0967f6b1e9e2473498d927ac3a034fe5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: soupday.cc3_unity_tools.project_runtime::Reallusion.Runtime.BoneDriver
+  baseBodySmr: {fileID: 8260081978961937624}
+  glossary:
+    ExpressionsByBone:
+    - BoneName: CC_Base_JawRoot
+      BoneTransform: {fileID: 1480751351143550593}
+      BoneMatch: 2
+      RefPositionArr:
+      - 0.024362154
+      - 0.010628815
+      - -0.00022501974
+      RefRotationArr:
+      - 0.000003419572
+      - -0.000068199704
+      - 1
+      - -0.000017177155
+      RefPosition: {x: 0.024362154, y: 0.010628815, z: -0.00022501974}
+      RefRotation: {x: 0.000003419572, y: -0.000068199704, z: 1, w: -0.000017177155}
+      Expressions:
+      - ExpressionName: V_Open
+        BlendShapeIndex: 1
+        isViseme: 1
+        isConstraint: 0
+        TranslateArr:
+        - -0.000000009536743
+        - 0.00000015258789
+        - 0.000000001490116
+        RotationArr:
+        - -0.000000031810487
+        - 0.00000004171875
+        - -0.13919048
+        - 0.99026567
+        Translate: {x: -0.000000009536743, y: 0.00000015258789, z: 0.000000001490116}
+        Rotation: {x: -0.000000031810487, y: 0.00000004171875, z: -0.13919048, w: 0.99026567}
+      - ExpressionName: Jaw_Open
+        BlendShapeIndex: 155
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.002887256
+        - -0.0037976073
+        - -0.000007487535
+        RotationArr:
+        - 0.000456669
+        - 0.000030595285
+        - -0.20569147
+        - 0.9786168
+        Translate: {x: -0.002887256, y: -0.0037976073, z: -0.000007487535}
+        Rotation: {x: 0.000456669, y: 0.000030595285, z: -0.20569147, w: 0.9786168}
+      - ExpressionName: Jaw_Forward
+        BlendShapeIndex: 156
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.0066958806
+        - -0.000051727293
+        - 0.000015377402
+        RotationArr:
+        - -0.000000118801836
+        - 0.00000005916104
+        - -0.00000006146467
+        - 1
+        Translate: {x: 0.0066958806, y: -0.000051727293, z: 0.000015377402}
+        Rotation: {x: -0.000000118801836, y: 0.00000005916104, z: -0.00000006146467, w: 1}
+      - ExpressionName: Jaw_Backward
+        BlendShapeIndex: 157
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.0044639334
+        - 0.00003479004
+        - -0.0000102490185
+        RotationArr:
+        - -0.000000118801836
+        - 0.00000005916104
+        - -0.00000006146467
+        - 1
+        Translate: {x: -0.0044639334, y: 0.00003479004, z: -0.0000102490185}
+        Rotation: {x: -0.000000118801836, y: 0.00000005916104, z: -0.00000006146467, w: 1}
+      - ExpressionName: Jaw_L
+        BlendShapeIndex: 158
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.000059280395
+        - -0.000075683594
+        - 0.00707301
+        RotationArr:
+        - -0.000000118801836
+        - 0.00000005916104
+        - -0.00000006146467
+        - 1
+        Translate: {x: -0.000059280395, y: -0.000075683594, z: 0.00707301}
+        Rotation: {x: -0.000000118801836, y: 0.00000005916104, z: -0.00000006146467, w: 1}
+      - ExpressionName: Jaw_R
+        BlendShapeIndex: 159
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.000026586054
+        - -0.000048828122
+        - -0.007073439
+        RotationArr:
+        - -0.000000118801836
+        - 0.00000005916104
+        - -0.00000006146467
+        - 1
+        Translate: {x: -0.000026586054, y: -0.000048828122, z: -0.007073439}
+        Rotation: {x: -0.000000118801836, y: 0.00000005916104, z: -0.00000006146467, w: 1}
+      - ExpressionName: Jaw_Up
+        BlendShapeIndex: 160
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.0000132203095
+        - 0.002088623
+        - 0.000004021227
+        RotationArr:
+        - -0.000000118801836
+        - 0.00000005916104
+        - -0.00000006146467
+        - 1
+        Translate: {x: 0.0000132203095, y: 0.002088623, z: 0.000004021227}
+        Rotation: {x: -0.000000118801836, y: 0.00000005916104, z: -0.00000006146467, w: 1}
+      - ExpressionName: Jaw_Down
+        BlendShapeIndex: 161
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.00003258705
+        - -0.005140991
+        - -0.000009892285
+        RotationArr:
+        - -0.000000118801836
+        - 0.00000005916104
+        - -0.00000006146467
+        - 1
+        Translate: {x: -0.00003258705, y: -0.005140991, z: -0.000009892285}
+        Rotation: {x: -0.000000118801836, y: 0.00000005916104, z: -0.00000006146467, w: 1}
+    - BoneName: CC_Base_L_Eye
+      BoneTransform: {fileID: 1011618369529705933}
+      BoneMatch: 1
+      RefPositionArr:
+      - 0.073928624
+      - 0.07297592
+      - 0.030908298
+      RefRotationArr:
+      - -0.49832836
+      - 0.50166607
+      - 0.49832836
+      - 0.50166607
+      RefPosition: {x: 0.073928624, y: 0.07297592, z: 0.030908298}
+      RefRotation: {x: -0.49832836, y: 0.50166607, z: 0.49832836, w: 0.50166607}
+      Expressions:
+      - ExpressionName: Eye_L_Look_L
+        BlendShapeIndex: 30
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.0010545825
+        - -0.000011444092
+        - -0.00073339936
+        RotationArr:
+        - -0.000000059604645
+        - 0.00000020861626
+        - -0.3449704
+        - 0.93861353
+        Translate: {x: -0.0010545825, y: -0.000011444092, z: -0.00073339936}
+        Rotation: {x: -0.000000059604645, y: 0.00000020861626, z: -0.3449704, w: 0.93861353}
+      - ExpressionName: Eye_L_Look_R
+        BlendShapeIndex: 32
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.000000076293944
+        - -0.0000045776364
+        - -0.000689795
+        RotationArr:
+        - -0.00000032782555
+        - -0.00000044703484
+        - -0.3286054
+        - -0.9444673
+        Translate: {x: 0.000000076293944, y: -0.0000045776364, z: -0.000689795}
+        Rotation: {x: -0.00000032782555, y: -0.00000044703484, z: -0.3286054, w: -0.9444673}
+      - ExpressionName: Eye_L_Look_Up
+        BlendShapeIndex: 34
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.0003311491
+        - -0.000033721924
+        - 0.000005903244
+        RotationArr:
+        - 0.16749679
+        - 0.01807326
+        - 0.01641941
+        - -0.98557013
+        Translate: {x: 0.0003311491, y: -0.000033721924, z: 0.000005903244}
+        Rotation: {x: 0.16749679, y: 0.01807326, z: 0.01641941, w: -0.98557013}
+      - ExpressionName: Eye_L_Look_Down
+        BlendShapeIndex: 36
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.00000081062313
+        - 0.00054382323
+        - 0.0000010585785
+        RotationArr:
+        - 0.30348712
+        - -0.000000059604645
+        - -0.000000074505806
+        - 0.9528355
+        Translate: {x: 0.00000081062313, y: 0.00054382323, z: 0.0000010585785}
+        Rotation: {x: 0.30348712, y: -0.000000059604645, z: -0.000000074505806, w: 0.9528355}
+    - BoneName: CC_Base_R_Eye
+      BoneTransform: {fileID: 8390305186374075808}
+      BoneMatch: 1
+      RefPositionArr:
+      - 0.07397223
+      - 0.07435394
+      - -0.029065363
+      RefRotationArr:
+      - 0.5000003
+      - -0.49999976
+      - -0.5000003
+      - -0.49999976
+      RefPosition: {x: 0.07397223, y: 0.07435394, z: -0.029065363}
+      RefRotation: {x: 0.5000003, y: -0.49999976, z: -0.5000003, w: -0.49999976}
+      Expressions:
+      - ExpressionName: Eye_R_Look_L
+        BlendShapeIndex: 31
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.000000047683713
+        - -0.0000051879883
+        - -0.00000008106232
+        RotationArr:
+        - 0.00004976988
+        - 0.00004801154
+        - -0.30376968
+        - 0.9527455
+        Translate: {x: -0.000000047683713, y: -0.0000051879883, z: -0.00000008106232}
+        Rotation: {x: 0.00004976988, y: 0.00004801154, z: -0.30376968, w: 0.9527455}
+      - ExpressionName: Eye_R_Look_R
+        BlendShapeIndex: 33
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.0010552787
+        - -0.000014038085
+        - 0.0007323169
+        RotationArr:
+        - -0.00000008940697
+        - 0.0000005364418
+        - -0.3449705
+        - -0.93861353
+        Translate: {x: -0.0010552787, y: -0.000014038085, z: 0.0007323169}
+        Rotation: {x: -0.00000008940697, y: 0.0000005364418, z: -0.3449705, w: -0.93861353}
+      - ExpressionName: Eye_R_Look_Up
+        BlendShapeIndex: 35
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.00033118724
+        - -0.0000340271
+        - -0.000005686283
+        RotationArr:
+        - 0.16749631
+        - -0.01807329
+        - -0.01641956
+        - -0.98557025
+        Translate: {x: 0.00033118724, y: -0.0000340271, z: -0.000005686283}
+        Rotation: {x: 0.16749631, y: -0.01807329, z: -0.01641956, w: -0.98557025}
+      - ExpressionName: Eye_R_Look_Down
+        BlendShapeIndex: 37
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.00000084400176
+        - 0.0005441284
+        - 0.000001013279
+        RotationArr:
+        - 0.30348733
+        - -0.00000025331974
+        - -0.00000014901161
+        - 0.95283556
+        Translate: {x: 0.00000084400176, y: 0.0005441284, z: 0.000001013279}
+        Rotation: {x: 0.30348733, y: -0.00000025331974, z: -0.00000014901161, w: 0.95283556}
+    - BoneName: CC_Base_Tongue01
+      BoneTransform: {fileID: 2990583905837462321}
+      BoneMatch: 4
+      RefPositionArr:
+      - -0.029206945
+      - 0.009399719
+      - 0.00040024013
+      RefRotationArr:
+      - -0.0009875922
+      - 0.00010804531
+      - -0.07120304
+      - 0.9974614
+      RefPosition: {x: -0.029206945, y: 0.009399719, z: 0.00040024013}
+      RefRotation: {x: -0.0009875922, y: 0.00010804531, z: -0.07120304, w: 0.9974614}
+      Expressions:
+      - ExpressionName: Jaw_Up
+        BlendShapeIndex: 160
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.0000041031835
+        - 0.0000021362305
+        - 0.0000000043213366
+        RotationArr:
+        - 0.00000014054149
+        - 0.00000009773066
+        - -0.0008932211
+        - 0.99999964
+        Translate: {x: -0.0000041031835, y: 0.0000021362305, z: 0.0000000043213366}
+        Rotation: {x: 0.00000014054149, y: 0.00000009773066, z: -0.0008932211, w: 0.99999964}
+      - ExpressionName: Jaw_Down
+        BlendShapeIndex: 161
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.000006906986
+        - 0.0000036621093
+        - 0.000000008493662
+        RotationArr:
+        - 0.00000014688067
+        - 0.00000016835111
+        - -0.0015037818
+        - 0.99999887
+        Translate: {x: -0.000006906986, y: 0.0000036621093, z: 0.000000008493662}
+        Rotation: {x: 0.00000014688067, y: 0.00000016835111, z: -0.0015037818, w: 0.99999887}
+    - BoneName: head
+      BoneTransform: {fileID: 2685334621420599236}
+      BoneMatch: 6
+      RefPositionArr:
+      - 0.000000007152557
+      - 0.07397094
+      - 0.00000045776366
+      RefRotationArr:
+      - -0.11974532
+      - -0.000037045695
+      - -0.00000054466176
+      - 0.99280465
+      RefPosition: {x: 0.000000007152557, y: 0.07397094, z: 0.00000045776366}
+      RefRotation: {x: -0.11974532, y: -0.000037045695, z: -0.00000054466176, w: 0.99280465}
+      Expressions:
+      - ExpressionName: Head_Turn_Up
+        BlendShapeIndex: 166
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -2.9802322e-10
+        - 0
+        - 0.000000076293944
+        RotationArr:
+        - -0.25881892
+        - 0.0000000016581225
+        - 0.0000000011750672
+        - 0.9659259
+        Translate: {x: -2.9802322e-10, y: 0, z: 0.000000076293944}
+        Rotation: {x: -0.25881892, y: 0.0000000016581225, z: 0.0000000011750672, w: 0.9659259}
+      - ExpressionName: Head_Turn_Down
+        BlendShapeIndex: 167
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -2.9802322e-10
+        - 0
+        - 0.000000076293944
+        RotationArr:
+        - 0.15643468
+        - 1.10162546e-10
+        - 5.5592864e-11
+        - 0.98768836
+        Translate: {x: -2.9802322e-10, y: 0, z: 0.000000076293944}
+        Rotation: {x: 0.15643468, y: 1.10162546e-10, z: 5.5592864e-11, w: 0.98768836}
+      - ExpressionName: Head_Turn_L
+        BlendShapeIndex: 168
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.018118862
+        - 0.00006698608
+        - -0.000023994446
+        RotationArr:
+        - -0.00083032105
+        - -0.3173121
+        - 0.0024825574
+        - 0.9483176
+        Translate: {x: -0.018118862, y: 0.00006698608, z: -0.000023994446}
+        Rotation: {x: -0.00083032105, y: -0.3173121, z: 0.0024825574, w: 0.9483176}
+      - ExpressionName: Head_Turn_R
+        BlendShapeIndex: 169
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.018118512
+        - 0.0001448059
+        - -0.000024490357
+        RotationArr:
+        - -0.00084211817
+        - 0.31731206
+        - -0.0024795474
+        - 0.9483175
+        Translate: {x: 0.018118512, y: 0.0001448059, z: -0.000024490357}
+        Rotation: {x: -0.00084211817, y: 0.31731206, z: -0.0024795474, w: 0.9483175}
+      - ExpressionName: Head_Tilt_L
+        BlendShapeIndex: 170
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.009661321
+        - -0.0021165465
+        - 0.0008825302
+        RotationArr:
+        - -0.0000009611837
+        - -0.000000031664968
+        - 0.20273167
+        - 0.9792343
+        Translate: {x: -0.009661321, y: -0.0021165465, z: 0.0008825302}
+        Rotation: {x: -0.0000009611837, y: -0.000000031664968, z: 0.20273167, w: 0.9792343}
+      - ExpressionName: Head_Tilt_R
+        BlendShapeIndex: 171
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.009600163
+        - -0.0022154236
+        - 0.0009079361
+        RotationArr:
+        - 0.00000037273668
+        - 0.00000009126961
+        - -0.20272762
+        - 0.9792352
+        Translate: {x: 0.009600163, y: -0.0022154236, z: 0.0009079361}
+        Rotation: {x: 0.00000037273668, y: 0.00000009126961, z: -0.20272762, w: 0.9792352}
+      - ExpressionName: Head_L
+        BlendShapeIndex: 172
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.030199496
+        - 0.00007247925
+        - -0.000042648313
+        RotationArr:
+        - 0.000000052154075
+        - -7.237588e-11
+        - 2.6147973e-10
+        - 1
+        Translate: {x: -0.030199496, y: 0.00007247925, z: -0.000042648313}
+        Rotation: {x: 0.000000052154075, y: -7.237588e-11, z: 2.6147973e-10, w: 1}
+      - ExpressionName: Head_R
+        BlendShapeIndex: 173
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.030198341
+        - -0.00015014649
+        - 0.000047683716
+        RotationArr:
+        - 0.000000052154075
+        - -7.237588e-11
+        - 2.6147973e-10
+        - 1
+        Translate: {x: 0.030198341, y: -0.00015014649, z: 0.000047683716}
+        Rotation: {x: 0.000000052154075, y: -7.237588e-11, z: 2.6147973e-10, w: 1}
+      - ExpressionName: Head_Forward
+        BlendShapeIndex: 174
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - 0.000018259585
+        - 0.0057543945
+        - 0.043589666
+        RotationArr:
+        - 0.000000052154075
+        - -7.237588e-11
+        - 2.6147973e-10
+        - 1
+        Translate: {x: 0.000018259585, y: 0.0057543945, z: 0.043589666}
+        Rotation: {x: 0.000000052154075, y: -7.237588e-11, z: 2.6147973e-10, w: 1}
+      - ExpressionName: Head_Backward
+        BlendShapeIndex: 175
+        isViseme: 0
+        isConstraint: 0
+        TranslateArr:
+        - -0.000015318692
+        - -0.0050102235
+        - -0.038334273
+        RotationArr:
+        - 0.000000052154075
+        - -7.237588e-11
+        - 2.6147973e-10
+        - 1
+        Translate: {x: -0.000015318692, y: -0.0050102235, z: -0.038334273}
+        Rotation: {x: 0.000000052154075, y: -7.237588e-11, z: 2.6147973e-10, w: 1}
+  constraintList: []
+  limitList: []
+  constraintTargets: 
+  blendShapeTargets:
+  - {fileID: 3817171349443059048}
+  - {fileID: 6984967216060433036}
+  blendShapeCount: 189
+  atlas:
+  - idx: 0
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 0
+    - smr: {fileID: 6984967216060433036}
+      idx: 0
+  - idx: 1
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 1
+    - smr: {fileID: 6984967216060433036}
+      idx: 1
+  - idx: 2
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 2
+    - smr: {fileID: 6984967216060433036}
+      idx: 2
+  - idx: 3
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 3
+    - smr: {fileID: 6984967216060433036}
+      idx: 3
+  - idx: 4
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 4
+    - smr: {fileID: 6984967216060433036}
+      idx: 4
+  - idx: 5
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 5
+    - smr: {fileID: 6984967216060433036}
+      idx: 5
+  - idx: 6
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 6
+    - smr: {fileID: 6984967216060433036}
+      idx: 6
+  - idx: 7
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 7
+    - smr: {fileID: 6984967216060433036}
+      idx: 7
+  - idx: 8
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 8
+    - smr: {fileID: 6984967216060433036}
+      idx: 8
+  - idx: 9
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 9
+    - smr: {fileID: 6984967216060433036}
+      idx: 9
+  - idx: 10
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 10
+    - smr: {fileID: 6984967216060433036}
+      idx: 10
+  - idx: 11
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 11
+    - smr: {fileID: 6984967216060433036}
+      idx: 11
+  - idx: 12
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 12
+    - smr: {fileID: 6984967216060433036}
+      idx: 12
+  - idx: 13
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 13
+    - smr: {fileID: 6984967216060433036}
+      idx: 13
+  - idx: 14
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 14
+    - smr: {fileID: 6984967216060433036}
+      idx: 14
+  - idx: 15
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 15
+    - smr: {fileID: 6984967216060433036}
+      idx: 15
+  - idx: 16
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 16
+    - smr: {fileID: 6984967216060433036}
+      idx: 16
+  - idx: 17
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 17
+    - smr: {fileID: 6984967216060433036}
+      idx: 17
+  - idx: 18
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 18
+    - smr: {fileID: 6984967216060433036}
+      idx: 18
+  - idx: 19
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 19
+    - smr: {fileID: 6984967216060433036}
+      idx: 19
+  - idx: 20
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 20
+    - smr: {fileID: 6984967216060433036}
+      idx: 20
+  - idx: 21
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 21
+    - smr: {fileID: 6984967216060433036}
+      idx: 21
+  - idx: 22
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 22
+    - smr: {fileID: 6984967216060433036}
+      idx: 22
+  - idx: 23
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 23
+    - smr: {fileID: 6984967216060433036}
+      idx: 23
+  - idx: 24
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 24
+    - smr: {fileID: 6984967216060433036}
+      idx: 24
+  - idx: 25
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 25
+    - smr: {fileID: 6984967216060433036}
+      idx: 25
+  - idx: 26
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 26
+    - smr: {fileID: 6984967216060433036}
+      idx: 26
+  - idx: 27
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 27
+    - smr: {fileID: 6984967216060433036}
+      idx: 27
+  - idx: 28
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 28
+    - smr: {fileID: 6984967216060433036}
+      idx: 28
+  - idx: 29
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 29
+    - smr: {fileID: 6984967216060433036}
+      idx: 29
+  - idx: 30
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 30
+    - smr: {fileID: 6984967216060433036}
+      idx: 30
+  - idx: 31
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 31
+    - smr: {fileID: 6984967216060433036}
+      idx: 31
+  - idx: 32
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 32
+    - smr: {fileID: 6984967216060433036}
+      idx: 32
+  - idx: 33
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 33
+    - smr: {fileID: 6984967216060433036}
+      idx: 33
+  - idx: 34
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 34
+    - smr: {fileID: 6984967216060433036}
+      idx: 34
+  - idx: 35
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 35
+    - smr: {fileID: 6984967216060433036}
+      idx: 35
+  - idx: 36
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 36
+    - smr: {fileID: 6984967216060433036}
+      idx: 36
+  - idx: 37
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 37
+    - smr: {fileID: 6984967216060433036}
+      idx: 37
+  - idx: 38
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 38
+    - smr: {fileID: 6984967216060433036}
+      idx: 38
+  - idx: 39
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 39
+    - smr: {fileID: 6984967216060433036}
+      idx: 39
+  - idx: 40
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 40
+    - smr: {fileID: 6984967216060433036}
+      idx: 40
+  - idx: 41
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 41
+    - smr: {fileID: 6984967216060433036}
+      idx: 41
+  - idx: 42
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 42
+    - smr: {fileID: 6984967216060433036}
+      idx: 42
+  - idx: 43
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 43
+    - smr: {fileID: 6984967216060433036}
+      idx: 43
+  - idx: 44
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 44
+    - smr: {fileID: 6984967216060433036}
+      idx: 44
+  - idx: 45
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 45
+    - smr: {fileID: 6984967216060433036}
+      idx: 45
+  - idx: 46
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 46
+    - smr: {fileID: 6984967216060433036}
+      idx: 46
+  - idx: 47
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 47
+    - smr: {fileID: 6984967216060433036}
+      idx: 47
+  - idx: 48
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 48
+    - smr: {fileID: 6984967216060433036}
+      idx: 48
+  - idx: 49
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 49
+    - smr: {fileID: 6984967216060433036}
+      idx: 49
+  - idx: 50
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 50
+    - smr: {fileID: 6984967216060433036}
+      idx: 50
+  - idx: 51
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 51
+    - smr: {fileID: 6984967216060433036}
+      idx: 51
+  - idx: 52
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 52
+    - smr: {fileID: 6984967216060433036}
+      idx: 52
+  - idx: 53
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 53
+    - smr: {fileID: 6984967216060433036}
+      idx: 53
+  - idx: 54
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 54
+    - smr: {fileID: 6984967216060433036}
+      idx: 54
+  - idx: 55
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 55
+    - smr: {fileID: 6984967216060433036}
+      idx: 55
+  - idx: 56
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 56
+    - smr: {fileID: 6984967216060433036}
+      idx: 56
+  - idx: 57
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 57
+    - smr: {fileID: 6984967216060433036}
+      idx: 57
+  - idx: 58
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 58
+    - smr: {fileID: 6984967216060433036}
+      idx: 58
+  - idx: 59
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 59
+    - smr: {fileID: 6984967216060433036}
+      idx: 59
+  - idx: 60
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 60
+    - smr: {fileID: 6984967216060433036}
+      idx: 60
+  - idx: 61
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 61
+    - smr: {fileID: 6984967216060433036}
+      idx: 61
+  - idx: 62
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 62
+    - smr: {fileID: 6984967216060433036}
+      idx: 62
+  - idx: 63
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 63
+    - smr: {fileID: 6984967216060433036}
+      idx: 63
+  - idx: 64
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 64
+    - smr: {fileID: 6984967216060433036}
+      idx: 64
+  - idx: 65
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 65
+    - smr: {fileID: 6984967216060433036}
+      idx: 65
+  - idx: 66
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 66
+    - smr: {fileID: 6984967216060433036}
+      idx: 66
+  - idx: 67
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 67
+    - smr: {fileID: 6984967216060433036}
+      idx: 67
+  - idx: 68
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 68
+    - smr: {fileID: 6984967216060433036}
+      idx: 68
+  - idx: 69
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 69
+    - smr: {fileID: 6984967216060433036}
+      idx: 69
+  - idx: 70
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 70
+    - smr: {fileID: 6984967216060433036}
+      idx: 70
+  - idx: 71
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 71
+    - smr: {fileID: 6984967216060433036}
+      idx: 71
+  - idx: 72
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 72
+    - smr: {fileID: 6984967216060433036}
+      idx: 72
+  - idx: 73
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 73
+    - smr: {fileID: 6984967216060433036}
+      idx: 73
+  - idx: 74
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 74
+    - smr: {fileID: 6984967216060433036}
+      idx: 74
+  - idx: 75
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 75
+    - smr: {fileID: 6984967216060433036}
+      idx: 75
+  - idx: 76
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 76
+    - smr: {fileID: 6984967216060433036}
+      idx: 76
+  - idx: 77
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 77
+    - smr: {fileID: 6984967216060433036}
+      idx: 77
+  - idx: 78
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 78
+    - smr: {fileID: 6984967216060433036}
+      idx: 78
+  - idx: 79
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 79
+    - smr: {fileID: 6984967216060433036}
+      idx: 79
+  - idx: 80
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 80
+    - smr: {fileID: 6984967216060433036}
+      idx: 80
+  - idx: 81
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 81
+    - smr: {fileID: 6984967216060433036}
+      idx: 81
+  - idx: 82
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 82
+    - smr: {fileID: 6984967216060433036}
+      idx: 82
+  - idx: 83
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 83
+    - smr: {fileID: 6984967216060433036}
+      idx: 83
+  - idx: 84
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 84
+    - smr: {fileID: 6984967216060433036}
+      idx: 84
+  - idx: 85
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 85
+    - smr: {fileID: 6984967216060433036}
+      idx: 85
+  - idx: 86
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 86
+    - smr: {fileID: 6984967216060433036}
+      idx: 86
+  - idx: 87
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 87
+    - smr: {fileID: 6984967216060433036}
+      idx: 87
+  - idx: 88
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 88
+    - smr: {fileID: 6984967216060433036}
+      idx: 88
+  - idx: 89
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 89
+    - smr: {fileID: 6984967216060433036}
+      idx: 89
+  - idx: 90
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 90
+    - smr: {fileID: 6984967216060433036}
+      idx: 90
+  - idx: 91
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 91
+    - smr: {fileID: 6984967216060433036}
+      idx: 91
+  - idx: 92
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 92
+    - smr: {fileID: 6984967216060433036}
+      idx: 92
+  - idx: 93
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 93
+    - smr: {fileID: 6984967216060433036}
+      idx: 93
+  - idx: 94
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 94
+    - smr: {fileID: 6984967216060433036}
+      idx: 94
+  - idx: 95
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 95
+    - smr: {fileID: 6984967216060433036}
+      idx: 95
+  - idx: 96
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 96
+    - smr: {fileID: 6984967216060433036}
+      idx: 96
+  - idx: 97
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 97
+    - smr: {fileID: 6984967216060433036}
+      idx: 97
+  - idx: 98
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 98
+    - smr: {fileID: 6984967216060433036}
+      idx: 98
+  - idx: 99
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 99
+    - smr: {fileID: 6984967216060433036}
+      idx: 99
+  - idx: 100
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 100
+    - smr: {fileID: 6984967216060433036}
+      idx: 100
+  - idx: 101
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 101
+    - smr: {fileID: 6984967216060433036}
+      idx: 101
+  - idx: 102
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 102
+    - smr: {fileID: 6984967216060433036}
+      idx: 102
+  - idx: 103
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 103
+    - smr: {fileID: 6984967216060433036}
+      idx: 103
+  - idx: 104
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 104
+    - smr: {fileID: 6984967216060433036}
+      idx: 104
+  - idx: 105
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 105
+    - smr: {fileID: 6984967216060433036}
+      idx: 105
+  - idx: 106
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 106
+    - smr: {fileID: 6984967216060433036}
+      idx: 106
+  - idx: 107
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 107
+    - smr: {fileID: 6984967216060433036}
+      idx: 107
+  - idx: 108
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 108
+    - smr: {fileID: 6984967216060433036}
+      idx: 108
+  - idx: 109
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 109
+    - smr: {fileID: 6984967216060433036}
+      idx: 109
+  - idx: 110
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 110
+    - smr: {fileID: 6984967216060433036}
+      idx: 110
+  - idx: 111
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 111
+    - smr: {fileID: 6984967216060433036}
+      idx: 111
+  - idx: 112
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 112
+    - smr: {fileID: 6984967216060433036}
+      idx: 112
+  - idx: 113
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 113
+    - smr: {fileID: 6984967216060433036}
+      idx: 113
+  - idx: 114
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 114
+    - smr: {fileID: 6984967216060433036}
+      idx: 114
+  - idx: 115
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 115
+    - smr: {fileID: 6984967216060433036}
+      idx: 115
+  - idx: 116
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 116
+    - smr: {fileID: 6984967216060433036}
+      idx: 116
+  - idx: 117
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 117
+    - smr: {fileID: 6984967216060433036}
+      idx: 117
+  - idx: 118
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 118
+    - smr: {fileID: 6984967216060433036}
+      idx: 118
+  - idx: 119
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 119
+    - smr: {fileID: 6984967216060433036}
+      idx: 119
+  - idx: 120
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 120
+    - smr: {fileID: 6984967216060433036}
+      idx: 120
+  - idx: 121
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 121
+    - smr: {fileID: 6984967216060433036}
+      idx: 121
+  - idx: 122
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 122
+    - smr: {fileID: 6984967216060433036}
+      idx: 122
+  - idx: 123
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 123
+    - smr: {fileID: 6984967216060433036}
+      idx: 123
+  - idx: 124
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 124
+    - smr: {fileID: 6984967216060433036}
+      idx: 124
+  - idx: 125
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 125
+    - smr: {fileID: 6984967216060433036}
+      idx: 125
+  - idx: 126
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 126
+    - smr: {fileID: 6984967216060433036}
+      idx: 126
+  - idx: 127
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 127
+    - smr: {fileID: 6984967216060433036}
+      idx: 127
+  - idx: 128
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 128
+    - smr: {fileID: 6984967216060433036}
+      idx: 128
+  - idx: 129
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 129
+    - smr: {fileID: 6984967216060433036}
+      idx: 129
+  - idx: 130
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 130
+    - smr: {fileID: 6984967216060433036}
+      idx: 130
+  - idx: 131
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 131
+    - smr: {fileID: 6984967216060433036}
+      idx: 131
+  - idx: 132
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 132
+    - smr: {fileID: 6984967216060433036}
+      idx: 132
+  - idx: 133
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 133
+    - smr: {fileID: 6984967216060433036}
+      idx: 133
+  - idx: 134
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 134
+    - smr: {fileID: 6984967216060433036}
+      idx: 134
+  - idx: 135
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 135
+    - smr: {fileID: 6984967216060433036}
+      idx: 135
+  - idx: 136
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 136
+    - smr: {fileID: 6984967216060433036}
+      idx: 136
+  - idx: 137
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 137
+    - smr: {fileID: 6984967216060433036}
+      idx: 137
+  - idx: 138
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 138
+    - smr: {fileID: 6984967216060433036}
+      idx: 138
+  - idx: 139
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 139
+    - smr: {fileID: 6984967216060433036}
+      idx: 139
+  - idx: 140
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 140
+    - smr: {fileID: 6984967216060433036}
+      idx: 140
+  - idx: 141
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 141
+    - smr: {fileID: 6984967216060433036}
+      idx: 141
+  - idx: 142
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 142
+    - smr: {fileID: 6984967216060433036}
+      idx: 142
+  - idx: 143
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 143
+    - smr: {fileID: 6984967216060433036}
+      idx: 143
+  - idx: 144
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 144
+    - smr: {fileID: 6984967216060433036}
+      idx: 144
+  - idx: 145
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 145
+    - smr: {fileID: 6984967216060433036}
+      idx: 145
+  - idx: 146
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 146
+    - smr: {fileID: 6984967216060433036}
+      idx: 146
+  - idx: 147
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 147
+    - smr: {fileID: 6984967216060433036}
+      idx: 147
+  - idx: 148
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 148
+    - smr: {fileID: 6984967216060433036}
+      idx: 148
+  - idx: 149
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 149
+    - smr: {fileID: 6984967216060433036}
+      idx: 149
+  - idx: 150
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 150
+    - smr: {fileID: 6984967216060433036}
+      idx: 150
+  - idx: 151
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 151
+    - smr: {fileID: 6984967216060433036}
+      idx: 151
+  - idx: 152
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 152
+    - smr: {fileID: 6984967216060433036}
+      idx: 152
+  - idx: 153
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 153
+    - smr: {fileID: 6984967216060433036}
+      idx: 153
+  - idx: 154
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 154
+    - smr: {fileID: 6984967216060433036}
+      idx: 154
+  - idx: 155
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 155
+    - smr: {fileID: 6984967216060433036}
+      idx: 155
+  - idx: 156
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 156
+    - smr: {fileID: 6984967216060433036}
+      idx: 156
+  - idx: 157
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 157
+    - smr: {fileID: 6984967216060433036}
+      idx: 157
+  - idx: 158
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 158
+    - smr: {fileID: 6984967216060433036}
+      idx: 158
+  - idx: 159
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 159
+    - smr: {fileID: 6984967216060433036}
+      idx: 159
+  - idx: 160
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 160
+    - smr: {fileID: 6984967216060433036}
+      idx: 160
+  - idx: 161
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 161
+    - smr: {fileID: 6984967216060433036}
+      idx: 161
+  - idx: 162
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 162
+    - smr: {fileID: 6984967216060433036}
+      idx: 162
+  - idx: 163
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 163
+    - smr: {fileID: 6984967216060433036}
+      idx: 163
+  - idx: 164
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 164
+    - smr: {fileID: 6984967216060433036}
+      idx: 164
+  - idx: 165
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 165
+    - smr: {fileID: 6984967216060433036}
+      idx: 165
+  - idx: 166
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 166
+    - smr: {fileID: 6984967216060433036}
+      idx: 166
+  - idx: 167
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 167
+    - smr: {fileID: 6984967216060433036}
+      idx: 167
+  - idx: 168
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 168
+    - smr: {fileID: 6984967216060433036}
+      idx: 168
+  - idx: 169
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 169
+    - smr: {fileID: 6984967216060433036}
+      idx: 169
+  - idx: 170
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 170
+    - smr: {fileID: 6984967216060433036}
+      idx: 170
+  - idx: 171
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 171
+    - smr: {fileID: 6984967216060433036}
+      idx: 171
+  - idx: 172
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 172
+    - smr: {fileID: 6984967216060433036}
+      idx: 172
+  - idx: 173
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 173
+    - smr: {fileID: 6984967216060433036}
+      idx: 173
+  - idx: 174
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 174
+    - smr: {fileID: 6984967216060433036}
+      idx: 174
+  - idx: 175
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 175
+    - smr: {fileID: 6984967216060433036}
+      idx: 175
+  - idx: 176
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 176
+    - smr: {fileID: 6984967216060433036}
+      idx: 176
+  - idx: 177
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 177
+    - smr: {fileID: 6984967216060433036}
+      idx: 177
+  - idx: 178
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 178
+    - smr: {fileID: 6984967216060433036}
+      idx: 178
+  - idx: 179
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 179
+    - smr: {fileID: 6984967216060433036}
+      idx: 179
+  - idx: 180
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 180
+    - smr: {fileID: 6984967216060433036}
+      idx: 180
+  - idx: 181
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 181
+    - smr: {fileID: 6984967216060433036}
+      idx: 181
+  - idx: 182
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 182
+    - smr: {fileID: 6984967216060433036}
+      idx: 182
+  - idx: 183
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 183
+    - smr: {fileID: 6984967216060433036}
+      idx: 183
+  - idx: 184
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 184
+    - smr: {fileID: 6984967216060433036}
+      idx: 184
+  - idx: 185
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 185
+    - smr: {fileID: 6984967216060433036}
+      idx: 185
+  - idx: 186
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 186
+    - smr: {fileID: 6984967216060433036}
+      idx: 186
+  - idx: 187
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 187
+    - smr: {fileID: 6984967216060433036}
+      idx: 187
+  - idx: 188
+    lastValue: -1000
+    blendTargets:
+    - smr: {fileID: 3817171349443059048}
+      idx: 188
+    - smr: {fileID: 6984967216060433036}
+      idx: 188
+  glossaryString: '{"ExpressionsByBone":[{"BoneName":"CC_Base_JawRoot","RefPositionArr":[0.0243621543,0.0106288148,-0.000225019743],"RefRotationArr":[3.419572E-06,-6.81997044E-05,1.0,-1.71771553E-05],"Expressions":[{"ExpressionName":"V_Open","BlendShapeIndex":1,"isViseme":true,"isConstraint":false,"TranslateArr":[-9.536743E-09,1.52587887E-07,1.490116E-09],"RotationArr":[-3.18104867E-08,4.171875E-08,-0.13919048,0.990265667]},{"ExpressionName":"Jaw_Open","BlendShapeIndex":155,"isViseme":false,"isConstraint":false,"TranslateArr":[-0.002887256,-0.00379760726,-7.487535E-06],"RotationArr":[0.000456669,3.05952854E-05,-0.205691472,0.9786168]},{"ExpressionName":"Jaw_Forward","BlendShapeIndex":156,"isViseme":false,"isConstraint":false,"TranslateArr":[0.00669588055,-5.17272929E-05,1.53774017E-05],"RotationArr":[-1.18801836E-07,5.916104E-08,-6.146467E-08,1.0]},{"ExpressionName":"Jaw_Backward","BlendShapeIndex":157,"isViseme":false,"isConstraint":false,"TranslateArr":[-0.00446393341,3.479004E-05,-1.02490185E-05],"RotationArr":[-1.18801836E-07,5.916104E-08,-6.146467E-08,1.0]},{"ExpressionName":"Jaw_L","BlendShapeIndex":158,"isViseme":false,"isConstraint":false,"TranslateArr":[-5.92803954E-05,-7.56835943E-05,0.00707301],"RotationArr":[-1.18801836E-07,5.916104E-08,-6.146467E-08,1.0]},{"ExpressionName":"Jaw_R","BlendShapeIndex":159,"isViseme":false,"isConstraint":false,"TranslateArr":[-2.65860544E-05,-4.88281221E-05,-0.007073439],"RotationArr":[-1.18801836E-07,5.916104E-08,-6.146467E-08,1.0]},{"ExpressionName":"Jaw_Up","BlendShapeIndex":160,"isViseme":false,"isConstraint":false,"TranslateArr":[1.32203095E-05,0.002088623,4.021227E-06],"RotationArr":[-1.18801836E-07,5.916104E-08,-6.146467E-08,1.0]},{"ExpressionName":"Jaw_Down","BlendShapeIndex":161,"isViseme":false,"isConstraint":false,"TranslateArr":[-3.258705E-05,-0.005140991,-9.892285E-06],"RotationArr":[-1.18801836E-07,5.916104E-08,-6.146467E-08,1.0]}]},{"BoneName":"CC_Base_L_Eye","RefPositionArr":[0.0739286244,0.07297592,0.0309082977],"RefRotationArr":[-0.498328358,0.501666069,0.498328358,0.501666069],"Expressions":[{"ExpressionName":"Eye_L_Look_L","BlendShapeIndex":30,"isViseme":false,"isConstraint":false,"TranslateArr":[-0.00105458254,-1.14440918E-05,-0.000733399356],"RotationArr":[-5.96046448E-08,2.08616257E-07,-0.3449704,0.938613534]},{"ExpressionName":"Eye_L_Look_R","BlendShapeIndex":32,"isViseme":false,"isConstraint":false,"TranslateArr":[7.62939436E-08,-4.57763645E-06,-0.000689795],"RotationArr":[-3.27825546E-07,-4.47034836E-07,-0.3286054,-0.9444673]},{"ExpressionName":"Eye_L_Look_Up","BlendShapeIndex":34,"isViseme":false,"isConstraint":false,"TranslateArr":[0.0003311491,-3.37219244E-05,5.903244E-06],"RotationArr":[0.167496786,0.01807326,0.01641941,-0.985570133]},{"ExpressionName":"Eye_L_Look_Down","BlendShapeIndex":36,"isViseme":false,"isConstraint":false,"TranslateArr":[8.10623135E-07,0.000543823233,1.0585785E-06],"RotationArr":[0.303487122,-5.96046448E-08,-7.4505806E-08,0.9528355]}]},{"BoneName":"CC_Base_R_Eye","RefPositionArr":[0.07397223,0.07435394,-0.0290653631],"RefRotationArr":[0.5000003,-0.499999762,-0.5000003,-0.499999762],"Expressions":[{"ExpressionName":"Eye_R_Look_L","BlendShapeIndex":31,"isViseme":false,"isConstraint":false,"TranslateArr":[-4.7683713E-08,-5.18798834E-06,-8.106232E-08],"RotationArr":[4.976988E-05,4.801154E-05,-0.303769678,0.9527455]},{"ExpressionName":"Eye_R_Look_R","BlendShapeIndex":33,"isViseme":false,"isConstraint":false,"TranslateArr":[-0.0010552787,-1.40380853E-05,0.0007323169],"RotationArr":[-8.940697E-08,5.364418E-07,-0.3449705,-0.938613534]},{"ExpressionName":"Eye_R_Look_Up","BlendShapeIndex":35,"isViseme":false,"isConstraint":false,"TranslateArr":[0.000331187242,-3.40271E-05,-5.686283E-06],"RotationArr":[0.167496309,-0.01807329,-0.01641956,-0.985570252]},{"ExpressionName":"Eye_R_Look_Down","BlendShapeIndex":37,"isViseme":false,"isConstraint":false,"TranslateArr":[8.44001761E-07,0.0005441284,1.013279E-06],"RotationArr":[0.303487331,-2.5331974E-07,-1.49011612E-07,0.95283556]}]},{"BoneName":"CC_Base_Tongue01","RefPositionArr":[-0.0292069446,0.009399719,0.000400240126],"RefRotationArr":[-0.0009875922,0.000108045308,-0.07120304,0.9974614],"Expressions":[{"ExpressionName":"Jaw_Up","BlendShapeIndex":160,"isViseme":false,"isConstraint":false,"TranslateArr":[-4.10318353E-06,2.13623048E-06,4.32133662E-09],"RotationArr":[1.40541488E-07,9.773066E-08,-0.0008932211,0.999999642]},{"ExpressionName":"Jaw_Down","BlendShapeIndex":161,"isViseme":false,"isConstraint":false,"TranslateArr":[-6.906986E-06,3.66210929E-06,8.493662E-09],"RotationArr":[1.46880666E-07,1.68351107E-07,-0.00150378176,0.999998868]}]},{"BoneName":"head","RefPositionArr":[7.152557E-09,0.07397094,4.57763662E-07],"RefRotationArr":[-0.119745322,-3.70456946E-05,-5.44661759E-07,0.992804646],"Expressions":[{"ExpressionName":"Head_Turn_Up","BlendShapeIndex":166,"isViseme":false,"isConstraint":false,"TranslateArr":[-2.98023217E-10,0.0,7.62939436E-08],"RotationArr":[-0.258818924,1.65812253E-09,1.17506715E-09,0.9659259]},{"ExpressionName":"Head_Turn_Down","BlendShapeIndex":167,"isViseme":false,"isConstraint":false,"TranslateArr":[-2.98023217E-10,0.0,7.62939436E-08],"RotationArr":[0.156434685,1.10162546E-10,5.55928636E-11,0.987688363]},{"ExpressionName":"Head_Turn_L","BlendShapeIndex":168,"isViseme":false,"isConstraint":false,"TranslateArr":[-0.0181188621,6.698608E-05,-2.39944457E-05],"RotationArr":[-0.000830321049,-0.3173121,0.00248255744,0.9483176]},{"ExpressionName":"Head_Turn_R","BlendShapeIndex":169,"isViseme":false,"isConstraint":false,"TranslateArr":[0.0181185119,0.0001448059,-2.44903567E-05],"RotationArr":[-0.00084211817,0.317312062,-0.0024795474,0.9483175]},{"ExpressionName":"Head_Tilt_L","BlendShapeIndex":170,"isViseme":false,"isConstraint":false,"TranslateArr":[-0.009661321,-0.0021165465,0.0008825302],"RotationArr":[-9.611837E-07,-3.16649675E-08,0.202731669,0.9792343]},{"ExpressionName":"Head_Tilt_R","BlendShapeIndex":171,"isViseme":false,"isConstraint":false,"TranslateArr":[0.009600163,-0.00221542362,0.0009079361],"RotationArr":[3.72736679E-07,9.126961E-08,-0.202727616,0.9792352]},{"ExpressionName":"Head_L","BlendShapeIndex":172,"isViseme":false,"isConstraint":false,"TranslateArr":[-0.0301994961,7.247925E-05,-4.2648313E-05],"RotationArr":[5.21540748E-08,-7.237588E-11,2.61479727E-10,1.0]},{"ExpressionName":"Head_R","BlendShapeIndex":173,"isViseme":false,"isConstraint":false,"TranslateArr":[0.0301983412,-0.000150146487,4.76837158E-05],"RotationArr":[5.21540748E-08,-7.237588E-11,2.61479727E-10,1.0]},{"ExpressionName":"Head_Forward","BlendShapeIndex":174,"isViseme":false,"isConstraint":false,"TranslateArr":[1.8259585E-05,0.00575439446,0.0435896665],"RotationArr":[5.21540748E-08,-7.237588E-11,2.61479727E-10,1.0]},{"ExpressionName":"Head_Backward","BlendShapeIndex":175,"isViseme":false,"isConstraint":false,"TranslateArr":[-1.5318692E-05,-0.00501022348,-0.0383342728],"RotationArr":[5.21540748E-08,-7.237588E-11,2.61479727E-10,1.0]}]}]}'
+  constraintString: 
+  bonesSetup: 1
+  expressionsSetup: 1
+  constraintSetup: 0
+  bones: 1
+  expressions: 1
+  constraint: 0
+  amplify: 0
+  visemePower: 1
+  visemeScale: 1
+  visemesByRenderer:
+  - smr: {fileID: 8260081978961937624}
+    visemeIndicies: 0100000002000000030000000400000005000000060000000700000008000000090000000a0000000b0000000c0000000d0000000e0000000f000000870000008e000000
+    lastSetValues:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+  driveEyes: 1
+  driveJaw: 1
+  driveNeck: 1
+  driveTongue: 1
+  driveTeeth: 1
+  driveHead: 0
+--- !u!137 &8260081978961937624 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5197118176682910397, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8390305186374075808 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5678530765130376133, guid: 0f1b610b76a834f4f8825739355ad19f, type: 3}
+  m_PrefabInstance: {fileID: 4232939146169607781}
+  m_PrefabAsset: {fileID: 0}

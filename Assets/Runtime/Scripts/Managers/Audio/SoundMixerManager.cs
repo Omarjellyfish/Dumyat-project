@@ -11,9 +11,8 @@ namespace DumyatRuntime
         private const string MUSIC_VOLUME_KEY = "MusicVolume";
         private const string SOUND_FX_VOLUME_KEY = "SFXVolume";
 
-        private void Start()
+        private void Awake()
         {
-
             LoadAndApplyVolumeSettings();
         }
 
@@ -21,7 +20,8 @@ namespace DumyatRuntime
         public void SetMasterVolume(float volume)
         {
             float clampedVolume = Mathf.Clamp(volume, 0.0001f, 1f);
-            audioMixer.SetFloat(MASTER_VOLUME_KEY, Mathf.Log10(clampedVolume) * 20f);
+            SetMixerVolume(MASTER_VOLUME_KEY, clampedVolume);
+            AudioListener.volume = Mathf.Clamp01(volume);
 
             PlayerPrefs.SetFloat(MASTER_VOLUME_KEY, volume);
             PlayerPrefs.Save();
@@ -30,7 +30,7 @@ namespace DumyatRuntime
         public void SetMusicVolume(float volume)
         {
             float clampedVolume = Mathf.Clamp(volume, 0.0001f, 1f);
-            audioMixer.SetFloat(MUSIC_VOLUME_KEY, Mathf.Log10(clampedVolume) * 20f);
+            SetMixerVolume(MUSIC_VOLUME_KEY, clampedVolume);
 
             PlayerPrefs.SetFloat(MUSIC_VOLUME_KEY, volume);
             PlayerPrefs.Save();
@@ -39,7 +39,7 @@ namespace DumyatRuntime
         public void SetSoundFXVolume(float volume)
         {
             float clampedVolume = Mathf.Clamp(volume, 0.0001f, 1f);
-            audioMixer.SetFloat(SOUND_FX_VOLUME_KEY, Mathf.Log10(clampedVolume) * 20f);
+            SetMixerVolume(SOUND_FX_VOLUME_KEY, clampedVolume);
 
             PlayerPrefs.SetFloat(SOUND_FX_VOLUME_KEY, volume);
             PlayerPrefs.Save();
@@ -54,11 +54,27 @@ namespace DumyatRuntime
             float musicVol = PlayerPrefs.GetFloat(MUSIC_VOLUME_KEY, 1f);
             float sfxVol = PlayerPrefs.GetFloat(SOUND_FX_VOLUME_KEY, 1f);
 
-            audioMixer.SetFloat(MASTER_VOLUME_KEY, Mathf.Log10(Mathf.Clamp(masterVol, 0.0001f, 1f)) * 20f);
-            audioMixer.SetFloat(MUSIC_VOLUME_KEY, Mathf.Log10(Mathf.Clamp(musicVol, 0.0001f, 1f)) * 20f);
-            audioMixer.SetFloat(SOUND_FX_VOLUME_KEY, Mathf.Log10(Mathf.Clamp(sfxVol, 0.0001f, 1f)) * 20f);
+            SetMixerVolume(MASTER_VOLUME_KEY, Mathf.Clamp(masterVol, 0.0001f, 1f));
+            SetMixerVolume(MUSIC_VOLUME_KEY, Mathf.Clamp(musicVol, 0.0001f, 1f));
+            SetMixerVolume(SOUND_FX_VOLUME_KEY, Mathf.Clamp(sfxVol, 0.0001f, 1f));
+            AudioListener.volume = Mathf.Clamp01(masterVol);
         }
         #endregion
+
+        private void SetMixerVolume(string exposedParameterName, float linearVolume)
+        {
+            if (audioMixer == null)
+            {
+                Debug.LogWarning("SoundMixerManager: AudioMixer is not assigned.");
+                return;
+            }
+
+            bool applied = audioMixer.SetFloat(exposedParameterName, Mathf.Log10(linearVolume) * 20f);
+            if (!applied)
+            {
+                Debug.LogWarning($"SoundMixerManager: AudioMixer parameter '{exposedParameterName}' is not exposed or does not exist.");
+            }
+        }
 
         #region Public Getters (For initializing UI Sliders)
         public float GetSavedMasterVolume() => PlayerPrefs.GetFloat(MASTER_VOLUME_KEY, 1f);

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a010ad0c88c72e043aaa325262b851ca, type: 3}
+  m_Name: Build Tutorial Piece
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.QuestDefinitionSO
+  questID: Build_1_Chair
+  displayName: Build a chair
+  description: you should build one chair and validate it
+  sceneName: carpentar_room
+  triggerType: 0
+  targetCount: 1
+  targetAsset: {fileID: 0}
+  targetNameFallback: 
+  rewardDescription: Get ship Piece
+  reward: {fileID: 11400000, guid: c56be3ba69e1ba040868149440378658, type: 2}
+  persistenceKeysOnComplete:
+  - HasShipPiece1
+  - HasUnlockedRasElBar
