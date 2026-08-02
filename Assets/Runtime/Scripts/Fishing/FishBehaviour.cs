@@ -121,6 +121,8 @@ namespace DumyatRuntime
                 // }
                 fishArea.hookedRb.useGravity = true;
 
+                UpdateGravity();
+
                 Debug.Log(name + " reached the hook and is now hooked.");
 
                 return;
@@ -240,10 +242,25 @@ namespace DumyatRuntime
 
             Debug.Log($"{name} inside fish area = {inside}");
 
-            if (fishRb != null)
-            {
-                fishRb.useGravity = !inside;
-            }
+            UpdateGravity();
+        }
+
+        /// <summary>
+        /// Central authority for this fish's gravity state.
+        /// Rules:
+        /// - Outside the fish area: gravity ON (fish falls/behaves normally).
+        /// - Inside the fish area, not hooked: gravity OFF (fish "swims" via
+        ///   scripted movement).
+        /// - Inside the fish area AND hooked: gravity ON, so the hooked fish
+        ///   is pulled by the line/rig physics instead of floating in place.
+        /// Called whenever isInsideFishArea or isHooked changes.
+        /// </summary>
+        private void UpdateGravity()
+        {
+            if (fishRb == null)
+                return;
+
+            fishRb.useGravity = isHooked || !isInsideFishArea;
         }
     }
 }
