@@ -32,4 +32,30 @@ namespace DumyatRuntime
             Language = language;
         }
     }
+
+    /// <summary>Published whenever one of the audio mixer volume settings changes.</summary>
+    public readonly struct VolumeSettingsChangedEvent : IGameEvent
+    {
+        public readonly float MasterVolume;
+        public readonly float MusicVolume;
+        public readonly float SoundFXVolume;
+
+        public VolumeSettingsChangedEvent(float masterVolume, float musicVolume, float soundFXVolume)
+        {
+            MasterVolume = masterVolume;
+            MusicVolume = musicVolume;
+            SoundFXVolume = soundFXVolume;
+        }
+    }
+
+    /// <summary>Published when the main settings panel is opened or closed.</summary>
+    public readonly struct SettingsPanelToggledEvent : IGameEvent
+    {
+        public readonly bool IsOpen;
+
+        public SettingsPanelToggledEvent(bool isOpen)
+        {
+            IsOpen = isOpen;
+        }
+    }
 }

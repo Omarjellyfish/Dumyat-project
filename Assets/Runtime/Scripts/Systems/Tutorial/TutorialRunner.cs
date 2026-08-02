@@ -24,6 +24,7 @@ namespace DumyatRuntime
         private IEventService _eventService;
         private IHapticService _hapticService;
         private TutorialService _tutorialService;
+        private ISoundService _soundService;
 
         private TutorialSequenceSO _activeSequence;
         private int _currentStepIndex;
@@ -40,12 +41,13 @@ namespace DumyatRuntime
         public TutorialSequenceSO SceneTutorial => _autoStartSequence;
 
         [Inject]
-        private void Inject(IEventService eventService, IHapticService hapticService, ITutorialService tutorialService)
+        private void Inject(IEventService eventService, IHapticService hapticService, ITutorialService tutorialService, ISoundService soundService)
         {
             _eventService = eventService;
             _hapticService = hapticService;
             // Cache the concrete type for internal callback
             _tutorialService = tutorialService as TutorialService;
+            _soundService = soundService;
         }
 
         private void Start()
@@ -143,6 +145,12 @@ namespace DumyatRuntime
             if (step.VoiceLine != null)
             {
                 _eventService.Publish(new PlayDialogueEvent(step.VoiceLine, DialoguePriority.Normal));
+            }
+
+            // Play direct audio clip if assigned
+            if (step.Audio != null && _soundService != null)
+            {
+                _soundService.PlayVoiceLine(step.Audio, _hoverUI != null ? _hoverUI.transform : transform, 1f);
             }
 
             // Fire haptic on both hands if assigned

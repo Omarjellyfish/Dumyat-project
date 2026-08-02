@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faab39427066832489fca51809ed474f, type: 3}
+  m_Name: Tutorial Warsh Sequence 2
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DialogueSequenceSO
+  SequenceId: 2
+  Priority: 0
+  CanBeInterrupted: 1
+  ResumeAfterInterruption: 1
+  Lines:
+  - Character: {fileID: 11400000, guid: c5e97e5479374fb4385c7a648c1cba29, type: 2}
+    VoiceLineKey: 4
+    SubtitleText: allah ynwr aleek
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 200
+  - Character: {fileID: 11400000, guid: c5e97e5479374fb4385c7a648c1cba29, type: 2}
+    VoiceLineKey: 5
+    SubtitleText: kml b2a
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 11
+  ChoicePoints: []
