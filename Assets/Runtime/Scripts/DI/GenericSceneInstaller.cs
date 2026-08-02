@@ -16,7 +16,7 @@ namespace DumyatRuntime
     {
         public virtual void InstallBindings(ContainerBuilder containerBuilder)
         {
-            // Override this in derived classes to register scene-specific services
+            Register<SettingsManager, ISettingsService>(containerBuilder, null);
         }
 
         // Helper to register the serialized instance, or the first one found in the scene.
