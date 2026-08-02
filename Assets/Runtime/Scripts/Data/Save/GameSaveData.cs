@@ -14,5 +14,6 @@ namespace DumyatRuntime
         public WalletSaveData walletData = new WalletSaveData();
         public AchievementSaveData achievementData = new AchievementSaveData();
         public TutorialSaveData tutorialData = new TutorialSaveData();
+        public SessionSaveData sessionData = new SessionSaveData();
     }
 }

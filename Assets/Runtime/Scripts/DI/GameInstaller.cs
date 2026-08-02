@@ -23,6 +23,13 @@ namespace DumyatRuntime
         [SerializeField] private QuestDatabaseSO _questDatabase;
         [Tooltip("Achievement database, injected into AchievementService.")]
         [SerializeField] private AchievementDatabaseSO _achievementDatabase;
+        [Tooltip("Menu scene names, loading tips and the controls image, injected into GameSessionService.")]
+        [SerializeField] private MenuCatalogSO _menuCatalog;
+
+        [Header("Menus")]
+        [Tooltip("Loading overlay PREFAB (asset reference, not instantiated here). LoadingScreenPresenter " +
+                 "spawns it on the first scene load and keeps it alive across loads.")]
+        [SerializeField] private LoadingScreenView _loadingScreenViewPrefab;
 
         [Header("Global MonoBehaviour Services (Prefabs)")]
         [Tooltip("Pooled positional SFX prefab. Will be instantiated on launch.")]
@@ -123,6 +130,36 @@ namespace DumyatRuntime
             // Tutorial tracking — persists completion state, manages active sequences.
             containerBuilder.RegisterType(typeof(TutorialService), new[] { typeof(ITutorialService) },
                 Lifetime.Singleton, Resolution.Lazy);
+
+            // Menu content (scene names, loading tips, controls image).
+            if (_menuCatalog != null)
+                containerBuilder.RegisterValue(_menuCatalog, new[] { typeof(MenuCatalogSO) });
+            else
+                Debug.LogWarning("GameInstaller: MenuCatalog is not assigned; the menus will not be able to change scene.");
+
+            // Loading overlay prefab, registered as an ASSET reference. LoadingScreenPresenter
+            // instantiates it lazily; Reflex never touches it.
+            if (_loadingScreenViewPrefab != null)
+                containerBuilder.RegisterValue(_loadingScreenViewPrefab, new[] { typeof(LoadingScreenView) });
+            else
+                Debug.LogWarning("GameInstaller: LoadingScreenView prefab is not assigned; scene loads will show nothing.");
+
+            // Player options (audio levels, subtitle mode), persisted to PlayerPrefs.
+            // EAGER: saved volumes must reach the mixer and the subtitle mode must be published
+            // before the main menu or any caption presenter exists.
+            containerBuilder.RegisterType(typeof(SettingsService), new[] { typeof(ISettingsService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // New Game / Continue / Exit.
+            // EAGER: it subscribes to SceneManager.sceneLoaded to record the Continue target, which
+            // has to be live from the first scene, not from the first time a menu asks.
+            containerBuilder.RegisterType(typeof(GameSessionService), new[] { typeof(IGameSessionService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Persistent loading overlay. EAGER: it subscribes to SceneLoadBeginEvent, and nothing
+            // ever resolves it by hand.
+            containerBuilder.RegisterType(typeof(LoadingScreenPresenter), new[] { typeof(ILoadingScreenService) },
+                Lifetime.Singleton, Resolution.Eager);
 
             // Global MonoBehaviour services — registered as values.
             // Reflex does NOT instantiate the ProjectScope prefab. It only reads from it.

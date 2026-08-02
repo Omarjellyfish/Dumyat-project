@@ -39,20 +39,24 @@ namespace DumyatRuntime
         [SerializeField, Min(0.02f)] private float _recheckInterval = 0.2f;
 
         [Header("Feedback (optional)")]
-        [Tooltip("Played when a fish comes to rest on the scale.")]
+        [Tooltip("Played through ISoundService (pooled, on the SFX bus) when a fish comes to rest on the scale.")]
         [SerializeField] private AudioClip _placeSound;
-        [SerializeField] private AudioSource _audioSource;
+
+        [Range(0f, 1f)]
+        [SerializeField] private float _placeVolume = 1f;
 
         // Injected so the scale can announce content changes on the shared bus. Optional — a scale in a
         // scene without a ContainerScope simply won't publish (it still tracks fish locally for polling).
         private IEventService _events;
         private IHapticService _haptics;
+        private ISoundService _sound;
 
         [Inject]
-        private void Inject(IEventService events, IHapticService haptics)
+        private void Inject(IEventService events, IHapticService haptics, ISoundService sound)
         {
             _events = events;
             _haptics = haptics;
+            _sound = sound;
         }
 
         // The trigger box whose inscribed elliptical cylinder is the acceptance volume.
@@ -113,9 +117,6 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            // Fall back to an AudioSource on this GameObject so placement audio works without manual wiring.
-            if (_audioSource == null) TryGetComponent(out _audioSource);
-
             ResolveVolume();
         }
 
@@ -310,7 +311,8 @@ namespace DumyatRuntime
 
         private void PlayPlacedFeedback()
         {
-            if (_audioSource != null && _placeSound != null) _audioSource.PlayOneShot(_placeSound);
+            // Pooled + routed to the SFX mixer bus, so the settings volume slider applies.
+            if (_placeSound != null) _sound?.PlaySoundFxAtPosition(_placeSound, transform, _placeVolume);
             _haptics?.TriggerVibration(0.4f, 0.1f, 0.6f, HapticHand.Both);
         }
 
