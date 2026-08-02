@@ -22,6 +22,8 @@ namespace DumyatRuntime
         [SerializeField] private float _positionLerpSpeed = 15f;
         [SerializeField] private float _moveUpStep = 0.2f;
         [SerializeField] private int _maxClippingAttempts = 15;
+        [SerializeField] private float _playerBiasDistance = 0.5f;
+        [SerializeField] private float _maxDeviationDistance = 1.5f;
 
         private UIDocument _uiDocument;
         private VisualElement _root;
@@ -271,12 +273,29 @@ namespace DumyatRuntime
             }).ExecuteLater((long)(_animationDuration * 1000));
         }
 
-        private void LateUpdate()
+        private void Update()
         {
             if (!_isVisible || _currentAnchor == null) return;
 
             Vector3 safePosition = CalculateSafePosition();
-            transform.position = Vector3.Lerp(transform.position, safePosition, Time.deltaTime * _positionLerpSpeed);
+            
+            // Only move if distance is significant to prevent micro-jitters
+            if (Vector3.Distance(transform.position, safePosition) > 0.005f)
+            {
+                transform.position = Vector3.Lerp(transform.position, safePosition, Time.deltaTime * _positionLerpSpeed);
+            }
+
+            // Always face the player (billboard)
+            if (Camera.main != null)
+            {
+                Vector3 lookDirection = transform.position - Camera.main.transform.position;
+                lookDirection.y = 0; // Keep upright
+                if (lookDirection.sqrMagnitude > 0.001f)
+                {
+                    Quaternion targetRot = Quaternion.LookRotation(lookDirection.normalized);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * _positionLerpSpeed);
+                }
+            }
         }
 
         private Vector3 CalculateSafePosition()
@@ -284,6 +303,18 @@ namespace DumyatRuntime
             if (_currentAnchor == null) return transform.position;
 
             Vector3 targetPosition = _currentAnchor.position + _currentOffset;
+
+            // Bias the position to be closer to the player
+            if (Camera.main != null)
+            {
+                Vector3 directionToPlayer = Camera.main.transform.position - targetPosition;
+                directionToPlayer.y = 0; // Keep the bias horizontal
+                if (directionToPlayer.sqrMagnitude > 0.001f)
+                {
+                    targetPosition += directionToPlayer.normalized * _playerBiasDistance;
+                }
+            }
+
             int attempts = 0;
 
             while (attempts < _maxClippingAttempts)
@@ -293,8 +324,8 @@ namespace DumyatRuntime
                 
                 foreach (var hit in hits)
                 {
-                    // Ignore the anchor object itself (e.g., player) to prevent UI from running away
-                    if (!hit.transform.IsChildOf(_currentAnchor.root))
+                    // Ignore ONLY the UI's own colliders. Do NOT ignore the anchor object (e.g. table) so the UI can push up out of it!
+                    if (hit.transform != this.transform && !hit.transform.IsChildOf(this.transform))
                     {
                         isClipping = true;
                         break;
@@ -310,6 +341,14 @@ namespace DumyatRuntime
                 {
                     break;
                 }
+            }
+
+            // Clamp the final target position so it doesn't stray too far from the original intended position
+            Vector3 originalTarget = _currentAnchor.position + _currentOffset;
+            Vector3 deviation = targetPosition - originalTarget;
+            if (deviation.sqrMagnitude > _maxDeviationDistance * _maxDeviationDistance)
+            {
+                targetPosition = originalTarget + deviation.normalized * _maxDeviationDistance;
             }
 
             return targetPosition;

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using Reflex.Attributes;
 
 namespace DumyatRuntime
@@ -36,11 +37,15 @@ namespace DumyatRuntime
 
         private void OnSelectEntered(SelectEnterEventArgs args)
         {
+            // Ignore sockets holding the rod — only fire on an actual
+            // hand/controller grab.
+            if (args.interactorObject is XRSocketInteractor)
+                return;
+
             if (_triggerOnce && hasTriggered) return;
             hasTriggered = true;
             Debug.Log("Fire selected");
             _eventService.Publish(new PlayDialogueEvent(_dialogueSequence, _priority));
-
         }
     }
 }

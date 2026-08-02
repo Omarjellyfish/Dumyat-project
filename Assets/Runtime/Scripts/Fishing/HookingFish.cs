@@ -54,11 +54,12 @@ namespace DumyatRuntime
             currentJoint = joint;
             isFishHooked = true;
 
-            // if (!_playerPreistence.HasKey("fish_hooked"))
-            // {
-            _soundService.PlaySoundFxAtPosition(HookFatherSound, Rod.transform, 1f);
-            // _playerPreistence.AddKey("fish_hooked");
-            // }
+            if (!_playerPreistence.HasKey("HookSoundPlayed"))
+            {
+
+                _soundService.PlaySoundFxAtPosition(HookFatherSound, Rod.transform, 1f);
+                _playerPreistence.AddKey("HookSoundPlayed");
+            }
 
             _haptics?.TriggerVibration(1f, 2f, 0.5f, HapticHand.Right);
 
