@@ -136,7 +136,7 @@
 /* ── Skip button ── */
 .skip-button {
     padding: 8px 18px;
-    border-radius: 8px;
+    border-radius: 20px;
     border-width: 0;
     border-bottom-width: 3px;
     border-bottom-color: rgba(0, 0, 0, 0.35);
@@ -145,16 +145,15 @@
     font-size: 15px;
     -unity-font-style: bold;
     letter-spacing: 1px;
-    transition-property: background-color, color, scale;
+    transition-property: background-color, color;
     transition-duration: 0.15s;
 }
 
 .skip-button:hover {
     background-color: rgba(160, 100, 50, 0.5);
     color: #F5E6D3;
-    scale: 1.04;
 }
 
 .skip-button:active {
-    scale: 0.96;
+    background-color: rgba(180, 110, 60, 0.7);
 }
