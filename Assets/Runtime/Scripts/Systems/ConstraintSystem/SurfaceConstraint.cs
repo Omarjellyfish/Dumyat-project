@@ -1,4 +1,5 @@
 using UnityEngine;
+using Reflex.Attributes;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
@@ -29,6 +30,10 @@ namespace DumyatRuntime
         // otherwise the mesh gets snapped back to sit exactly on the handle.
         protected Vector3 _visualLocalOffsetPosition;
         protected Quaternion _visualLocalOffsetRotation;
+        protected IEventService _eventService;
+
+        [Inject]
+        private void Inject(IEventService eventService) => _eventService = eventService;
 
         protected virtual void Awake()
         {
@@ -43,12 +48,21 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
+            if (_xrGrab == null)
+            {
+                Debug.LogWarning($"{nameof(SurfaceConstraint)} on {name} needs an XRGrabInteractable.");
+                return;
+            }
+
             _xrGrab.activated.AddListener(OnActivate);
             _xrGrab.deactivated.AddListener(OnDeactivate);
         }
 
         private void OnDisable()
         {
+            if (_xrGrab == null)
+                return;
+
             _xrGrab.activated.RemoveListener(OnActivate);
             _xrGrab.deactivated.RemoveListener(OnDeactivate);
         }
@@ -61,6 +75,9 @@ namespace DumyatRuntime
             }
             else
             {
+                if (_visualObject == null)
+                    return;
+
                 // Keep the mesh's authored local offset (position+rotation relative to the saw
                 // handle) instead of forcing it to exactly match the handle's world pose. Without
                 // this, any offset given to _visualObject in the editor gets erased every frame.
@@ -74,9 +91,30 @@ namespace DumyatRuntime
             if (TryDetectSurface(out RaycastHit hit, out Vector3 avgNormal))
             {
                 _isConstrained = true;
-                _hitPosition = hit.point;
+
+                // NEW: subclasses can override RefineHitPosition to snap somewhere
+                // more specific than the raw raycast hit point (e.g. nearest edge).
+                _hitPosition = RefineHitPosition(hit, avgNormal);
+
                 _hitNormal = avgNormal;
-                _lockedRotation = transform.rotation;
+
+                // FIXED: previously this was just `transform.rotation` (whatever angle your
+                // hand happened to be at when you pressed activate) - it ignored avgNormal
+                // entirely, which is why the tool would lock at a random tilt instead of
+                // lying flush on the wood. Build a rotation whose UP axis matches the surface
+                // normal (since our raycasts go -transform.up into the wood, transform.up is
+                // the "away from wood" axis) while keeping as much of your hand's heading
+                // (forward direction) as possible.
+                Vector3 projectedForward = Vector3.ProjectOnPlane(transform.forward, avgNormal);
+                if (projectedForward.sqrMagnitude < 0.0001f)
+                {
+                    // Hand forward was pointing almost straight along the normal (looking
+                    // straight down at the wood) - fall back to the right axis so we don't
+                    // get a zero vector into LookRotation.
+                    projectedForward = Vector3.ProjectOnPlane(transform.right, avgNormal);
+                }
+                projectedForward.Normalize();
+                _lockedRotation = Quaternion.LookRotation(projectedForward, avgNormal);
 
                 _handPositionAtSnap = GetTrackedHandPosition();
 
@@ -84,12 +122,32 @@ namespace DumyatRuntime
                 _automaticSnapOffset = avgNormal * _surfaceClearance;
 
                 Debug.Log($"Automatically snapped flush to surface of: {hit.collider.name}");
+                _eventService?.Publish(new SurfaceConstraintChangedEvent(this, true, _hitPosition, _hitNormal));
             }
         }
 
         private void OnDeactivate(DeactivateEventArgs arg0)
         {
             _isConstrained = false;
+            _eventService?.Publish(new SurfaceConstraintChangedEvent(this, false, _hitPosition, _hitNormal));
+        }
+
+        public virtual void SetCutProgress(int current, int required)
+        {
+            _eventService?.Publish(new SurfaceConstraintProgressEvent(this, current, required));
+        }
+
+        public virtual void ResetCutProgress()
+        {
+            SetCutProgress(0, 0);
+        }
+
+        // NEW: override this in a subclass to change what point the tool snaps to
+        // once a surface has been detected. Default behaviour is unchanged
+        // (snaps to the raw raycast hit point).
+        protected virtual Vector3 RefineHitPosition(RaycastHit hit, Vector3 normal)
+        {
+            return hit.point;
         }
 
         protected Vector3 GetTrackedHandPosition()

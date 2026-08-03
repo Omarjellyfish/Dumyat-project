@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faab39427066832489fca51809ed474f, type: 3}
+  m_Name: Warsh Sequence 1
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DialogueSequenceSO
+  SequenceId: 2
+  Priority: 0
+  CanBeInterrupted: 1
+  ResumeAfterInterruption: 1
+  Lines:
+  - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
+    VoiceLineKey: 2
+    SubtitleText: 3am amgaaad 3amel eh...
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 1
+  - Character: {fileID: 11400000, guid: c5e97e5479374fb4385c7a648c1cba29, type: 2}
+    VoiceLineKey: 0
+    SubtitleText: yaaah ya 7ag osama
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 2
+  - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
+    VoiceLineKey: 3
+    SubtitleText: Dah yehia ebny
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 3
+  - Character: {fileID: 11400000, guid: c5e97e5479374fb4385c7a648c1cba29, type: 2}
+    VoiceLineKey: 1
+    SubtitleText: hzbotholk zbta mo7trma
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 4
+  - Character: {fileID: 11400000, guid: c5e97e5479374fb4385c7a648c1cba29, type: 2}
+    VoiceLineKey: 2
+    SubtitleText: Bos Yabny
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 5
+  ChoicePoints: []

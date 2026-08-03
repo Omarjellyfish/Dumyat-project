@@ -1,25 +1,23 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find 'C:\\\\Users\\\\rohyy/.unity' g:/Unity/Projects/Dumyat-project/ProjectSettings g:/Unity/Projects/Dumyat-project/UserSettings -type f '\\(' -iname *mcp* -o -iname *approv* -o -iname *trust* -o -iname *client* '\\)')",
-      "Bash(find 'C:\\\\Users\\\\rohyy/AppData/Local/Unity' 'C:\\\\Users\\\\rohyy/AppData/Roaming/Unity' -maxdepth 4 -type f '\\(' -iname *mcp* -o -iname *client* -o -iname *approv* -o -iname *revok* '\\)')",
       "mcp__unity-mcp__Unity_ManageAsset",
-      "Bash(rm -v \"Assets/Runtime/Scripts/Interfaces/IManager.cs\" \"Assets/Runtime/Scripts/Interfaces/IManager.cs.meta\")",
-      "Bash(grep -rn \"IManager\" Assets/Runtime/Scripts/)",
-      "Bash(git checkout *)",
-      "Bash(git add *)",
-      "Bash(git commit -m ' *)",
-      "Bash(gh auth *)",
-      "Bash(git symbolic-ref *)",
-      "Bash(git push *)",
-      "Bash(ls -la)",
-      "Bash(cat MEMORY.md)",
-      "Read(//c/Program Files \\(x86\\)/Microsoft/Edge/Application/**)",
-      "Read(//c/Program Files/Google/Chrome/Application/**)",
-      "Bash(command -v pandoc)",
-      "Bash(pandoc --version)",
-      "Bash(command -v wkhtmltopdf)",
-      "Bash(/c/Python314/python.exe -c \"import weasyprint; print\\('weasyprint: yes'\\)\")"
+      "Bash(awk 'BEGIN{RS=\"===== Voice session\"} END{print \"===== Voice session\" $0}' \"/c/Users/rohyy/AppData/LocalLow/DefaultCompany/Dumyat project/stt_debug_log.txt\")",
+      "Bash(git rev-list *)",
+      "Bash(grep -inE \"api[_-]?key|secret|sk-[a-z0-9]{16,}|xi-api|bearer [a-z0-9]{16,}|token\\\\s*=\\\\s*\\\\\"\")",
+      "Bash(grep -inE \"api[_-]?key|secret|sk-[a-z0-9]{16,}\" Assets/Runtime/Scripts/UI/SummaryCard.cs)",
+      "Bash(git commit *)",
+      "Bash(read f *)",
+      "Bash(grep -q fe685ec1767f73d42b749ea8045bfe43 __TRACKED_VAR__.meta)",
+      "Bash(git commit -m ' *)"
     ]
+  },
+  "mcpServers": {
+    "unity-mcp": {
+      "command": "${USERPROFILE}\\.unity\\relay\\relay_win.exe",
+      "args": [
+        "--mcp"
+      ]
+    }
   }
 }

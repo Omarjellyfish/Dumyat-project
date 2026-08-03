@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ui="UnityEngine.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd"
+>
+    <ui:Style src="CompletedQuestsMenu.uss" />
+
+    <ui:VisualElement class="completed-menu-container">
+        <ui:Label text="COMPLETED QUESTS" class="completed-menu-header" />
+        
+        <ui:ScrollView class="completed-menu-scroll-view">
+            <ui:VisualElement name="CompletedListContainer" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

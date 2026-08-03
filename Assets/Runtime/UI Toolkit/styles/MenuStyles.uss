@@ -1,0 +1,465 @@
+/* ============================================================================
+   Menus — "Delta" treatment, shared by MainMenu, PauseMenu and SettingsPage.
+
+   Values are lifted from InventoryStyles.uss on purpose so the menus and the
+   inventory read as one family. If the palette changes, change it in both.
+
+   Authored against a 900 x 620 world-space panel. If a UIDocument's World Space
+   Width/Height changes, these px values need rescaling with it.
+
+   VR legibility floor, measured against that panel: body >= 26px, headers >=
+   32px, and anything the ray can click >= 64px tall. Menu buttons use 72px
+   because they are the primary — often only — target on the panel.
+
+   UI Toolkit has no box-shadow, no gradients, no backdrop-filter and no
+   text-transform: the frosted look is opacity only, and every uppercase string
+   is authored uppercase in the UXML.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- Panel -- */
+.menu-panel {
+    background-color: rgba(8, 26, 34, 0.84);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.42);
+    border-radius: 22px;
+    padding: 28px 32px;
+    width: 100%;
+    height: 100%;
+}
+
+/* A page inside the panel (buttons page, settings page). Only one shows at a
+   time; the controllers flip `display`. */
+.menu-page {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+/* --------------------------------------------------------------- Header -- */
+.menu-header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    margin-bottom: 6px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.2);
+}
+
+.menu-title {
+    font-size: 40px;
+    color: #D6F6FA;
+    letter-spacing: 9px;
+    align-self: auto;
+    margin: 0;
+}
+
+/* Pause and Settings sit under a smaller title than the game's own name. */
+.menu-title--sub {
+    font-size: 32px;
+    letter-spacing: 7px;
+}
+
+.menu-header-note {
+    font-size: 20px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 4px;
+    margin: 0;
+    -unity-text-align: middle-right;
+    /* See the Arabic note at the bottom of this file. */
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+/* -------------------------------------------------------------- Buttons -- */
+/* Ghost: transparent fill with a coloured outline that fills in on hover. A
+   wall of solid fills reads badly on a panel that is mostly buttons. */
+.menu-btn {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 72px;
+    padding: 0 26px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.55);
+    border-radius: 8px;
+    color: #EAF8FB;
+    font-size: 28px;
+    letter-spacing: 3px;
+    -unity-text-align: middle-left;
+    transition-property: background-color, border-color, color, scale;
+    transition-duration: 0.18s;
+}
+
+.menu-btn:hover {
+    background-color: rgba(103, 221, 232, 0.18);
+    border-color: #67DDE8;
+    scale: 1.02 1.02;
+}
+
+.menu-btn:active {
+    background-color: #67DDE8;
+    color: #06222B;
+    scale: 0.98 0.98;
+}
+
+/* Destructive: Exit, Erase, Leave. */
+.menu-btn--danger {
+    color: #FF9B8A;
+    border-color: rgba(255, 155, 138, 0.55);
+}
+
+.menu-btn--danger:hover {
+    background-color: rgba(255, 155, 138, 0.16);
+    border-color: #FF9B8A;
+}
+
+.menu-btn--danger:active {
+    background-color: #B4402F;
+    color: #FFF1EE;
+}
+
+/* Continue with no save. `display` stays Flex so the panel's layout does not
+   jump — the button is present, just visibly unavailable. Reinforced in code
+   with SetEnabled(false), which is what actually blocks the click. */
+.menu-btn--disabled {
+    opacity: 0.35;
+}
+
+.menu-btn--disabled:hover {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(120, 228, 236, 0.55);
+    scale: 1 1;
+}
+
+/* Small button that sits inside a header row rather than the main stack. */
+.menu-btn--compact {
+    min-height: 64px;
+    font-size: 24px;
+    padding: 0 24px;
+    -unity-text-align: middle-center;
+    justify-content: center;
+}
+
+/* A Button renders its own `text` in the same box as its children, so a button that needs a
+   secondary line must carry NO text attribute and use two child labels instead — otherwise the
+   two strings draw on top of each other. Colour and font-size are inherited from .menu-btn, so
+   the hover and active states still reach these labels. */
+.menu-btn-label {
+    flex-grow: 1;
+    font-size: 28px;
+    letter-spacing: 3px;
+    margin: 0;
+}
+
+/* Secondary line on a button — "First_room", "No saved game". */
+.menu-btn-hint {
+    font-size: 20px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.menu-btn-stack {
+    flex-direction: column;
+    margin-top: 26px;
+}
+
+.menu-btn-stack > .menu-btn {
+    margin-bottom: 16px;
+}
+
+/* ---------------------------------------------------------------- Foot -- */
+.menu-foot {
+    /* Pins the footer to the bottom of the panel regardless of how many buttons sit above it. */
+    margin-top: auto;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top-width: 1px;
+    border-top-color: rgba(120, 228, 236, 0.14);
+}
+
+.menu-foot-text {
+    font-size: 18px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+/* ------------------------------------------------------ Confirm overlay -- */
+/* Covers the whole panel so a destructive action cannot be clicked past. */
+.confirm-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(4, 14, 18, 0.86);
+    border-radius: 20px;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    display: none;
+}
+
+.confirm-title {
+    font-size: 34px;
+    color: #FF9B8A;
+    letter-spacing: 5px;
+    -unity-text-align: middle-center;
+    margin: 0 0 18px 0;
+}
+
+.confirm-message {
+    font-size: 26px;
+    color: #EAF8FB;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin: 0 0 28px 0;
+}
+
+.confirm-actions {
+    flex-direction: row;
+    width: 100%;
+}
+
+.confirm-actions > .menu-btn {
+    flex-grow: 1;
+    flex-basis: 0;
+    justify-content: center;
+    -unity-text-align: middle-center;
+    margin: 0 9px;
+}
+
+/* ================================================================ Settings */
+
+.settings-body {
+    flex-direction: row;
+    flex-grow: 1;
+    min-height: 0;
+    padding-top: 20px;
+}
+
+/* A persistent rail, not push/pop screens: in VR every page should be one ray
+   target away, with nothing to back out of. */
+.settings-rail {
+    flex-direction: column;
+    width: 260px;
+    flex-shrink: 0;
+}
+
+.settings-tab {
+    min-height: 68px;
+    padding: 0 18px;
+    margin-bottom: 12px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-radius: 8px;
+    color: rgba(214, 246, 250, 0.55);
+    font-size: 26px;
+    letter-spacing: 3px;
+    -unity-text-align: middle-left;
+    transition-property: background-color, color, border-left-color;
+    transition-duration: 0.18s;
+}
+
+.settings-tab:hover {
+    background-color: rgba(103, 221, 232, 0.1);
+    color: #EAF8FB;
+}
+
+/* Same active-row bar the inventory uses on .slot-row:hover. */
+.settings-tab--active {
+    border-left-color: #67DDE8;
+    background-color: rgba(103, 221, 232, 0.1);
+    color: #EAF8FB;
+}
+
+.settings-pages {
+    flex-grow: 1;
+    min-width: 0;
+    border-left-width: 1px;
+    border-left-color: rgba(120, 228, 236, 0.14);
+    padding-left: 26px;
+}
+
+.settings-page {
+    flex-grow: 1;
+    display: none;
+}
+
+.settings-page--active {
+    display: flex;
+}
+
+.settings-field-label {
+    font-size: 19px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 4px;
+    margin: 6px 0 14px 0;
+}
+
+/* -------------------------------------------------------- Audio sliders -- */
+.slider-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 74px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.14);
+}
+
+.slider-label {
+    width: 190px;
+    flex-shrink: 0;
+    font-size: 26px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.slider-control {
+    flex-grow: 1;
+    margin: 0 20px;
+    height: 40px;
+}
+
+.slider-control .unity-base-slider__tracker {
+    height: 6px;
+    border-radius: 3px;
+    background-color: rgba(120, 228, 236, 0.22);
+    border-width: 0;
+}
+
+.slider-control .unity-base-slider__dragger {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    background-color: #67DDE8;
+    border-width: 0;
+    margin-top: -14px;
+}
+
+/* A right-aligned number with a label beside it, not a badge. */
+.slider-value {
+    width: 92px;
+    flex-shrink: 0;
+    font-size: 26px;
+    color: #67DDE8;
+    -unity-text-align: middle-right;
+    margin: 0;
+}
+
+/* ------------------------------------------------------------- Segments -- */
+.segment-row {
+    flex-direction: row;
+}
+
+.segment-btn {
+    /* See the Arabic note at the bottom of this file — one of these reads "العربية". */
+    -unity-text-generator: advanced;
+    flex-grow: 1;
+    flex-basis: 0;
+    min-height: 76px;
+    margin-right: 14px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.45);
+    border-radius: 8px;
+    color: rgba(214, 246, 250, 0.55);
+    font-size: 26px;
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.18s;
+}
+
+.segment-btn:hover {
+    background-color: rgba(103, 221, 232, 0.14);
+    color: #EAF8FB;
+}
+
+.segment-btn--selected {
+    background-color: rgba(103, 221, 232, 0.2);
+    border-color: #67DDE8;
+    color: #EAF8FB;
+}
+
+/* Tracking breaks Arabic's cursive joins, so the Arabic option opts out of it. */
+.segment-btn--arabic {
+    letter-spacing: 0;
+}
+
+/* --------------------------------------------- Subtitle preview + notes -- */
+.subtitle-preview {
+    margin-top: 30px;
+    padding: 22px 24px;
+    border-width: 1px;
+    border-color: rgba(120, 228, 236, 0.14);
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.22);
+}
+
+.subtitle-preview-speaker {
+    font-size: 19px;
+    color: #67DDE8;
+    letter-spacing: 3px;
+    margin: 0 0 10px 0;
+}
+
+.subtitle-preview-line {
+    font-size: 27px;
+    color: #EAF8FB;
+    white-space: normal;
+    margin: 0;
+    /* See the Arabic note at the bottom of this file. */
+    -unity-text-generator: advanced;
+}
+
+/* Applied by code when the mode is Off — the line becomes an explanation
+   rather than a sample. */
+.subtitle-preview-line--muted {
+    color: rgba(214, 246, 250, 0.3);
+    -unity-font-style: italic;
+}
+
+.settings-note {
+    font-size: 19px;
+    color: rgba(214, 246, 250, 0.38);
+    letter-spacing: 1px;
+    white-space: normal;
+    margin-top: 22px;
+}
+
+/* ------------------------------------------------------- Controls image -- */
+.controls-image {
+    flex-grow: 1;
+    margin-top: 8px;
+    border-width: 1px;
+    border-color: rgba(120, 228, 236, 0.14);
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.24);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* ============================================================================
+   Arabic
+   ----------------------------------------------------------------------------
+   Any element that can hold Arabic sets `-unity-text-generator: advanced`. The
+   Standard generator draws glyphs in code-point order with no shaping, so
+   "دمياط" comes out as disconnected letters in reverse; the Advanced generator
+   does the bidi reordering and contextual joining. It is more expensive, so it
+   is applied per-element rather than to the whole panel.
+
+   The font must also cover the glyphs — the Menu PanelSettings point at
+   `Cairo Panel Text Settings`, which does. A panel wired to the default runtime
+   theme will show empty boxes instead.
+
+   `letter-spacing` is reset to 0 on Arabic-bearing elements: tracking pulls
+   joined letterforms apart and breaks the cursive connections.
+   ============================================================================ */

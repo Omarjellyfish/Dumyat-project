@@ -45,6 +45,11 @@ namespace DumyatRuntime
 
         private void OnTakeFromPool(AudioSource source)
         {
+            // Reset state a previous user may have left behind: PlayVoiceLine sets spatialBlend to 1
+            // and PlayLoopingSoundFxAtPosition sets loop to true, and neither ever restores them. Without
+            // this, a recycled source stays 3D/looping forever and later one-shots come out attenuated.
+            source.spatialBlend = 0f;
+            source.loop = false;
             source.gameObject.SetActive(true);
         }
 
@@ -100,7 +105,26 @@ namespace DumyatRuntime
 
         public void PlayVoiceLine(AudioClip clip, Transform targetTransform, float volume, AudioMixerGroup mixerGroup = null)
         {
-            PlaySoundFxAtPosition(clip, targetTransform, volume, mixerGroup);
+            if (clip == null) return;
+
+            AudioSource source = AudioPool.Get();
+
+            if (targetTransform != null)
+            {
+                source.transform.position = targetTransform.position;
+                source.spatialBlend = 1f; // 3D positional
+            }
+            else
+            {
+                source.spatialBlend = 0f; // 2D global fallback
+            }
+
+            source.clip = clip;
+            source.volume = volume;
+            source.outputAudioMixerGroup = mixerGroup != null ? mixerGroup : _defaultMixerGroup;
+            source.Play();
+
+            StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
         }
         #endregion
 

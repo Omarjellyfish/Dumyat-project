@@ -1,90 +1,190 @@
-/* Inventory Main Screen Styles */
+/* ============================================================================
+   Inventory panel — "Delta" treatment (layout study 02, plate C2).
+   Frosted deep-water glass, hairline dividers instead of cards, and the EGP
+   balance as a right-aligned readout rather than a badge.
+
+   Authored against a 900 x 620 world-space panel. If the UIDocument's
+   World Space Width/Height changes, these px values need rescaling with it.
+
+   UI Toolkit has no box-shadow, no gradients, no backdrop-filter and no
+   text-transform — the frosted look here is opacity only, and every uppercase
+   string is authored uppercase in the UXML.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- Panel -- */
 .inventory-panel {
-    background-color: rgba(20, 20, 20, 0.95);
-    border-radius: 12px;
+    background-color: rgba(8, 26, 34, 0.84);
     border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.1);
-    padding: 24px;
+    border-color: rgba(120, 228, 236, 0.42);
+    border-radius: 22px;
+    padding: 28px 32px;
     width: 100%;
     height: 100%;
 }
 
-.inventory-title {
-    font-size: 28px;
-    color: #FFFFFF;
-    -unity-font-style: bold;
-    align-self: center;
+/* --------------------------------------------------------------- Header -- */
+.inventory-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
     margin-bottom: 20px;
-    letter-spacing: 2px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.2);
 }
 
+.inventory-title {
+    font-size: 32px;
+    color: #D6F6FA;
+    letter-spacing: 9px;
+    /* align-self must stay `auto`: `center` fights the header row's
+       justify-content and pushes the wallet readout out of place. */
+    align-self: auto;
+    margin: 0;
+}
+
+/* ------------------------------------------------- Wallet (EGP readout) -- */
+/* A stacked readout, right-aligned: small currency label over a large number.
+   Deliberately not a pill — the balance is data, not a badge. */
+.wallet-chip {
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 2px 4px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    transition-property: border-color, background-color, scale;
+    transition-duration: 0.18s;
+}
+
+.wallet-currency {
+    font-size: 14px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 4px;
+    margin: 0;
+    padding: 0;
+}
+
+.wallet-balance {
+    font-size: 44px;
+    color: #8DEBAF;
+    margin: 0;
+    padding: 0;
+}
+
+/* Transient feedback, added then removed by InventoryToolkitUI. */
+.wallet-chip--gain {
+    border-color: rgba(141, 235, 175, 0.85);
+    background-color: rgba(141, 235, 175, 0.14);
+    scale: 1.06;
+}
+
+.wallet-chip--loss {
+    border-color: rgba(255, 155, 138, 0.85);
+    background-color: rgba(255, 155, 138, 0.14);
+    scale: 0.96;
+}
+
+/* ------------------------------------------------------------ Item list -- */
 .inventory-scrollview {
     flex-grow: 1;
 }
 
-/* Inventory Slot Styles */
+/* Rows read as one continuous list: hairline dividers, no gaps, no cards. */
 .slot-row {
     flex-direction: row;
     align-items: center;
-    background-color: rgba(40, 40, 40, 0.7);
-    margin-bottom: 12px;
-    padding: 12px 18px;
-    border-radius: 8px;
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.05);
-    transition-property: background-color, border-color;
+    min-height: 96px;
+    padding: 14px 18px;
+    background-color: rgba(255, 255, 255, 0.045);
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.14);
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    transition-property: background-color, border-left-color;
     transition-duration: 0.15s;
 }
 
 .slot-row:hover {
-    background-color: rgba(60, 60, 60, 0.85);
-    border-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(103, 221, 232, 0.1);
+    border-left-color: #67DDE8;
 }
 
 .slot-icon {
-    width: 50px;
-    height: 50px;
+    width: 72px;
+    height: 72px;
     margin-right: 18px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
+    background-color: rgba(103, 221, 232, 0.1);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.35);
+    border-radius: 50%;
     background-size: contain;
+    /* Non-interactive children must not steal the XR ray from the row. */
+    picking-mode: ignore;
+}
+
+.slot-text {
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: center;
     picking-mode: ignore;
 }
 
 .slot-name {
-    flex-grow: 1;
-    color: #E0E0E0;
-    font-size: 18px;
-    -unity-font-style: bold;
+    font-size: 26px;
+    color: #EAF8FB;
+    letter-spacing: 0.5px;
+    white-space: normal;
+    margin: 0;
     picking-mode: ignore;
 }
 
 .slot-quantity {
-    margin-right: 24px;
-    color: #FFD54F;
-    font-size: 20px;
+    font-size: 24px;
+    color: #67DDE8;
     -unity-font-style: bold;
+    margin: 4px 0 0 0;
     picking-mode: ignore;
 }
 
+/* Ghost button — keeps a wall of red off the panel at higher item counts,
+   while staying a 64px-tall XR ray target. */
 .slot-drop-btn {
-    background-color: #D32F2F;
-    color: #FFFFFF;
-    font-size: 14px;
-    border-radius: 6px;
-    padding: 8px 16px;
-    border-width: 0;
-    -unity-font-style: bold;
-    transition-property: background-color, scale;
-    transition-duration: 0.1s;
+    font-size: 22px;
+    color: #FF9B8A;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(255, 155, 138, 0.55);
+    border-radius: 8px;
+    min-height: 64px;
+    min-width: 128px;
+    padding: 10px 24px;
+    margin: 0;
+    letter-spacing: 2px;
+    transition-property: background-color, border-color, color, scale;
+    transition-duration: 0.12s;
 }
 
 .slot-drop-btn:hover {
-    background-color: #F44336;
-    scale: 1.05;
+    background-color: rgba(255, 155, 138, 0.18);
+    border-color: #FF9B8A;
+    color: #FFD5CD;
+    scale: 1.04;
 }
 
 .slot-drop-btn:active {
-    background-color: #B71C1C;
-    scale: 0.95;
+    background-color: #B4402F;
+    border-color: #FF9B8A;
+    color: #FFFFFF;
+    scale: 0.96;
+}
+
+/* ---------------------------------------------------------- Empty state -- */
+.inventory-empty-hint {
+    font-size: 24px;
+    color: rgba(214, 246, 250, 0.45);
+    -unity-text-align: middle-center;
+    margin-top: 24px;
+    /* InventoryToolkitUI flips this to Flex when the bag is empty. */
+    display: none;
 }

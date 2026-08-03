@@ -1,0 +1,1349 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-1949938815480941269
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd922ae02c94c87a66e46a10a7319b9, type: 3}
+  m_Name: NegotiationBehavior Blackboard
+  m_EditorClassIdentifier: Unity.Behavior.Authoring::Unity.Behavior.BehaviorBlackboardAuthoringAsset
+  AssetID:
+    m_Value0: 14137280418386760734
+    m_Value1: 14684576930522652123
+  m_Variables:
+  - rid: 4833587709264003072
+  m_VersionTimestamp: 639201138005623105
+  m_CommandBuffer:
+    m_Commands: []
+  m_RuntimeBlackboardAsset: {fileID: 4555697440172637621}
+  references:
+    version: 2
+    RefIds:
+    - rid: 4833587709264003072
+      type: {class: 'TypedVariableModel`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: {fileID: 0}
+--- !u!114 &-1429066853182821179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b27bb6d9a2c8d540a10dff10acc543e, type: 3}
+  m_Name: NegotiationBehavior Debug Info
+  m_EditorClassIdentifier: Unity.Behavior::Unity.Behavior.BehaviorGraphDebugInfo
+  m_CodeBreakPointsList: []
+--- !u!114 &-1279495821062000234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db920e62f70f420bb33c771449926fa4, type: 3}
+  m_Name: NegotiationBehavior
+  m_EditorClassIdentifier: Unity.Behavior::Unity.Behavior.BehaviorGraph
+  Graphs:
+  - rid: 4833587709264003073
+  m_DebugInfo: {fileID: -1429066853182821179}
+  m_WasCompileWithPlaceholderNode: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 4833587709264003073
+      type: {class: BehaviorGraphModule, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        AuthoringAssetID:
+          m_Value0: 14137280418386760734
+          m_Value1: 14684576930522652123
+        m_DebugInfo: {fileID: -1429066853182821179}
+        BlackboardReference:
+          rid: 4833587709264003074
+        BlackboardGroupReferences: []
+        Root:
+          rid: 6385685426637635688
+        m_VersionTimestamp: 639213266549670249
+    - rid: 4833587709264003074
+      type: {class: BlackboardReference, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        m_Blackboard:
+          rid: 4833587709264003076
+        m_Source: {fileID: 4555697440172637621}
+    - rid: 4833587709264003076
+      type: {class: Blackboard, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        m_Variables:
+        - rid: 6385685426637635690
+    - rid: 6385685426637635688
+      type: {class: Start, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        ID:
+          m_Value0: 16089605378421449508
+          m_Value1: 15012885035311772563
+        Graph:
+          rid: 4833587709264003073
+        m_Parent:
+          rid: -2
+        m_Child:
+          rid: 6385685426637635689
+        Repeat: 0
+        AllowMultipleRepeatsPerTick: 0
+    - rid: 6385685426637635689
+      type: {class: BranchingConditionComposite, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        ID:
+          m_Value0: 8778232844875678619
+          m_Value1: 8976027944511448408
+        Graph:
+          rid: 4833587709264003073
+        m_Parent:
+          rid: 6385685426637635688
+        m_Children:
+        - rid: 6385685426637635691
+        - rid: 6385685426637635692
+        m_RegisteredObservers: []
+        m_Conditions:
+        - rid: 6385685426637635693
+        m_RequiresAllConditions: 0
+        True:
+          rid: 6385685426637635691
+        False:
+          rid: 6385685426637635692
+        m_CurrentChild:
+          rid: -2
+        m_ObserverType: 0
+    - rid: 6385685426637635690
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 0}
+    - rid: 6385685426637635691
+      type: {class: RunBundleSaleAction, ns: DumyatRuntime, asm: Project.Runtime}
+      data:
+        ID:
+          m_Value0: 8084332313876729820
+          m_Value1: 4098158591150687808
+        Graph:
+          rid: 4833587709264003073
+        m_Parent:
+          rid: 6385685426637635689
+    - rid: 6385685426637635692
+      type: {class: RunOfflineSaleAction, ns: DumyatRuntime, asm: Project.Runtime}
+      data:
+        ID:
+          m_Value0: 16780125771308346555
+          m_Value1: 309358215735255112
+        Graph:
+          rid: 4833587709264003073
+        m_Parent:
+          rid: 6385685426637635689
+    - rid: 6385685426637635693
+      type: {class: UseOnlineSellingCondition, ns: DumyatRuntime, asm: Project.Runtime}
+      data:
+        Graph:
+          rid: 4833587709264003073
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bad8f2220607dac4db5082ff333fafb8, type: 3}
+  m_Name: NegotiationBehavior
+  m_EditorClassIdentifier: Unity.Behavior.Authoring::Unity.Behavior.BehaviorAuthoringGraph
+  Blackboard: {fileID: -1949938815480941269}
+  m_Description: 
+  m_Nodes:
+  - rid: 4833587709264003078
+  - rid: 4833587709264003081
+  - rid: 4833587709264003089
+  - rid: 4833587709264003090
+  - rid: 4833587709264003091
+  - rid: 4833587709264003103
+  - rid: 4833587709264003108
+  - rid: 4833587709264003113
+  - rid: 4833587709264003118
+  - rid: 4833587709264003123
+  - rid: 4833587709264003128
+  - rid: 4833587709264003133
+  - rid: 4833587709264003143
+  - rid: 4833587709264003148
+  - rid: 4833587709264003153
+  - rid: 4833587709264003158
+  - rid: 4833587709264003163
+  - rid: 4833587709264003168
+  - rid: 4833587709264003173
+  - rid: 4833587818902323410
+  - rid: 4833587818902323411
+  - rid: 4833587818902323412
+  - rid: 4833587818902323437
+  m_VersionTimestamp: 639213266549670249
+  m_SerializedVersion: 3
+  m_DebugInfo: {fileID: -1429066853182821179}
+  m_RuntimeGraph: {fileID: -1279495821062000234}
+  AssetID:
+    m_Value0: 14137280418386760734
+    m_Value1: 14684576930522652123
+  Story:
+    Story: 
+    StoryVariableNames: []
+    Variables: []
+  m_NodeModelsInfo:
+  - Name: On Start
+    Story: 
+    RuntimeTypeString: Unity.Behavior.Start, Unity.Behavior, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 3335272451348827663
+      m_Value1: 11549843281177505721
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Run Bundle Sale
+    Story: Run bundle sale
+    RuntimeTypeString: DumyatRuntime.RunBundleSaleAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877333504450
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Conditional Branch
+    Story: 
+    RuntimeTypeString: Unity.Behavior.BranchingConditionComposite, Unity.Behavior,
+      Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 12334964803190848789
+      m_Value1: 14608808926743427008
+    Variables: []
+    NamedChildren:
+    - True
+    - False
+    IsPlaceholder: 0
+  - Name: Sequence
+    Story: 
+    RuntimeTypeString: Unity.Behavior.SequenceComposite, Unity.Behavior, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 10181448252506100447
+      m_Value1: 8737116843063128493
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Scripted Fallback
+    Story: Scripted fallback
+    RuntimeTypeString: DumyatRuntime.ScriptedFallbackAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877283172802
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Setup Negotiation
+    Story: Setup negotiation
+    RuntimeTypeString: DumyatRuntime.SetupNegotiationAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877148955074
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Run Placement Phase
+    Story: Run placement phase
+    RuntimeTypeString: DumyatRuntime.RunPlacementPhaseAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877299950018
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Generate Opening Line
+    Story: Generate opening line
+    RuntimeTypeString: DumyatRuntime.GenerateOpeningLineAction, Project.Runtime,
+      Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877165732290
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Speak Merchant Line
+    Story: Speak merchant line
+    RuntimeTypeString: DumyatRuntime.SpeakMerchantLineAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877182509506
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Repeat While
+    Story: 
+    RuntimeTypeString: Unity.Behavior.RepeatWhileConditionModifier, Unity.Behavior,
+      Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 17299482495328769724
+      m_Value1: 1892732619013874548
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Listen For Player
+    Story: Listen for player
+    RuntimeTypeString: DumyatRuntime.ListenForPlayerAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877199286722
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Process Player Turn
+    Story: Process player turn
+    RuntimeTypeString: DumyatRuntime.ProcessPlayerTurnAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877216063938
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Apply Turn Result
+    Story: Apply turn result
+    RuntimeTypeString: DumyatRuntime.ApplyTurnResultAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877232841154
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Run Sale Confirm Phase
+    Story: Run sale confirm phase
+    RuntimeTypeString: DumyatRuntime.RunSaleConfirmPhaseAction, Project.Runtime,
+      Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877316727234
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Resolve Negotiation
+    Story: Resolve negotiation
+    RuntimeTypeString: DumyatRuntime.ResolveNegotiationAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877266395586
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Run Offline Sale
+    Story: Run offline sale
+    RuntimeTypeString: DumyatRuntime.RunOfflineSaleAction, Project.Runtime, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 5476572877350281666
+      m_Value1: 13895728
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  m_Blackboards: []
+  m_MainBlackboardAuthoringAsset: {fileID: -1949938815480941269}
+  m_CommandBuffer:
+    m_Commands: []
+  m_SubgraphsInfo: []
+  m_BlackboardMissingManagedRef: 0
+  m_GraphMissingManagedRef: 0
+  m_HasMissingTypeInManagedRef: 0
+  m_EnumDependencyCache:
+    Entries: []
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 4833587709264003078
+      type: {class: StartNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: 61.28679, y: -103.07329}
+        ID:
+          m_Value0: 16089605378421449508
+          m_Value1: 15012885035311772563
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003079
+        NodeType:
+          m_SerializableType: Unity.Behavior.Start, Unity.Behavior, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 3335272451348827663
+          m_Value1: 11549843281177505721
+        m_FieldValues: []
+        Repeat: 0
+        AllowMultipleRepeatsPerTick: 0
+    - rid: 4833587709264003079
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003078
+        m_Connections:
+        - rid: 4833587818902323417
+    - rid: 4833587709264003081
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -90.49075, y: 218.91669}
+        ID:
+          m_Value0: 8084332313876729820
+          m_Value1: 4098158591150687808
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003082
+        - rid: 4833587709264003083
+        NodeType:
+          m_SerializableType: DumyatRuntime.RunBundleSaleAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877333504450
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003082
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003081
+        m_Connections:
+        - rid: 4833587818902323414
+    - rid: 4833587709264003083
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003081
+        m_Connections: []
+    - rid: 4833587709264003089
+      type: {class: FloatingPortNodeModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        Position: {x: -743.5221, y: 502.22202}
+        ID:
+          m_Value0: 3637620562189384013
+          m_Value1: 8391972221512445250
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003092
+        - rid: 4833587709264003093
+        ParentNodeID:
+          m_Value0: 18002650987182908630
+          m_Value1: 16773642434330599610
+        PortName: True
+        Metadata: 
+    - rid: 4833587709264003090
+      type: {class: FloatingPortNodeModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        Position: {x: -551.5223, y: 502.22202}
+        ID:
+          m_Value0: 12682199469725591283
+          m_Value1: 5317557090646040634
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003094
+        - rid: 4833587709264003095
+        ParentNodeID:
+          m_Value0: 18002650987182908630
+          m_Value1: 16773642434330599610
+        PortName: False
+        Metadata: 
+    - rid: 4833587709264003091
+      type: {class: BranchingConditionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -647.52185, y: 399.2226}
+        ID:
+          m_Value0: 18002650987182908630
+          m_Value1: 16773642434330599610
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003096
+        - rid: 4833587709264003097
+        - rid: 4833587709264003098
+        NodeType:
+          m_SerializableType: Unity.Behavior.BranchingConditionComposite, Unity.Behavior,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 12334964803190848789
+          m_Value1: 14608808926743427008
+        m_FieldValues: []
+        <ConditionModels>k__BackingField:
+        - ConditionType:
+            m_SerializableType: DumyatRuntime.VoiceModeAvailableCondition, Project.Runtime,
+              Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          ConditionTypeID:
+            m_Value0: 5336765561733116593
+            m_Value1: 11667728
+          NodeModel:
+            rid: 4833587709264003091
+          m_FieldValues: []
+          OperatorFieldModel:
+            rid: -2
+        <RequiresAllConditionsTrue>k__BackingField: 0
+        <ShouldTruncateNodeUI>k__BackingField: 0
+        <ObserverType>k__BackingField: 0
+    - rid: 4833587709264003092
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 1
+        m_NodeModel:
+          rid: 4833587709264003089
+        m_Connections:
+        - rid: 4833587709264003097
+    - rid: 4833587709264003093
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003089
+        m_Connections:
+        - rid: 4833587709264003104
+    - rid: 4833587709264003094
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 1
+        m_NodeModel:
+          rid: 4833587709264003090
+        m_Connections:
+        - rid: 4833587709264003098
+    - rid: 4833587709264003095
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003090
+        m_Connections:
+        - rid: 4833587709264003109
+    - rid: 4833587709264003096
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003091
+        m_Connections: []
+    - rid: 4833587709264003097
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: True
+        m_PortDataFlowType: 1
+        m_IsFloating: 1
+        m_NodeModel:
+          rid: 4833587709264003091
+        m_Connections:
+        - rid: 4833587709264003092
+    - rid: 4833587709264003098
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: False
+        m_PortDataFlowType: 1
+        m_IsFloating: 1
+        m_NodeModel:
+          rid: 4833587709264003091
+        m_Connections:
+        - rid: 4833587709264003094
+    - rid: 4833587709264003103
+      type: {class: CompositeNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -866.13226, y: 679.78613}
+        ID:
+          m_Value0: 2013739712790809526
+          m_Value1: 17473467873996094213
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003104
+        - rid: 4833587709264003105
+        NodeType:
+          m_SerializableType: Unity.Behavior.SequenceComposite, Unity.Behavior, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 10181448252506100447
+          m_Value1: 8737116843063128493
+        m_FieldValues: []
+    - rid: 4833587709264003104
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003103
+        m_Connections:
+        - rid: 4833587709264003093
+    - rid: 4833587709264003105
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003103
+        m_Connections:
+        - rid: 4833587709264003114
+        - rid: 4833587709264003119
+        - rid: 4833587709264003124
+        - rid: 4833587709264003129
+        - rid: 4833587709264003134
+        - rid: 4833587709264003169
+        - rid: 4833587709264003174
+    - rid: 4833587709264003108
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -345.1434, y: 602.0012}
+        ID:
+          m_Value0: 11487891340540898531
+          m_Value1: 3300529094144750753
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003109
+        - rid: 4833587709264003110
+        NodeType:
+          m_SerializableType: DumyatRuntime.ScriptedFallbackAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877283172802
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003109
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003108
+        m_Connections:
+        - rid: 4833587709264003095
+    - rid: 4833587709264003110
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003108
+        m_Connections: []
+    - rid: 4833587709264003113
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -1491.3868, y: 788.7768}
+        ID:
+          m_Value0: 16940675285012713934
+          m_Value1: 18375590742563393362
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003114
+        - rid: 4833587709264003115
+        NodeType:
+          m_SerializableType: DumyatRuntime.SetupNegotiationAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877148955074
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003114
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003113
+        m_Connections:
+        - rid: 4833587709264003105
+    - rid: 4833587709264003115
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003113
+        m_Connections: []
+    - rid: 4833587709264003118
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -1323.0907, y: 788.7768}
+        ID:
+          m_Value0: 1004643182412079587
+          m_Value1: 9161453500369905405
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003119
+        - rid: 4833587709264003120
+        NodeType:
+          m_SerializableType: DumyatRuntime.RunPlacementPhaseAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877299950018
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003119
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003118
+        m_Connections:
+        - rid: 4833587709264003105
+    - rid: 4833587709264003120
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003118
+        m_Connections: []
+    - rid: 4833587709264003123
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -1140.5874, y: 788.7768}
+        ID:
+          m_Value0: 570511114242552077
+          m_Value1: 17760636888502978073
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003124
+        - rid: 4833587709264003125
+        NodeType:
+          m_SerializableType: DumyatRuntime.GenerateOpeningLineAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877165732290
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003124
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003123
+        m_Connections:
+        - rid: 4833587709264003105
+    - rid: 4833587709264003125
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003123
+        m_Connections: []
+    - rid: 4833587709264003128
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -946.0629, y: 789.57684}
+        ID:
+          m_Value0: 13389430709381940829
+          m_Value1: 3660389670982450152
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003129
+        - rid: 4833587709264003130
+        NodeType:
+          m_SerializableType: DumyatRuntime.SpeakMerchantLineAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877182509506
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003129
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003128
+        m_Connections:
+        - rid: 4833587709264003105
+    - rid: 4833587709264003130
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003128
+        m_Connections: []
+    - rid: 4833587709264003133
+      type: {class: RepeatNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -693.2209, y: 789.37054}
+        ID:
+          m_Value0: 518753162369273747
+          m_Value1: 6672880526587138040
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003134
+        - rid: 4833587709264003135
+        NodeType:
+          m_SerializableType: Unity.Behavior.RepeatWhileConditionModifier, Unity.Behavior,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 17299482495328769724
+          m_Value1: 1892732619013874548
+        m_FieldValues: []
+        AllowMultipleRepeatsPerTick: 0
+        <ConditionModels>k__BackingField:
+        - rid: 4833587709264003140
+        <RequiresAllConditionsTrue>k__BackingField: 0
+        <ShouldTruncateNodeUI>k__BackingField: 0
+        m_RepeatMode: 3
+        <ObserverType>k__BackingField: 0
+        <ReturnFailureOnConditionFail>k__BackingField: 1
+    - rid: 4833587709264003134
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003133
+        m_Connections:
+        - rid: 4833587709264003105
+    - rid: 4833587709264003135
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003133
+        m_Connections:
+        - rid: 4833587709264003144
+    - rid: 4833587709264003140
+      type: {class: ConditionModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        ConditionType:
+          m_SerializableType: DumyatRuntime.NegotiationOngoingCondition, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        ConditionTypeID:
+          m_Value0: 5341269161360487089
+          m_Value1: 11667728
+        NodeModel:
+          rid: 4833587709264003133
+        m_FieldValues: []
+        OperatorFieldModel:
+          rid: -2
+    - rid: 4833587709264003143
+      type: {class: CompositeNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -693.221, y: 922.2346}
+        ID:
+          m_Value0: 4480770268641838519
+          m_Value1: 16803078537862568462
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003144
+        - rid: 4833587709264003145
+        NodeType:
+          m_SerializableType: Unity.Behavior.SequenceComposite, Unity.Behavior, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 10181448252506100447
+          m_Value1: 8737116843063128493
+        m_FieldValues: []
+    - rid: 4833587709264003144
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003143
+        m_Connections:
+        - rid: 4833587709264003135
+    - rid: 4833587709264003145
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003143
+        m_Connections:
+        - rid: 4833587709264003149
+        - rid: 4833587709264003154
+        - rid: 4833587709264003159
+        - rid: 4833587709264003164
+    - rid: 4833587709264003148
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -991.79285, y: 1011.8055}
+        ID:
+          m_Value0: 15152028621916339711
+          m_Value1: 6695444239188214161
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003149
+        - rid: 4833587709264003150
+        NodeType:
+          m_SerializableType: DumyatRuntime.ListenForPlayerAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877199286722
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003149
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003148
+        m_Connections:
+        - rid: 4833587709264003145
+    - rid: 4833587709264003150
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003148
+        m_Connections: []
+    - rid: 4833587709264003153
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -821.60693, y: 1011.80536}
+        ID:
+          m_Value0: 10428528833525170588
+          m_Value1: 5102882793942396005
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003154
+        - rid: 4833587709264003155
+        NodeType:
+          m_SerializableType: DumyatRuntime.ProcessPlayerTurnAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877216063938
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003154
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003153
+        m_Connections:
+        - rid: 4833587709264003145
+    - rid: 4833587709264003155
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003153
+        m_Connections: []
+    - rid: 4833587709264003158
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -637.9851, y: 1010.31256}
+        ID:
+          m_Value0: 12952322476669086191
+          m_Value1: 6036761959436907874
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003159
+        - rid: 4833587709264003160
+        NodeType:
+          m_SerializableType: DumyatRuntime.ApplyTurnResultAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877232841154
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003159
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003158
+        m_Connections:
+        - rid: 4833587709264003145
+    - rid: 4833587709264003160
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003158
+        m_Connections: []
+    - rid: 4833587709264003163
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -440.9286, y: 1011.80536}
+        ID:
+          m_Value0: 8297032965205824325
+          m_Value1: 2586505281926913169
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003164
+        - rid: 4833587709264003165
+        NodeType:
+          m_SerializableType: DumyatRuntime.SpeakMerchantLineAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877182509506
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003164
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003163
+        m_Connections:
+        - rid: 4833587709264003145
+    - rid: 4833587709264003165
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003163
+        m_Connections: []
+    - rid: 4833587709264003168
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -385.693, y: 789.3706}
+        ID:
+          m_Value0: 16967435512145284275
+          m_Value1: 12681905121066568094
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003169
+        - rid: 4833587709264003170
+        NodeType:
+          m_SerializableType: DumyatRuntime.RunSaleConfirmPhaseAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877316727234
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003169
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003168
+        m_Connections:
+        - rid: 4833587709264003105
+    - rid: 4833587709264003170
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003168
+        m_Connections: []
+    - rid: 4833587709264003173
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -191.62218, y: 789.37054}
+        ID:
+          m_Value0: 17004343546502822279
+          m_Value1: 17640874814639148019
+        Parents: []
+        PortModels:
+        - rid: 4833587709264003174
+        - rid: 4833587709264003175
+        NodeType:
+          m_SerializableType: DumyatRuntime.ResolveNegotiationAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877266395586
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587709264003174
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003173
+        m_Connections:
+        - rid: 4833587709264003105
+    - rid: 4833587709264003175
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587709264003173
+        m_Connections: []
+    - rid: 4833587818902323410
+      type: {class: FloatingPortNodeModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        Position: {x: -91.03745, y: 126.292755}
+        ID:
+          m_Value0: 12850014073921187686
+          m_Value1: 2655657532283094367
+        Parents: []
+        PortModels:
+        - rid: 4833587818902323413
+        - rid: 4833587818902323414
+        ParentNodeID:
+          m_Value0: 8778232844875678619
+          m_Value1: 8976027944511448408
+        PortName: True
+        Metadata: 
+    - rid: 4833587818902323411
+      type: {class: FloatingPortNodeModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        Position: {x: 210.7943, y: 125.11185}
+        ID:
+          m_Value0: 7177454402048717291
+          m_Value1: 3316906018915953131
+        Parents: []
+        PortModels:
+        - rid: 4833587818902323415
+        - rid: 4833587818902323416
+        ParentNodeID:
+          m_Value0: 8778232844875678619
+          m_Value1: 8976027944511448408
+        PortName: False
+        Metadata: 
+    - rid: 4833587818902323412
+      type: {class: BranchingConditionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: 60.469006, y: 15.025879}
+        ID:
+          m_Value0: 8778232844875678619
+          m_Value1: 8976027944511448408
+        Parents: []
+        PortModels:
+        - rid: 4833587818902323417
+        - rid: 4833587818902323418
+        - rid: 4833587818902323419
+        NodeType:
+          m_SerializableType: Unity.Behavior.BranchingConditionComposite, Unity.Behavior,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 12334964803190848789
+          m_Value1: 14608808926743427008
+        m_FieldValues: []
+        <ConditionModels>k__BackingField:
+        - ConditionType:
+            m_SerializableType: DumyatRuntime.UseOnlineSellingCondition, Project.Runtime,
+              Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          ConditionTypeID:
+            m_Value0: 5345772760987857585
+            m_Value1: 11667728
+          NodeModel:
+            rid: 4833587818902323412
+          m_FieldValues: []
+          OperatorFieldModel:
+            rid: -2
+        <RequiresAllConditionsTrue>k__BackingField: 0
+        <ShouldTruncateNodeUI>k__BackingField: 0
+        <ObserverType>k__BackingField: 0
+    - rid: 4833587818902323413
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 1
+        m_NodeModel:
+          rid: 4833587818902323410
+        m_Connections:
+        - rid: 4833587818902323418
+    - rid: 4833587818902323414
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587818902323410
+        m_Connections:
+        - rid: 4833587709264003082
+    - rid: 4833587818902323415
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 1
+        m_NodeModel:
+          rid: 4833587818902323411
+        m_Connections:
+        - rid: 4833587818902323419
+    - rid: 4833587818902323416
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587818902323411
+        m_Connections:
+        - rid: 4833587818902323438
+    - rid: 4833587818902323417
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587818902323412
+        m_Connections:
+        - rid: 4833587709264003079
+    - rid: 4833587818902323418
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: True
+        m_PortDataFlowType: 1
+        m_IsFloating: 1
+        m_NodeModel:
+          rid: 4833587818902323412
+        m_Connections:
+        - rid: 4833587818902323413
+    - rid: 4833587818902323419
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: False
+        m_PortDataFlowType: 1
+        m_IsFloating: 1
+        m_NodeModel:
+          rid: 4833587818902323412
+        m_Connections:
+        - rid: 4833587818902323415
+    - rid: 4833587818902323437
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: 210.19312, y: 216.76587}
+        ID:
+          m_Value0: 16780125771308346555
+          m_Value1: 309358215735255112
+        Parents: []
+        PortModels:
+        - rid: 4833587818902323438
+        - rid: 4833587818902323439
+        NodeType:
+          m_SerializableType: DumyatRuntime.RunOfflineSaleAction, Project.Runtime,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 5476572877350281666
+          m_Value1: 13895728
+        m_FieldValues: []
+    - rid: 4833587818902323438
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587818902323437
+        m_Connections:
+        - rid: 4833587818902323416
+    - rid: 4833587818902323439
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4833587818902323437
+        m_Connections: []
+--- !u!114 &4555697440172637621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c02bb70996b49eba31d0c206e28da24, type: 3}
+  m_Name: NegotiationBehavior Blackboard
+  m_EditorClassIdentifier: Unity.Behavior::Unity.Behavior.RuntimeBlackboardAsset
+  VersionTimestamp: 639201138005623105
+  AssetID:
+    m_Value0: 0
+    m_Value1: 0
+  m_Blackboard:
+    m_Variables:
+    - rid: 4833587709264003080
+  m_SharedBlackboardVariableGuids: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 4833587709264003080
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 0}

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Reflex.Attributes;
@@ -18,16 +19,21 @@ namespace DumyatRuntime
 
         private IInventoryService _inventory;
         private IEventService _eventService;
+        private IWalletService _wallet;
 
         [Inject]
-        private void Inject(IInventoryService inventory, IEventService eventService)
+        private void Inject(IInventoryService inventory, IEventService eventService, IWalletService wallet)
         {
             _inventory = inventory;
             _eventService = eventService;
+            _wallet = wallet;
         }
 
         private VisualElement _root;
         private VisualElement _slotContainer;
+        private VisualElement _walletChip;
+        private Label _walletLabel;
+        private Label _emptyHint;
         private Dictionary<string, VisualElement> _activeSlots = new Dictionary<string, VisualElement>();
 
         private void OnEnable()
@@ -41,11 +47,20 @@ namespace DumyatRuntime
 
             // The main container in your UI Builder document where slots will be added
             _slotContainer = _root.Q<VisualElement>("SlotContainer");
+            _walletChip = _root.Q<VisualElement>("WalletChip");
+            _walletLabel = _root.Q<Label>("WalletBalance");
+            _emptyHint = _root.Q<Label>("EmptyHint");
+
+            // Seed from the service so the number is right before the first MoneyChangedEvent arrives.
+            SetBalanceText(_wallet?.Balance ?? 0);
+
+            if (_eventService == null) return;
 
             _eventService.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
+            _eventService.Subscribe<MoneyChangedEvent>(HandleMoneyChanged);
 
             _root.style.display = _startOpen ? DisplayStyle.Flex : DisplayStyle.None;
-            
+
             if (_startOpen)
             {
                 RefreshFullUI();
@@ -54,7 +69,10 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
+            if (_eventService == null) return;
+
             _eventService.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
+            _eventService.Unsubscribe<MoneyChangedEvent>(HandleMoneyChanged);
         }
 
         public void ToggleUI()
@@ -101,6 +119,41 @@ namespace DumyatRuntime
             }
         }
 
+        // Deliberately does NOT early-return when the panel is hidden, unlike HandleInventoryChanged:
+        // writing a label costs nothing and it guarantees the balance is correct the instant the bag opens.
+        private void HandleMoneyChanged(MoneyChangedEvent evt)
+        {
+            SetBalanceText(evt.NewBalance);
+
+            // Only animate when the panel is actually on screen.
+            if (_walletChip == null || _root == null || _root.style.display == DisplayStyle.None) return;
+
+            FlashWalletChip(evt.IsIncome);
+        }
+
+        private void SetBalanceText(int balance)
+        {
+            if (_walletLabel == null) return;
+            _walletLabel.text = balance.ToString("N0", CultureInfo.InvariantCulture);
+        }
+
+        private void FlashWalletChip(bool isIncome)
+        {
+            const string gain = "wallet-chip--gain";
+            const string loss = "wallet-chip--loss";
+
+            _walletChip.RemoveFromClassList(gain);
+            _walletChip.RemoveFromClassList(loss);
+            _walletChip.AddToClassList(isIncome ? gain : loss);
+
+            // UI Toolkit's own scheduler — no coroutine, and it survives the panel being hidden mid-flash.
+            _walletChip.schedule.Execute(() =>
+            {
+                _walletChip.RemoveFromClassList(gain);
+                _walletChip.RemoveFromClassList(loss);
+            }).ExecuteLater(280);
+        }
+
         private void RefreshFullUI()
         {
             if (_slotContainer == null) return;
@@ -108,11 +161,21 @@ namespace DumyatRuntime
             _slotContainer.Clear();
             _activeSlots.Clear();
 
+            // Opening the bag re-reads the balance, so it is always truth even if an event was missed.
+            SetBalanceText(_wallet?.Balance ?? 0);
+
             if (_inventory == null) return;
 
             foreach (var item in _inventory.CurrentItems)
             {
                 UpdateOrSpawnSlot(item);
+            }
+
+            if (_emptyHint != null)
+            {
+                _emptyHint.style.display = _inventory.CurrentItems.Count == 0
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
             }
         }
 
@@ -168,7 +231,7 @@ namespace DumyatRuntime
             var qtyLabel = slot.Q<Label>("ItemQuantity");
             if (qtyLabel != null)
             {
-                qtyLabel.text = quantity.ToString();
+                qtyLabel.text = $"×{quantity}";
             }
         }
 

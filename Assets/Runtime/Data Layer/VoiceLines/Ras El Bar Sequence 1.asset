@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faab39427066832489fca51809ed474f, type: 3}
+  m_Name: Ras El Bar Sequence 1
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DialogueSequenceSO
+  SequenceId: 4
+  Priority: 2
+  CanBeInterrupted: 1
+  ResumeAfterInterruption: 1
+  Lines:
+  - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
+    VoiceLineKey: 8
+    SubtitleText: mafesh arw2 mn el seed
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 1
+  - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
+    VoiceLineKey: 9
+    SubtitleText: kan nfsy astad fe safina zy ely hnak
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 2
+  - Character: {fileID: 11400000, guid: 01a4dbe4fdb4bd24ba2b31065d45b323, type: 2}
+    VoiceLineKey: 3
+    SubtitleText: tb mna ba2et kowayes m3a el 54b aho
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 3
+  - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
+    VoiceLineKey: 10
+    SubtitleText: kan nfsy t2ool keda
+    PersistenceConditionKey: 
+    RequiredState: 0
+    PersistenceKeyToSet: 
+    NextLineIndex: 4
+  ChoicePoints: []

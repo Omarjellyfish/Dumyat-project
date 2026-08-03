@@ -1,32 +1,17 @@
 using System.Collections.Generic;
+using Reflex.Attributes;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
-using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
     public class SawTip : MonoBehaviour
     {
-        private ISoundService _sound;
-        private IHapticService _haptics;
-        private IFloatingTextService _floatingText;
-        private IEventService _eventService;
-
-        [Inject]
-        private void Inject(ISoundService sound, IHapticService haptics, IFloatingTextService floatingText, IEventService eventService)
-        {
-            _sound = sound;
-            _haptics = haptics;
-            _floatingText = floatingText;
-            _eventService = eventService;
-        }
-
         [SerializeField] private SawBladePoint _bladeTip;
         [SerializeField] private SawBladePoint _bladeMid;
         [SerializeField] private SawBladePoint _bladeBase;
         [SerializeField] private Transform _bladeDirectionReference;
-        [SerializeField] private SurfaceConstraint _surfaceConstraint;
+        [SerializeField] private SawConstraint _surfaceConstraint;
         [SerializeField] private WoodSlicer _woodSlicer;
 
         [Header("Settings")]
@@ -43,11 +28,28 @@ namespace DumyatRuntime
 
         private bool _hasValidPreviousFrame;
         private int _strokeCount;
-private FloatingText _activeFloatingText;
+        private FloatingText _activeFloatingText;
         private List<Vector3> _hitPoints;
         private List<Vector3> _hitNormals;
+        private IEventService _eventService;
+        private IFloatingTextService _floatingTextService;
+        private ISoundService _soundService;
+        private IHapticService _hapticService;
 
-        private void Start()
+        [Inject]
+        private void Inject(
+            IEventService eventService,
+            IFloatingTextService floatingTextService,
+            ISoundService soundService,
+            IHapticService hapticService)
+        {
+            _eventService = eventService;
+            _floatingTextService = floatingTextService;
+            _soundService = soundService;
+            _hapticService = hapticService;
+        }
+
+        private void Awake()
         {
             _hitPoints = new List<Vector3>();
             _hitNormals = new List<Vector3>();
@@ -55,6 +57,9 @@ private FloatingText _activeFloatingText;
 
         private void FixedUpdate()
         {
+            if (_bladeTip == null || _bladeMid == null || _bladeBase == null || _settings == null)
+                return;
+
             _bladeTip.CheckContact();
             _bladeMid.CheckContact();
             _bladeBase.CheckContact();
@@ -117,14 +122,17 @@ private FloatingText _activeFloatingText;
                 _strokeCount++;
                 AddCurrentHitPoints();
 
-                _eventService.Publish(new SawStrokeEvent(_strokeCount, _settings.strokesNeededToCut, _bladeMid.transform.position));
+                _surfaceConstraint.SetCutProgress(_strokeCount, _settings.strokesNeededToCut);
+                _eventService?.Publish(new SawStrokeEvent(_strokeCount, _settings.strokesNeededToCut, _currentPosition));
 
-                ShowFloatingText($"Sawing {_strokeCount}/{_settings.strokesNeededToCut}");
+
+
+                ShowFloatingText($"{_strokeCount}/{_settings.strokesNeededToCut}");
                 
-                _sound?.PlayRandomSoundFxAtPosition(
+                _soundService?.PlayRandomSoundFxAtPosition(
                     _settings.sawStrokeClips, transform, _settings.sfxVolume);
 
-                _haptics?.TriggerVibration(
+                _hapticService?.TriggerVibration(
                     _settings.sawStrokeHapticProfile, XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
             }
 
@@ -134,19 +142,21 @@ private FloatingText _activeFloatingText;
 
                 if (woodToCut != null && _hitPoints.Count > 0)
                 {
-                    _woodSlicer.PerformCut(_hitPoints, _currentDirection, woodToCut);
+                    if (_woodSlicer != null)
+                        _woodSlicer.PerformCut(_hitPoints, _currentDirection, woodToCut);
                     ShowFloatingText("Cut!");
 
-                    _sound?.PlayRandomSoundFxAtPosition(
+                    _soundService?.PlayRandomSoundFxAtPosition(
                         _settings.cutCompleteClips, transform, _settings.sfxVolume);
 
-                    _haptics?.TriggerVibration(
+                    _hapticService?.TriggerVibration(
                         _settings.cutCompleteHapticProfile, XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
                 }
 
                 _strokeCount = 0;
                 _hitPoints.Clear();
                 _hitNormals.Clear();
+                _surfaceConstraint.ResetCutProgress();
             }
         }
 
@@ -197,18 +207,17 @@ private FloatingText _activeFloatingText;
             _strokeCount = 0;
             _hitPoints.Clear();
             _hitNormals.Clear();
+            _surfaceConstraint?.ResetCutProgress();
             HideFloatingText();
         }
-private void HideFloatingText()
-{
-    if (_activeFloatingText == null)
-        return;
+        private void HideFloatingText()
+        {
+            if (_activeFloatingText == null)
+                return;
 
-    if (_floatingText != null)
-        _floatingText.Hide(_activeFloatingText);
-
-    _activeFloatingText = null;
-}
+            _floatingTextService?.Hide(_activeFloatingText);
+            _activeFloatingText = null;
+        }
         private void ResetStrokeTracking()
         {
             _hasValidPreviousFrame = false;
@@ -216,26 +225,23 @@ private void HideFloatingText()
             _previousDirection = Vector3.zero;
         }
 
-private void ShowFloatingText(string text)
-{
-    if (!_showFloatingText)
-        return;
+        private void ShowFloatingText(string text)
+        {
+            if (!_showFloatingText || _floatingTextService == null)
+                return;
 
-    if (_floatingText == null)
-        return;
+            Vector3 position = _bladeMid != null
+                ? _bladeMid.transform.position + _floatingTextOffset
+                : transform.position + _floatingTextOffset;
 
-    Vector3 position = _bladeMid != null
-        ? _bladeMid.transform.position + _floatingTextOffset
-        : transform.position + _floatingTextOffset;
+            if (_activeFloatingText == null || !_activeFloatingText.gameObject.activeSelf)
+            {
+                _activeFloatingText = _floatingTextService.Show(position, text);
+                return;
+            }
 
-    if (_activeFloatingText == null || !_activeFloatingText.gameObject.activeSelf)
-    {
-        _activeFloatingText = _floatingText.Show(position, text);
-        return;
-    }
-
-    _activeFloatingText.SetPosition(position, Vector3.zero);
-    _activeFloatingText.SetText(text);
-}
+            _activeFloatingText.SetPosition(position, Vector3.zero);
+            _activeFloatingText.SetText(text);
+        }
     }
 }

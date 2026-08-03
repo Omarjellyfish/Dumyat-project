@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a010ad0c88c72e043aaa325262b851ca, type: 3}
+  m_Name: Sell 5 Fishes
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.QuestDefinitionSO
+  questID: Sell_5_Fishes
+  displayName: Sell 5 Fishes
+  description: you need to sell 5 fishes in ezbt el borg
+  sceneName: 
+  triggerType: 2
+  targetCount: 5
+  targetAsset: {fileID: 11400000, guid: 3285a763850db3049842c74a3d2a7df3, type: 2}
+  targetNameFallback: Fish
+  rewardDescription: get sm other thing
+  reward: {fileID: 11400000, guid: 99904e31451a254439f164cfba92f84f, type: 2}

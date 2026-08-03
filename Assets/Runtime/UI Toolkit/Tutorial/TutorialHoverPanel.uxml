@@ -1,0 +1,22 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/Tutorial/TutorialHoverPanel.uss" />
+    <ui:VisualElement name="TutorialPanel" class="tutorial-panel tutorial-panel--hidden">
+        <!-- Header: dots + step counter -->
+        <ui:VisualElement class="tutorial-header">
+            <ui:VisualElement name="ProgressDots" class="progress-dots-row" />
+            <ui:Label name="StepCounter" text="Step 1/7" class="step-counter" />
+        </ui:VisualElement>
+
+        <!-- Icon (optional, hidden by default) -->
+        <ui:VisualElement name="IconContainer" class="icon-container" />
+
+        <!-- Instruction text -->
+        <ui:Label name="InstructionText" text="Tutorial instruction goes here" class="instruction-text" />
+
+        <!-- Footer: skip and next button -->
+        <ui:VisualElement class="tutorial-footer" style="flex-direction: row; justify-content: space-between;">
+            <ui:Button name="SkipButton" text="Skip ▸" class="skip-button" />
+            <ui:Button name="NextButton" text="Next ▸" class="skip-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
