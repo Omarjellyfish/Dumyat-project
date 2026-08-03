@@ -93,6 +93,27 @@ namespace DumyatRuntime
             _currentSaveData = new GameSaveData();
         }
 
+        /// <summary>
+        /// Resets the save IN PLACE. The obvious implementation — <c>_currentSaveData = new
+        /// GameSaveData()</c> — is silently catastrophic: every save-backed service caches its own
+        /// slice by reference in its constructor (InventoryService, WalletService, QuestService,
+        /// CraftingService, AchievementService, PlayerPersistenceService, PlayerStats), so a fresh
+        /// aggregate leaves all of them reading and writing orphaned objects while the file shows
+        /// an empty save. FromJsonOverwrite reuses the existing nested instances, so those cached
+        /// references keep pointing at the live data.
+        /// </summary>
+        public void ResetSave()
+        {
+            // Touch the property, not the field: a New Game started from the main menu can happen
+            // before anything has forced a Load.
+            GameSaveData target = CurrentSaveData;
+
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(new GameSaveData()), target);
+            SaveAsync();
+
+            Debug.Log("SaveService: save reset for a new game.");
+        }
+
         public void SaveAsync()
         {
             if (_currentSaveData == null) return;

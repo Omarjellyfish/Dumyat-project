@@ -21,9 +21,19 @@ namespace DumyatRuntime
         [SerializeField] private SubtitlePanel _panel;
 
         private IEventService _eventService;
+        private ISettingsService _settings;
+
+        // The last line spoken, kept so a mid-line language change can re-render it rather than
+        // leaving the player staring at the previous language until the merchant speaks again.
+        private MerchantSpokeEvent _lastLine;
+        private bool _hasLine;
 
         [Inject]
-        private void Inject(IEventService eventService) => _eventService = eventService;
+        private void Inject(IEventService eventService, ISettingsService settings)
+        {
+            _eventService = eventService;
+            _settings = settings;
+        }
 
         private void Awake()
         {
@@ -49,6 +59,7 @@ namespace DumyatRuntime
 
             _eventService.Subscribe<MerchantSpokeEvent>(HandleMerchantSpoke);
             _eventService.Subscribe<MerchantStoppedSpeakingEvent>(HandleMerchantStopped);
+            _eventService.Subscribe<SubtitleModeChangedEvent>(HandleSubtitleModeChanged);
         }
 
         private void OnDisable()
@@ -56,21 +67,58 @@ namespace DumyatRuntime
             if (_eventService == null) return;
             _eventService.Unsubscribe<MerchantSpokeEvent>(HandleMerchantSpoke);
             _eventService.Unsubscribe<MerchantStoppedSpeakingEvent>(HandleMerchantStopped);
+            _eventService.Unsubscribe<SubtitleModeChangedEvent>(HandleSubtitleModeChanged);
         }
 
         // Every merchant publishes on the same channel, so each presenter takes only its own lines.
         private void HandleMerchantSpoke(MerchantSpokeEvent evt)
         {
             if (evt.Merchant != _merchant || _panel == null) return;
-            string speaker = _merchant.Config != null ? _merchant.Config.MerchantName : null;
-            if (evt.Instant) _panel.ShowInstant(evt.English, speaker);   // no voice to pace the type-out
-            else _panel.Show(evt.English, speaker);
+
+            _lastLine = evt;
+            _hasLine = true;
+            Render(evt, forceInstant: false);
         }
 
         private void HandleMerchantStopped(MerchantStoppedSpeakingEvent evt)
         {
             if (evt.Merchant != _merchant || _panel == null) return;
+
+            _hasLine = false;
             _panel.Hide();
+        }
+
+        /// <summary>
+        /// Re-renders the current line in the newly chosen language. Deliberately instant: the
+        /// merchant's voice is already partway through the line, so restarting the type-out would
+        /// put the caption behind the audio.
+        /// </summary>
+        private void HandleSubtitleModeChanged(SubtitleModeChangedEvent evt)
+        {
+            if (_panel == null) return;
+
+            if (evt.Mode == SubtitleMode.Off) { _panel.Hide(); return; }
+            if (_hasLine) Render(_lastLine, forceInstant: true);
+        }
+
+        private void Render(MerchantSpokeEvent evt, bool forceInstant)
+        {
+            // No settings service (a scene without a ContainerScope) degrades to English rather
+            // than to silence — a missing dependency should not look like a broken merchant.
+            SubtitleMode mode = _settings?.SubtitleMode ?? SubtitleMode.English;
+
+            if (mode == SubtitleMode.Off) { _panel.Hide(); return; }
+
+            string line = mode == SubtitleMode.Arabic ? evt.Arabic : evt.English;
+
+            // Arabic is authored per line and can legitimately be missing on a generated one.
+            // Falling back beats showing an empty panel while the merchant talks.
+            if (string.IsNullOrWhiteSpace(line)) line = evt.English;
+
+            string speaker = _merchant.Config != null ? _merchant.Config.MerchantName : null;
+
+            if (evt.Instant || forceInstant) _panel.ShowInstant(line, speaker);   // no voice to pace the type-out
+            else _panel.Show(line, speaker);
         }
     }
 }

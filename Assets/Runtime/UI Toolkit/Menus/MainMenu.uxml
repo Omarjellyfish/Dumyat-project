@@ -1,0 +1,58 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/MenuStyles.uss" />
+    <ui:Template name="SettingsPage" src="project://database/Assets/Runtime/UI%20Toolkit/Menus/SettingsPage.uxml" />
+
+    <!-- ========================================================================================
+         Main menu. Driven by MainMenuToolkitUI; the settings page inside it is driven separately
+         by SettingsToolkitUI on the same GameObject, so neither knows about the other beyond a
+         BackRequested event.
+
+         Element names are the contract with those controllers. Authored for a 900 x 620
+         world-space panel. Uppercase is authored, not transformed.
+         ======================================================================================== -->
+    <ui:VisualElement name="MainMenuPanel" class="menu-panel">
+
+        <!-- MenuRoot and SettingsRoot are swapped by display; only one is ever visible. -->
+        <ui:VisualElement name="MenuRoot" class="menu-page">
+
+            <ui:VisualElement name="MenuHeader" class="menu-header">
+                <ui:Label text="DUMYAT" class="menu-title" />
+                <ui:Label text="دمياط" class="menu-header-note" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="MenuButtons" class="menu-btn-stack">
+                <ui:Button name="NewGameButton" text="NEW GAME" class="menu-btn" />
+
+                <!-- Two child labels and NO text attribute: a Button draws its own `text` in the
+                     same box as its children, so setting both overlaps them. The hint carries the
+                     resume scene, or "No saved game" when Continue is disabled. -->
+                <ui:Button name="ContinueButton" class="menu-btn">
+                    <ui:Label text="CONTINUE" class="menu-btn-label" picking-mode="Ignore" />
+                    <ui:Label name="ContinueSubLabel" text="" class="menu-btn-hint" picking-mode="Ignore" />
+                </ui:Button>
+
+                <ui:Button name="SettingsButton" text="SETTINGS" class="menu-btn" />
+                <ui:Button name="ExitButton" text="EXIT" class="menu-btn menu-btn--danger" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="MenuFoot" class="menu-foot">
+                <ui:Label name="VersionLabel" text="" class="menu-foot-text" />
+                <ui:Label text="POINT AND PULL THE TRIGGER" class="menu-foot-text" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:Instance template="SettingsPage" name="SettingsPageInstance" style="display: none;" />
+
+        <!-- One overlay reused by New Game and Exit; the controller rebinds the Yes action and
+             rewrites the message per prompt. Covers the whole panel so the destructive button
+             underneath cannot be clicked past. -->
+        <ui:VisualElement name="ConfirmOverlay" class="confirm-overlay">
+            <ui:Label name="ConfirmTitle" text="ARE YOU SURE?" class="confirm-title" />
+            <ui:Label name="ConfirmMessage" text="" class="confirm-message" />
+            <ui:VisualElement name="ConfirmActions" class="confirm-actions">
+                <ui:Button name="ConfirmNoButton" text="CANCEL" class="menu-btn" />
+                <ui:Button name="ConfirmYesButton" text="CONFIRM" class="menu-btn menu-btn--danger" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

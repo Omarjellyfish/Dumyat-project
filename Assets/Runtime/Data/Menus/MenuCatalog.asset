@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5211740e8c93191438b18edf14b4db36, type: 3}
+  m_Name: MenuCatalog
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MenuCatalogSO
+  _mainMenuSceneName: MainMenu
+  _newGameSceneName: First_room
+  _nonResumableScenes: []
+  _loadingTips:
+  - Merchants remember how you dealt with them. Push too hard and the next price
+    will be worse.
+  - Freshness moves the price more than weight does. A big old fish is still an old
+    fish.
+  - The Menu button on your left controller pauses at any time.
+  - "Put your catch on the scale before you start haggling \u2014 an empty scale
+    gives you nothing to argue with."
+  _tipRotationSeconds: 4
+  _controlsImage: {fileID: 0}

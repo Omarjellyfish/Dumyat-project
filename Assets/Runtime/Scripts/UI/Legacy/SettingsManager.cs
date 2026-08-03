@@ -3,7 +3,12 @@ using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
-    public interface ISettingsService
+    /// <summary>
+    /// Contract for the superseded uGUI settings prototype. Deliberately NOT
+    /// <see cref="ISettingsService"/> — that name belongs to the UI Toolkit settings system backed by
+    /// <see cref="SettingsService"/>. The two are kept apart on purpose; do not merge them.
+    /// </summary>
+    public interface ILegacySettingsService
     {
         bool SubtitlesEnabled { get; }
         int SubtitleSize { get; }
@@ -22,7 +27,7 @@ namespace DumyatRuntime
         void PublishCurrentSettings();
     }
 
-    public class SettingsManager : MonoBehaviour, ISettingsService
+    public class SettingsManager : MonoBehaviour, ILegacySettingsService
     {
         private const string SUBTITLES_ENABLED_KEY = "SubtitlesEnabled";
         private const string SUBTITLE_SIZE_KEY = "SubtitleSize";

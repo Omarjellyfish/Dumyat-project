@@ -16,7 +16,9 @@ namespace DumyatRuntime
     {
         public virtual void InstallBindings(ContainerBuilder containerBuilder)
         {
-            Register<SettingsManager, ISettingsService>(containerBuilder, null);
+            // Nothing scene-wide by default. Settings are a root service (SettingsService, bound in
+            // GameInstaller) — registering the legacy SettingsManager here would shadow it in every
+            // gameplay scene. The legacy prototype binds its own contract in MenuSceneInstaller.
         }
 
         // Helper to register the serialized instance, or the first one found in the scene.

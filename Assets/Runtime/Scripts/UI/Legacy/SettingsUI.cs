@@ -21,10 +21,10 @@ namespace DumyatRuntime
         [SerializeField] private Slider _ambientVolumeSlider;
 
         private ISoundMixerService _soundMixerService;
-        private ISettingsService _settingsService;
+        private ILegacySettingsService _settingsService;
 
         [Inject]
-        private void Inject(ISoundMixerService soundMixerService, ISettingsService settingsService)
+        private void Inject(ISoundMixerService soundMixerService, ILegacySettingsService settingsService)
         {
             _soundMixerService = soundMixerService;
             _settingsService = settingsService;

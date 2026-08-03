@@ -9,5 +9,6 @@ namespace DumyatRuntime
         public IEventService EventService;
         public ICraftingService CraftingService;
         public IInventoryService InventoryService;
+        public IWalletService WalletService;
     }
 }

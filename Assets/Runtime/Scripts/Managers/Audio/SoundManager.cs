@@ -45,6 +45,11 @@ namespace DumyatRuntime
 
         private void OnTakeFromPool(AudioSource source)
         {
+            // Reset state a previous user may have left behind: PlayVoiceLine sets spatialBlend to 1
+            // and PlayLoopingSoundFxAtPosition sets loop to true, and neither ever restores them. Without
+            // this, a recycled source stays 3D/looping forever and later one-shots come out attenuated.
+            source.spatialBlend = 0f;
+            source.loop = false;
             source.gameObject.SetActive(true);
         }
 
