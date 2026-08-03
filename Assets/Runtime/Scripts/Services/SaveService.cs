@@ -41,8 +41,15 @@ namespace DumyatRuntime
         // How long shutdown will block for a pending write before giving up and letting the app close.
         private const int QUIT_FLUSH_TIMEOUT_MS = 2000;
 
-        public SaveService()
+        // Routine chatter (loaded / written / reset) is OFF by default: SaveAsync fires after every
+        // inventory mutation, so leaving it on buries everything else in the Console. Toggled from the
+        // GameInstaller's "Verbose Save Logging" checkbox. Warnings and errors are NEVER gated by this —
+        // a save that failed to read or write is a real problem and must always be visible.
+        private readonly bool _verboseLogging;
+
+        public SaveService(bool verboseLogging = false)
         {
+            _verboseLogging = verboseLogging;
             _savePath = Path.Combine(Application.persistentDataPath, SAVE_FILE_NAME);
             _tempPath = _savePath + TEMP_SUFFIX;
 
@@ -53,6 +60,11 @@ namespace DumyatRuntime
         }
 
         public void Dispose() => Application.quitting -= FlushOnQuit;
+
+        private void LogVerbose(string message)
+        {
+            if (_verboseLogging) Debug.Log(message);
+        }
 
         public GameSaveData CurrentSaveData
         {
@@ -75,7 +87,7 @@ namespace DumyatRuntime
                     string json = File.ReadAllText(_savePath);
                     _currentSaveData = new GameSaveData();
                     JsonUtility.FromJsonOverwrite(json, _currentSaveData);
-                    Debug.Log("SaveService: Master Save Loaded.");
+                    LogVerbose("SaveService: Master Save Loaded.");
                     return;
                 }
                 catch (Exception e)
@@ -87,7 +99,7 @@ namespace DumyatRuntime
             }
             else
             {
-                Debug.Log("SaveService: No existing save file found. Initializing a fresh GameSaveData.");
+                LogVerbose("SaveService: No existing save file found. Initializing a fresh GameSaveData.");
             }
 
             _currentSaveData = new GameSaveData();
@@ -111,7 +123,7 @@ namespace DumyatRuntime
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(new GameSaveData()), target);
             SaveAsync();
 
-            Debug.Log("SaveService: save reset for a new game.");
+            LogVerbose("SaveService: save reset for a new game.");
         }
 
         public void SaveAsync()
@@ -195,7 +207,7 @@ namespace DumyatRuntime
 
                     // See FlushAsync: this loop must be able to finish without the main thread.
                     await Task.Run(() => WriteAtomic(json)).ConfigureAwait(false);
-                    Debug.Log($"SaveService: Master save written asynchronously to {_savePath}");
+                    LogVerbose($"SaveService: Master save written asynchronously to {_savePath}");
                 }
             }
             catch (Exception e)

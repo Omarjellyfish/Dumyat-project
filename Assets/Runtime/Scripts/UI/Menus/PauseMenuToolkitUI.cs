@@ -12,8 +12,12 @@ namespace DumyatRuntime
     /// it means anything listening for <see cref="GameStateChangedEvent"/> learns about the pause
     /// too. <see cref="GamePauseToggledEvent"/> is published alongside it for existing listeners.
     ///
-    /// Lives per gameplay scene, like the inventory panel: a scene-resident object gets normal
-    /// Reflex injection from the scene's ContainerScope, which a DontDestroyOnLoad one would not.
+    /// ONE persistent instance serves every scene. It is spawned and injected by
+    /// <see cref="PauseMenuPresenter"/> (a root-container service) and marked DontDestroyOnLoad, so
+    /// it survives scene loads and no scene carries its own copy — do not place this prefab in a
+    /// scene as well. Everything scene-specific is therefore resolved per-open, not cached in
+    /// <c>OnEnable</c>: the location label is read each time the panel opens, and the state to return
+    /// to on Resume is whatever the game was in when it was paused.
     /// </summary>
     public class PauseMenuToolkitUI : MonoBehaviour
     {
@@ -27,7 +31,8 @@ namespace DumyatRuntime
         [SerializeField] private LazyFollowAnchor _anchor;
 
         [Header("Display")]
-        [Tooltip("Shown next to the PAUSED title. Falls back to the scene name if empty.")]
+        [Tooltip("Shown next to the PAUSED title. Leave EMPTY: this menu is shared by every scene, so " +
+                 "a fixed name here would be wrong everywhere but one. Empty uses the active scene name.")]
         [SerializeField] private string _locationDisplayName = "";
 
         private IEventService _eventService;
@@ -48,6 +53,10 @@ namespace DumyatRuntime
         private VisualElement _panelRoot;
         private VisualElement _menuRoot;
         private MenuConfirmOverlay _confirm;
+
+        // What to put the game back into on Resume. Defaults to FreeRoaming for the case where there
+        // is no IGameStateService to ask.
+        private GameState _stateBeforePause = GameState.FreeRoaming;
 
         public bool IsOpen { get; private set; }
 
@@ -71,7 +80,6 @@ namespace DumyatRuntime
             _confirm = new MenuConfirmOverlay(_panelRoot);
 
             BindButtons();
-            SetLocationLabel();
 
             // Closed, and closed silently: Close() would publish an "unpaused" event and force
             // FreeRoaming on a scene that may legitimately have started in another state.
@@ -90,12 +98,17 @@ namespace DumyatRuntime
             }
 
             _eventService.Subscribe<PauseToggleRequestedEvent>(HandleToggleRequested);
+
+            // This instance outlives the scene it was opened in, so a load starting underneath it
+            // has to shut it down — otherwise the panel would still be up over the next scene.
+            _eventService.Subscribe<SceneLoadBeginEvent>(HandleSceneLoadBegin);
         }
 
         private void OnDisable()
         {
             if (_settingsUI != null) _settingsUI.BackRequested -= ShowMenuPage;
             _eventService?.Unsubscribe<PauseToggleRequestedEvent>(HandleToggleRequested);
+            _eventService?.Unsubscribe<SceneLoadBeginEvent>(HandleSceneLoadBegin);
         }
 
         private void BindButtons()
@@ -132,6 +145,26 @@ namespace DumyatRuntime
             else Open();
         }
 
+        /// <summary>
+        /// Drops the panel without touching game state — whoever started the load already owns the
+        /// state it is heading into (ExitToMainMenu sets MainMenu before loading, for instance).
+        /// The one thing that must not survive is a zeroed timeScale, so Paused is unwound here.
+        /// </summary>
+        private void HandleSceneLoadBegin(SceneLoadBeginEvent _)
+        {
+            if (!IsOpen) return;
+
+            IsOpen = false;
+            SetPanelVisible(false);
+            _settingsUI?.Close();
+            _confirm?.Hide();
+
+            if (_gameState != null && _gameState.CurrentState == GameState.Paused)
+                _gameState.SetState(_stateBeforePause);
+
+            _eventService?.Publish(new GamePauseToggledEvent(false));
+        }
+
         public void Open()
         {
             if (IsOpen || _panelRoot == null) return;
@@ -145,8 +178,18 @@ namespace DumyatRuntime
             SetPanelVisible(true);
             ShowMenuPage();
 
-            // Snap to the current view rather than easing in from wherever the player last left it.
+            // Read per-open, not cached in OnEnable: this instance persists across scene loads, so
+            // the scene it is floating in is not the one it was created in.
+            SetLocationLabel();
+
+            // Snap to the current view rather than easing in from wherever the player last left it —
+            // which after a scene load is a stale pose from the previous scene. (The anchor picks up
+            // the new scene's Camera.main on its own once the old one is destroyed.)
             _anchor?.Reanchor();
+
+            // Remembered so Resume returns to whatever the player was doing — pausing mid-quest and
+            // resuming must not silently drop them back to FreeRoaming.
+            if (_gameState != null) _stateBeforePause = _gameState.CurrentState;
 
             // SetState is what actually zeroes Time.timeScale.
             _gameState?.SetState(GameState.Paused);
@@ -160,7 +203,7 @@ namespace DumyatRuntime
             IsOpen = false;
             SetPanelVisible(false);
 
-            _gameState?.SetState(GameState.FreeRoaming);
+            _gameState?.SetState(_stateBeforePause);
             _eventService?.Publish(new GamePauseToggledEvent(false));
         }
 
