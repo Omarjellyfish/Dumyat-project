@@ -13,7 +13,7 @@ namespace DumyatRuntime
             base.InstallBindings(containerBuilder);
 
             Register<MenuManager, IMenuService>(containerBuilder, _menuManager);
-            Register<SettingsManager, ISettingsService>(containerBuilder, _settingsManager);
+            Register<SettingsManager, ILegacySettingsService>(containerBuilder, _settingsManager);
         }
     }
 }

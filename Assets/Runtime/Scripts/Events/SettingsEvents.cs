@@ -56,6 +56,9 @@ namespace DumyatRuntime
         public SettingsPanelToggledEvent(bool isOpen)
         {
             IsOpen = isOpen;
+        }
+    }
+    
     /// <summary>
     /// Published by <see cref="SettingsService"/> when the subtitle mode changes. Prefer this over
     /// the two events above: it carries off/English/Arabic as one value that cannot self-contradict.
