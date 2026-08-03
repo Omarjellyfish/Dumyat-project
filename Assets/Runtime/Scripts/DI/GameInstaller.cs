@@ -230,7 +230,15 @@ namespace DumyatRuntime
             else
                 Debug.LogWarning("GameInstaller: FloatingUIManager prefab is not assigned.");
 
-            // Fade transition — plain C# service, constructor-injected.
+            // VR blackout for scene loads. EAGER: it drives itself off SceneLoadBegin/Complete and
+            // nothing ever resolves it by hand, so it has to exist before the first load.
+            // Handler order against FadeTransitionHandler does not matter — the fade-in only advances
+            // on later frames, so that handler's player-placement always lands first either way.
+            containerBuilder.RegisterType(typeof(ScreenFadeService), new[] { typeof(IScreenFadeService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Travel/door transition — carries the player across the load. Fading is the blackout's
+            // job now, not this one's.
             containerBuilder.RegisterType(typeof(FadeTransitionHandler), new[] { typeof(IFadeTransitionService) },
                 Lifetime.Singleton, Resolution.Eager);
 

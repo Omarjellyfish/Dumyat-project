@@ -240,6 +240,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 712170392700737431, guid: ba135fd7119b563479c689cd36ad4e34, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1421723600578774450, guid: ba135fd7119b563479c689cd36ad4e34, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9045741729288280136, guid: ba135fd7119b563479c689cd36ad4e34, type: 3}
       propertyPath: m_Name
       value: MainMenuUIDocument
@@ -415,10 +423,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8585213064526799703, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
 --- !u!1 &1745933723
 GameObject:
