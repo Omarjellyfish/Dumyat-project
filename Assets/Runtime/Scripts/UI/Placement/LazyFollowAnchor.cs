@@ -26,7 +26,7 @@ namespace DumyatRuntime
 
         [Tooltip("Offset (m) UP from view-centre. Slightly negative sits it just below eye level, " +
                  "which is the comfortable place to read and point at something.")]
-        [SerializeField] private float _upOffset = -0.12f;
+        [SerializeField] private float _upOffset = 0f;
 
         [Header("Lazy follow — world-anchored, re-centres past the cone")]
         [Tooltip("Half-angle (deg) of the comfort cone: how far the player can rotate their head before " +
