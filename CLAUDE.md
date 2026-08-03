@@ -119,6 +119,46 @@ Content/config are ScriptableObjects: `ItemData`/`CraftingRecipe` assets with `I
 `RecipeDatabase` lookups (e.g. `RecipeDatabase.GetRecipeByName`), plus tuning SOs (`SawSettingsSO`,
 `NailHammerSettingsSO`, `HapticProfileSO`, `PerformanceBudgetSettingSO`).
 
+### UI theme — "Delta" (the project's standard look)
+All new UI in this project — in-game panels **and** any design mockup/artifact produced for it —
+should use the **Delta** treatment unless the user asks otherwise. It is a frosted deep-water glass
+look, chosen for VR legibility and for fitting Dumyat's Mediterranean-port setting. The reference
+implementation is the inventory panel:
+[InventoryStyles.uss](Assets/Runtime/UI%20Toolkit/styles/InventoryStyles.uss).
+
+| Role | Value |
+|---|---|
+| Panel ground | `rgba(8, 26, 34, 0.84)`, `border-radius: 22px` |
+| Hairline / border | `rgba(120, 228, 236, 0.42)`; dividers at `0.14–0.2` alpha |
+| Primary text | `#EAF8FB` · Muted/label text `rgba(214, 246, 250, 0.55)` |
+| Accent (cyan) | `#67DDE8` — quantities, hover states, active row bar |
+| Money (jade) | `#8DEBAF` — EGP balances, positive deltas |
+| Destructive (coral) | `#FF9B8A` — Drop, refusals, negative deltas |
+
+Principles that matter more than the hex values:
+- **Hairline dividers, not cards.** Rows read as one continuous list; no per-row background boxes.
+- **Ghost buttons.** Transparent fill with a coloured outline, filling in on hover — a wall of solid
+  red reads badly at high item counts. Rectangular with a slight `border-radius: 8px`; **not** pills.
+- **Restraint in the type.** Non-bold titles carrying wide `letter-spacing`; weight comes from size
+  and spacing, not from bolding everything.
+- **Data, not badges.** Numeric readouts (balances, counts) are right-aligned with a small uppercase
+  label above, rather than wrapped in pills.
+
+**VR sizing floor** (world-space panels): body text ≥ 26 px, headers ≥ 32 px, and any ray-clickable
+control ≥ 64 px tall — measured against a 900 × 620 panel. Below that it is unreadable in a headset.
+
+**UI Toolkit cannot do**: `box-shadow`, gradients, `backdrop-filter`, `text-transform`, `clip-path`,
+or `::before`/`::after`. The frosted effect is opacity only (it does **not** blur what is behind it),
+and uppercase strings must be authored uppercase in the UXML.
+
+### Head-anchored world-space UI — lazy follow
+World-space panels that follow the player must use **`LazyFollowYaw`**
+([Assets/Runtime/Scripts/UI/LazyFollowYaw.cs](Assets/Runtime/Scripts/UI/LazyFollowYaw.cs)) — never
+parent UI to a controller or hard-`LookAt` the camera every frame. The panel anchors to a *world*
+yaw and holds still while the head turns inside a comfort cone (±30° default), then eases after it
+once it would leave view. Drop **`LazyFollowAnchor`** on any panel to get this; `NotificationHudManager`
+uses the same solver, so both behave identically.
+
 ### VR interaction systems (`Assets/Runtime/Scripts/`)
 - **CuttingSystem** — `WoodSlicer` slices meshes via EzySlice, driven by `SawTip`/`SawBladePoint`.
 - **Crafting** — `CraftingStation` + `StructuralPiece`/`DecorationPiece`; validated by
@@ -173,6 +213,46 @@ or changing code, prefer the option that keeps pieces decoupled and reusable:
   check whether an existing system already covers it (pooled audio via `ISoundService`, persistence
   via `ISaveService`/`PlayerPersistence`, haptics via `IHapticService`). Extend the shared system
   rather than duplicating it.
+
+## File architecture — decide where a script lives before you write it
+
+**Never drop a script into a folder root and move on.** Every new file needs a deliberate home, and
+every folder you touch should be left better organised than you found it. This is not cosmetic: a
+flat folder of thirty scripts hides duplication, makes ownership unclear, and is the main reason
+people re-implement something that already exists two files away.
+
+Rules:
+
+- **Place by feature, not by type.** Group scripts by the thing they serve (`UI/Subtitles/`,
+  `UI/Notifications/`), not by Unity concept (`Managers/`, `Behaviours/`). A folder should read as
+  a feature someone could own.
+- **A folder root holds folders, not loose scripts.** `Scripts/UI/` contains only subfolders. If you
+  add the *first* file of a new concern, create the folder for it rather than leaving it at the root.
+- **Two or three related files justify a folder.** A view + its data struct + its controller belong
+  together. A single unrelated file at a root does not.
+- **Reorganise when you notice drift.** If a task takes you into a folder that has accumulated loose
+  files, tidy it as part of that task — do not add to the mess and leave. Say so in your summary.
+- **Move with `git mv`, and always move the `.meta` alongside the `.cs`.** The `.meta` carries the
+  GUID, so moving both keeps every scene and prefab reference intact and git records a rename rather
+  than a delete + add. After any move, force a reimport and confirm no scene shows missing scripts.
+- **Namespaces do not follow folders here.** Nearly all runtime code is the single `DumyatRuntime`
+  namespace, so moving a file never requires touching `using` directives — which is exactly why
+  reorganising is cheap and there is no excuse for skipping it.
+
+Current `Assets/Runtime/Scripts/UI/` layout — extend it, don't flatten it:
+
+| Folder | Holds |
+|---|---|
+| `Placement/` | Shared world-space placement primitives (`LazyFollowAnchor`, `LazyFollowYaw`) |
+| `Menus/` | Main menu, pause menu, shared settings page, pause input relay |
+| `Loading/` | Loading overlay view + presenter |
+| `Subtitles/` | `SubtitlePanel`, `PlayerCaptionPresenter` |
+| `Notifications/` | HUD manager + card views + data |
+| `FloatingText/` | Pooled world-space popups |
+| `Inventory/`, `Crafting/`, `Quests/`, `Achievements/` | Per-system panels |
+| `Sales/` | Merchant sale panel + summary card |
+| `Travel/`, `Consent/`, `Testing/` | Destination board, consent prompt, dev harnesses |
+| `Legacy/` | The **superseded uGUI menu prototype** (`MenuManager`, `MenuLocation`, `PauseManager`, `SettingsManager`, `SettingsUI`). Used only by `Testing_MainMenu.unity`. Do not extend, depend on, or delete it — the UI Toolkit system in `Menus/` replaces it, and the two are merged deliberately, not incidentally. |
 
 ## Conventions
 

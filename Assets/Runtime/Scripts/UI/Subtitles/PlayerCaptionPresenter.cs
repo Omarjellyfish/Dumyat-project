@@ -26,9 +26,14 @@ namespace DumyatRuntime
         [SerializeField] private string _speakerLabel = "You";
 
         private IEventService _eventService;
+        private ISettingsService _settings;
 
         [Inject]
-        private void Inject(IEventService eventService) => _eventService = eventService;
+        private void Inject(IEventService eventService, ISettingsService settings)
+        {
+            _eventService = eventService;
+            _settings = settings;
+        }
 
         private void Awake()
         {
@@ -61,6 +66,11 @@ namespace DumyatRuntime
         private void HandlePartial(PlayerPartialTranscriptEvent evt)
         {
             if (_panel == null) return;
+
+            // Only the on/off part of the setting applies here. The language part deliberately does
+            // not: these are the player's own words as the STT heard them, already in the capture
+            // language, so there is no English version to switch to.
+            if (_settings != null && !_settings.SubtitlesEnabled) { _panel.Hide(); return; }
 
             // Empty text is the controller's signal to clear the caption (final arrived / turn ended).
             if (string.IsNullOrWhiteSpace(evt.Text)) { _panel.Hide(); return; }

@@ -50,9 +50,8 @@ namespace DumyatRuntime
         private readonly Queue<NotificationData> _queue = new Queue<NotificationData>();
         private Coroutine _runner;
 
-        private float _followYaw;         // world yaw (deg) the panel is horizontally anchored to
-        private float _yawVel;            // SmoothDampAngle velocity ref
-        private bool _needsReanchor = true; // snap the anchor to the current view on next update
+        // Shared comfort-cone follow, identical to the one driving the inventory panel.
+        private readonly LazyFollowYaw _follow = new LazyFollowYaw();
 
         private void Awake()
         {
@@ -98,12 +97,6 @@ namespace DumyatRuntime
 
             Transform cam = _camera.transform;
 
-            // Horizontal anchor: keep the panel's yaw fixed in the world while the head rotates
-            // within the comfort cone (panel slides across the view); once the head turns far enough
-            // that the panel would leave the cone — on EITHER side — ease the anchor to follow.
-            float camYaw = cam.eulerAngles.y;
-            if (_needsReanchor) { _followYaw = camYaw; _yawVel = 0f; _needsReanchor = false; }
-
             // Clamp the card's VISUAL CENTRE against the cone, not the canvas anchor. The canvas
             // pivot is the top-right corner (_rightOffset from the forward ray) and the card body
             // hangs down-left from it, so its centre is half a card-width further in. Clamping the
@@ -114,17 +107,14 @@ namespace DumyatRuntime
                 : 0f;
             float centreRightOffset = _rightOffset - cardHalfWidth;
             float panelYawOffset = Mathf.Atan2(centreRightOffset, _distance) * Mathf.Rad2Deg;
-            float panelInView = Mathf.DeltaAngle(camYaw, _followYaw + panelYawOffset);
-            if (Mathf.Abs(panelInView) > _followDeadzoneDeg)
-            {
-                float targetYaw = camYaw + Mathf.Sign(panelInView) * _followDeadzoneDeg - panelYawOffset;
-                _followYaw = Mathf.SmoothDampAngle(_followYaw, targetYaw, ref _yawVel,
-                                                   _followSmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
-            }
+
+            float followYaw = _follow.Solve(cam.eulerAngles.y, panelYawOffset,
+                                            _followDeadzoneDeg, _followSmoothTime,
+                                            Time.unscaledDeltaTime);
 
             // Yaw-only anchor for the horizontal; a stable world-up offset for the vertical so
             // pitching the head doesn't bob the panel.
-            Quaternion yaw = Quaternion.Euler(0f, _followYaw, 0f);
+            Quaternion yaw = Quaternion.Euler(0f, followYaw, 0f);
             Vector3 fwd = yaw * Vector3.forward;
             Vector3 right = yaw * Vector3.right;
             _root.position = cam.position + fwd * _distance + Vector3.up * _upOffset + right * _rightOffset;
@@ -140,7 +130,7 @@ namespace DumyatRuntime
                 NotificationData data = _queue.Dequeue();
                 if (_view == null) { _runner = null; yield break; }
 
-                _needsReanchor = true;   // snap the fresh card into the current view, then world-anchor
+                _follow.Reanchor();      // snap the fresh card into the current view, then world-anchor
                 _view.Build(data);
                 CanvasGroup g = _view.GroupHandle;
                 RectTransform c = _view.ContentHandle;

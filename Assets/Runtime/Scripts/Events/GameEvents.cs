@@ -21,4 +21,17 @@ namespace DumyatRuntime
             IsPaused = isPaused;
         }
     }
+
+    /// <summary>
+    /// The player asked to open or close the pause menu. Published by input (see
+    /// <see cref="PauseInputRelay"/>), never by the menu itself — that split is what lets a wrist
+    /// button, a debug key or the XR simulator open pause without the menu knowing about any of them.
+    /// </summary>
+    public readonly struct PauseToggleRequestedEvent : IGameEvent { }
+
+    /// <summary>
+    /// The save was wiped for a New Game. Anything holding derived state built from save data
+    /// should rebuild it rather than trusting what it cached.
+    /// </summary>
+    public readonly struct SaveResetEvent : IGameEvent { }
 }

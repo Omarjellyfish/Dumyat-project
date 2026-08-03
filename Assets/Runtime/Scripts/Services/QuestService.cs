@@ -29,7 +29,8 @@ namespace DumyatRuntime
             QuestDatabaseSO questDatabase,
             ICraftingService craftingService,
             IInventoryService inventoryService,
-            IPlayerPersistenceService persistenceService)
+            IPlayerPersistenceService persistenceService,
+            IWalletService walletService)
         {
             _saveService = saveService;
             _eventService = eventService;
@@ -41,7 +42,8 @@ namespace DumyatRuntime
             {
                 EventService = eventService,
                 CraftingService = craftingService,
-                InventoryService = inventoryService
+                InventoryService = inventoryService,
+                WalletService = walletService
             };
 
             SubscribeToGameplayEvents();

@@ -1,0 +1,48 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/MenuStyles.uss" />
+    <ui:Template name="SettingsPage" src="project://database/Assets/Runtime/UI%20Toolkit/Menus/SettingsPage.uxml" />
+
+    <!-- ========================================================================================
+         Pause menu. Same structure and the same SettingsPage template as MainMenu.uxml, so the
+         two panels stay in step by construction rather than by discipline.
+
+         Driven by PauseMenuToolkitUI. Authored for a 900 x 620 world-space panel.
+         ======================================================================================== -->
+    <ui:VisualElement name="PauseMenuPanel" class="menu-panel">
+
+        <ui:VisualElement name="PauseRoot" class="menu-page">
+
+            <ui:VisualElement name="PauseHeader" class="menu-header">
+                <ui:Label text="PAUSED" class="menu-title menu-title--sub" />
+                <ui:Label name="PauseSubLabel" text="" class="menu-header-note" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="PauseButtons" class="menu-btn-stack">
+                <!-- No text attribute — see MainMenu.uxml's ContinueButton for why. -->
+                <ui:Button name="ResumeButton" class="menu-btn">
+                    <ui:Label text="RESUME" class="menu-btn-label" picking-mode="Ignore" />
+                    <ui:Label text="MENU BUTTON" class="menu-btn-hint" picking-mode="Ignore" />
+                </ui:Button>
+
+                <ui:Button name="SettingsButton" text="SETTINGS" class="menu-btn" />
+                <ui:Button name="ExitToMenuButton" text="EXIT TO MAIN MENU" class="menu-btn menu-btn--danger" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="PauseFoot" class="menu-foot">
+                <ui:Label text="PROGRESS SAVED" class="menu-foot-text" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:Instance template="SettingsPage" name="SettingsPageInstance" style="display: none;" />
+
+        <!-- Leaving mid-session is one ray-flick away from losing the run, so it confirms. -->
+        <ui:VisualElement name="ConfirmOverlay" class="confirm-overlay">
+            <ui:Label name="ConfirmTitle" text="ARE YOU SURE?" class="confirm-title" />
+            <ui:Label name="ConfirmMessage" text="" class="confirm-message" />
+            <ui:VisualElement name="ConfirmActions" class="confirm-actions">
+                <ui:Button name="ConfirmNoButton" text="STAY" class="menu-btn" />
+                <ui:Button name="ConfirmYesButton" text="LEAVE" class="menu-btn menu-btn--danger" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

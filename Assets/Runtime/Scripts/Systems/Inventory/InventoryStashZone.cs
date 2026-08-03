@@ -14,13 +14,21 @@ namespace DumyatRuntime
         [SerializeField] private InventoryToolkitUI _inventoryUI;
 
         private IHapticService _haptics;
+        private ISoundService _sound;
 
         [Inject]
-        private void Inject(IHapticService haptics) => _haptics = haptics;
+        private void Inject(IHapticService haptics, ISoundService sound)
+        {
+            _haptics = haptics;
+            _sound = sound;
+        }
 
         [Header("Audio Feedback")]
+        [Tooltip("Played through ISoundService (pooled, on the SFX bus) when an item is stashed.")]
         [SerializeField] private AudioClip _stashSound;
-        [SerializeField] private AudioSource _audioSource;
+
+        [Range(0f, 1f)]
+        [SerializeField] private float _stashVolume = 1f;
 
 
         private XRGrabInteractable _interactable;
@@ -128,10 +136,8 @@ namespace DumyatRuntime
         {
             if (pickup == null) return;
 
-            if (_audioSource != null && _stashSound != null)
-            {
-                _audioSource.PlayOneShot(_stashSound);
-            }
+            // Pooled + routed to the SFX mixer bus, so the settings volume slider applies.
+            if (_stashSound != null) _sound?.PlaySoundFxAtPosition(_stashSound, transform, _stashVolume);
 
             _haptics?.TriggerVibration(0.6f, 0.15f, 0.8f, HapticHand.Both);
 
