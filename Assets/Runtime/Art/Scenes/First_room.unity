@@ -4841,13 +4841,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: XR Origin (XR Rig)
       objectReference: {fileID: 0}
+    - target: {fileID: 3309285002930837712, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3840634287862328838, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
       propertyPath: m_LocalPosition.z
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7592668055181980100, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5881,7 +5885,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 871988678790602921, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
       propertyPath: _destinations.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 871988678790602921, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
       propertyPath: '_destinations.Array.data[0]'
@@ -5895,6 +5899,10 @@ PrefabInstance:
       propertyPath: '_destinations.Array.data[2]'
       value: 
       objectReference: {fileID: 11400000, guid: 253cda07b3063d943981b705d54f0bb0, type: 2}
+    - target: {fileID: 871988678790602921, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
+      propertyPath: '_destinations.Array.data[3]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 048a8c381a242ed45aaea063326ba068, type: 2}
     - target: {fileID: 1471034364042049163, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
       propertyPath: m_Name
       value: BusStop
