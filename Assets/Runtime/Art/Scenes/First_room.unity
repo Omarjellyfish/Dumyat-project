@@ -2615,55 +2615,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: aa382a387e472e148b97e7c0629f88a9, type: 3}
---- !u!1 &1133163139
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1133163141}
-  - component: {fileID: 1133163140}
-  m_Layer: 0
-  m_Name: Narrative Engine
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1133163140
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1133163139}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d213e42c48fb16f40adf87ee6d884f0f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.Testing.NarrativeVoiceLineTest
-  _mainSequence: {fileID: 11400000, guid: 10721b5d7ba981e4da5fd18d9cc36661, type: 2}
-  _interruptSequence: {fileID: 11400000, guid: 4bfc18c5284aa964bba89b1b8eb0382b, type: 2}
-  _voiceVolume: 1
-  _autoAdvance: 1
-  _autoAdvanceDelay: 0.1
---- !u!4 &1133163141
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1133163139}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.38498, y: -0.79, z: 13.19338}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1137500641
 GameObject:
   m_ObjectHideFlags: 0
@@ -4724,7 +4675,6 @@ SceneRoots:
   - {fileID: 2880904847918374818}
   - {fileID: 381937516}
   - {fileID: 1081110337}
-  - {fileID: 1133163141}
   - {fileID: 602880188}
   - {fileID: 1982911421}
   - {fileID: 1887413229}
