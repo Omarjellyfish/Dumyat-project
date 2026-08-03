@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -151,7 +150,7 @@ namespace DumyatRuntime
         /// Peak amplitude (0-1) of the most recent captured audio chunk. Useful for a live
         /// input-level meter when calibrating <see cref="_silenceAmplitudeThreshold"/>. 0 when idle.
         /// </summary>
-        public float CurrentInputLevel { get; private set; }
+        public float CurrentInputLevel => _capture.CurrentInputLevel;
 
         /// <summary>Names of the microphone devices currently connected to the system (live).</summary>
         public static string[] AvailableMicrophoneDevices => Microphone.devices;
@@ -199,13 +198,13 @@ namespace DumyatRuntime
         }
 
         /// <summary>The tracked ambient noise floor (0-1, peak domain). 0 when idle / not calibrated.</summary>
-        public float CurrentNoiseFloor => _noiseFloor;
+        public float CurrentNoiseFloor => _capture.CurrentNoiseFloor;
 
         /// <summary>
         /// The effective voice gate the level is currently compared against: the adaptive open-gate when
         /// auto-sensitivity is on, otherwise the fixed <see cref="SilenceAmplitudeThreshold"/>.
         /// </summary>
-        public float CurrentGateThreshold => _autoAdjustSensitivity ? _openGate : _silenceAmplitudeThreshold;
+        public float CurrentGateThreshold => _capture.CurrentGateThreshold;
 
         // The Scribe server rejects a commit with less than 0.3s of uncommitted audio. Require a bit
         // more so a too-short blip is discarded locally instead of triggering a server error.
@@ -242,22 +241,12 @@ namespace DumyatRuntime
         // Preferred device, set via the MicrophoneDevice property by the VoiceCaptureController
         // (which now owns the Inspector field). Empty = system default.
         private string _microphoneDevice = string.Empty;
-        private string _micDevice;
-        private AudioClip _micClip;
-        private float[] _readBuffer;
-        private int _clipSamples;
-        private int _lastReadPos;
-        private bool _speechStarted;
-        private float _lastVoiceTime;
-        private int _captureSampleRate;
-        private int _streamedSampleCount;   // samples streamed to the server for the current utterance
 
-        // --- Adaptive input sensitivity (Discord-style noise-floor tracking, peak domain) ---
-        private float _smoothedLevel;         // envelope-followed input level (instant attack, slow release)
-        private float _noiseFloor;            // tracked ambient baseline; the auto gate rides just above it
-        private float _openGate;              // adaptive threshold to OPEN the gate (start capturing)
-        private float _closeGate;             // lower threshold to keep it open (hysteresis, anti-chatter)
-        private bool _noiseFloorInitialized;  // false until the first chunk of a fresh session seeds the floor
+        // Owns the mic ring buffer, the input-level envelope and the adaptive voice gate. Shared with
+        // the other streaming STT clients so the gate is tuned in exactly one place.
+        private readonly MicrophoneStreamCapture _capture = new MicrophoneStreamCapture();
+
+        private int _streamedSampleCount;   // samples streamed to the server for the current utterance
 
         // --- Per-utterance finalization / timeout state (main-thread only) ---
         private bool _awaitingFinal;
@@ -390,33 +379,29 @@ namespace DumyatRuntime
             // Auto-open the session on first use, then validate the mic device.
             if (!IsSessionOpen && !OpenSession()) return;
 
-            if (Microphone.devices == null || Microphone.devices.Length == 0)
+            // Push the current tuning onto the capture before opening the device, then re-calibrate the
+            // adaptive gate from scratch for this utterance (a new mic / room has a different ambience).
+            _capture.LogPrefix = LogPrefix;
+            _capture.Device = _microphoneDevice;
+            _capture.AutoAdjustSensitivity = _autoAdjustSensitivity;
+            _capture.SensitivityMargin = _autoSensitivityMargin;
+            _capture.ManualThreshold = _silenceAmplitudeThreshold;
+            _capture.DropLeadingSilence = AutoStopOnSilence;
+            _capture.ResetCalibration();
+
+            if (!_capture.Start(out string micError))
             {
-                NotifyFailed("No microphone device found.");
-                return;
-            }
-            if (!StartMicrophone())
-            {
-                NotifyFailed("Failed to start microphone capture.");
+                NotifyFailed(micError);
                 return;
             }
 
-            _speechStarted = false;
-            _lastVoiceTime = Time.unscaledTime;
             _awaitingFinal = false;
             _streamedSampleCount = 0;
             _utterancePcm.Clear();
-            _captureSampleRate = _micClip.frequency;
-            // Re-calibrate the adaptive gate from scratch for this session (new mic / room can differ).
-            _smoothedLevel = 0f;
-            _noiseFloor = 0f;
-            _openGate = 0f;
-            _closeGate = 0f;
-            _noiseFloorInitialized = false;
             MicrophoneEnabled = true;
 
             Log($"Microphone ENABLED — {(AutoStopOnSilence ? "armed (voice-activity)" : "capturing")} " +
-                $"on '{_micDevice}' (session {(_socketOpen ? "open" : "connecting")}, silence: {_silenceThresholdSeconds}s, " +
+                $"on '{_capture.ResolvedDevice}' (session {(_socketOpen ? "open" : "connecting")}, silence: {_silenceThresholdSeconds}s, " +
                 $"gate: {(_autoAdjustSensitivity ? $"auto x{_autoSensitivityMargin:0.0} over noise floor" : $"manual amp<{_silenceAmplitudeThreshold}")}).");
         }
 
@@ -426,9 +411,8 @@ namespace DumyatRuntime
         {
             if (!MicrophoneEnabled) return;
 
-            StopMicrophone();
+            _capture.Stop();
             MicrophoneEnabled = false;
-            CurrentInputLevel = 0f;
 
             FinalizeUtterance(keepMicOpen: false);
         }
@@ -439,7 +423,7 @@ namespace DumyatRuntime
         private void FinalizeUtterance(bool keepMicOpen)
         {
             // Streamed audio is always resampled to 16 kHz before sending (see CaptureAndStreamAudio),
-            // so _streamedSampleCount / _utterancePcm are in the 16 kHz domain — NOT _captureSampleRate.
+            // so _streamedSampleCount / _utterancePcm are in the 16 kHz domain — NOT the device's rate.
             int rate = RequiredSampleRate;
             float streamedSeconds = _streamedSampleCount / (float)rate;
 
@@ -465,7 +449,7 @@ namespace DumyatRuntime
                 Log("Mic disabled — no captured voice to commit.");
             }
 
-            _speechStarted = false;
+            _capture.ClearSpeechState();
             _streamedSampleCount = 0;
             _utterancePcm.Clear();
         }
@@ -477,51 +461,9 @@ namespace DumyatRuntime
         {
             if (!_dumpSttAudio || _utterancePcm.Count == 0) return;
 
-            try
-            {
-                string folder = Path.Combine(Application.persistentDataPath,
-                    string.IsNullOrWhiteSpace(_sttAudioFolderName) ? "STT_Audio" : _sttAudioFolderName);
-                Directory.CreateDirectory(folder);
-
-                string fileName = $"stt_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.wav";
-                string path = Path.Combine(folder, fileName);
-                File.WriteAllBytes(path, BuildWav(_utterancePcm.ToArray(), sampleRate));
-                Log($"STT audio dumped → {path}");
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"{LogPrefix} Could not write STT audio dump: {ex.Message}");
-            }
-        }
-
-        // Wraps raw 16-bit mono little-endian PCM in a canonical 44-byte WAV/PCM header.
-        private static byte[] BuildWav(byte[] pcm, int sampleRate)
-        {
-            const short channels = 1;
-            const short bitsPerSample = 16;
-            int byteRate = sampleRate * channels * bitsPerSample / 8;
-            short blockAlign = (short)(channels * bitsPerSample / 8);
-
-            using (var ms = new MemoryStream(44 + pcm.Length))
-            using (var w = new BinaryWriter(ms, Encoding.UTF8))
-            {
-                w.Write(Encoding.ASCII.GetBytes("RIFF"));
-                w.Write(36 + pcm.Length);                    // ChunkSize
-                w.Write(Encoding.ASCII.GetBytes("WAVE"));
-                w.Write(Encoding.ASCII.GetBytes("fmt "));
-                w.Write(16);                                 // Subchunk1Size (PCM)
-                w.Write((short)1);                           // AudioFormat = PCM
-                w.Write(channels);
-                w.Write(sampleRate);
-                w.Write(byteRate);
-                w.Write(blockAlign);
-                w.Write(bitsPerSample);
-                w.Write(Encoding.ASCII.GetBytes("data"));
-                w.Write(pcm.Length);                         // Subchunk2Size
-                w.Write(pcm);
-                w.Flush();
-                return ms.ToArray();
-            }
+            string path = AudioCodec.WriteWavDump(_utterancePcm.ToArray(), sampleRate,
+                _sttAudioFolderName, LogPrefix);
+            if (path != null) Log($"STT audio dumped → {path}");
         }
 
         // --- ISTTModel compatibility (delegate to the mic toggle) ------------------
@@ -570,125 +512,17 @@ namespace DumyatRuntime
 
         // --- Microphone capture (main thread) --------------------------------------
 
-        private bool StartMicrophone()
-        {
-            _micDevice = ResolveMicrophoneDevice();
-            if (string.IsNullOrEmpty(_micDevice)) return false;
-
-            // 1-second ring buffer, looping, at the rate Scribe expects.
-            _micClip = Microphone.Start(_micDevice, true, 1, RequiredSampleRate);
-            if (_micClip == null) return false;
-
-            _clipSamples = _micClip.samples;
-            _readBuffer = new float[_clipSamples];
-            _lastReadPos = 0;
-
-            if (_micClip.frequency != RequiredSampleRate)
-            {
-                // The device forced a different rate. We tag chunks with the real rate, but
-                // audio_format=pcm_16000 expects 16 kHz — quality/recognition may suffer.
-                Debug.LogWarning($"ElevenLabsScribeClient: mic opened at {_micClip.frequency} Hz, " +
-                                 $"expected {RequiredSampleRate} Hz.");
-            }
-            return true;
-        }
-
-        // Picks the configured device if it's currently connected, otherwise the first available one.
-        private string ResolveMicrophoneDevice()
-        {
-            string[] devices = Microphone.devices;
-            if (devices == null || devices.Length == 0) return null;
-
-            if (!string.IsNullOrEmpty(_microphoneDevice) && Array.IndexOf(devices, _microphoneDevice) >= 0)
-                return _microphoneDevice;
-
-            if (!string.IsNullOrEmpty(_microphoneDevice))
-                Debug.LogWarning($"ElevenLabsScribeClient: microphone '{_microphoneDevice}' not connected; " +
-                                 $"using '{devices[0]}'.");
-            return devices[0];
-        }
-
-        private void StopMicrophone()
-        {
-            if (!string.IsNullOrEmpty(_micDevice) && Microphone.IsRecording(_micDevice))
-                Microphone.End(_micDevice);
-            _micClip = null;
-        }
-
+        // Reads whatever the mic produced this frame (levels + voice gate live in
+        // MicrophoneStreamCapture) and streams the gated audio, then applies voice-activity
+        // segmentation on top.
         private void CaptureAndStreamAudio()
         {
-            if (_micClip == null) return;
-
-            int currentPos = Microphone.GetPosition(_micDevice);
-            if (currentPos < 0 || currentPos == _lastReadPos) return;
-
-            _micClip.GetData(_readBuffer, 0);
-
-            // Collect samples written since the last read, handling ring-buffer wrap.
-            int newCount = currentPos >= _lastReadPos
-                ? currentPos - _lastReadPos
-                : (_clipSamples - _lastReadPos) + currentPos;
-
-            float[] chunk = new float[newCount];
-            float peak = 0f;
-            for (int i = 0; i < newCount; i++)
-            {
-                float sample = _readBuffer[(_lastReadPos + i) % _clipSamples];
-                chunk[i] = sample;
-                float abs = sample < 0f ? -sample : sample;
-                if (abs > peak) peak = abs;
-            }
-            _lastReadPos = currentPos;
-
-            // Envelope-follow the peak: snap up instantly, decay slowly — a steady level (and meter) instead
-            // of frame-to-frame jitter. Still peak domain, so the manual gate stays comparable.
-            _smoothedLevel = peak >= _smoothedLevel ? peak : Mathf.Lerp(_smoothedLevel, peak, 0.15f);
-            CurrentInputLevel = _smoothedLevel;
-
-            // Effective voice gate. AUTO: derive it from a tracked ambient noise floor so it self-calibrates
-            // per mic/room (Discord-style automatic sensitivity). MANUAL: the fixed serialized threshold.
-            // Hysteresis (open > close) stops the gate chattering on the quiet dips between words.
-            float openGate, closeGate;
-            if (_autoAdjustSensitivity)
-            {
-                if (!_noiseFloorInitialized) { _noiseFloor = _smoothedLevel; _noiseFloorInitialized = true; }
-                _openGate = Mathf.Clamp(_noiseFloor * _autoSensitivityMargin + 0.006f, 0.008f, 0.2f);
-                _closeGate = _openGate * 0.6f;
-                openGate = _openGate;
-                closeGate = _closeGate;
-            }
-            else
-            {
-                openGate = closeGate = _silenceAmplitudeThreshold;
-            }
-
-            // Once speaking, hold the gate open down to the lower close-gate; before speech, require the open-gate.
-            bool voiced = _speechStarted ? _smoothedLevel >= closeGate : _smoothedLevel >= openGate;
-
-            // Track the noise floor ONLY while the gate is closed (silence), so speech bursts don't inflate it:
-            // rise slowly toward a creeping ambient level, fall quickly when the room gets quieter.
-            if (_autoAdjustSensitivity && !voiced)
-            {
-                float rate = _smoothedLevel > _noiseFloor ? 0.02f : 0.2f;
-                _noiseFloor = Mathf.Lerp(_noiseFloor, _smoothedLevel, rate);
-            }
-
-            // In voice-activity mode (AutoStopOnSilence) capture begins at the FIRST voiced chunk and
-            // then streams the utterance CONTIGUOUSLY until the silence-commit — so the natural sub-
-            // threshold dips between syllables/words are kept and the audio isn't fragmented. Only the
-            // idle audio BEFORE speech starts (leading dead air / background silence) is dropped. In
-            // push-to-talk mode the full held audio is streamed.
-            bool sendChunk = !AutoStopOnSilence || _speechStarted || voiced;
+            if (!_capture.Poll(out float[] sendSamples, out byte[] pcm)) return;
 
             // Stream only what passes the gate — no leading/idle silence, just the utterance.
             // (Skip while awaiting the final result after a commit.)
-            if (!_awaitingFinal && sendChunk)
+            if (!_awaitingFinal && pcm != null)
             {
-                // We declared audio_format=pcm_16000, but Unity often opens the mic at the device's
-                // native rate (e.g. 48 kHz on a Quest), so resample to 16 kHz before sending — otherwise
-                // Scribe decodes the PCM at the wrong speed and returns a completely wrong transcript.
-                float[] sendSamples = ResampleTo16k(chunk, _captureSampleRate > 0 ? _captureSampleRate : RequiredSampleRate);
-                byte[] pcm = FloatsToPcm16(sendSamples);
                 EnqueueAudioChunk(pcm, commit: false);
                 _streamedSampleCount += sendSamples.Length;
                 // Keep a copy of EXACTLY what we send, for the optional .wav debug dump.
@@ -698,56 +532,18 @@ namespace DumyatRuntime
             // Voice-activity segmentation: capture "starts" on the first voiced chunk and "stops"
             // after _silenceThresholdSeconds of quiet, which commits the utterance WITHOUT closing
             // the mic — it stays open (armed) for the next utterance.
-            if (voiced)
+            if (_capture.SpeechStartedThisPoll)
             {
-                if (!_speechStarted)
-                    Log($"Speech DETECTED (level {_smoothedLevel:F3} >= gate {openGate:F3}, floor {_noiseFloor:F3}, " +
-                        $"{(_autoAdjustSensitivity ? "auto" : "manual")}) — capturing.");
-                _speechStarted = true;
-                _lastVoiceTime = Time.unscaledTime;
+                Log($"Speech DETECTED (level {_capture.CurrentInputLevel:F3} >= gate " +
+                    $"{_capture.CurrentGateThreshold:F3}, floor {_capture.CurrentNoiseFloor:F3}, " +
+                    $"{(_autoAdjustSensitivity ? "auto" : "manual")}) — capturing.");
             }
-            else if (AutoStopOnSilence && _speechStarted && !_awaitingFinal
-                     && Time.unscaledTime - _lastVoiceTime >= _silenceThresholdSeconds)
+            else if (!_capture.LastChunkVoiced && AutoStopOnSilence && _capture.SpeechStarted && !_awaitingFinal
+                     && Time.unscaledTime - _capture.LastVoiceTime >= _silenceThresholdSeconds)
             {
                 Log($"Silence for {_silenceThresholdSeconds}s after speech — committing (mic stays open).");
                 FinalizeUtterance(keepMicOpen: true);
             }
-        }
-
-        // Linear-resamples a mono float chunk to 16 kHz. ElevenLabs Scribe is told audio_format=pcm_16000,
-        // so whatever rate Unity actually opened the mic at, the PCM we send must be 16 kHz or Scribe
-        // decodes it at the wrong speed (garbage transcript on otherwise-clear audio). Per-chunk linear
-        // interpolation: the tiny boundary artifact every frame is inaudible to the STT model, unlike a
-        // 3x speed error. src[0]→dst[0] and src[last]→dst[last] so overall duration is preserved.
-        private static float[] ResampleTo16k(float[] src, int srcRate)
-        {
-            if (srcRate == RequiredSampleRate || srcRate <= 0 || src.Length < 2) return src;
-
-            int outLen = Mathf.Max(1, Mathf.RoundToInt(src.Length * (float)RequiredSampleRate / srcRate));
-            var dst = new float[outLen];
-            float step = (float)(src.Length - 1) / Mathf.Max(1, outLen - 1);
-            for (int i = 0; i < outLen; i++)
-            {
-                float pos = i * step;
-                int i0 = (int)pos;
-                int i1 = i0 + 1 < src.Length ? i0 + 1 : src.Length - 1;
-                float frac = pos - i0;
-                dst[i] = src[i0] * (1f - frac) + src[i1] * frac;
-            }
-            return dst;
-        }
-
-        private static byte[] FloatsToPcm16(float[] samples)
-        {
-            var bytes = new byte[samples.Length * 2];
-            for (int i = 0; i < samples.Length; i++)
-            {
-                float clamped = Mathf.Clamp(samples[i], -1f, 1f);
-                short s = (short)Mathf.RoundToInt(clamped * short.MaxValue);
-                bytes[i * 2] = (byte)(s & 0xFF);
-                bytes[i * 2 + 1] = (byte)((s >> 8) & 0xFF);
-            }
-            return bytes;
         }
 
         private void EnqueueAudioChunk(byte[] pcm, bool commit)
@@ -791,7 +587,8 @@ namespace DumyatRuntime
                     if (epoch != _sessionEpoch) return;   // superseded/torn down while connecting
                     _socketOpen = true;
                     _connecting = false;
-                    if (_micClip != null) _lastReadPos = Microphone.GetPosition(_micDevice);
+                    // Drop whatever the mic buffered while we were connecting.
+                    _capture.ResyncReadHead();
                     Log("WebSocket CONNECTED — session open, streaming when mic enabled.");
                 });
 
@@ -1066,9 +863,8 @@ namespace DumyatRuntime
             _connecting = false;
             _awaitingFinal = false;
             ClearSettling();
-            CurrentInputLevel = 0f;
 
-            StopMicrophone();
+            _capture.Stop();
 
             CancellationTokenSource cts = _cts;
             _cts = null;

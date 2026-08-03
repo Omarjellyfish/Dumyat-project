@@ -127,7 +127,13 @@ namespace DumyatRuntime
             if (_speakerLabel == null) return;
             bool has = !string.IsNullOrWhiteSpace(speaker);
             _speakerLabel.gameObject.SetActive(has);
-            if (has) _speakerLabel.text = speaker.ToUpperInvariant();
+            if (!has) return;
+
+            // Shaped as well: a speaker named in Arabic needs the same treatment as the line itself.
+            // ToUpperInvariant is a no-op on Arabic, so it stays safe for both scripts.
+            string name = speaker.ToUpperInvariant();
+            _speakerLabel.isRightToLeftText = ArabicTextShaper.ContainsArabic(name);
+            _speakerLabel.text = ArabicTextShaper.Shape(name);
         }
 
         /// <summary>Reveals the rest of the current line at once.</summary>
@@ -183,10 +189,18 @@ namespace DumyatRuntime
         // front, so revealing characters never reflows the layout and the panel never jitters.
         private void Resize(string text)
         {
-            _text.text = text;
+            // TMP cannot shape Arabic, so the line is rewritten into connected letterforms and the
+            // component is flipped to right-to-left. Both are needed: shaping alone leaves the words in
+            // English reading order, RTL alone leaves the letters disconnected. Measuring uses the
+            // SHAPED string — lam+alef collapses two characters into one glyph, so measuring the raw
+            // text would size the panel for a line that is never drawn.
+            string shaped = ArabicTextShaper.Shape(text);
+            _text.isRightToLeftText = ArabicTextShaper.ContainsArabic(text);
+
+            _text.text = shaped;
             _text.maxVisibleCharacters = 0;
 
-            Vector2 preferred = _text.GetPreferredValues(text, _maxWidth, 0f);
+            Vector2 preferred = _text.GetPreferredValues(shaped, _maxWidth, 0f);
             preferred.x = Mathf.Min(preferred.x, _maxWidth);
 
             _text.rectTransform.sizeDelta = preferred;

@@ -4,6 +4,7 @@ using System.Text;
 using Reflex.Attributes;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace DumyatRuntime
 {
@@ -12,8 +13,9 @@ namespace DumyatRuntime
     /// capture mode (push-to-talk / voice-activity),
     /// push-to-talk release tail, voice-activity amplitude + silence tuning, reconnect cooldown,
     /// mic/session status, and an Arabic-safe UTF-8 debug log. It drives an
-    /// <see cref="IVoiceCaptureSource"/> (e.g. <see cref="ElevenLabsScribeClient"/>) directly so both
-    /// the test harness AND the real merchant negotiation share one implementation.
+    /// <see cref="IVoiceCaptureSource"/> (e.g. <see cref="MunsitSTTClient"/> or
+    /// <see cref="ElevenLabsScribeClient"/>) directly so both the test harness AND the real merchant
+    /// negotiation share one implementation.
     ///
     /// TWO USAGE MODES (see <see cref="_autoReArm"/>):
     ///   • CONTINUOUS (harness): arm once, keep listening — voice-activity re-arms automatically after
@@ -40,9 +42,10 @@ namespace DumyatRuntime
         private void Inject(ISTTService stt) => _stt = stt;
 
         [Header("STT Source")]
-        [Tooltip("The voice-capture source to drive. Assign the ElevenLabsScribeClient here; if left " +
-                 "empty it is resolved from the STTManager pool or the scene on first use.")]
-        [SerializeField] private ElevenLabsScribeClient _scribeClient;
+        [Tooltip("The voice-capture source to drive — any component implementing IVoiceCaptureSource " +
+                 "(MunsitSTTClient, ElevenLabsScribeClient). If left empty it is resolved from the " +
+                 "STTManager pool (highest priority first) or the scene on first use.")]
+        [SerializeField, FormerlySerializedAs("_scribeClient")] private MonoBehaviour _captureSource;
 
         [Header("Microphone Device")]
         [Tooltip("Preferred microphone. Empty = system default (first connected device). The Inspector " +
@@ -175,10 +178,22 @@ namespace DumyatRuntime
         public static string[] AvailableMicrophoneDevices => Microphone.devices;
 
         /// <summary>Explicitly assign the capture source, overriding pool/scene resolution.</summary>
-        public void AssignSource(ElevenLabsScribeClient client)
+        public void AssignSource(IVoiceCaptureSource source)
         {
-            _scribeClient = client;
-            if (client != null) SetSource(client);
+            _captureSource = source as MonoBehaviour;
+            if (source != null) SetSource(source);
+        }
+
+        // Editor guard: the field has to be a MonoBehaviour for Unity to serialize it, so catch a
+        // component that doesn't actually implement the contract at assign time rather than at runtime.
+        private void OnValidate()
+        {
+            if (_captureSource != null && !(_captureSource is IVoiceCaptureSource))
+            {
+                Debug.LogWarning($"{name}: '{_captureSource.GetType().Name}' does not implement " +
+                                 "IVoiceCaptureSource and cannot drive voice capture.", this);
+                _captureSource = null;
+            }
         }
 
         // --- Public status (for meters / UI) ---------------------------------------
@@ -429,20 +444,28 @@ namespace DumyatRuntime
         // --- Source resolution + events --------------------------------------------
 
         // Resolves the capture source lazily: prefer the Inspector reference, else the top-priority
-        // available model from the injected STT service pool, else the first scribe client in the scene.
+        // available model from the injected STT service pool, else the best one found in the scene.
         private bool EnsureSource()
         {
+            // Release a source that has become unavailable — e.g. a provider that latched a fatal
+            // config error after the server rejected its key. This is what hands the next capture to
+            // the fallback provider instead of retrying a connection that cannot succeed.
+            if (_source != null && !IsUsable(_source))
+            {
+                UnsubscribeSource();
+                _source = null;
+            }
             if (_source != null) return true;
 
-            if (_scribeClient != null)
+            if (_captureSource is IVoiceCaptureSource assigned && IsUsable(assigned))
             {
-                SetSource(_scribeClient);
+                SetSource(assigned);
                 return true;
             }
 
             if (_stt != null)
             {
-                foreach (ISTTModel model in _stt.Models)
+                foreach (ISTTModel model in _stt.Models)   // already sorted by descending priority
                 {
                     if (model is IVoiceCaptureSource vcs && model.IsAvailable)
                     {
@@ -452,15 +475,35 @@ namespace DumyatRuntime
                 }
             }
 
-            var scribe = FindFirstObjectByType<ElevenLabsScribeClient>();
-            if (scribe != null)
+            // Scene fallback. FindObjectsByType order is arbitrary, so pick the HIGHEST-priority match
+            // rather than the first — otherwise a scene holding two providers could grab either by luck.
+            IVoiceCaptureSource best = null;
+            int bestPriority = int.MinValue;
+            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(
+                         FindObjectsInactive.Exclude, FindObjectsSortMode.None))
             {
-                SetSource(scribe);
+                if (!(behaviour is IVoiceCaptureSource candidate) || !IsUsable(candidate)) continue;
+
+                int priority = candidate is IAIModel model ? model.Priority : 0;
+                if (priority <= bestPriority) continue;
+
+                best = candidate;
+                bestPriority = priority;
+            }
+
+            if (best != null)
+            {
+                SetSource(best);
                 return true;
             }
 
             return false;
         }
+
+        // A source that is also a pooled AI model must report itself available; one that isn't a
+        // pooled model (a test double, say) has nothing to check.
+        private static bool IsUsable(IVoiceCaptureSource source) =>
+            !(source is IAIModel model) || model.IsAvailable;
 
         private void SetSource(IVoiceCaptureSource source)
         {
@@ -473,6 +516,9 @@ namespace DumyatRuntime
                 _source.OnPartialTranscript += HandleSourcePartial;
                 _source.OnTranscriptionFailed += HandleSourceFailed;
                 _sourceSubscribed = true;
+                // Name the resolved provider — this is how a fallback from the preferred STT model to
+                // the next one becomes visible instead of silent.
+                WriteLog("STT SOURCE", source is IAIModel model ? model.ModelName : source.GetType().Name);
             }
         }
 
