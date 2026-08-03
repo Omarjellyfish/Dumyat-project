@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -48,5 +49,9 @@ namespace DumyatRuntime
 
         [Tooltip("Optional reward to grant on completion. Create via Dumyat > Quests > Rewards.")]
         public QuestRewardSO reward;
+
+        [Header("Persistence")]
+        [Tooltip("Optional persistence keys to unlock when this quest completes.")]
+        public List<string> persistenceKeysOnComplete = new List<string>();
     }
 }

@@ -17,6 +17,14 @@ namespace DumyatRuntime
         [Header("Animation")]
         [SerializeField, Range(0.05f, 0.5f)] private float _animationDuration = 0.2f;
 
+        [Header("Positioning")]
+        [SerializeField] private float _collisionCheckRadius = 0.5f;
+        [SerializeField] private float _positionLerpSpeed = 15f;
+        [SerializeField] private float _moveUpStep = 0.2f;
+        [SerializeField] private int _maxClippingAttempts = 15;
+        [SerializeField] private float _playerBiasDistance = 0.5f;
+        [SerializeField] private float _maxDeviationDistance = 1.5f;
+
         private UIDocument _uiDocument;
         private VisualElement _root;
         private VisualElement _panel;
@@ -25,6 +33,7 @@ namespace DumyatRuntime
         private VisualElement _progressDotsContainer;
         private VisualElement _iconContainer;
         private Button _skipButton;
+        private Button _nextButton;
 
         private ITutorialService _tutorialService;
         private Transform _currentAnchor;
@@ -58,7 +67,7 @@ namespace DumyatRuntime
 
             _root = _uiDocument.rootVisualElement;
             CacheElements();
-            SetupSkipButton();
+            SetupButtons();
 
             // Start hidden
             _panel?.AddToClassList("tutorial-panel--hidden");
@@ -72,13 +81,18 @@ namespace DumyatRuntime
             _progressDotsContainer = _root.Q<VisualElement>("ProgressDots");
             _iconContainer = _root.Q<VisualElement>("IconContainer");
             _skipButton = _root.Q<Button>("SkipButton");
+            _nextButton = _root.Q<Button>("NextButton");
         }
 
-        private void SetupSkipButton()
+        private void SetupButtons()
         {
             if (_skipButton != null)
             {
                 _skipButton.clicked += OnSkipClicked;
+            }
+            if (_nextButton != null)
+            {
+                _nextButton.clicked += OnNextClicked;
             }
         }
 
@@ -87,6 +101,10 @@ namespace DumyatRuntime
             _tutorialService?.SkipTutorial();
         }
 
+        private void OnNextClicked()
+        {
+            _tutorialService?.SkipCurrentStep();
+        }
 
         /// <summary>
         /// Display a tutorial step on the hover panel.
@@ -100,7 +118,7 @@ namespace DumyatRuntime
             // Position immediately if we have an anchor
             if (anchor != null)
             {
-                transform.position = anchor.position + offset;
+                transform.position = CalculateSafePosition();
             }
 
             // Update content
@@ -255,11 +273,96 @@ namespace DumyatRuntime
             }).ExecuteLater((long)(_animationDuration * 1000));
         }
 
+        private void Update()
+        {
+            if (!_isVisible || _currentAnchor == null) return;
+
+            Vector3 safePosition = CalculateSafePosition();
+            
+            // Only move if distance is significant to prevent micro-jitters
+            if (Vector3.Distance(transform.position, safePosition) > 0.005f)
+            {
+                transform.position = Vector3.Lerp(transform.position, safePosition, Time.deltaTime * _positionLerpSpeed);
+            }
+
+            // Always face the player (billboard)
+            if (Camera.main != null)
+            {
+                Vector3 lookDirection = transform.position - Camera.main.transform.position;
+                lookDirection.y = 0; // Keep upright
+                if (lookDirection.sqrMagnitude > 0.001f)
+                {
+                    Quaternion targetRot = Quaternion.LookRotation(lookDirection.normalized);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * _positionLerpSpeed);
+                }
+            }
+        }
+
+        private Vector3 CalculateSafePosition()
+        {
+            if (_currentAnchor == null) return transform.position;
+
+            Vector3 targetPosition = _currentAnchor.position + _currentOffset;
+
+            // Bias the position to be closer to the player
+            if (Camera.main != null)
+            {
+                Vector3 directionToPlayer = Camera.main.transform.position - targetPosition;
+                directionToPlayer.y = 0; // Keep the bias horizontal
+                if (directionToPlayer.sqrMagnitude > 0.001f)
+                {
+                    targetPosition += directionToPlayer.normalized * _playerBiasDistance;
+                }
+            }
+
+            int attempts = 0;
+
+            while (attempts < _maxClippingAttempts)
+            {
+                bool isClipping = false;
+                Collider[] hits = Physics.OverlapSphere(targetPosition, _collisionCheckRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                
+                foreach (var hit in hits)
+                {
+                    // Ignore ONLY the UI's own colliders. Do NOT ignore the anchor object (e.g. table) so the UI can push up out of it!
+                    if (hit.transform != this.transform && !hit.transform.IsChildOf(this.transform))
+                    {
+                        isClipping = true;
+                        break;
+                    }
+                }
+
+                if (isClipping)
+                {
+                    targetPosition.y += _moveUpStep; // Always aim to move up to avoid clipping
+                    attempts++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            // Clamp the final target position so it doesn't stray too far from the original intended position
+            Vector3 originalTarget = _currentAnchor.position + _currentOffset;
+            Vector3 deviation = targetPosition - originalTarget;
+            if (deviation.sqrMagnitude > _maxDeviationDistance * _maxDeviationDistance)
+            {
+                targetPosition = originalTarget + deviation.normalized * _maxDeviationDistance;
+            }
+
+            return targetPosition;
+        }
+
         private void OnDisable()
         {
             if (_skipButton != null)
             {
                 _skipButton.clicked -= OnSkipClicked;
+            }
+            if (_nextButton != null)
+            {
+                _nextButton.clicked -= OnNextClicked;
             }
 
             _videoPlayer?.Stop();

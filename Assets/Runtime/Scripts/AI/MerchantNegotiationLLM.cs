@@ -224,6 +224,18 @@ namespace DumyatRuntime
         private const string CoercedBargainAcceptArabic = "ماشي يا ريس، اتفقنا خلاص، هدهالك بالسعر اللي انت طالبه.";
         private const string CoercedBargainAcceptEnglish = "Alright sir, deal — I'll take it at the price you asked.";
 
+        // The merchant has decided to MEET the fisherman's asking price (their ask sits above the
+        // standing offer but within reach this turn). That is agreement, not haggling, so the line must
+        // read as a warm yes — never the "your price is too high… fine, exactly your price" contradiction
+        // a RaiseOffer landing on the ask produces. It agrees in THEIR terms ("the price you asked")
+        // rather than repeating a figure: the TTS voice needs numbers spelled out, and naming one here
+        // could drift from the price the sale actually closes at. Still a CONFIRM turn like every other
+        // acceptance, so a mis-heard number can never lock in a sale on its own.
+        private const string CoercedMeetAskAcceptArabic =
+            "ماشي يا ريس، اتفقنا خلاص، هدهالك بالسعر اللي انت طالبه. يبقى هتبيعهالي؟ قولي اه ولا لا عشان اكد البيعة.";
+        private const string CoercedMeetAskAcceptEnglish =
+            "Alright sir, deal — I'll give you the price you asked for. So you'll sell it to me? Tell me yes or no so I can confirm the sale.";
+
         // Scripted line used when the player calls the sale off but has not been asked to confirm yet.
         // Ending a negotiation is destructive and a mis-transcription must never trigger it, so an
         // unconfirmed PlayerDeclined is always coerced into this one-turn confirmation question.
@@ -1366,15 +1378,31 @@ namespace DumyatRuntime
             return Mathf.Round(Mathf.Min(ceiling, state.currentOffer + state.maxRaisePerTurn));
         }
 
-        // The price an acceptance closes at: the merchant never pays more than it was asked, so a
-        // fisherman asking BELOW the standing offer (a bargain) closes at their ask; otherwise — a plain
-        // "yes" to the offer on the table — it closes at the current offer. Never above the ceiling.
-        private static float ComputeAcceptPrice(NegotiationState state, float playerAsk)
+        // The price an acceptance closes at, never above the ceiling. Three cases:
+        //   • BARGAIN — the fisherman is asking BELOW the standing offer: close at their ask (the
+        //     merchant never pays more than it was asked).
+        //   • MERCHANT MET THE ASK — the fisherman is asking ABOVE the standing offer and the MERCHANT
+        //     is the one agreeing, at a price that reaches that ask (<paramref name="merchantAgreedAmount"/>).
+        //     Close at the ask: otherwise the merchant says "agreed" to their number and quietly pays
+        //     its own older, lower offer.
+        //   • Otherwise — a plain "yes" from the player to the offer on the table: the current offer.
+        // <paramref name="merchantAgreedAmount"/> is 0 when the acceptance came from the player agreeing
+        // (an acceptance score), not from the merchant naming a price — that must never move the price.
+        private static float ComputeAcceptPrice(NegotiationState state, float playerAsk,
+                                                float merchantAgreedAmount = 0f)
         {
             float ceiling = NegotiationCeiling(state);
-            float price = (playerAsk > 0f && playerAsk < state.currentOffer)
-                ? Mathf.Min(playerAsk, ceiling)
-                : state.currentOffer;
+            float price = state.currentOffer;
+
+            if (playerAsk > 0f)
+            {
+                float ask = Mathf.Min(Mathf.Round(playerAsk), ceiling);
+                if (ask < state.currentOffer)
+                    price = ask;                                                       // bargain
+                else if (merchantAgreedAmount > 0f && Mathf.Round(merchantAgreedAmount) >= ask)
+                    price = ask;                                                       // merchant met the ask
+            }
+
             return Mathf.Round(Mathf.Min(price, ceiling));
         }
 
@@ -1563,7 +1591,13 @@ namespace DumyatRuntime
                 }
                 else if (parsed.AcceptanceScore >= AcceptanceScoreThreshold || parsed.Action == MerchantAction.Accept)
                 {
-                    float dealPrice = ComputeAcceptPrice(state, parsed.PlayerAskedPrice);
+                    // When the MODEL chose Accept it also named the price it is agreeing to, so pass that
+                    // through: an Accept that reaches the fisherman's (higher) ask closes at the ask, not
+                    // at the merchant's stale standing offer. An acceptance driven purely by the
+                    // acceptance score is the PLAYER saying yes to the offer on the table — no merchant
+                    // amount, so the price is unchanged.
+                    float merchantAgreed = parsed.Action == MerchantAction.Accept ? dto.newOfferAmount : 0f;
+                    float dealPrice = ComputeAcceptPrice(state, parsed.PlayerAskedPrice, merchantAgreed);
                     state.pendingAcceptPrice = dealPrice;
 
                     // A BUNDLE sale already has a confirmation step of its own — the per-fish summary
@@ -1741,13 +1775,66 @@ namespace DumyatRuntime
                 }
                 else // RaiseOffer
                 {
-                    // Highest a raise may legally reach THIS turn: never above the ceiling, this turn's
-                    // gradual step cap, or the fisherman's ask (a buyer never offers above what's asked).
+                    // Highest the merchant may legally LAND ON this turn, ignoring the ask: never above
+                    // the ceiling or this turn's gradual step cap.
                     float raiseCap = RaiseCap(state);
-                    float maxThisTurn = Mathf.Round(Mathf.Min(Mathf.Min(ceiling, raiseCap), ask > 0f ? ask : ceiling));
+                    float reachable = Mathf.Round(Mathf.Min(ceiling, raiseCap));
+                    float askRounded = ask > 0f ? Mathf.Round(ask) : 0f;
+                    // A raise also never goes above what it was asked to pay (a buyer never offers more
+                    // than the seller wants).
+                    float maxThisTurn = askRounded > 0f ? Mathf.Min(reachable, askRounded) : reachable;
                     float spoken = Mathf.Round(dto.newOfferAmount);
 
-                    if (spoken > state.currentOffer && spoken <= maxThisTurn)
+                    // MEETING THE ASK IS A DEAL, NOT A RAISE. If the merchant is willing to go to (or
+                    // past) the fisherman's standing ask and can legally reach it this turn, the haggle
+                    // is over. Left as a RaiseOffer it produces the reported contradiction — a line that
+                    // argues their price is too high and then lands on that exact price ("a hundred and
+                    // fifty is too much… fine, a hundred and fifty for you"). The prompt already forbids
+                    // it ("a RaiseOffer must NEVER meet or exceed the price they asked"), but the model
+                    // does it anyway, so enforce it here. Reject on the first attempt so the model
+                    // re-speaks the turn as a proper acceptance in its own voice; only coerce to the
+                    // canned line if it still won't.
+                    if (askRounded > 0f && askRounded > state.currentOffer
+                        && spoken >= askRounded && askRounded <= reachable)
+                    {
+                        if (!allowCoercion)
+                        {
+                            rejectionReason = $"You offered {EGP(spoken)}, which MEETS the fisherman's " +
+                                              $"asking price of {EGP(askRounded)}. Paying someone the price " +
+                                              "they asked for is AGREEING with them, not haggling — so do " +
+                                              $"NOT use RaiseOffer. Use action \"Accept\" with " +
+                                              $"newOfferAmount {EGP(askRounded)}, and say it warmly as what " +
+                                              "it is: you are giving them the price they asked for. Never " +
+                                              "argue their price is too high and then match it anyway. (If " +
+                                              "you would rather keep haggling, RaiseOffer to a number " +
+                                              $"STRICTLY BELOW {EGP(askRounded)} instead.)";
+                            Debug.LogWarning($"MerchantNegotiationLLM: RaiseOffer {spoken} meets the ask " +
+                                             $"{askRounded} (reachable {reachable}); rejecting so the turn " +
+                                             "is re-spoken as an acceptance.");
+                            return false;
+                        }
+
+                        float dealPrice = ComputeAcceptPrice(state, askRounded, askRounded);
+                        state.pendingAcceptPrice = dealPrice;
+                        Debug.Log($"MerchantNegotiationLLM: RaiseOffer {spoken} meets the ask {askRounded}; " +
+                                  $"coercing to an acceptance at {dealPrice:0}.");
+
+                        // A BUNDLE sale confirms through its own per-fish summary read-back, so asking to
+                        // confirm here too would make the player agree twice for one deal (see the
+                        // acceptance block above). Single-fish has no summary, so it keeps the confirm.
+                        if (bundlePriced)
+                        {
+                            CoerceLine(parsed, MerchantAction.Accept,
+                                CoercedAcceptToSummaryArabic, CoercedAcceptToSummaryEnglish);
+                            parsed.NewOfferAmount = dealPrice;   // the agreed total the summary is built from
+                        }
+                        else
+                        {
+                            CoerceLine(parsed, MerchantAction.ConfirmAccept,
+                                CoercedMeetAskAcceptArabic, CoercedMeetAskAcceptEnglish);
+                        }
+                    }
+                    else if (spoken > state.currentOffer && spoken <= maxThisTurn)
                     {
                         parsed.NewOfferAmount = spoken;   // legal raise, trusted exactly (speech == applied)
                     }

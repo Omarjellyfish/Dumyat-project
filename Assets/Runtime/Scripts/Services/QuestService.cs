@@ -21,24 +21,29 @@ namespace DumyatRuntime
         private readonly QuestDatabaseSO _questDatabase;
         private readonly QuestSaveData _questData;
         private readonly QuestRewardContext _rewardContext;
+        private readonly IPlayerPersistenceService _persistenceService;
 
         public QuestService(
             ISaveService saveService,
             IEventService eventService,
             QuestDatabaseSO questDatabase,
             ICraftingService craftingService,
-            IInventoryService inventoryService)
+            IInventoryService inventoryService,
+            IPlayerPersistenceService persistenceService,
+            IWalletService walletService)
         {
             _saveService = saveService;
             _eventService = eventService;
             _questDatabase = questDatabase;
             _questData = _saveService.CurrentSaveData.questData;
+            _persistenceService = persistenceService;
 
             _rewardContext = new QuestRewardContext
             {
                 EventService = eventService,
                 CraftingService = craftingService,
-                InventoryService = inventoryService
+                InventoryService = inventoryService,
+                WalletService = walletService
             };
 
             SubscribeToGameplayEvents();
@@ -283,6 +288,17 @@ namespace DumyatRuntime
 
             _eventService.Publish(new QuestCompletedEvent(questID));
             Debug.Log($"[QuestService] Quest COMPLETED: '{def.displayName}' ({questID})");
+
+            if (def.persistenceKeysOnComplete != null)
+            {
+                foreach (string key in def.persistenceKeysOnComplete)
+                {
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        _persistenceService.AddKey(key);
+                    }
+                }
+            }
 
             // Grant reward if one is assigned.
             if (def.reward != null)
