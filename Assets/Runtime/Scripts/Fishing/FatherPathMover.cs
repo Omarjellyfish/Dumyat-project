@@ -47,6 +47,7 @@ namespace DumyatRuntime
 
         [Header("Fade Out")]
         [SerializeField] private FadeInBoat fadeInBoat;
+        private Transform player;
 
         private IEventService _eventService;
         private Coroutine pathRoutine;
@@ -64,6 +65,7 @@ namespace DumyatRuntime
             {
                 animator = GetComponentInChildren<Animator>();
             }
+            player = GameObject.FindGameObjectWithTag("Player").transform;
         }
 
         private void OnEnable()
@@ -165,7 +167,9 @@ namespace DumyatRuntime
                 }
                 if (!loopPath)
                 {
-                    fadeInBoat.TriggerFadeIn();
+                    fadeInBoat.StartTransition(player);
+                    animator.SetBool(isWalkingHash, false);
+                    animator.SetBool(isTalkingHash, true);
                 }
             }
             while (loopPath);
