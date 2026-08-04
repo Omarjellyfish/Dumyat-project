@@ -52,6 +52,12 @@ namespace DumyatRuntime
         [Header("Completion")]
         public TutorialCompletionType CompletionType;
 
+        [Tooltip("Uncheck to make this step MANDATORY: the Skip and Next buttons are hidden and the " +
+                 "step can only end by its own completion trigger firing. Use it for a step the rest " +
+                 "of the tutorial makes no sense without — walking into the workshop, say, when every " +
+                 "later step points at a tool inside it.")]
+        public bool Skippable = true;
+
         [Tooltip("Event completion: full event type name (e.g. 'RecipeSelectedEvent')")]
         public string EventTypeName;
 

@@ -3055,6 +3055,7 @@ GameObject:
   - component: {fileID: 6829562521458915796}
   - component: {fileID: 1653059132428393953}
   - component: {fileID: 2911866043426252285}
+  - component: {fileID: 4353285534164891086}
   m_Layer: 0
   m_Name: Near-Far Interactor
   m_TagString: Untagged
@@ -3417,6 +3418,18 @@ MonoBehaviour:
     m_Duration: 0.1
     m_Frequency: 0
   m_AllowHoverHapticsWhileSelecting: 0
+--- !u!114 &4353285534164891086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1884758778865661137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd51ea71314578846a931683841a9029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.NearFarInteractorAnchorRepair
 --- !u!1 &2065928275699624392
 GameObject:
   m_ObjectHideFlags: 0
@@ -3563,6 +3576,7 @@ GameObject:
   - component: {fileID: 7780596073020169772}
   - component: {fileID: 6255412043443754534}
   - component: {fileID: 6898799286130264899}
+  - component: {fileID: 2824535173311257231}
   m_Layer: 0
   m_Name: Near-Far Interactor
   m_TagString: Untagged
@@ -3925,6 +3939,18 @@ MonoBehaviour:
     m_Duration: 0.1
     m_Frequency: 0
   m_AllowHoverHapticsWhileSelecting: 0
+--- !u!114 &2824535173311257231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2390197289342769046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd51ea71314578846a931683841a9029, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.NearFarInteractorAnchorRepair
 --- !u!1 &2648412606901956180
 GameObject:
   m_ObjectHideFlags: 0
@@ -4213,8 +4239,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82bc72d2ecc8add47b2fe00d40318500, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_LeftHand: {fileID: 0}
-  m_RightHand: {fileID: 0}
+  m_LeftHand: {fileID: 2465906582367651443}
+  m_RightHand: {fileID: 5727343370742699493}
   m_LeftController: {fileID: 8989068768926566254}
   m_RightController: {fileID: 4976776950776594127}
   m_TrackedHandModeStarted:
@@ -8440,6 +8466,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b3ed8a0a703ebd34a9e44ed3d9f1fcf6, type: 3}
+--- !u!1 &2465906582367651443 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 773853689519989575, guid: b3ed8a0a703ebd34a9e44ed3d9f1fcf6, type: 3}
+  m_PrefabInstance: {fileID: 2920002907231528244}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2986863281557347529 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 141466980049140221, guid: b3ed8a0a703ebd34a9e44ed3d9f1fcf6, type: 3}
@@ -8878,5 +8909,10 @@ PrefabInstance:
 --- !u!4 &4913511718241357663 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2321527512367231968, guid: 3f7511fbc40ae7a4b89c3298a3de199d, type: 3}
+  m_PrefabInstance: {fileID: 7207998177030388927}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5727343370742699493 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3133494152545806682, guid: 3f7511fbc40ae7a4b89c3298a3de199d, type: 3}
   m_PrefabInstance: {fileID: 7207998177030388927}
   m_PrefabAsset: {fileID: 0}

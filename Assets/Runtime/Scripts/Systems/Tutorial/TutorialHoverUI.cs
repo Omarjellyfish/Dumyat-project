@@ -174,6 +174,8 @@ namespace DumyatRuntime
             // language-dependent, so they are written in one place.
             ApplyLanguage();
 
+            ApplySkippability(step);
+
             // The step number is the one string that never translates. Zero-padded so the numeral
             // does not change width between steps.
             if (_stepCounterLabel != null)
@@ -197,6 +199,26 @@ namespace DumyatRuntime
                 // Already visible — play a subtle pulse to indicate step change
                 PlayStepTransition();
             }
+        }
+
+        /// <summary>
+        /// Shows or hides the two ways out of a step — Skip (abandons the tutorial) and Next (steps
+        /// over it) — according to <see cref="TutorialStepSO.Skippable"/>.
+        ///
+        /// Hidden rather than merely disabled: a greyed-out button in VR invites the player to keep
+        /// pointing at it and wondering what is broken, whereas a card with no exit reads as "this
+        /// one you actually have to do". <see cref="TutorialService"/> refuses the calls as well, so
+        /// nothing depends on the card getting this right.
+        /// </summary>
+        private void ApplySkippability(TutorialStepSO step)
+        {
+            bool skippable = step == null || step.Skippable;
+
+            if (_skipButton != null)
+                _skipButton.style.display = skippable ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (_nextButton != null)
+                _nextButton.style.display = skippable ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         /// <summary>Show the panel with a scale animation.</summary>

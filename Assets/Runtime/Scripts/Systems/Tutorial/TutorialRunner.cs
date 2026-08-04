@@ -21,6 +21,10 @@ namespace DumyatRuntime
         [Tooltip("The TutorialHoverUI component — can be on this GameObject or a child")]
         [SerializeField] private TutorialHoverUI _hoverUI;
 
+        [Tooltip("Draws the beacons a step's PrimaryAnchorId / HighlightIds ask for. Auto-added to " +
+                 "this GameObject if missing, so no scene has to remember to wire it.")]
+        [SerializeField] private TutorialHighlighter _highlighter;
+
         private IEventService _eventService;
         private IHapticService _hapticService;
         private TutorialService _tutorialService;
@@ -40,6 +44,27 @@ namespace DumyatRuntime
         public int CurrentStepIndex => _currentStepIndex;
         public TutorialSequenceSO SceneTutorial => _autoStartSequence;
 
+        /// <summary>
+        /// The step on screen right now, or null when nothing is running. Exposed so
+        /// <see cref="TutorialService"/> can honour <see cref="TutorialStepSO.Skippable"/> — the skip
+        /// request arrives at the service, but only the runner knows which step it lands on.
+        /// </summary>
+        public TutorialStepSO CurrentStep =>
+            _isRunning && _activeSequence != null &&
+            _currentStepIndex >= 0 && _currentStepIndex < _activeSequence.Steps.Count
+                ? _activeSequence.Steps[_currentStepIndex]
+                : null;
+
+        /// <summary>Whether the player is currently allowed to skip past what is on screen.</summary>
+        public bool CanSkipCurrentStep
+        {
+            get
+            {
+                TutorialStepSO step = CurrentStep;
+                return step == null || step.Skippable;
+            }
+        }
+
         [Inject]
         private void Inject(IEventService eventService, IHapticService hapticService, ITutorialService tutorialService, ISoundService soundService)
         {
@@ -55,6 +80,15 @@ namespace DumyatRuntime
             if (_hoverUI == null)
             {
                 _hoverUI = GetComponentInChildren<TutorialHoverUI>(true);
+            }
+
+            // Added rather than merely warned about: highlighting is driven entirely by data on the
+            // step assets, so a runner without this component silently ignores instructions that are
+            // already authored on every existing step.
+            if (_highlighter == null)
+            {
+                _highlighter = GetComponentInChildren<TutorialHighlighter>(true)
+                               ?? gameObject.AddComponent<TutorialHighlighter>();
             }
 
             if (_autoStartSequence != null && _tutorialService != null)
@@ -165,6 +199,10 @@ namespace DumyatRuntime
                 _currentStepIndex,
                 _activeSequence.Steps.Count,
                 step));
+
+            // Raise the beacons this step points at. After ShowHoverUI so the card and the beacons
+            // appear on the same frame.
+            _highlighter?.Apply(step);
 
             // Set up completion trigger
             SetupCompletionTrigger(step);
@@ -364,6 +402,9 @@ namespace DumyatRuntime
 
         private void CleanupCurrentStep()
         {
+            // Drop this step's beacons before the next step raises its own, so the two never overlap.
+            _highlighter?.Clear();
+
             // Stop delay coroutine
             if (_delayCoroutine != null)
             {
