@@ -4145,6 +4145,7 @@ GameObject:
   - component: {fileID: 5522710961565367264}
   - component: {fileID: 5470959634670399383}
   - component: {fileID: 4172830596611238475}
+  - component: {fileID: 1414386326929583998}
   m_Layer: 2
   m_Name: XR Origin (XR Rig)
   m_TagString: Player
@@ -4326,6 +4327,25 @@ MonoBehaviour:
   _insufficientFundsClip: {fileID: 0}
   _volume: 0.8
   _mixerGroup: {fileID: 0}
+--- !u!114 &1414386326929583998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3309285002930837712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46b69279c99f7ca43af64b86cbea091b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlayerFootstepAudio
+  _footstepClips:
+  - {fileID: 8300000, guid: 923d4bfab78948949b3baf40f8c7b167, type: 3}
+  - {fileID: 8300000, guid: 3dbd9225ded27214e98816ecda38cdfb, type: 3}
+  - {fileID: 8300000, guid: 30a48278b27b9dc43b2a2d76bb4dd8b8, type: 3}
+  - {fileID: 8300000, guid: 88d2d6a68fc1dde45b7995f44b390820, type: 3}
+  _stepDistance: 1.2
+  _volume: 0.5
 --- !u!1 &3322255530926025890
 GameObject:
   m_ObjectHideFlags: 0
@@ -5907,6 +5927,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: Hands
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!1 &5017821205765953743
 GameObject:
   m_ObjectHideFlags: 0
@@ -8316,6 +8341,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: Hands
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!1001 &691584779998832634
 PrefabInstance:
   m_ObjectHideFlags: 0
