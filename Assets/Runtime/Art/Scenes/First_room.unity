@@ -287,6 +287,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3af693de690251f49bcffd031d190533, type: 3}
       insertIndex: -1
       addedObject: {fileID: 659241076}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3af693de690251f49bcffd031d190533, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 659241079}
   m_SourcePrefab: {fileID: 100100000, guid: 3af693de690251f49bcffd031d190533, type: 3}
 --- !u!1 &24992684 stripped
 GameObject:
@@ -2034,6 +2037,28 @@ MonoBehaviour:
   m_LimitAngularVelocity: 0
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
+--- !u!114 &659241079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 659241070}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba92d544fe0fd8e46afca3c8f9abb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CollisionAudio
+  _impactSounds:
+  - {fileID: 8300000, guid: cad59e661c0742b459f82d6c9a4b2599, type: 3}
+  - {fileID: 8300000, guid: 2c555b2820d12ec4bbb8567fb86330ce, type: 3}
+  - {fileID: 8300000, guid: e5bb5af61169828458453aaa73998c29, type: 3}
+  - {fileID: 8300000, guid: 90de859b635162945b10a2e578137a41, type: 3}
+  - {fileID: 8300000, guid: 36887f7543d232c40b77480532dd6a5d, type: 3}
+  _minImpactVelocity: 1
+  _maxImpactVelocity: 10
+  _baseVolume: 1
+  _cooldownTime: 0.1
 --- !u!4 &659279222 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aa382a387e472e148b97e7c0629f88a9, type: 3}
