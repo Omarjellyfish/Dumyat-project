@@ -2175,6 +2175,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 846aea799856f43478ee441840815179, type: 3}
       insertIndex: -1
       addedObject: {fileID: 580982446}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 846aea799856f43478ee441840815179, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 580982447}
   m_SourcePrefab: {fileID: 100100000, guid: 846aea799856f43478ee441840815179, type: 3}
 --- !u!1 &580982444 stripped
 GameObject:
@@ -2222,8 +2225,91 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 92.08449, y: 1.4064333, z: 18.47759}
-  m_Center: {x: -36.803448, y: -0.62921554, z: 0}
+  m_Size: {x: 92.08449, y: 1.1341097, z: 18.47759}
+  m_Center: {x: -36.803448, y: -0.765378, z: 0}
+--- !u!114 &580982447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 580982444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38f6bf3d943ac7945842268c9ef1dca6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea
+  m_InteractionManager: {fileID: 0}
+  m_Colliders: []
+  m_InteractionLayers:
+    m_Bits: 2147483648
+  m_DistanceCalculationMode: 1
+  m_SelectMode: 1
+  m_FocusMode: 1
+  m_CustomReticle: {fileID: 0}
+  m_AllowGazeInteraction: 0
+  m_AllowGazeSelect: 0
+  m_OverrideGazeTimeToSelect: 0
+  m_GazeTimeToSelect: 0.5
+  m_OverrideTimeToAutoDeselectGaze: 0
+  m_TimeToAutoDeselectGaze: 3
+  m_AllowGazeAssistance: 0
+  m_FirstHoverEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastHoverExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_HoverEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_HoverExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FirstSelectEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastSelectExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_SelectEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_SelectExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FirstFocusEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastFocusExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FocusEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FocusExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Activated:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Deactivated:
+    m_PersistentCalls:
+      m_Calls: []
+  m_StartingHoverFilters: []
+  m_StartingSelectFilters: []
+  m_StartingInteractionStrengthFilters: []
+  m_AutoFindParentInteractableInHierarchy: 0
+  m_ParentInteractableObject: {fileID: 0}
+  m_TeleportationProvider: {fileID: 0}
+  m_MatchOrientation: 0
+  m_MatchDirectionalInput: 0
+  m_TeleportTrigger: 0
+  m_FilterSelectionByHitNormal: 0
+  m_UpNormalToleranceDegrees: 30
+  m_Teleporting:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &625306484
 GameObject:
   m_ObjectHideFlags: 0
@@ -3225,8 +3311,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 7.7022715, y: 0.29413438, z: 0.1347742}
-  m_Center: {x: -3.7960117, y: -0.095524706, z: -0.0048338003}
+  m_Size: {x: 7.7022715, y: 0.19078411, z: 0.1347742}
+  m_Center: {x: -3.7960026, y: -0.04384927, z: -0.0048338184}
 --- !u!1001 &890447082
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5481,9 +5567,6 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7801197442702505875, guid: cc5edafa8dc808b49a8631e1e980d7b2, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1695008353}
     - targetCorrespondingSourceObject: {fileID: 8460630826006004194, guid: cc5edafa8dc808b49a8631e1e980d7b2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 886031826}
@@ -5501,21 +5584,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3827803042142216580, guid: cc5edafa8dc808b49a8631e1e980d7b2, type: 3}
   m_PrefabInstance: {fileID: 1695008350}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1695008353
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1695008351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed759791d012eb340880d7524f060a53, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialFire
-  _dialogueSequence: {fileID: 11400000, guid: f560812060382ab43a75358a83a3c937, type: 2}
-  _priority: 1
-  _triggerOnce: 1
 --- !u!114 &1695008354 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 562349338920409140, guid: cc5edafa8dc808b49a8631e1e980d7b2, type: 3}
