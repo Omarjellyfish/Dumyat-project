@@ -22,8 +22,14 @@ namespace DumyatRuntime
         [SerializeField] private TutorialHoverUI _hoverUI;
 
         [Header("Highlights")]
-        [Tooltip("Optional prefab instantiated as a child of highlighted anchors.")]
+        [Tooltip("Optional prefab instantiated as a child of highlighted anchors. Assign it to use " +
+                 "your own highlight art INSTEAD of the built-in beacon/frame below.")]
         [SerializeField] private GameObject _highlightPrefab;
+
+        [Tooltip("Draws the built-in beacon (places, objects) or frame (UI windows) a step's " +
+                 "PrimaryAnchorId / HighlightIds ask for. Auto-added to this GameObject if missing, " +
+                 "so no scene has to remember to wire it. Ignored when a Highlight Prefab is assigned.")]
+        [SerializeField] private TutorialHighlighter _highlighter;
 
         private IEventService _eventService;
         private IHapticService _hapticService;
@@ -46,6 +52,27 @@ namespace DumyatRuntime
         public int CurrentStepIndex => _currentStepIndex;
         public TutorialSequenceSO SceneTutorial => _autoStartSequence;
 
+        /// <summary>
+        /// The step on screen right now, or null when nothing is running. Exposed so
+        /// <see cref="TutorialService"/> can honour <see cref="TutorialStepSO.Skippable"/> — the skip
+        /// request arrives at the service, but only the runner knows which step it lands on.
+        /// </summary>
+        public TutorialStepSO CurrentStep =>
+            _isRunning && _activeSequence != null &&
+            _currentStepIndex >= 0 && _currentStepIndex < _activeSequence.Steps.Count
+                ? _activeSequence.Steps[_currentStepIndex]
+                : null;
+
+        /// <summary>Whether the player is currently allowed to skip past what is on screen.</summary>
+        public bool CanSkipCurrentStep
+        {
+            get
+            {
+                TutorialStepSO step = CurrentStep;
+                return step == null || step.Skippable;
+            }
+        }
+
         [Inject]
         private void Inject(IEventService eventService, IHapticService hapticService, ITutorialService tutorialService, ISoundService soundService)
         {
@@ -61,6 +88,15 @@ namespace DumyatRuntime
             if (_hoverUI == null)
             {
                 _hoverUI = GetComponentInChildren<TutorialHoverUI>(true);
+            }
+
+            // Added rather than merely warned about: highlighting is driven entirely by data on the
+            // step assets, so a runner without this component silently ignores instructions that are
+            // already authored on every existing step.
+            if (_highlighter == null)
+            {
+                _highlighter = GetComponentInChildren<TutorialHighlighter>(true)
+                               ?? gameObject.AddComponent<TutorialHighlighter>();
             }
 
             if (_autoStartSequence != null && _tutorialService != null)
@@ -172,7 +208,8 @@ namespace DumyatRuntime
                 _activeSequence.Steps.Count,
                 step));
 
-            // Set up highlights
+            // Raise this step's highlights. After ShowHoverUI so the card and the highlight appear
+            // on the same frame.
             ApplyHighlights(step);
 
             // Set up completion trigger
@@ -395,11 +432,23 @@ namespace DumyatRuntime
 
         // ─────────────────────────────────────────────────────────────
         // Highlights
+        //
+        // Three layers, applied together, because they answer different needs:
+        //
+        //  1. TutorialAnchor.OnHighlightChanged — a per-object hook, so a specific anchor can light
+        //     its own outline or play its own animation. Always fired.
+        //  2. _highlightPrefab — custom highlight ART, when a designer has authored some.
+        //  3. TutorialHighlighter — the built-in procedural beacon (places, objects) and frame (UI
+        //     windows). Used only when there is no prefab, so assigning one is a real override
+        //     rather than something that draws two highlights on top of each other.
         // ─────────────────────────────────────────────────────────────
 
         private void ApplyHighlights(TutorialStepSO step)
         {
             ClearHighlights();
+
+            // Layer 3. Skipped when custom art is assigned — the prefab loop below covers it.
+            if (_highlightPrefab == null) _highlighter?.Apply(step);
 
             List<TutorialAnchor> anchorsToHighlight = new List<TutorialAnchor>();
 
@@ -439,6 +488,9 @@ namespace DumyatRuntime
 
         private void ClearHighlights()
         {
+            // Dropped before the next step raises its own, so the two never overlap.
+            _highlighter?.Clear();
+
             foreach (var anchor in _currentlyHighlightedAnchors)
             {
                 if (anchor != null)
