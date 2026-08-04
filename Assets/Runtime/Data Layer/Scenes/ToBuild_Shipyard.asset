@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58c6237b0853f0d45ae4ce23985ecc02, type: 3}
   m_Name: ToBuild_Shipyard
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TravelDestination
-  DisplayName: Shipyard
+  DisplayName: The Shipyard
+  DisplayNameArabic: 'الترسانة'
+  RouteCode: S4
   SceneName: Shipyard
-  Description: 'shipyard scene
-
-
-'
-  RequiredPersistenceKey: HasUnlockedShipYard
+  Description: Where Damietta still builds boats by hand. Timber, tar, and hulls waiting
+    on the slipway.
+  DescriptionArabic: 'لسه دمياط بتبني المراكب بإيديها. خشب، وقطران، وهياكل مستنية على الشينة.'
+  RequiredPersistenceKey: 

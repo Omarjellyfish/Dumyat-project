@@ -22,9 +22,14 @@ namespace DumyatRuntime
         [SerializeField] private SettingsToolkitUI _settingsUI;
 
         private IGameSessionService _session;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(IGameSessionService session) => _session = session;
+        private void Inject(IGameSessionService session, IEventService eventService)
+        {
+            _session = session;
+            _eventService = eventService;
+        }
 
         private VisualElement _panelRoot;
         private VisualElement _menuRoot;
@@ -62,11 +67,38 @@ namespace DumyatRuntime
             ShowMenuPage();
 
             if (_settingsUI != null) _settingsUI.BackRequested += ShowMenuPage;
+
+            _eventService?.Subscribe<SceneLoadBeginEvent>(HandleSceneLoadBegin);
         }
 
         private void OnDisable()
         {
             if (_settingsUI != null) _settingsUI.BackRequested -= ShowMenuPage;
+
+            _eventService?.Unsubscribe<SceneLoadBeginEvent>(HandleSceneLoadBegin);
+        }
+
+        /// <summary>
+        /// Drops the panel the moment a load starts, the same way the pause menu does.
+        ///
+        /// This is a visibility fix, not a tidiness one: the menu is a fixed 900 x 620 world-space
+        /// panel with no lazy-follow, while the loading overlay floats 1.2 m in front of the head. A
+        /// player standing closer to the menu board than that had the loading panel rendered behind
+        /// it, which is why it looked like nothing happened after pressing New Game.
+        /// </summary>
+        private void HandleSceneLoadBegin(SceneLoadBeginEvent _) => SetPanelVisible(false);
+
+        private void SetPanelVisible(bool visible)
+        {
+            if (_panelRoot == null) return;
+
+            if (!visible)
+            {
+                _confirm?.Hide();
+                _settingsUI?.Close();
+            }
+
+            _panelRoot.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void BindButtons()

@@ -6,9 +6,9 @@ using UnityEngine.UIElements;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Drives the shared SettingsPage template: audio levels, subtitle mode and a read-only
-    /// controls image. Lives on the same GameObject as the main menu or pause menu UIDocument and
-    /// binds into whichever one instantiated the template.
+    /// Drives the shared SettingsPage template: audio levels, interface language, merchant
+    /// subtitles, and a read-only controls image. Lives on the same GameObject as the main menu or
+    /// pause menu UIDocument and binds into whichever one instantiated the template.
     ///
     /// It never knows who owns it — closing raises <see cref="BackRequested"/> and the owning menu
     /// decides where "back" goes. That is what lets one component serve both menus.
@@ -20,7 +20,7 @@ namespace DumyatRuntime
         [SerializeField] private UIDocument _uiDocument;
 
         [Header("Subtitle Preview")]
-        [Tooltip("Sample line shown on the Subtitles page in English mode.")]
+        [Tooltip("Sample line shown on the Language page when the language is English.")]
         [SerializeField] private string _previewEnglish = "Fresh from the lake this morning — give me forty and it's yours.";
 
         [Tooltip("Sample line shown in Arabic mode. Also the quickest in-headset check that the " +
@@ -56,6 +56,7 @@ namespace DumyatRuntime
 
         private Slider[] _sliders;
         private Label[] _sliderValues;
+        private Button[] _languageButtons;
         private Button[] _subtitleButtons;
 
         private Label _previewLabel;
@@ -78,9 +79,17 @@ namespace DumyatRuntime
             "MasterValue", "MusicValue", "SfxValue", "AmbienceValue", "DialogueValue"
         };
 
+        // Index matches the GameLanguage enum, which is contiguous from 0.
+        private static readonly string[] LanguageButtonNames =
+        {
+            "LanguageEnglishButton", "LanguageArabicButton"
+        };
+
+        // Index 0 = on, 1 = off. Deliberately not a bool-indexed array — reading
+        // `_subtitleButtons[0]` as "the ON button" is clearer at the call site.
         private static readonly string[] SubtitleButtonNames =
         {
-            "SubtitleOffButton", "SubtitleEnglishButton", "SubtitleArabicButton"
+            "SubtitlesOnButton", "SubtitlesOffButton"
         };
 
         private const string ActiveTabClass = "settings-tab--active";
@@ -133,6 +142,7 @@ namespace DumyatRuntime
             _pages = null;
             _sliders = null;
             _sliderValues = null;
+            _languageButtons = null;
             _subtitleButtons = null;
         }
 
@@ -167,14 +177,14 @@ namespace DumyatRuntime
             _tabs = new[]
             {
                 _root.Q<Button>("TabAudioButton"),
-                _root.Q<Button>("TabSubtitlesButton"),
+                _root.Q<Button>("TabLanguageButton"),
                 _root.Q<Button>("TabControlsButton")
             };
 
             _pages = new[]
             {
                 _root.Q<VisualElement>("AudioPage"),
-                _root.Q<VisualElement>("SubtitlesPage"),
+                _root.Q<VisualElement>("LanguagePage"),
                 _root.Q<VisualElement>("ControlsPage")
             };
 
@@ -186,6 +196,7 @@ namespace DumyatRuntime
             }
 
             BindSliders();
+            BindLanguageSegment();
             BindSubtitleSegment();
 
             _previewLabel = _root.Q<Label>("SubtitlePreviewLabel");
@@ -225,6 +236,24 @@ namespace DumyatRuntime
             }
         }
 
+        private void BindLanguageSegment()
+        {
+            _languageButtons = new Button[LanguageButtonNames.Length];
+
+            for (int i = 0; i < LanguageButtonNames.Length; i++)
+            {
+                _languageButtons[i] = _root.Q<Button>(LanguageButtonNames[i]);
+                if (_languageButtons[i] == null) continue;
+
+                GameLanguage language = (GameLanguage)i;   // English, Arabic — same order as the UXML
+                _languageButtons[i].clicked += () =>
+                {
+                    _settings?.SetLanguage(language);
+                    SeedFromSettings();
+                };
+            }
+        }
+
         private void BindSubtitleSegment()
         {
             _subtitleButtons = new Button[SubtitleButtonNames.Length];
@@ -234,11 +263,11 @@ namespace DumyatRuntime
                 _subtitleButtons[i] = _root.Q<Button>(SubtitleButtonNames[i]);
                 if (_subtitleButtons[i] == null) continue;
 
-                SubtitleMode mode = (SubtitleMode)i;   // Off, English, Arabic — same order as the UXML
+                bool enabled = i == 0;   // 0 = ON, 1 = OFF
                 _subtitleButtons[i].clicked += () =>
                 {
-                    _settings?.SetSubtitleMode(mode);
-                    ApplySubtitleMode(mode);
+                    _settings?.SetSubtitlesEnabled(enabled);
+                    SeedFromSettings();
                 };
             }
         }
@@ -257,7 +286,7 @@ namespace DumyatRuntime
                 SetSliderValueLabel(i, value);
             }
 
-            ApplySubtitleMode(_settings.SubtitleMode);
+            ApplyLanguageAndSubtitles();
         }
 
         private void SetSliderValueLabel(int index, float value01)
@@ -268,38 +297,50 @@ namespace DumyatRuntime
             label.text = Mathf.RoundToInt(Mathf.Clamp01(value01) * 100f).ToString();
         }
 
-        private void ApplySubtitleMode(SubtitleMode mode)
+        /// <summary>
+        /// Lights the selected pill in each segment and redraws the caption sample.
+        ///
+        /// The two segments are read independently, so the preview can show an Arabic line that is
+        /// currently switched off — which is exactly the state the old single control could not
+        /// represent.
+        /// </summary>
+        private void ApplyLanguageAndSubtitles()
         {
+            if (_settings == null) return;
+
+            GameLanguage language = _settings.Language;
+            bool subtitlesOn = _settings.SubtitlesEnabled;
+
+            if (_languageButtons != null)
+            {
+                for (int i = 0; i < _languageButtons.Length; i++)
+                    _languageButtons[i]?.EnableInClassList(SelectedSegmentClass, i == (int)language);
+            }
+
             if (_subtitleButtons != null)
             {
-                for (int i = 0; i < _subtitleButtons.Length; i++)
-                    _subtitleButtons[i]?.EnableInClassList(SelectedSegmentClass, i == (int)mode);
+                _subtitleButtons[0]?.EnableInClassList(SelectedSegmentClass, subtitlesOn);
+                if (_subtitleButtons.Length > 1)
+                    _subtitleButtons[1]?.EnableInClassList(SelectedSegmentClass, !subtitlesOn);
             }
 
             if (_previewLabel == null) return;
 
-            switch (mode)
+            if (!subtitlesOn)
             {
-                case SubtitleMode.Arabic:
-                    _previewLabel.text = _previewArabic;
-                    // UI Toolkit has no direction property, so right-alignment is the closest we can
-                    // get to an RTL layout for the preview.
-                    _previewLabel.style.unityTextAlign = TextAnchor.MiddleRight;
-                    _previewLabel.EnableInClassList(MutedPreviewClass, false);
-                    break;
-
-                case SubtitleMode.Off:
-                    _previewLabel.text = _previewOff;
-                    _previewLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
-                    _previewLabel.EnableInClassList(MutedPreviewClass, true);
-                    break;
-
-                default:
-                    _previewLabel.text = _previewEnglish;
-                    _previewLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
-                    _previewLabel.EnableInClassList(MutedPreviewClass, false);
-                    break;
+                _previewLabel.text = _previewOff;
+                _previewLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+                _previewLabel.EnableInClassList(MutedPreviewClass, true);
+                return;
             }
+
+            bool arabic = language == GameLanguage.Arabic;
+            _previewLabel.text = arabic ? _previewArabic : _previewEnglish;
+
+            // UI Toolkit has no direction property, so right-alignment is the closest we can get to
+            // an RTL layout for the preview.
+            _previewLabel.style.unityTextAlign = arabic ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
+            _previewLabel.EnableInClassList(MutedPreviewClass, false);
         }
 
         private void ShowPage(int index)

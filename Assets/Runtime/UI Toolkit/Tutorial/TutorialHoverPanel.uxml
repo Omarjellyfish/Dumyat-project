@@ -1,22 +1,46 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/Tutorial/TutorialHoverPanel.uss" />
+
+    <!-- Delta v2 "workshop drawing". Authored for a 620 x 300 world-space panel.
+
+         TutorialHoverUI queries by NAME only, so this restructure needs no rewiring:
+         TutorialPanel / ProgressDots / StepCounter / IconContainer / InstructionText /
+         SkipButton / NextButton all keep their names. StepTotal and TutorialEyebrow are
+         additive and null-guarded.
+
+         Every string authored here is the ENGLISH copy. TutorialHoverUI rewrites the
+         eyebrow, the buttons and the step total when the player's subtitle setting is
+         Arabic — see ApplyLanguage(). -->
     <ui:VisualElement name="TutorialPanel" class="tutorial-panel tutorial-panel--hidden">
-        <!-- Header: dots + step counter -->
-        <ui:VisualElement class="tutorial-header">
-            <ui:VisualElement name="ProgressDots" class="progress-dots-row" />
-            <ui:Label name="StepCounter" text="Step 1/7" class="step-counter" />
+
+        <!-- Crop marks. Four absolutely positioned elements with two borders each, replacing
+             the continuous panel border so the card sits lighter over the workpiece. -->
+        <ui:VisualElement class="corner corner--tl" picking-mode="Ignore" />
+        <ui:VisualElement class="corner corner--tr" picking-mode="Ignore" />
+        <ui:VisualElement class="corner corner--bl" picking-mode="Ignore" />
+        <ui:VisualElement class="corner corner--br" picking-mode="Ignore" />
+
+        <!-- Index column: the step number is the anchor of the card, not a footnote.
+             "How far through am I" is the question players actually ask. -->
+        <ui:VisualElement class="tutorial-index">
+            <ui:Label name="StepCounter" text="01" class="step-numeral" />
+            <ui:Label name="StepTotal" text="OF 01" class="step-total" />
+            <ui:VisualElement class="tutorial-index-spacer" />
+            <ui:VisualElement name="IconContainer" class="icon-container" />
         </ui:VisualElement>
 
-        <!-- Icon (optional, hidden by default) -->
-        <ui:VisualElement name="IconContainer" class="icon-container" />
+        <ui:VisualElement class="tutorial-body">
+            <ui:Label name="TutorialEyebrow" text="TUTORIAL" class="tutorial-eyebrow" />
+            <ui:Label name="InstructionText" text="Tutorial instruction goes here" class="instruction-text" />
 
-        <!-- Instruction text -->
-        <ui:Label name="InstructionText" text="Tutorial instruction goes here" class="instruction-text" />
+            <!-- One child per step, added by UpdateProgressDots(). Styled as ruler ticks:
+                 the current step is a full-height cyan tick, past steps are half-height. -->
+            <ui:VisualElement name="ProgressDots" class="progress-dots-row" />
 
-        <!-- Footer: skip and next button -->
-        <ui:VisualElement class="tutorial-footer" style="flex-direction: row; justify-content: space-between;">
-            <ui:Button name="SkipButton" text="Skip ▸" class="skip-button" />
-            <ui:Button name="NextButton" text="Next ▸" class="skip-button" />
+            <ui:VisualElement class="tutorial-footer">
+                <ui:Button name="SkipButton" text="SKIP" class="tutorial-btn tutorial-btn--quiet" />
+                <ui:Button name="NextButton" text="NEXT" class="tutorial-btn" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

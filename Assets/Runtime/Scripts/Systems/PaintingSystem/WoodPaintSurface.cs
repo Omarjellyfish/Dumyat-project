@@ -16,6 +16,32 @@ namespace DumyatRuntime
             _renderTexture.Create();
             ClearRenderTexture(_renderTexture);
             render.material.SetTexture("_RenderTexture", _renderTexture);
+
+            WarnIfNotPaintable();
+        }
+
+        /// <summary>
+        /// The pen locates a mark by reading the UV of its raycast hit, and
+        /// <see cref="RaycastHit.textureCoord2"/> only resolves against a non-convex
+        /// MeshCollider. Any other collider reports (0,0) instead of failing, so every
+        /// mark silently stacks in one corner of the texture - worth saying out loud.
+        /// </summary>
+        private void WarnIfNotPaintable()
+        {
+            bool hasPaintableCollider = false;
+
+            foreach (Collider surfaceCollider in GetComponents<Collider>())
+            {
+                if (surfaceCollider is MeshCollider meshCollider && !meshCollider.convex)
+                    hasPaintableCollider = true;
+            }
+
+            if (hasPaintableCollider)
+                return;
+
+            Debug.LogWarning(
+                $"{nameof(WoodPaintSurface)} on {name} has no non-convex MeshCollider. " +
+                "Paint UVs only resolve against one, so the pen cannot mark this surface.", this);
         }
 
         private void ClearRenderTexture(RenderTexture rt)

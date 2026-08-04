@@ -1,96 +1,341 @@
+/* ============================================================================
+   Destination board — "Delta" treatment, Departure list layout.
+
+   Authored against a 900 x 620 world-space panel. The previous sheet was
+   600 x 800 — portrait — inside an 800 x 600 landscape UIDocument, i.e. it was
+   authored 90 degrees out from the surface it rendered on.
+
+   VR floor observed here: body >= 26px, headers >= 32px, ray-clickable
+   controls >= 64px tall. The previous sheet ran 16px descriptions and a ~46px
+   Travel button.
+
+   UI Toolkit has no box-shadow, no gradients, no backdrop-filter and no
+   text-transform — the frosted look is opacity only, and every uppercase
+   string is authored uppercase in the UXML.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- Panel -- */
+/* Cairo is set here rather than inline on a single label, so the whole panel
+   uses one face instead of the header alone. Font properties inherit in UI
+   Toolkit, so every child picks this up. */
 .destination-root {
     flex-grow: 1;
-    background-color: rgba(45, 20, 60, 0.95);
-    border-radius: 12px;
-    border-width: 2px;
-    border-color: rgba(255, 200, 0, 0.6);
-    padding: 16px;
-    width: 600px;
-    height: 800px;
-    justify-content: flex-start;
-    align-items: stretch;
+    background-color: rgba(8, 26, 34, 0.84);
+    /* Hairline only — the corner brackets carry the frame. */
+    border-width: 1px;
+    border-color: rgba(120, 228, 236, 0.16);
+    border-radius: 4px;
+    padding: 28px 32px;
+    width: 100%;
+    height: 100%;
+    -unity-text-generator: advanced;
+    -unity-font-definition: url("project://database/Assets/Runtime/UI%20Toolkit/Fonts/Cairo-VariableFont_slnt,wght.ttf?fileID=12800000&guid=7d8050dfeb2d6c64ab82de5bd3f91742&type=3#Cairo-VariableFont_slnt,wght");
 }
 
+/* ----------------------------------------------------------- Crop marks -- */
+.corner {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-color: #67DDE8;
+}
+
+.corner--tl {
+    top: -1px;
+    left: -1px;
+    border-top-width: 3px;
+    border-left-width: 3px;
+    border-top-left-radius: 4px;
+}
+
+.corner--tr {
+    top: -1px;
+    right: -1px;
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-top-right-radius: 4px;
+}
+
+.corner--bl {
+    bottom: -1px;
+    left: -1px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-bottom-left-radius: 4px;
+}
+
+.corner--br {
+    bottom: -1px;
+    right: -1px;
+    border-bottom-width: 3px;
+    border-right-width: 3px;
+    border-bottom-right-radius: 4px;
+}
+
+/* Mid-load lockout. DestinationBoardUI calls SetEnabled(false) on
+   SceneLoadBeginEvent; without this it would just take UI Toolkit's default
+   opacity wash, which reads as a rendering glitch rather than a deliberate state. */
+.destination-root:disabled {
+    opacity: 0.45;
+}
+
+/* --------------------------------------------------------------- Header -- */
 .destination-header-container {
-    background-color: rgba(30, 10, 40, 0.8);
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 16px;
-    align-items: center;
-    border-bottom-width: 2px;
-    border-bottom-color: rgba(255, 200, 0, 0.8);
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.2);
+}
+
+.destination-title-group {
+    flex-direction: column;
+}
+
+.destination-eyebrow {
+    font-size: 14px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 8px;
+    margin: 0 0 4px 0;
 }
 
 .destination-header {
-    font-size: 28px;
-    -unity-font-style: bold;
-    color: #FFD700;
-    letter-spacing: 2px;
+    font-size: 32px;
+    color: #D6F6FA;
+    letter-spacing: 7px;
+    margin: 0;
 }
 
+/* --------------------------------------------------- Route count readout -- */
+.route-readout {
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 2px 4px;
+}
+
+.route-readout-label {
+    font-size: 14px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 4px;
+    margin: 0;
+    padding: 0;
+}
+
+.route-readout-value {
+    font-size: 40px;
+    color: #67DDE8;
+    margin: 0;
+    padding: 0;
+}
+
+/* ------------------------------------------------------------ Route list -- */
 .destination-scroll {
     flex-grow: 1;
 }
 
-.destination-empty {
-    font-size: 20px;
-    color: rgb(150, 150, 160);
-    -unity-text-align: middle-center;
-    margin-top: 50px;
+/* -------------------------------------------------------------- Scrollbar -- */
+/* UI Toolkit's default scrollbar is a desktop widget: a bordered tray with
+   arrow buttons at each end. In VR nobody drags a 20px thumb with a controller
+   ray, and the arrows are far below the 64px target floor — they read as
+   clutter. Slimmed to a thin cyan indicator: it still shows position and how
+   much list is left, but it is not pretending to be a control.
+
+   The list is scrolled by pointing at it and using the thumbstick, not by
+   grabbing this. */
+.destination-scroll .unity-scroller--vertical {
+    width: 8px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    margin-left: 8px;
 }
 
+/* The arrow buttons at the ends of the tray. */
+.destination-scroll .unity-scroller--vertical .unity-scroller__low-button,
+.destination-scroll .unity-scroller--vertical .unity-scroller__high-button {
+    display: none;
+}
+
+.destination-scroll .unity-scroller--vertical .unity-scroller__slider {
+    width: 8px;
+    min-width: 8px;
+    margin: 0;
+}
+
+.destination-scroll .unity-scroller--vertical .unity-base-slider__tracker {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.destination-scroll .unity-scroller--vertical .unity-base-slider__dragger {
+    width: 8px;
+    min-width: 8px;
+    left: 0;
+    background-color: rgba(120, 228, 236, 0.35);
+    border-width: 0;
+    border-radius: 4px;
+}
+
+.destination-scroll .unity-scroller--vertical .unity-base-slider__dragger:hover {
+    background-color: rgba(120, 228, 236, 0.6);
+}
+
+/* Horizontal scrolling is never wanted here — rows wrap instead. */
+.destination-scroll .unity-scroller--horizontal {
+    display: none;
+}
+
+/* Each route is a ticket stub: perforated edge, code cell, then the destination
+   and what you will find there. */
 .destination-card {
-    background-color: rgba(70, 30, 90, 0.9);
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 12px;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 120px;
+    margin-bottom: 11px;
+    background-color: rgba(255, 255, 255, 0.035);
     border-width: 1px;
-    border-color: rgba(255, 200, 0, 0.3);
-    transition-duration: 0.2s;
+    border-color: rgba(120, 228, 236, 0.2);
+    border-radius: 3px;
     transition-property: background-color, border-color;
+    transition-duration: 0.15s;
 }
 
 .destination-card:hover {
-    background-color: rgba(85, 40, 110, 0.95);
-    border-color: rgba(255, 200, 0, 0.8);
+    background-color: rgba(103, 221, 232, 0.1);
+    border-color: rgba(120, 228, 236, 0.5);
+}
+
+/* --------------------------------------------------------- Perforation -- */
+.destination-perforation {
+    width: 10px;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.destination-perforation-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(120, 228, 236, 0.35);
+}
+
+/* --------------------------------------------------------- Route code -- */
+.destination-code {
+    width: 96px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-right-width: 1px;
+    border-right-color: rgba(120, 228, 236, 0.2);
+    /* Decorative — must not steal the XR ray from the stub or its button. */
+    picking-mode: ignore;
+}
+
+.destination-code-label {
+    font-size: 38px;
+    color: #67DDE8;
+    letter-spacing: 1px;
+    margin: 0;
+    picking-mode: ignore;
+}
+
+/* Name + description stack here so the Travel button can hold a fixed column
+   on the right — every route's action lands in the same place, which means the
+   player learns where to point once. */
+.destination-text {
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px 22px;
+    /* Non-interactive children must not steal the XR ray from the row. */
+    picking-mode: ignore;
 }
 
 .destination-name {
-    font-size: 24px;
-    -unity-font-style: bold;
-    color: rgb(255, 255, 255);
-    margin-bottom: 8px;
+    font-size: 27px;
+    color: #EAF8FB;
+    letter-spacing: 0.5px;
+    white-space: normal;
+    margin: 0;
+    picking-mode: ignore;
 }
 
 .destination-description {
-    font-size: 16px;
-    color: rgb(180, 180, 190);
+    font-size: 20px;
+    color: rgba(214, 246, 250, 0.55);
     white-space: normal;
-    margin-bottom: 16px;
+    margin: 6px 0 0 0;
+    picking-mode: ignore;
 }
 
+/* Ghost button — transparent fill with a cyan outline that fills in on hover.
+   64px tall and 170px wide so it is a reliable XR ray target. */
 .destination-travel-btn {
-    background-color: #FFD700;
-    border-color: #B8860B;
+    font-size: 20px;
+    color: #67DDE8;
+    background-color: rgba(0, 0, 0, 0);
     border-width: 2px;
-    border-bottom-width: 6px;
-    border-bottom-color: rgba(0, 0, 0, 0.5);
-    border-radius: 6px;
-    color: #000000;
-    font-size: 18px;
-    -unity-font-style: bold;
-    padding: 10px 0;
-    margin: 0;
-    transition-duration: 0.15s;
-    transition-property: background-color;
+    border-color: rgba(120, 228, 236, 0.5);
+    border-radius: 4px;
+    min-height: 64px;
+    min-width: 170px;
+    padding: 10px 26px;
+    margin: 26px 18px 26px 0;
+    letter-spacing: 3px;
+    flex-shrink: 0;
+    align-self: center;
+    transition-property: background-color, border-color, color, scale;
+    transition-duration: 0.12s;
 }
 
 .destination-travel-btn:hover {
-    background-color: #FFEA00;
+    background-color: rgba(103, 221, 232, 0.18);
+    border-color: #67DDE8;
+    color: #CFF6FA;
+    scale: 1.04;
 }
 
 .destination-travel-btn:active {
-    background-color: #CCAA00;
-    border-bottom-width: 2px;
-    margin-top: 4px;
+    background-color: rgba(103, 221, 232, 0.34);
+    color: #FFFFFF;
+    scale: 0.96;
+}
+
+/* ---------------------------------------------------------- Empty state -- */
+.destination-empty {
+    font-size: 24px;
+    color: rgba(214, 246, 250, 0.45);
+    -unity-text-align: middle-center;
+    margin-top: 40px;
+}
+
+/* ---------------------------------------------------------------- Arabic -- */
+/* Toggled onto every text element by UiLanguage.ApplyScript while the player's
+   language setting is Arabic.
+
+   The Standard text generator draws code points in order with no shaping, so
+   Arabic comes out as disconnected letters in reverse; Advanced does the bidi
+   reordering and the contextual joining.
+
+   letter-spacing returns to 0 — the tracking on the eyebrow and header would
+   pull joined letterforms apart and break the cursive connections outright.
+
+   The board must sit on a PanelSettings whose text settings carry an
+   Arabic-capable font (Cairo Panel Text Settings) or every glyph is a box. */
+.ui-arabic {
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+/* UI Toolkit has no `direction` property, so right-alignment is as close to an
+   RTL layout as prose gets. The route code is deliberately NOT flipped — it is
+   an alphanumeric handle like C1, not a word. */
+.ui-arabic.destination-name,
+.ui-arabic.destination-description,
+.ui-arabic.destination-empty {
+    -unity-text-align: upper-right;
 }

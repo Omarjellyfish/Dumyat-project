@@ -30,8 +30,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.11776, y: 2.48, z: 5.41272}
-  m_LocalScale: {x: 0.5, y: 3.76, z: 0.44656}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.22, y: 1.6544, z: 0.1964864}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3201064477634635426}
   - {fileID: 3664586136550144513}
@@ -70,7 +70,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 956ba1adce6f7cc47bbcb484f0d3713a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -127,13 +127,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de84da19dfb3b854ab400503914b7630, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.BusStation
-  _pickupPoint: {fileID: 3201064477634635426}
   _destinations:
+  - {fileID: 11400000, guid: 2aa3e1d0ac0cc8a45b693c80e9e6a2e2, type: 2}
   - {fileID: 11400000, guid: e396014813a2929409163e7beedac876, type: 2}
-  - {fileID: 11400000, guid: 1be1bef139c5f784e99e1990636e57ae, type: 2}
   - {fileID: 11400000, guid: 253cda07b3063d943981b705d54f0bb0, type: 2}
-  _playerTag: Player
-  _carTag: PlayerCar
+  - {fileID: 11400000, guid: 048a8c381a242ed45aaea063326ba068, type: 2}
+  _transitionVoiceLines: []
 --- !u!1 &6270779726518705797
 GameObject:
   m_ObjectHideFlags: 0
@@ -183,15 +182,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5033295815123871270, guid: 759cc788b3e91074da48016c6e4697aa, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.15
+      value: 0.13297872
       objectReference: {fileID: 0}
     - target: {fileID: 5033295815123871270, guid: 759cc788b3e91074da48016c6e4697aa, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 1.11967
       objectReference: {fileID: 0}
     - target: {fileID: 5033295815123871270, guid: 759cc788b3e91074da48016c6e4697aa, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.72
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5033295815123871270, guid: 759cc788b3e91074da48016c6e4697aa, type: 3}
       propertyPath: m_LocalPosition.y

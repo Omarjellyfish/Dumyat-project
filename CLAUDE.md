@@ -271,10 +271,14 @@ Current `Assets/Runtime/Scripts/UI/` layout — extend it, don't flatten it:
   checks are brittle and wrong; adjust the scoring context or thresholds instead of pattern-matching text.
 
 ## Gotchas
-- The only **build-enabled scene**, `Assets/Runtime/Art/Scenes/carpentar_room.unity`, is **missing on
-  this branch** (a recent commit deleted the "carpentar room in art"; only
-  `Assets/Scenes/DemoScenes/carpentar_room_Demo.unity` remains). Fix the Build Settings scene list
-  before making a player build.
+- **Build Settings — `MainMenu_UI` is referenced but not enabled.** Six scenes are enabled:
+  `Testing_MainMenu` (index 0, so a player build boots into the **legacy** uGUI nail menu),
+  `First_room`, `carpentar_room`, `El_manara`, `Shipyard`, `ToBuild_EzbetAlBourg`. Every scene the
+  `TravelDestination` assets name is enabled, but `MenuCatalog._mainMenuSceneName` is `MainMenu_UI`,
+  whose scene is in the list with `enabled: 0` — so `GameSessionService.ExitToMainMenu()` throws in a
+  player build. That scene also contains no project scripts; the UI Toolkit menu lives in
+  `Assets/Runtime/Prefabs/UI/MainMenuUIDocument.prefab` and is not placed in any scene yet.
+  (`carpentar_room.unity` does exist — an older note here claiming otherwise was wrong.)
 - When editing, **match the target file's existing namespace** — nearly all runtime code (including
   `EventBus`, `IGameEvent`, and the `Events/` structs) is `DumyatRuntime`.
 - Never edit `Library/` or `Assets/Samples/` — generated / third-party.
