@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b237ea2217696d40ad163884773c095, type: 3}
+  m_Name: Ocean Water 1
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.WaterSettingsSO
+  imTiredUnityHandleIt: 1
+  waveCount: 16
+  liveUpdateProceduralWaves: 1
+  medianWavelength: 1.11
+  wavelengthRange: 0.79
+  medianAmplitude: 0.01
+  medianSpeed: 0.14
+  speedRange: 0.08
+  medianDirection: 42.9
+  directionalRange: 259.7
+  manualDirection: 42.8
+  manualWavelength: 1.14
+  manualAmplitude: 0.23
+  manualSpeed: -0.17
+  savedProceduralWaves:
+  - amplitude: 0.01592414
+    frequency: 1.1314906
+    phase: 0.80308145
+    pad: 0
+    direction: {x: -0.13538334, y: -0.9907933}
+  - amplitude: 0.013474109
+    frequency: 1.3372325
+    phase: 1.1233531
+    pad: 0
+    direction: {x: 0.7079506, y: 0.706262}
+  - amplitude: 0.007128238
+    frequency: 2.5276957
+    phase: 1.0751989
+    pad: 0
+    direction: {x: -0.84332764, y: 0.5373997}
+  - amplitude: 0.0066392
+    frequency: 2.7138839
+    phase: 1.9928378
+    pad: 0
+    direction: {x: -0.39363632, y: -0.9192663}
+  - amplitude: 0.012818288
+    frequency: 1.4056492
+    phase: 0.69211304
+    pad: 0
+    direction: {x: -0.8412331, y: 0.5406726}
+  - amplitude: 0.014586329
+    frequency: 1.2352674
+    phase: 1.2044168
+    pad: 0
+    direction: {x: -0.10508796, y: -0.9944629}
+  - amplitude: 0.007354801
+    frequency: 2.4498305
+    phase: 1.3034291
+    pad: 0
+    direction: {x: 0.6854319, y: -0.7281367}
+  - amplitude: 0.013936781
+    frequency: 1.2928392
+    phase: 1.3348182
+    pad: 0
+    direction: {x: 0.9064549, y: -0.42230266}
+  - amplitude: 0.01578046
+    frequency: 1.1417929
+    phase: 1.253355
+    pad: 0
+    direction: {x: -0.9975871, y: -0.06942652}
+  - amplitude: 0.0069485144
+    frequency: 2.5930746
+    phase: 1.7940106
+    pad: 0
+    direction: {x: -0.0890107, y: -0.9960307}
+  - amplitude: 0.0070798304
+    frequency: 2.5449786
+    phase: 1.7400556
+    pad: 0
+    direction: {x: -0.99039996, y: -0.13823155}
+  - amplitude: 0.012538343
+    frequency: 1.4370333
+    phase: 0.8739727
+    pad: 0
+    direction: {x: 0.82484585, y: -0.5653577}
+  - amplitude: 0.012437846
+    frequency: 1.4486445
+    phase: 1.0800927
+    pad: 0
+    direction: {x: -0.99098194, y: -0.13399573}
+  - amplitude: 0.007205607
+    frequency: 2.500555
+    phase: 1.5095019
+    pad: 0
+    direction: {x: 0.25546896, y: -0.96681726}
+  - amplitude: 0.009422267
+    frequency: 1.9122804
+    phase: 0.95322526
+    pad: 0
+    direction: {x: 0.95271176, y: -0.30387545}
+  - amplitude: 0.0147826215
+    frequency: 1.2188647
+    phase: 0.7044539
+    pad: 0
+    direction: {x: -0.14016904, y: -0.99012756}
+  proceduralWavesGenerated: 1
