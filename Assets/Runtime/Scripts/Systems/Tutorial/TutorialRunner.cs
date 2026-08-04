@@ -21,6 +21,10 @@ namespace DumyatRuntime
         [Tooltip("The TutorialHoverUI component — can be on this GameObject or a child")]
         [SerializeField] private TutorialHoverUI _hoverUI;
 
+        [Header("Highlights")]
+        [Tooltip("Optional prefab instantiated as a child of highlighted anchors.")]
+        [SerializeField] private GameObject _highlightPrefab;
+
         private IEventService _eventService;
         private IHapticService _hapticService;
         private TutorialService _tutorialService;
@@ -33,6 +37,8 @@ namespace DumyatRuntime
         private bool _isRunning;
         private Coroutine _delayCoroutine;
 
+        private List<GameObject> _spawnedHighlights = new List<GameObject>();
+        private List<TutorialAnchor> _currentlyHighlightedAnchors = new List<TutorialAnchor>();
 
         private TutorialZoneSensor _activeZoneSensor;
 
@@ -165,6 +171,9 @@ namespace DumyatRuntime
                 _currentStepIndex,
                 _activeSequence.Steps.Count,
                 step));
+
+            // Set up highlights
+            ApplyHighlights(step);
 
             // Set up completion trigger
             SetupCompletionTrigger(step);
@@ -380,6 +389,73 @@ namespace DumyatRuntime
                 _activeZoneSensor.Deactivate();
                 _activeZoneSensor = null;
             }
+
+            ClearHighlights();
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Highlights
+        // ─────────────────────────────────────────────────────────────
+
+        private void ApplyHighlights(TutorialStepSO step)
+        {
+            ClearHighlights();
+
+            List<TutorialAnchor> anchorsToHighlight = new List<TutorialAnchor>();
+
+            if (step.HighlightPrimaryAnchor && !string.IsNullOrEmpty(step.PrimaryAnchorId))
+            {
+                var primaryAnchors = TutorialAnchorRegistry.GetAllAnchors(step.PrimaryAnchorId);
+                if (primaryAnchors != null) anchorsToHighlight.AddRange(primaryAnchors);
+            }
+
+            if (step.HighlightIds != null)
+            {
+                foreach (var id in step.HighlightIds)
+                {
+                    if (string.IsNullOrEmpty(id)) continue;
+                    var anchors = TutorialAnchorRegistry.GetAllAnchors(id);
+                    if (anchors != null) anchorsToHighlight.AddRange(anchors);
+                }
+            }
+
+            foreach (var anchor in anchorsToHighlight)
+            {
+                if (anchor == null || _currentlyHighlightedAnchors.Contains(anchor)) continue;
+                
+                _currentlyHighlightedAnchors.Add(anchor);
+                
+                // Fire event on the anchor
+                anchor.SetHighlight(true);
+                
+                // Spawn optional prefab
+                if (_highlightPrefab != null)
+                {
+                    var instance = Instantiate(_highlightPrefab, anchor.transform.position, Quaternion.identity, anchor.transform);
+                    _spawnedHighlights.Add(instance);
+                }
+            }
+        }
+
+        private void ClearHighlights()
+        {
+            foreach (var anchor in _currentlyHighlightedAnchors)
+            {
+                if (anchor != null)
+                {
+                    anchor.SetHighlight(false);
+                }
+            }
+            _currentlyHighlightedAnchors.Clear();
+
+            foreach (var instance in _spawnedHighlights)
+            {
+                if (instance != null)
+                {
+                    Destroy(instance);
+                }
+            }
+            _spawnedHighlights.Clear();
         }
 
         // ─────────────────────────────────────────────────────────────

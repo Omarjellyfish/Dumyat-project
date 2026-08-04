@@ -44,6 +44,11 @@ namespace DumyatRuntime
                 Destroy(_currentRootObject);
             }
 
+            if (_hologramObject != null)
+            {
+                Destroy(_hologramObject);
+            }
+
             if (_spawnPoint != null && recipe.RootPrefab != null)
             {
                 _currentRootObject = Instantiate(recipe.RootPrefab, _spawnPoint.position, _spawnPoint.rotation);
