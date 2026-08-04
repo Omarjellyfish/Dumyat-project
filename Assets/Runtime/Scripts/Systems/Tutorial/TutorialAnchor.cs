@@ -3,8 +3,21 @@ using UnityEngine;
 
 namespace DumyatRuntime
 {
+    /// <summary>How <see cref="TutorialHighlighter"/> should draw attention to an anchor.</summary>
+    public enum TutorialHighlightStyle
+    {
+        /// <summary>Frame for anything that is a UI panel; beacon for everything else.</summary>
+        Auto,
+
+        /// <summary>A vertical beam with a disc at its foot. For places and loose objects.</summary>
+        Beacon,
+
+        /// <summary>An outline drawn around the whole panel. For UI windows.</summary>
+        Frame
+    }
+
     /// <summary>
-    /// Add this component to any GameObject you want the tutorial system to find 
+    /// Add this component to any GameObject you want the tutorial system to find
     /// without relying on slow GameObject.FindWithTag() calls.
     /// </summary>
     public class TutorialAnchor : MonoBehaviour
@@ -13,9 +26,22 @@ namespace DumyatRuntime
         public string AnchorId;
 
         [Header("Events")]
-        [Tooltip("Fired when the tutorial system highlights or unhighlights this anchor.")]
+        [Tooltip("Fired when the tutorial system highlights or unhighlights this anchor. Use it to " +
+                 "drive something specific to this object — an outline, a particle, an animation — " +
+                 "alongside or instead of the built-in highlight below.")]
         public UnityEngine.Events.UnityEvent<bool> OnHighlightChanged;
 
+        [Header("Built-in highlight")]
+        [Tooltip("How the tutorial highlights this anchor when no custom highlight prefab is " +
+                 "assigned on the TutorialRunner. Auto picks a frame for UI panels and a beacon for " +
+                 "everything else, which is almost always what you want.")]
+        public TutorialHighlightStyle HighlightStyle = TutorialHighlightStyle.Auto;
+
+        [Tooltip("Frame size in METRES, for Frame style only. Leave at zero to measure the panel " +
+                 "automatically — set it only when the measurement comes out wrong.")]
+        public Vector2 FrameSizeOverride;
+
+        /// <summary>Raises <see cref="OnHighlightChanged"/>. Called by the runner as a step starts and ends.</summary>
         public void SetHighlight(bool state)
         {
             OnHighlightChanged?.Invoke(state);

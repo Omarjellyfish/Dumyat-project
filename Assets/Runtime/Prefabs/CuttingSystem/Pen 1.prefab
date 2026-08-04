@@ -215,6 +215,7 @@ GameObject:
   - component: {fileID: 1886754577400463337}
   - component: {fileID: 3862457174410590595}
   - component: {fileID: 4057587704098017535}
+  - component: {fileID: 205354980734852870}
   m_Layer: 0
   m_Name: Pen 1
   m_TagString: Untagged
@@ -406,12 +407,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6390e93b913878848abc86a6f53c8ba9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.LineDrawing
-  _grabInteractable: {fileID: 5870747917565473396}
   _penTip: {fileID: 6827235999181371940}
   _surfaceConstraint: {fileID: 3862457174410590595}
   _lineMaterial: {fileID: 2100000, guid: 0266695b5852f4148aa4a00d6e0d9426, type: 2}
   _lineWidth: 0.02
-  offset: {x: 0, y: 0.06, z: 0}
+  _distanceTextOffset: {x: 0, y: 0.06, z: 0}
 --- !u!114 &3862457174410590595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -445,6 +445,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PaintBrush
   _brushTexture: {fileID: 2800000, guid: c3fd374711185fd4da798eece120c657, type: 3}
   _stampShader: {fileID: 4800000, guid: 6be086920d0a2e64eabce9c9cb3dfa8a, type: 3}
+--- !u!114 &205354980734852870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5101026488185995106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: Pen
 --- !u!1 &7089041419396340366
 GameObject:
   m_ObjectHideFlags: 0
