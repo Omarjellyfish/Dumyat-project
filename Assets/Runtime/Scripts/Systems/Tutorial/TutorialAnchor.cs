@@ -12,6 +12,15 @@ namespace DumyatRuntime
         [Tooltip("The ID used by TutorialStepSO to find this object (e.g. 'CraftingStation' or 'WoodRack')")]
         public string AnchorId;
 
+        [Header("Events")]
+        [Tooltip("Fired when the tutorial system highlights or unhighlights this anchor.")]
+        public UnityEngine.Events.UnityEvent<bool> OnHighlightChanged;
+
+        public void SetHighlight(bool state)
+        {
+            OnHighlightChanged?.Invoke(state);
+        }
+
         private void OnEnable()
         {
             TutorialAnchorRegistry.Register(this);
