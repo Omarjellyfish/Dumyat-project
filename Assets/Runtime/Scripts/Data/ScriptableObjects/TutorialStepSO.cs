@@ -31,6 +31,12 @@ namespace DumyatRuntime
         [Tooltip("The instruction text shown on the hover UI panel")]
         public string InstructionText;
 
+        [TextArea(2, 4)]
+        [Tooltip("Egyptian-Arabic version of the instruction, shown when the player's subtitle " +
+                 "setting is Arabic. Leave empty and the card falls back to InstructionText, so a " +
+                 "step without a translation still reads rather than going blank.")]
+        public string InstructionTextArabic;
+
         [Tooltip("Optional audio for the tutorial step")]
         public AudioClip Audio;
 

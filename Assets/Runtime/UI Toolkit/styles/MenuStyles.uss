@@ -303,6 +303,13 @@
     margin: 6px 0 14px 0;
 }
 
+/* A second field group under the first. The base 6px top margin is sized for a
+   label opening a page, which reads as cramped once another control sits above
+   it — the two groups need to be visibly separate settings, not one block. */
+.settings-field-label--stacked {
+    margin-top: 28px;
+}
+
 /* -------------------------------------------------------- Audio sliders -- */
 .slider-row {
     flex-direction: row;
