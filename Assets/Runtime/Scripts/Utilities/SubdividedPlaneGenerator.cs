@@ -31,9 +31,6 @@ namespace DumyatRuntime
         [Tooltip("How many subdivision levels to drop per LOD step. (e.g. Step = 2 with Base = 6 creates LOD0 = 6, LOD1 = 4, LOD2 = 2).")]
         public int subdivisionStep = 1;
 
-        [Tooltip("Hide generated LOD child GameObjects in the Hierarchy window to keep your scene clean.")]
-        public bool hideLODChildrenInHierarchy = true;
-
         [Header("Editor & Bounds")]
         [Tooltip("When enabled, modifying properties in the Inspector updates the mesh instantly.")]
         public bool realTimeUpdates = true;
@@ -48,6 +45,12 @@ namespace DumyatRuntime
 
         private Mesh _mesh;
         private bool _meshNeedsRebuild = false;
+
+        // Meshes this component instance has generated for its LOD children.
+        // Only ever destroy meshes we personally created - never a mesh we merely
+        // find attached (e.g. right after duplicating, a child's sharedMesh may
+        // still point at the ORIGINAL object's mesh instance until we regenerate).
+        private readonly System.Collections.Generic.List<Mesh> _ownedLodMeshes = new System.Collections.Generic.List<Mesh>();
 
         private void OnEnable() 
         {
@@ -82,6 +85,19 @@ namespace DumyatRuntime
         [ContextMenu("Regenerate Plane")]
         public void Generate() 
         {
+            #if UNITY_EDITOR
+            // Prefab assets viewed in the Project window (not an instance placed
+            // in a scene, and not open in Prefab Mode) don't allow structural
+            // changes like reparenting - creating/destroying LOD children here
+            // would throw "SetParent is disabled to prevent data corruption".
+            // Prefab Mode instances and scene instances are NOT persistent, so
+            // this only skips the passive "selected in Project window" case.
+            if (UnityEditor.EditorUtility.IsPersistent(gameObject)) 
+            {
+                return;
+            }
+            #endif
+
             if (useLODGroup)
             {
                 GenerateLODSystem();
@@ -101,6 +117,14 @@ namespace DumyatRuntime
             MeshRenderer parentRenderer = GetComponent<MeshRenderer>();
             parentRenderer.enabled = true;
 
+            // Release the previous mesh before generating a new one, or every
+            // regenerate (e.g. dragging a slider with realTimeUpdates on) leaks it
+            if (_mesh != null)
+            {
+                DestroyImmediate(_mesh);
+                _mesh = null;
+            }
+
             _mesh = CreatePlaneMesh(subdivisionLevel);
             _mesh.name = $"{gameObject.name}_SubdividedPlane";
 
@@ -114,7 +138,13 @@ namespace DumyatRuntime
 
             MeshRenderer parentRenderer = GetComponent<MeshRenderer>();
             AssignParentMaterial(parentRenderer);
-            parentRenderer.enabled = false;
+
+            // The parent itself now serves as LOD0, keeping its own renderer
+            // live (not disabled) so it stays clickable/selectable in the Scene
+            // view. Only the lower-detail fallback LODs (1..N-1) live on hidden
+            // child objects, since those only render when you're too far away
+            // to realistically need to click-select the object anyway.
+            parentRenderer.enabled = true;
 
             LODGroup lodGroup = GetComponent<LODGroup>();
             if (lodGroup == null)
@@ -128,18 +158,31 @@ namespace DumyatRuntime
             LOD[] lods = new LOD[lodCount];
             float[] screenHeights = new float[] { 0.6f, 0.3f, 0.1f, 0.02f };
 
-            for (int i = 0; i < lodCount; i++)
+            // LOD0: assign directly to the parent's own MeshFilter/MeshRenderer
+            if (_mesh != null)
+            {
+                DestroyImmediate(_mesh);
+                _mesh = null;
+            }
+
+            _mesh = CreatePlaneMesh(subdivisionLevel);
+            int lod0Segments = 1 << subdivisionLevel;
+            _mesh.name = $"{gameObject.name}_LOD0_{lod0Segments}x{lod0Segments}";
+            GetComponent<MeshFilter>().mesh = _mesh;
+
+            lods[0] = new LOD(screenHeights[0], new Renderer[] { parentRenderer })
+            {
+                fadeTransitionWidth = 0.25f
+            };
+
+            // LOD1..N-1: hidden fallback children, same as before
+            for (int i = 1; i < lodCount; i++)
             {
                 // Calculate exact subdivision drop based on subdivisionStep
                 int currentSubdivision = Mathf.Max(0, subdivisionLevel - (i * subdivisionStep));
 
                 GameObject lodChild = new GameObject($"LOD_{i}");
                 lodChild.transform.SetParent(transform, false);
-
-                if (hideLODChildrenInHierarchy)
-                {
-                    lodChild.hideFlags = HideFlags.HideInHierarchy;
-                }
 
                 MeshFilter mf = lodChild.AddComponent<MeshFilter>();
                 MeshRenderer mr = lodChild.AddComponent<MeshRenderer>();
@@ -148,6 +191,7 @@ namespace DumyatRuntime
                 int segments = 1 << currentSubdivision;
                 lodMesh.name = $"{gameObject.name}_LOD{i}_{segments}x{segments}";
                 mf.sharedMesh = lodMesh;
+                _ownedLodMeshes.Add(lodMesh);
 
                 mr.sharedMaterial = parentRenderer.sharedMaterial;
 
@@ -248,6 +292,18 @@ namespace DumyatRuntime
 
         private void ClearLODChildren()
         {
+            // Destroy only the meshes WE created and tracked - not whatever a
+            // child's MeshFilter currently references. Right after a Ctrl+D
+            // duplicate, a duplicated child's sharedMesh still points at the
+            // ORIGINAL object's mesh instance (Unity shallow-copies the
+            // reference, it doesn't clone the Mesh). Destroying based on that
+            // live reference would delete the original's mesh out from under it.
+            foreach (Mesh ownedMesh in _ownedLodMeshes)
+            {
+                if (ownedMesh != null) DestroyImmediate(ownedMesh);
+            }
+            _ownedLodMeshes.Clear();
+
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 DestroyImmediate(transform.GetChild(i).gameObject);
@@ -261,6 +317,12 @@ namespace DumyatRuntime
             #endif
 
             if (_mesh != null) DestroyImmediate(_mesh);
+
+            foreach (Mesh ownedMesh in _ownedLodMeshes)
+            {
+                if (ownedMesh != null) DestroyImmediate(ownedMesh);
+            }
+            _ownedLodMeshes.Clear();
         }
     }
 }

@@ -185,10 +185,16 @@ namespace DumyatRuntime
         }
 
         private void CreateMaterial() {
-            if (existingMaterial == null) return;
-            waterMaterial = existingMaterial;
-            GetComponent<MeshRenderer>().sharedMaterial = waterMaterial;
+        if (existingMaterial == null) {
+            Debug.LogWarning("WaterVFX: No material assigned. Assign one in the inspector.", this);
+            return;
         }
+
+        waterMaterial = existingMaterial;
+        // No MeshRenderer assignment here - this object doesn't need to render
+        // anything itself. It just pushes computed wave data into the shared
+        // material, which some other object's MeshRenderer is already using.
+    }
 
         private void CreateWaveBuffer() {
             if (waveBuffer != null) {
