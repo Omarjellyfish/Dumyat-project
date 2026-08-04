@@ -9,7 +9,6 @@ using UnityEditor;
 
 namespace DumyatRuntime
 {
-    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     [ExecuteAlways]
     public class WaterVFX : MonoBehaviour {
 
@@ -30,6 +29,7 @@ namespace DumyatRuntime
         }
 
         private Material waterMaterial;
+        public ComputeBuffer WaveBuffer => waveBuffer;
         private ComputeBuffer waveBuffer;
         private WaveData[] waves;
 
