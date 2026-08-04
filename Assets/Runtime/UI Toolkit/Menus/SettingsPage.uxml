@@ -25,7 +25,7 @@
                  inventory uses for a hovered row. -->
             <ui:VisualElement name="SettingsRail" class="settings-rail">
                 <ui:Button name="TabAudioButton" text="AUDIO" class="settings-tab settings-tab--active" />
-                <ui:Button name="TabSubtitlesButton" text="SUBTITLES" class="settings-tab" />
+                <ui:Button name="TabLanguageButton" text="LANGUAGE" class="settings-tab" />
                 <ui:Button name="TabControlsButton" text="CONTROLS" class="settings-tab" />
             </ui:VisualElement>
 
@@ -66,17 +66,31 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
 
-                <!-- ======================================================== SUBTITLES -->
-                <!-- One three-way control rather than an on/off toggle plus a language picker:
-                     two fields that can disagree ("off, but Arabic") is a bug waiting to happen. -->
-                <ui:VisualElement name="SubtitlesPage" class="settings-page">
+                <!-- ========================================================= LANGUAGE -->
+                <!-- TWO independent controls, not one three-way.
 
-                    <ui:Label text="MERCHANT SUBTITLES" class="settings-field-label" />
+                     It used to be a single OFF / ENGLISH / العربية segment, on the reasoning that
+                     an on/off plus a language picker could disagree. That held while the setting
+                     only governed merchant captions. It stopped holding once language drove every
+                     panel in the game: "off" is not a language, and choosing it threw the player's
+                     language away and silently reverted the whole interface to English.
+
+                     Split apart, the two cannot contradict each other — a language is always set,
+                     and captions are independently on or off. -->
+                <ui:VisualElement name="LanguagePage" class="settings-page">
+
+                    <ui:Label text="LANGUAGE" class="settings-field-label" />
+
+                    <ui:VisualElement name="LanguageSegment" class="segment-row">
+                        <ui:Button name="LanguageEnglishButton" text="ENGLISH" class="segment-btn segment-btn--selected" />
+                        <ui:Button name="LanguageArabicButton" text="العربية" class="segment-btn segment-btn--arabic" />
+                    </ui:VisualElement>
+
+                    <ui:Label text="MERCHANT SUBTITLES" class="settings-field-label settings-field-label--stacked" />
 
                     <ui:VisualElement name="SubtitleSegment" class="segment-row">
-                        <ui:Button name="SubtitleOffButton" text="OFF" class="segment-btn" />
-                        <ui:Button name="SubtitleEnglishButton" text="ENGLISH" class="segment-btn segment-btn--selected" />
-                        <ui:Button name="SubtitleArabicButton" text="العربية" class="segment-btn segment-btn--arabic" />
+                        <ui:Button name="SubtitlesOnButton" text="ON" class="segment-btn segment-btn--selected" />
+                        <ui:Button name="SubtitlesOffButton" text="OFF" class="segment-btn" />
                     </ui:VisualElement>
 
                     <!-- A live sample, so the Arabic font and its right-to-left shaping can be
@@ -86,7 +100,7 @@
                         <ui:Label name="SubtitlePreviewLabel" text="" class="subtitle-preview-line" />
                     </ui:VisualElement>
 
-                    <ui:Label text="Changing this mid-line re-renders the caption instantly rather than restarting it."
+                    <ui:Label text="Language changes every panel in the game. Subtitles can be off in either language."
                               class="settings-note" />
                 </ui:VisualElement>
 

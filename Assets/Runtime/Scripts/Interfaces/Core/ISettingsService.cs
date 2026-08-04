@@ -7,20 +7,42 @@ namespace DumyatRuntime
     /// </summary>
     public interface ISettingsService
     {
-        SubtitleMode SubtitleMode { get; }
+        /// <summary>
+        /// The language the whole interface draws in — menus, the tutorial card, the departure
+        /// board, the crafting sheets — not just captions. Always a real language: there is no
+        /// "off", because a panel with no language has nothing to draw.
+        /// </summary>
+        GameLanguage Language { get; }
 
-        /// <summary>Convenience for consumers that only care whether captions are showing at all.</summary>
+        /// <summary>Whether merchant captions are shown. Independent of <see cref="Language"/>.</summary>
         bool SubtitlesEnabled { get; }
 
         /// <summary>
-        /// Which language to render captions in. Meaningless when <see cref="SubtitlesEnabled"/>
-        /// is false — check that first.
+        /// The two settings above folded back into the old three-way value, for anything written
+        /// against it (notably <see cref="MerchantSubtitlePresenter"/>). Derived, never stored.
+        /// </summary>
+        SubtitleMode SubtitleMode { get; }
+
+        /// <summary>
+        /// Alias of <see cref="Language"/>. Kept because callers already read it; new code should
+        /// prefer <see cref="Language"/>, which says what it actually controls.
         /// </summary>
         GameLanguage SubtitleLanguage { get; }
 
         /// <summary>Linear 0..1, as the sliders show it — not decibels.</summary>
         float GetVolume(AudioChannel channel);
 
+        /// <summary>Switches the interface language. Does not touch whether captions are on.</summary>
+        void SetLanguage(GameLanguage language);
+
+        /// <summary>Turns merchant captions on or off. Does not touch the interface language.</summary>
+        void SetSubtitlesEnabled(bool enabled);
+
+        /// <summary>
+        /// Sets both at once from the old combined value: <see cref="DumyatRuntime.SubtitleMode.Off"/>
+        /// turns captions off and LEAVES the language alone, which is the whole reason the two were
+        /// split apart.
+        /// </summary>
         void SetSubtitleMode(SubtitleMode mode);
 
         /// <summary>

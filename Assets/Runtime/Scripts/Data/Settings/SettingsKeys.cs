@@ -25,7 +25,25 @@ namespace DumyatRuntime
         /// </summary>
         public const string DialogueVolume = "DialougeVolume";
 
-        // --- Subtitles. Namespaced because, unlike the volumes, nothing legacy reads it. ---
+        // --- Language & subtitles. Namespaced because, unlike the volumes, nothing legacy reads them. ---
+
+        /// <summary>
+        /// Which language the whole interface draws in. Stored as <see cref="GameLanguage"/>.
+        /// </summary>
+        public const string Language = "Dumyat.Language";
+
+        /// <summary>Whether merchant captions are shown at all. Stored as 0/1.</summary>
+        public const string SubtitlesOn = "Dumyat.SubtitlesOn";
+
+        /// <summary>
+        /// LEGACY. The old single three-way <see cref="DumyatRuntime.SubtitleMode"/> that folded
+        /// language and on/off together. Kept only so <see cref="SettingsService"/> can migrate a
+        /// player who already has one saved — nothing writes it any more.
+        ///
+        /// It was replaced because it could not express "Arabic interface, no merchant captions":
+        /// choosing Off threw the language away, and once the setting drove the whole UI rather than
+        /// just captions, that made picking Off silently revert the interface to English.
+        /// </summary>
         public const string SubtitleMode = "Dumyat.SubtitleMode";
 
         /// <summary>Default for every audio channel, matching SoundMixerManager's PlayerPrefs fallback.</summary>

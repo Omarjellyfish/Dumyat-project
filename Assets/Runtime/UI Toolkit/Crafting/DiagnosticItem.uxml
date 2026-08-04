@@ -1,6 +1,14 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Runtime/UI Toolkit/Crafting/CraftingValidation.uss" />
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/Crafting/CraftingValidation.uss" />
+
+    <!-- A single fault row. item-code carries the failure KIND as a short word in an outlined
+         cell, so the kind is scannable down the left edge without reading the sentence.
+
+         item-icon is retained for compatibility with CraftingDiagnosticItemUI.Setup, which
+         still tints it — it is hidden in USS because the code cell replaced it, and the two
+         together were a redundant second icon system. -->
     <ui:VisualElement class="diagnostic-item">
+        <ui:Label text="FAULT" name="item-code" class="diagnostic-code" />
         <ui:VisualElement name="item-icon" class="diagnostic-icon" />
         <ui:Label text="Diagnostic message goes here." name="item-text" class="diagnostic-text" />
     </ui:VisualElement>

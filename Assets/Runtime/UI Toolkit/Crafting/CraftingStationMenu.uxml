@@ -1,11 +1,53 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/Crafting/CraftingStationMenu.uss" />
+
+    <!-- Delta v2 "workshop drawing" — single drafting sheet. Authored for a 900 x 620
+         world-space panel.
+
+         The panel shows ONE drawing at a time: an index strip of every blueprint across the
+         top, the selected recipe's cut list filling the sheet, and a title block plus the
+         action along the bottom edge.
+
+         This is a real interaction change from the card list — picking a chip changes which
+         sheet is displayed, and the single action button buys or selects whatever is on the
+         sheet. Every service call is the same; only the route to it changed. -->
     <ui:VisualElement name="CraftingRoot" class="crafting-root">
         <ui:VisualElement name="CraftingPanel" class="crafting-panel">
+
+            <ui:VisualElement class="corner corner--tl" picking-mode="Ignore" />
+            <ui:VisualElement class="corner corner--tr" picking-mode="Ignore" />
+            <ui:VisualElement class="corner corner--bl" picking-mode="Ignore" />
+            <ui:VisualElement class="corner corner--br" picking-mode="Ignore" />
+
             <ui:VisualElement class="crafting-header">
-                <ui:Label text="CRAFTING BLUEPRINTS" class="crafting-title" />
+                <ui:VisualElement class="crafting-title-group">
+                    <ui:Label name="CraftingEyebrow" text="WORKSHOP · CUT SHEETS" class="crafting-eyebrow" />
+                    <ui:Label name="CraftingTitle" text="BLUEPRINTS" class="crafting-title" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="crafting-readout">
+                    <ui:Label name="UnlockedLabel" text="UNLOCKED" class="crafting-readout-label" />
+                    <ui:Label name="UnlockedCount" text="0/0" class="crafting-readout-value" />
+                </ui:VisualElement>
             </ui:VisualElement>
+
+            <!-- Index of every blueprint. One chip each; the active one is outlined. -->
+            <ui:VisualElement name="BlueprintIndex" class="blueprint-index" />
+
+            <!-- The sheet: cut list for whichever blueprint the index has selected. -->
+            <ui:VisualElement class="sheet-heading-row">
+                <ui:Label name="CutListHeading" text="CUT LIST" class="sheet-heading" />
+                <ui:Label name="DimensionHeading" text="W X H X D (CM)" class="sheet-heading" />
+            </ui:VisualElement>
+
             <ui:ScrollView name="BlueprintContainer" class="blueprint-scroll" />
+
+            <!-- Title block + the one action, pinned to the bottom edge. -->
+            <ui:VisualElement class="sheet-footer">
+                <ui:VisualElement name="SheetTitleBlock" class="blueprint-title-block" />
+                <ui:Button name="SheetAction" text="SELECT" class="bp-action-btn bp-btn-select" />
+            </ui:VisualElement>
+
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

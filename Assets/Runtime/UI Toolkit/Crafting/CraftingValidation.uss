@@ -1,9 +1,25 @@
-/* ─────────────────────────────────────────────────────────
-   CraftingValidation.uss
-   Compact validation panel — dynamic sizing, scrollable
-   diagnostics, never covers full screen.
-   ───────────────────────────────────────────────────────── */
+/* ============================================================================
+   Crafting validation — "Delta" treatment, Split verdict layout.
 
+   Authored against a 900 x 620 world-space panel. The previous setup was
+   350 x 200, which had to hold a status, a score, a scrolling issue list and
+   two buttons — impossible at legible sizes.
+
+   VR floor observed here: body >= 26px, headers >= 32px, ray-clickable
+   controls >= 64px tall. The previous sheet ran 13px diagnostic text — the
+   failure detail is the entire point of this panel — and ~40px buttons.
+
+   NOTE ON STATE COLOUR: the pass/fail/idle colours are serialized Color fields
+   on CraftingValidationUI (_successColor / _failColor / _idleColor) applied via
+   style.backgroundColor, so USS cannot override them. Set them in the Inspector
+   to jade #8DEBAF, coral #FF9B8A and rgba(120,228,236,0.2).
+
+   UI Toolkit has no box-shadow, no gradients, no backdrop-filter and no
+   text-transform — the frosted look is opacity only, and every uppercase
+   string is authored uppercase.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- Panel -- */
 .validation-root {
     flex-grow: 1;
     width: 100%;
@@ -14,112 +30,342 @@
 }
 
 .container {
-    width: 38%;
-    min-width: 320px;
-    max-width: 520px;
-    height: 55%;
-    min-height: 300px;
-    max-height: 560px;
-    background-color: rgba(50, 40, 30, 0.95);
-    border-radius: 14px;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(8, 26, 34, 0.84);
+    /* Hairline only — the corner brackets carry the frame. */
     border-width: 1px;
-    border-color: rgba(139, 90, 43, 0.5);
-    padding: 3%;
-    flex-direction: column;
+    border-color: rgba(120, 228, 236, 0.16);
+    border-radius: 4px;
+    padding: 28px 32px;
+    flex-direction: row;
     overflow: hidden;
 }
 
-.header-area {
+/* ----------------------------------------------------------- Crop marks -- */
+.corner {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-color: #67DDE8;
+}
+
+.corner--tl {
+    top: -1px;
+    left: -1px;
+    border-top-width: 3px;
+    border-left-width: 3px;
+    border-top-left-radius: 4px;
+}
+
+.corner--tr {
+    top: -1px;
+    right: -1px;
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-top-right-radius: 4px;
+}
+
+.corner--bl {
+    bottom: -1px;
+    left: -1px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-bottom-left-radius: 4px;
+}
+
+.corner--br {
+    bottom: -1px;
+    right: -1px;
+    border-bottom-width: 3px;
+    border-right-width: 3px;
+    border-bottom-right-radius: 4px;
+}
+
+/* ------------------------------------------------------------ Left rail -- */
+.verdict-rail {
+    width: 300px;
     flex-shrink: 0;
-    margin-bottom: 2%;
+    flex-direction: column;
+    margin-right: 28px;
+}
+
+.verdict-eyebrow {
+    font-size: 14px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 9px;
+    margin: 0;
+}
+
+/* ---------------------------------------------------------------- Stamp -- */
+/* The one deliberate off-axis element in an otherwise square panel. This screen's
+   whole job is delivering a judgement, so the judgement breaks the grid.
+   UI Toolkit supports `rotate`, and the border colour is tinted from code with
+   the same serialized state colour the indicator uses. */
+.verdict-stamp {
+    align-self: flex-start;
+    flex-direction: column;
     align-items: center;
+    margin-top: 24px;
+    padding: 12px 22px;
+    border-width: 3px;
+    border-color: rgba(120, 228, 236, 0.3);
+    border-radius: 4px;
+    rotate: -2.5deg;
 }
 
+/* Set from code to READY TO VALIDATE / VALIDATING BUILD... / BUILD PASSED /
+   NEEDS WORK. */
 .status-title {
-    font-size: 20px;
-    -unity-font-style: bold;
-    color: white;
+    font-size: 32px;
+    color: #D6F6FA;
+    letter-spacing: 4px;
+    white-space: normal;
     -unity-text-align: middle-center;
+    margin: 0;
 }
 
+.stamp-sub {
+    font-size: 13px;
+    color: rgba(214, 246, 250, 0.5);
+    letter-spacing: 5px;
+    margin: 3px 0 0 0;
+}
+
+/* Was a 3px hairline — thinner than the panel border, for the panel's primary
+   signal. Driven by style.backgroundColor from the serialized state colours. */
 .status-indicator {
-    height: 3px;
+    height: 4px;
     width: 100%;
-    margin-top: 6px;
-    background-color: #37474F;
+    margin-top: 16px;
     border-radius: 2px;
+    background-color: rgba(120, 228, 236, 0.2);
 }
 
-.quality-score {
-    font-size: 16px;
-    color: white;
-    margin-bottom: 8px;
-    -unity-text-align: middle-center;
+/* -------------------------------------------------------------- Readouts -- */
+/* Stacked, the same shape as the inventory's EGP balance: small uppercase
+   label over a large number. Data, not a badge. */
+.verdict-readout {
+    flex-direction: column;
+    margin-top: 26px;
+}
+
+.verdict-readout-label {
+    font-size: 14px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 5px;
+    margin: 0;
+    padding: 0;
+}
+
+.verdict-readout-value {
+    font-size: 60px;
+    color: #8DEBAF;
+    margin: 0;
+    padding: 0;
+}
+
+.verdict-readout-value--fail {
+    color: #FF9B8A;
+}
+
+/* Pushes the button block to the bottom of the rail. */
+.verdict-spacer {
+    flex-grow: 1;
+}
+
+/* ------------------------------------------------------------- Controls -- */
+.button-area {
     flex-shrink: 0;
+    flex-direction: column;
 }
 
-/* ── Diagnostic list — forced scroll ── */
+/* Ghost buttons, 64px tall so a controller ray can land on them. They are no
+   longer equal weight — one re-runs the check, the other wipes the log. */
+.action-button {
+    min-height: 64px;
+    margin: 0;
+    padding: 10px 20px;
+    font-size: 22px;
+    letter-spacing: 3px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-radius: 4px;
+    transition-property: background-color, border-color, color, scale;
+    transition-duration: 0.12s;
+}
+
+.action-button:active {
+    scale: 0.97;
+}
+
+/* Primary: the action the player came here to press. */
+.action-button--primary {
+    color: #CFF6FA;
+    border-color: #67DDE8;
+    background-color: rgba(103, 221, 232, 0.18);
+    margin-bottom: 12px;
+}
+
+.action-button--primary:hover {
+    background-color: rgba(103, 221, 232, 0.32);
+    color: #FFFFFF;
+}
+
+/* Secondary: clears results, so it stays quiet. */
+.action-button--quiet {
+    color: rgba(214, 246, 250, 0.55);
+    border-color: rgba(214, 246, 250, 0.28);
+}
+
+.action-button--quiet:hover {
+    background-color: rgba(214, 246, 250, 0.1);
+    border-color: rgba(214, 246, 250, 0.5);
+    color: #EAF8FB;
+}
+
+/* --------------------------------------------------------- Right column -- */
+.diagnostic-column {
+    flex-grow: 1;
+    flex-direction: column;
+    border-left-width: 1px;
+    border-left-color: rgba(120, 228, 236, 0.14);
+    padding-left: 28px;
+    min-width: 0;
+}
+
+.diagnostic-heading-row {
+    flex-direction: row;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.14);
+}
+
+.diagnostic-heading {
+    font-size: 13px;
+    color: rgba(214, 246, 250, 0.4);
+    letter-spacing: 6px;
+    margin: 0;
+}
+
 .diagnostic-list {
     flex-grow: 1;
     flex-shrink: 1;
     min-height: 0;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    padding: 6px;
 }
 
-.button-area {
-    flex-shrink: 0;
-    flex-direction: row;
-    justify-content: space-between;
-    margin-top: 10px;
-}
-
-.action-button {
-    flex-grow: 1;
-    margin: 0 4px;
-    padding: 10px;
-    border-radius: 6px;
-    background-color: rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 13px;
-    -unity-font-style: bold;
+/* Slim scroll indicator rather than UI Toolkit's desktop scrollbar — nobody drags
+   a 20px thumb with a controller ray, and the tray's arrow buttons are far below
+   the 64px target floor. Matches the destination board. */
+.diagnostic-list .unity-scroller--vertical {
+    width: 8px;
+    background-color: rgba(0, 0, 0, 0);
     border-width: 0;
-    border-bottom-width: 4px;
-    border-bottom-color: rgba(0, 0, 0, 0.4);
-    transition-duration: 0.15s;
+    margin-left: 8px;
 }
 
-.action-button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+.diagnostic-list .unity-scroller--vertical .unity-scroller__low-button,
+.diagnostic-list .unity-scroller--vertical .unity-scroller__high-button {
+    display: none;
 }
 
-.action-button:active {
-    background-color: rgba(255, 255, 255, 0.3);
+.diagnostic-list .unity-scroller--vertical .unity-scroller__slider {
+    width: 8px;
+    min-width: 8px;
+    margin: 0;
 }
 
-/* ── Diagnostic item ── */
+.diagnostic-list .unity-scroller--vertical .unity-base-slider__tracker {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.diagnostic-list .unity-scroller--vertical .unity-base-slider__dragger {
+    width: 8px;
+    min-width: 8px;
+    left: 0;
+    background-color: rgba(255, 155, 138, 0.35);
+    border-width: 0;
+    border-radius: 4px;
+}
+
+.diagnostic-list .unity-scroller--vertical .unity-base-slider__dragger:hover {
+    background-color: rgba(255, 155, 138, 0.6);
+}
+
+.diagnostic-list .unity-scroller--horizontal {
+    display: none;
+}
+
+/* ------------------------------------------------------- Diagnostic row -- */
+/* Hairline rows, no per-row background boxes — the list reads as one run. */
 .diagnostic-item {
     flex-direction: row;
     align-items: flex-start;
-    padding: 6px 8px;
-    margin-bottom: 4px;
-    border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.03);
+    padding: 14px 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.14);
 }
 
-.diagnostic-icon {
-    width: 16px;
-    height: 16px;
-    min-width: 16px;
-    margin-right: 8px;
-    margin-top: 2px;
+/* The failure KIND as a short word in its own outlined cell, so the kind is
+   scannable down the left edge without reading the sentence. Text and border
+   are tinted from code with the state colour. */
+.diagnostic-code {
+    width: 84px;
+    min-width: 84px;
     flex-shrink: 0;
+    margin-right: 16px;
+    padding: 5px 4px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: #FF9B8A;
+    -unity-text-align: middle-center;
+    border-width: 1px;
+    border-color: rgba(255, 155, 138, 0.4);
+    border-radius: 3px;
 }
 
+/* Retired: the code cell replaced it, and the two together were a redundant
+   second icon system. Kept in the template so CraftingDiagnosticItemUI.Setup,
+   which still tints it, has something to find. */
+.diagnostic-icon {
+    display: none;
+}
+
+/* Colour is set inline from the serialized state colour by
+   CraftingDiagnosticItemUI.Setup, so it wins over anything set here. */
 .diagnostic-text {
-    color: white;
-    font-size: 13px;
+    font-size: 23px;
+    color: #EAF8FB;
     white-space: normal;
     flex-shrink: 1;
+    padding-top: 3px;
+    margin: 0;
+}
+
+/* ---------------------------------------------------------------- Arabic -- */
+/* Toggled onto every text element by UiLanguage.ApplyScript while the player's
+   language setting is Arabic.
+
+   The Standard text generator draws code points in order with no shaping, so
+   Arabic comes out as disconnected letters in reverse; Advanced does the bidi
+   reordering and the contextual joining.
+
+   letter-spacing returns to 0 — the tracking on the eyebrow, headings and
+   buttons would pull joined letterforms apart and break the cursive
+   connections outright.
+
+   The panel must sit on a PanelSettings whose text settings carry an
+   Arabic-capable font (Cairo Panel Text Settings) or every glyph is a box. */
+.ui-arabic {
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+/* UI Toolkit has no `direction` property, so right-alignment is as close to an
+   RTL layout as a fault sentence gets. The code cell stays put — it is a fixed
+   column in a table. */
+.ui-arabic.diagnostic-text {
+    -unity-text-align: upper-right;
 }

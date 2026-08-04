@@ -1,23 +1,30 @@
-/* ─────────────────────────────────────────────────────────
-   TutorialHoverPanel.uss
-   World-space VR hover panel for tutorial steps.
-   Uses fixed pixel sizes suitable for world-space UIDocument
-   at ~0.3m physical scale (readable at arm's length in VR).
-   Color palette matches the project's warm-tone UI style.
-   ───────────────────────────────────────────────────────── */
+/* ============================================================================
+   Tutorial hover panel — Delta v2, "workshop drawing".
 
-/* ── Panel container ── */
+   Authored against a 620 x 300 world-space panel. NOTE: world size is
+   WorldSpaceWidth / PixelsPerUnit * transform scale, so 620 px at PPU 100 needs
+   a transform scale of 0.1 to land at 0.62 m. At scale 1 the card is 6.2 m wide
+   and the player stands inside it.
+
+   VR floor: body >= 26px, headers >= 32px, ray-clickable controls >= 64px tall.
+
+   UI Toolkit has no box-shadow, no gradients, no backdrop-filter and no
+   text-transform — the frosted look is opacity only, uppercase strings are
+   authored uppercase, and the crop marks are real child elements.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- Panel -- */
 .tutorial-panel {
-    width: 420px;
-    padding: 20px 24px;
-    background-color: rgba(40, 32, 24, 0.94);
-    border-radius: 16px;
-    border-width: 1.5px;
-    border-color: rgba(180, 130, 70, 0.45);
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    background-color: rgba(8, 26, 34, 0.84);
+    /* Hairline only — the corner brackets carry the frame. */
+    border-width: 1px;
+    border-color: rgba(120, 228, 236, 0.16);
+    border-radius: 4px;
+    padding: 22px 26px;
+    width: 100%;
+    height: 100%;
 
-    /* Animation properties */
     transition-property: scale, opacity;
     transition-duration: 0.2s;
     transition-timing-function: ease-out;
@@ -25,7 +32,6 @@
     opacity: 1;
 }
 
-/* ── Visibility states ── */
 .tutorial-panel--hidden {
     scale: 0;
     opacity: 0;
@@ -36,124 +42,236 @@
     opacity: 1;
 }
 
-/* ── Step transition pulse ── */
 .tutorial-panel--transitioning {
-    scale: 0.95;
+    scale: 0.96;
     transition-duration: 0.1s;
 }
 
-/* ── Header row ── */
-.tutorial-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-    border-bottom-width: 1px;
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+/* ----------------------------------------------------------- Crop marks -- */
+/* Absolutely positioned so they sit on the panel edge without affecting the
+   row layout. UI Toolkit's default position is relative, so the panel is
+   already a valid containing block. */
+.corner {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-color: #67DDE8;
 }
 
-/* ── Progress dots ── */
-.progress-dots-row {
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
+.corner--tl {
+    top: -1px;
+    left: -1px;
+    border-top-width: 3px;
+    border-left-width: 3px;
+    border-top-left-radius: 4px;
 }
 
-.progress-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 5px;
-    margin-right: 6px;
-    transition-property: background-color, scale;
-    transition-duration: 0.2s;
+.corner--tr {
+    top: -1px;
+    right: -1px;
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-top-right-radius: 4px;
 }
 
-.progress-dot--completed {
-    background-color: rgba(180, 130, 70, 0.8);
-    scale: 1;
+.corner--bl {
+    bottom: -1px;
+    left: -1px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-bottom-left-radius: 4px;
 }
 
-.progress-dot--active {
-    background-color: #E8A840;
-    scale: 1.2;
+.corner--br {
+    bottom: -1px;
+    right: -1px;
+    border-bottom-width: 3px;
+    border-right-width: 3px;
+    border-bottom-right-radius: 4px;
 }
 
-.progress-dot--inactive {
-    background-color: rgba(255, 255, 255, 0.15);
-    scale: 1;
-}
-
-/* ── Step counter ── */
-.step-counter {
-    font-size: 14px;
-    color: rgba(200, 180, 150, 0.6);
-    -unity-font-style: normal;
+/* --------------------------------------------------------- Index column -- */
+.tutorial-index {
+    width: 150px;
     flex-shrink: 0;
-    margin-left: 8px;
+    flex-direction: column;
+    margin-right: 22px;
 }
 
-/* ── Icon container ── */
+/* The step number carries the card. Tabular figures so 01 and 07 sit at the
+   same width and the numeral does not jitter between steps. */
+.step-numeral {
+    font-size: 74px;
+    color: #67DDE8;
+    letter-spacing: -1px;
+    margin: 0;
+    padding: 0;
+    -unity-font-style: normal;
+}
+
+.step-total {
+    font-size: 15px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 6px;
+    margin: 4px 0 0 0;
+    padding: 0;
+}
+
+.tutorial-index-spacer {
+    flex-grow: 1;
+}
+
+/* Media sits under the numeral. UpdateMedia() flips this to Flex for a sprite
+   or a video RenderTexture and back to None when the step has neither. */
 .icon-container {
-    width: 48px;
-    height: 48px;
-    align-self: center;
-    margin-bottom: 12px;
+    width: 100%;
+    height: 96px;
+    flex-shrink: 0;
+    border-width: 1px;
+    border-color: rgba(120, 228, 236, 0.28);
+    border-radius: 3px;
+    background-color: rgba(103, 221, 232, 0.07);
     -unity-background-scale-mode: scale-to-fit;
     display: none;
 }
 
 .media-container--video {
-    width: 360px;
-    height: 202px; /* 16:9 aspect ratio roughly */
-    border-radius: 8px;
-    border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.15);
-    background-color: rgba(0, 0, 0, 0.5); /* dark background while video loads */
+    border-color: rgba(120, 228, 236, 0.42);
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* ── Instruction text ── */
+/* ------------------------------------------------------------ Body column -- */
+.tutorial-body {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.tutorial-eyebrow {
+    font-size: 14px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 9px;
+    margin: 0;
+}
+
+/* Left-aligned: centred text is harder to scan when the line count changes
+   between steps. */
 .instruction-text {
-    font-size: 22px;
-    color: #F5E6D3;
-    -unity-font-style: normal;
-    -unity-text-align: middle-center;
+    font-size: 26px;
+    color: #EAF8FB;
     white-space: normal;
-    margin-bottom: 16px;
-    letter-spacing: 0.5px;
+    flex-grow: 1;
+    margin: 12px 0 0 0;
 }
 
-/* ── Footer ── */
+/* --------------------------------------------------------- Ruler ticks -- */
+/* Same VisualElements UpdateProgressDots() already builds — one per step, with
+   --completed / --active / --inactive. Only the class bodies change, so the
+   loop that adds them needs no edit. 10px circles were unreadable at a metre;
+   these carry the same information at a glance. */
+.progress-dots-row {
+    flex-direction: row;
+    align-items: flex-end;
+    height: 16px;
+    margin-bottom: 14px;
+}
+
+.progress-dot {
+    width: 2px;
+    margin-right: 5px;
+    transition-property: height, background-color;
+    transition-duration: 0.2s;
+}
+
+.progress-dot--completed {
+    height: 8px;
+    background-color: rgba(120, 228, 236, 0.5);
+}
+
+.progress-dot--active {
+    height: 16px;
+    background-color: #67DDE8;
+}
+
+.progress-dot--inactive {
+    height: 8px;
+    background-color: rgba(120, 228, 236, 0.28);
+}
+
+/* ---------------------------------------------------------------- Footer -- */
 .tutorial-footer {
     flex-direction: row;
-    justify-content: flex-end;
-    align-items: center;
-    padding-top: 8px;
-    border-top-width: 1px;
-    border-top-color: rgba(255, 255, 255, 0.06);
 }
 
-/* ── Skip button ── */
-.skip-button {
-    padding: 8px 18px;
-    border-radius: 20px;
-    border-width: 0;
-    border-bottom-width: 3px;
-    border-bottom-color: rgba(0, 0, 0, 0.35);
-    background-color: rgba(120, 80, 40, 0.35);
-    color: rgba(220, 200, 170, 0.7);
-    font-size: 15px;
-    -unity-font-style: bold;
-    letter-spacing: 1px;
-    transition-property: background-color, color;
-    transition-duration: 0.15s;
+/* Ghost buttons, 64px tall so a controller ray can actually land on them. */
+.tutorial-btn {
+    flex-grow: 1;
+    min-height: 64px;
+    padding: 0 20px;
+    margin: 0 0 0 12px;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #67DDE8;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.5);
+    border-radius: 4px;
+    transition-property: background-color, border-color, color, scale;
+    transition-duration: 0.12s;
 }
 
-.skip-button:hover {
-    background-color: rgba(160, 100, 50, 0.5);
-    color: #F5E6D3;
+.tutorial-btn:hover {
+    background-color: rgba(103, 221, 232, 0.18);
+    border-color: #67DDE8;
+    color: #CFF6FA;
+    scale: 1.03;
 }
 
-.skip-button:active {
-    background-color: rgba(180, 110, 60, 0.7);
+.tutorial-btn:active {
+    background-color: rgba(103, 221, 232, 0.32);
+    scale: 0.97;
+}
+
+/* Skip abandons the tutorial, so it should not read as loudly as Next. */
+.tutorial-btn--quiet {
+    color: rgba(214, 246, 250, 0.55);
+    border-color: rgba(214, 246, 250, 0.24);
+    margin-left: 0;
+}
+
+.tutorial-btn--quiet:hover {
+    background-color: rgba(214, 246, 250, 0.1);
+    border-color: rgba(214, 246, 250, 0.5);
+    color: #EAF8FB;
+}
+
+/* ---------------------------------------------------------------- Arabic -- */
+/* Applied by ApplyLanguage() to every element that can hold Arabic, and removed
+   again when the player switches back. Same rule MenuStyles.uss follows.
+
+   The Standard text generator draws code points in order with no shaping, so
+   Arabic comes out as disconnected letters in reverse. Advanced does the bidi
+   reordering and the contextual joining. It costs more, which is why it is
+   switched on per-element rather than on the panel.
+
+   letter-spacing goes back to 0: tracking pulls joined letterforms apart and
+   breaks the cursive connections outright — the eyebrow's 9px and the buttons'
+   3px would shred an Arabic word.
+
+   The panel must also sit on a PanelSettings whose text settings carry an
+   Arabic-capable font. Tutorial Panel Settings points at Cairo Panel Text
+   Settings, which does; the default runtime theme would draw empty boxes.
+
+   Note this is the UI Toolkit path — ArabicTextShaper is not involved. That
+   class exists only because TMP cannot shape Arabic; UI Toolkit's Advanced
+   generator does it natively. */
+.tutorial-arabic {
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+/* UI Toolkit has no `direction` property, so right-alignment is as close to an
+   RTL layout as the instruction can get. The card's columns stay put — flipping
+   those would move the buttons out from under the player's ray for no gain. */
+.instruction-text--arabic {
+    -unity-text-align: upper-right;
 }
