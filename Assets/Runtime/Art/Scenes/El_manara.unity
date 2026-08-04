@@ -7920,71 +7920,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3975157729289343698, guid: adc32f75397d0774f8405aa8bc996b07, type: 3}
   m_PrefabInstance: {fileID: 1677678062}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &1688568286
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 871988678790602921, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: _destinations.Array.size
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 871988678790602921, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: '_destinations.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 54c34436dd9afc74a89a9edd6dbcefd3, type: 2}
-    - target: {fileID: 1471034364042049163, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_Name
-      value: BusStop
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -14.87
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.060000278
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 3.18
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.95938385
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0.2821041
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: -32.772
-      objectReference: {fileID: 0}
-    - target: {fileID: 4418700912428659470, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
 --- !u!1001 &1690425149
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8146,6 +8081,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7801197442702505875, guid: cc5edafa8dc808b49a8631e1e980d7b2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1695008353}
+    - targetCorrespondingSourceObject: {fileID: 7801197442702505875, guid: cc5edafa8dc808b49a8631e1e980d7b2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1695008356}
     - targetCorrespondingSourceObject: {fileID: 8460630826006004194, guid: cc5edafa8dc808b49a8631e1e980d7b2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 886031826}
@@ -8200,6 +8138,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ad34abafad169848a38072baa96cdb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
+--- !u!114 &1695008356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1695008351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba92d544fe0fd8e46afca3c8f9abb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CollisionAudio
+  _impactSounds:
+  - {fileID: 8300000, guid: 304eb40c3931e32428a939999899ab67, type: 3}
+  _minImpactVelocity: 1
+  _maxImpactVelocity: 10
+  _baseVolume: 1
+  _cooldownTime: 0.1
 --- !u!1001 &1695513643
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8942,7 +8898,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3995945282806637079, guid: b625c9afdc1ab6043b693546a47b371a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: b625c9afdc1ab6043b693546a47b371a, type: 3}
 --- !u!1001 &1862661435
 PrefabInstance:
@@ -9496,7 +9455,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8585213064526799703, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
 --- !u!1 &1978747912
 GameObject:
@@ -39414,7 +39376,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8395746391384792019, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
 --- !u!1001 &3564416054188575692
 PrefabInstance:
@@ -86708,7 +86673,6 @@ SceneRoots:
   - {fileID: 2004857337}
   - {fileID: 1587679074}
   - {fileID: 580982443}
-  - {fileID: 1688568286}
   - {fileID: 2003126895}
   - {fileID: 2664133428224758358}
   - {fileID: 1991373579}

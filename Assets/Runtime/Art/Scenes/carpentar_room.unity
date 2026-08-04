@@ -2807,6 +2807,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: WorkshopApproach
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
   HighlightStyle: 0
   FrameSizeOverride: {x: 0, y: 0}
 --- !u!4 &100163900
@@ -11008,7 +11011,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3010728937220096095, guid: d9f1c1ae38f88ec4abe44355b5e92831, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: d9f1c1ae38f88ec4abe44355b5e92831, type: 3}
 --- !u!1001 &429827764
 PrefabInstance:
@@ -11310,7 +11316,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8395746391384792019, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
 --- !u!1001 &437785620
 PrefabInstance:
@@ -17395,6 +17404,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 677690035324269899, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
+      propertyPath: m_UseGravity
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7274760496640076776, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
       propertyPath: m_Name
       value: Saw 2
@@ -17450,8 +17463,34 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7274760496640076776, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 627222543}
   m_SourcePrefab: {fileID: 100100000, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
+--- !u!1 &627222542 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7274760496640076776, guid: 20d5e85d4e417c344a385e56c931da08, type: 3}
+  m_PrefabInstance: {fileID: 627222541}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &627222543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 627222542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba92d544fe0fd8e46afca3c8f9abb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CollisionAudio
+  _impactSounds:
+  - {fileID: 8300000, guid: 2bad7275198e0db468a07b9288638c9b, type: 3}
+  _minImpactVelocity: 1
+  _maxImpactVelocity: 10
+  _baseVolume: 1
+  _cooldownTime: 0.1
 --- !u!1001 &627413592
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17573,7 +17612,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7752122688464455922, guid: 5b0687e66cd05a144a6a9d2dd9d43a80, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 5b0687e66cd05a144a6a9d2dd9d43a80, type: 3}
 --- !u!1 &631513324 stripped
 GameObject:
@@ -25734,7 +25776,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 436490815572581247, guid: 47623828a1fc305499adb69da9762baa, type: 3}
-      insertIndex: -1
+      insertIndex: 7
       addedObject: {fileID: 827755259}
   m_SourcePrefab: {fileID: 100100000, guid: 47623828a1fc305499adb69da9762baa, type: 3}
 --- !u!4 &827755257 stripped
@@ -25760,6 +25802,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: Glue
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
   HighlightStyle: 0
   FrameSizeOverride: {x: 0, y: 0}
 --- !u!1001 &829376849
@@ -50295,6 +50340,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: WorkshopEntrance
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
   HighlightStyle: 0
   FrameSizeOverride: {x: 0, y: 0}
 --- !u!4 &1605959763
@@ -51389,6 +51437,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: WorkshopZone
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
   HighlightStyle: 0
   FrameSizeOverride: {x: 0, y: 0}
 --- !u!1001 &1637564617
@@ -55841,6 +55892,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2309010280554479569, guid: 64cf27d62288602459ee6e4cac9e23b3, type: 3}
+      propertyPath: m_UseGravity
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2410662133641548887, guid: 64cf27d62288602459ee6e4cac9e23b3, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.5185971
@@ -57419,6 +57474,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6280173052986147947, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1801611128}
+    - targetCorrespondingSourceObject: {fileID: 8585213064526799703, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
 --- !u!1 &1801611127 stripped
 GameObject:
@@ -67781,6 +67839,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3081097456844508204, guid: 64cf27d62288602459ee6e4cac9e23b3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5101026488185995106, guid: 64cf27d62288602459ee6e4cac9e23b3, type: 3}
       propertyPath: m_Name
       value: Pen 1
@@ -69306,8 +69368,34 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4849559469114405977, guid: 257465c8085ac5b469e71be5dc9509df, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 438922637617685872}
   m_SourcePrefab: {fileID: 100100000, guid: 257465c8085ac5b469e71be5dc9509df, type: 3}
+--- !u!1 &438922637617685871 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4849559469114405977, guid: 257465c8085ac5b469e71be5dc9509df, type: 3}
+  m_PrefabInstance: {fileID: 438922637617685870}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &438922637617685872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 438922637617685871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba92d544fe0fd8e46afca3c8f9abb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CollisionAudio
+  _impactSounds:
+  - {fileID: 8300000, guid: 2bad7275198e0db468a07b9288638c9b, type: 3}
+  _minImpactVelocity: 1
+  _maxImpactVelocity: 10
+  _baseVolume: 1
+  _cooldownTime: 0.1
 --- !u!1001 &537374411386955897
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -70801,8 +70889,50 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5480202351066813704, guid: a5e9569a7f9b8054587c43022af67d90, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7139233947845223069}
+    - targetCorrespondingSourceObject: {fileID: 5480202351066813704, guid: a5e9569a7f9b8054587c43022af67d90, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7139233947845223070}
   m_SourcePrefab: {fileID: 100100000, guid: a5e9569a7f9b8054587c43022af67d90, type: 3}
+--- !u!1 &7139233947845223068 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5480202351066813704, guid: a5e9569a7f9b8054587c43022af67d90, type: 3}
+  m_PrefabInstance: {fileID: 7139233947845223067}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7139233947845223069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7139233947845223068}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c12a498f97c08b47824f9e4a821d8d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CrowbarTool
+  _settings: {fileID: 11400000, guid: d858c5857baf8e848b4df3a8e7f26321, type: 2}
+--- !u!114 &7139233947845223070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7139233947845223068}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba92d544fe0fd8e46afca3c8f9abb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CollisionAudio
+  _impactSounds:
+  - {fileID: 8300000, guid: 2bad7275198e0db468a07b9288638c9b, type: 3}
+  _minImpactVelocity: 1
+  _maxImpactVelocity: 10
+  _baseVolume: 1
+  _cooldownTime: 0.1
 --- !u!1001 &7209357266158820824
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -71652,7 +71782,7 @@ PrefabInstance:
     - target: {fileID: 454234298418069389, guid: 90ff9d9d86c0bc145a1c28c6c6f5c740, type: 3}
       propertyPath: '_availableRecipes.Array.data[0]'
       value: 
-      objectReference: {fileID: 11400000, guid: 697cff14cf8f0d640a1f71751fd1e750, type: 2}
+      objectReference: {fileID: 11400000, guid: 3afa966061e8e4d4499338f1ad7f0286, type: 2}
     - target: {fileID: 454234298418069389, guid: 90ff9d9d86c0bc145a1c28c6c6f5c740, type: 3}
       propertyPath: '_availableRecipes.Array.data[1]'
       value: 
