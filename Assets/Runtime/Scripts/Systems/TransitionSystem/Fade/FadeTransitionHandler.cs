@@ -1,22 +1,21 @@
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Plain C# service for fade-to-black scene transitions.
-    /// Registered via RegisterType in GameInstaller (same pattern as SceneLoadService).
-    /// Creates its own Canvas/CanvasGroup on first use.
+    /// The travel/door transition: carries the player across a scene load and drops them at the new
+    /// scene's ArrivalPoint.
+    ///
+    /// It no longer owns any fading. <see cref="ScreenFadeService"/> blacks the view out from
+    /// <see cref="SceneLoadBeginEvent"/>, which covers this path and the menu paths alike — this
+    /// class only has to do the part that is specific to travelling: keeping the player alive across
+    /// the load and placing them on arrival.
     /// </summary>
     public class FadeTransitionHandler : IFadeTransitionService
     {
-        private const float DEFAULT_FADE_DURATION = 1f;
-
         private readonly IEventService _eventService;
         private readonly ISceneLoadService _sceneLoadService;
 
-        private CanvasGroup _fadeCanvasGroup;
         private bool _isTransitioning;
         private GameObject _playerObj;
 
@@ -29,12 +28,11 @@ namespace DumyatRuntime
             _eventService.Subscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
         }
 
-        public async void StartTransition(string destinationScene)
+        public void StartTransition(string destinationScene)
         {
             if (_isTransitioning) return;
 
             _isTransitioning = true;
-            EnsureFadeCanvas();
 
             // Find and persist the player
             _playerObj = GameObject.FindWithTag("Player");
@@ -51,18 +49,21 @@ namespace DumyatRuntime
                 Debug.LogWarning("FadeTransitionHandler: Could not find GameObject with tag 'Player'.");
             }
 
-            // Fade out
-            await FadeAsync(0f, 1f, DEFAULT_FADE_DURATION);
-
-            // Load the scene (SceneLoadService publishes SceneLoadCompleteEvent when done)
+            // SceneLoadService publishes SceneLoadBeginEvent immediately and then holds for
+            // PreLoadHoldSeconds, which is what gives the blinder time to reach full black before
+            // anything is destroyed.
             _sceneLoadService.LoadScene(destinationScene);
         }
 
-        private async void OnSceneLoadComplete(SceneLoadCompleteEvent evt)
+        /// <summary>
+        /// Places the player in the new scene. Runs synchronously inside the event dispatch, so it is
+        /// guaranteed to finish before <see cref="ScreenFadeService"/>'s fade-in shows anything —
+        /// that ease only advances on the following frames.
+        /// </summary>
+        private void OnSceneLoadComplete(SceneLoadCompleteEvent evt)
         {
             if (!_isTransitioning) return;
 
-            // Teleport the player
             if (_playerObj != null)
             {
                 GameObject arrivalPoint = GameObject.FindWithTag("ArrivalPoint");
@@ -81,52 +82,7 @@ namespace DumyatRuntime
                 _playerObj = null;
             }
 
-            EnsureFadeCanvas();
-            await FadeAsync(1f, 0f, DEFAULT_FADE_DURATION);
             _isTransitioning = false;
-        }
-
-        private async Task FadeAsync(float from, float to, float duration)
-        {
-            float timer = 0f;
-            while (timer < duration)
-            {
-                timer += Time.unscaledDeltaTime;
-                _fadeCanvasGroup.alpha = Mathf.Lerp(from, to, timer / duration);
-                await Task.Yield();
-            }
-            _fadeCanvasGroup.alpha = to;
-        }
-
-        private void EnsureFadeCanvas()
-        {
-            if (_fadeCanvasGroup != null) return;
-
-            var canvasObj = new GameObject("FadeCanvas");
-            Object.DontDestroyOnLoad(canvasObj);
-
-            var canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 999;
-
-            canvasObj.AddComponent<CanvasScaler>();
-
-            var imgObj = new GameObject("FadeImage");
-            imgObj.transform.SetParent(canvasObj.transform, false);
-
-            var img = imgObj.AddComponent<Image>();
-            img.color = Color.black;
-
-            var rect = img.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            _fadeCanvasGroup = canvasObj.AddComponent<CanvasGroup>();
-            _fadeCanvasGroup.alpha = 0f;
-            _fadeCanvasGroup.blocksRaycasts = false;
-            _fadeCanvasGroup.interactable = false;
         }
     }
 }

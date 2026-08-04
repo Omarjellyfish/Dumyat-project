@@ -17,6 +17,9 @@ namespace DumyatRuntime
     {
         [SerializeField] private UIDocument _uiDocument;
 
+        [Tooltip("Placement solver on this GameObject. Auto-resolved if empty.")]
+        [SerializeField] private LazyFollowAnchor _followAnchor;
+
         private VisualElement _root;
         private VisualElement _progressFill;
         private Label _sceneLabel;
@@ -32,6 +35,7 @@ namespace DumyatRuntime
         private void OnEnable()
         {
             if (_uiDocument == null) _uiDocument = GetComponent<UIDocument>();
+            if (_followAnchor == null) _followAnchor = GetComponent<LazyFollowAnchor>();
             if (_uiDocument == null) return;
 
             _root = _uiDocument.rootVisualElement;
@@ -54,6 +58,12 @@ namespace DumyatRuntime
         {
             _tips = tips;
             _tipIndex = 0;
+
+            // The GameObject never actually disables between loads — only the root's display flips —
+            // so LazyFollowAnchor's OnEnable re-anchor does not fire on the second and later loads.
+            // Without this the panel reappears at whatever world yaw the last load left behind, which
+            // can be off to the side or behind the player.
+            if (_followAnchor != null) _followAnchor.Reanchor();
 
             if (_sceneLabel != null) _sceneLabel.text = destinationName ?? string.Empty;
 

@@ -1,10 +1,24 @@
-/* ─────────────────────────────────────────────────────────
-   CraftingStationMenu.uss
-   Compact, scalable panel — never covers the full screen.
-   Uses percentage-based sizing so it adapts to any resolution.
-   ───────────────────────────────────────────────────────── */
+/* ============================================================================
+   Crafting blueprints — "Delta" treatment, Spec sheet layout.
 
-/* Root wrapper – centered on screen, never fullscreen */
+   Authored against a 900 x 620 world-space panel. The previous setup was a
+   1920 x 1080 UIDocument holding a panel clamped to 38% / 60% — an enormous
+   world-space surface carrying a small panel.
+
+   VR floor observed here: body >= 26px, headers >= 32px, ray-clickable
+   controls >= 64px tall. The previous sheet rendered part dimensions at 12px —
+   the numbers the player has to cut wood against — and buttons at ~32px tall.
+
+   Cards are built in C# by CraftingStationMenuUI, not from a template asset.
+
+   UI Toolkit has no box-shadow, no gradients, no backdrop-filter and no
+   text-transform — the frosted look is opacity only, and every uppercase
+   string is authored uppercase.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- Panel -- */
+/* The root fills the document but stays transparent and ray-transparent, so
+   only the panel itself is visible and only the panel eats XR rays. */
 .crafting-root {
     flex-grow: 1;
     width: 100%;
@@ -15,106 +29,370 @@
 }
 
 .crafting-panel {
-    width: 38%;
-    min-width: 320px;
-    max-width: 520px;
-    height: 60%;
-    min-height: 360px;
-    max-height: 640px;
-    background-color: rgba(50, 40, 30, 0.95);
-    border-radius: 14px;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(8, 26, 34, 0.84);
+    /* Hairline only — the corner brackets carry the frame. */
     border-width: 1px;
-    border-color: rgba(139, 90, 43, 0.5);
-    padding: 3%;
+    border-color: rgba(120, 228, 236, 0.16);
+    border-radius: 4px;
+    padding: 28px 32px;
     flex-direction: column;
     overflow: hidden;
 }
 
-/* ── Header ── */
+/* ----------------------------------------------------------- Crop marks -- */
+.corner {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-color: #67DDE8;
+}
+
+.corner--tl {
+    top: -1px;
+    left: -1px;
+    border-top-width: 3px;
+    border-left-width: 3px;
+    border-top-left-radius: 4px;
+}
+
+.corner--tr {
+    top: -1px;
+    right: -1px;
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-top-right-radius: 4px;
+}
+
+.corner--bl {
+    bottom: -1px;
+    left: -1px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-bottom-left-radius: 4px;
+}
+
+.corner--br {
+    bottom: -1px;
+    right: -1px;
+    border-bottom-width: 3px;
+    border-right-width: 3px;
+    border-bottom-right-radius: 4px;
+}
+
+/* --------------------------------------------------------------- Header -- */
 .crafting-header {
     flex-shrink: 0;
-    margin-bottom: 2%;
-    padding-bottom: 2%;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
     border-bottom-width: 1px;
-    border-bottom-color: rgba(255, 255, 255, 0.06);
-    align-items: center;
+    border-bottom-color: rgba(120, 228, 236, 0.2);
+}
+
+.crafting-title-group {
+    flex-direction: column;
+}
+
+.crafting-eyebrow {
+    font-size: 14px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 8px;
+    margin: 0 0 4px 0;
 }
 
 .crafting-title {
-    font-size: 22px;
-    color: #F5E6D3;
-    -unity-font-style: bold;
-    letter-spacing: 3px;
-    -unity-text-align: middle-center;
+    font-size: 32px;
+    color: #D6F6FA;
+    letter-spacing: 7px;
+    margin: 0;
 }
 
-/* ── Blueprint scroll area ── */
+/* ------------------------------------------------ Unlocked count readout -- */
+/* Stacked readout, right-aligned — the same shape as the inventory's EGP
+   balance. Jade because it tracks what the player owns. */
+.crafting-readout {
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 2px 4px;
+}
+
+.crafting-readout-label {
+    font-size: 14px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 4px;
+    margin: 0;
+    padding: 0;
+}
+
+.crafting-readout-value {
+    font-size: 40px;
+    color: #8DEBAF;
+    margin: 0;
+    padding: 0;
+}
+
+/* --------------------------------------------------------- Index strip -- */
+/* One chip per blueprint. Picking one changes which drawing is on the sheet —
+   it does not hand anything to the station, so browsing cut lists is free. */
+.blueprint-index {
+    flex-direction: row;
+    flex-shrink: 0;
+    margin-bottom: 18px;
+}
+
+.blueprint-chip {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: column;
+    padding: 11px 14px;
+    margin-right: 10px;
+    border-width: 1px;
+    border-color: rgba(120, 228, 236, 0.2);
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0);
+    transition-property: background-color, border-color;
+    transition-duration: 0.12s;
+}
+
+.blueprint-chip:hover {
+    border-color: rgba(120, 228, 236, 0.5);
+    background-color: rgba(103, 221, 232, 0.08);
+}
+
+.blueprint-chip--active {
+    border-color: #67DDE8;
+    background-color: rgba(103, 221, 232, 0.12);
+}
+
+/* Locked drawings are still browsable — you should be able to read what you are
+   about to buy — so they are dashed rather than hidden or dimmed to nothing. */
+.blueprint-chip--locked {
+    border-color: rgba(141, 235, 175, 0.5);
+}
+
+.blueprint-chip--locked.blueprint-chip--active {
+    border-color: #8DEBAF;
+    background-color: rgba(141, 235, 175, 0.12);
+}
+
+.blueprint-chip-name {
+    font-size: 19px;
+    color: #EAF8FB;
+    white-space: normal;
+    margin: 0;
+}
+
+.blueprint-chip-meta {
+    font-size: 15px;
+    color: rgba(214, 246, 250, 0.45);
+    margin: 2px 0 0 0;
+}
+
+.blueprint-chip-meta--locked {
+    color: rgba(141, 235, 175, 0.7);
+}
+
+/* ------------------------------------------------------------- The sheet -- */
+.sheet-heading-row {
+    flex-direction: row;
+    justify-content: space-between;
+    flex-shrink: 0;
+    padding-bottom: 7px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.14);
+}
+
+.sheet-heading {
+    font-size: 13px;
+    color: rgba(214, 246, 250, 0.4);
+    letter-spacing: 5px;
+    margin: 0;
+}
+
 .blueprint-scroll {
     flex-grow: 1;
     flex-shrink: 1;
     min-height: 0;
 }
 
-/* ── Individual blueprint card ── */
-.blueprint-card {
-    flex-direction: column;
-    background-color: rgba(100, 70, 40, 0.15);
-    border-radius: 8px;
-    margin-bottom: 8px;
-    padding: 10px 12px;
-    border-width: 1px;
-    border-color: rgba(139, 90, 43, 0.2);
-    transition-property: background-color, border-color;
-    transition-duration: 0.15s;
-}
-
-.blueprint-card:hover {
-    background-color: rgba(100, 70, 40, 0.3);
-    border-color: rgba(139, 90, 43, 0.5);
-}
-
-.blueprint-card-top {
+/* Title block and the one action, along the bottom edge of the sheet. */
+.sheet-footer {
     flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.blueprint-name {
-    color: #E0E0E0;
-    font-size: 16px;
-    -unity-font-style: bold;
-    flex-shrink: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.blueprint-details {
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top-width: 1px;
-    border-top-color: rgba(255, 255, 255, 0.04);
-}
-
-.blueprint-detail-label {
-    font-size: 12px;
-    color: rgba(200, 210, 220, 0.6);
-    margin-bottom: 2px;
-    white-space: normal;
-}
-
-/* ── Action buttons ── */
-.bp-action-btn {
-    min-width: 72px;
-    padding: 6px 14px;
-    border-radius: 6px;
-    border-width: 0;
-    border-bottom-width: 4px;
-    border-bottom-color: rgba(0, 0, 0, 0.4);
-    font-size: 13px;
-    -unity-font-style: bold;
-    color: #FFFFFF;
+    align-items: stretch;
     flex-shrink: 0;
-    transition-property: background-color, scale;
+    margin-top: 14px;
+}
+
+/* Slim scroll indicator rather than UI Toolkit's desktop scrollbar — nobody drags
+   a 20px thumb with a controller ray, and the tray's arrow buttons are far below
+   the 64px target floor. Matches the destination board. */
+.blueprint-scroll .unity-scroller--vertical {
+    width: 8px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    margin-left: 8px;
+}
+
+.blueprint-scroll .unity-scroller--vertical .unity-scroller__low-button,
+.blueprint-scroll .unity-scroller--vertical .unity-scroller__high-button {
+    display: none;
+}
+
+.blueprint-scroll .unity-scroller--vertical .unity-scroller__slider {
+    width: 8px;
+    min-width: 8px;
+    margin: 0;
+}
+
+.blueprint-scroll .unity-scroller--vertical .unity-base-slider__tracker {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.blueprint-scroll .unity-scroller--vertical .unity-base-slider__dragger {
+    width: 8px;
+    min-width: 8px;
+    left: 0;
+    background-color: rgba(120, 228, 236, 0.35);
+    border-width: 0;
+    border-radius: 4px;
+}
+
+.blueprint-scroll .unity-scroller--vertical .unity-base-slider__dragger:hover {
+    background-color: rgba(120, 228, 236, 0.6);
+}
+
+.blueprint-scroll .unity-scroller--horizontal {
+    display: none;
+}
+
+/* ------------------------------------------------------------ Cut list -- */
+/* Part dimensions are DATA, so they get columns and right alignment rather
+   than being buried in a bullet string. A player checking whether their cut is
+   31cm or 34cm can now find that number without reading a sentence. */
+
+/* One row per PartBlueprint: slot name left, W x H x D right. */
+.blueprint-part-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.07);
+    picking-mode: ignore;
+}
+
+.blueprint-part-name {
+    font-size: 20px;
+    color: rgba(214, 246, 250, 0.55);
+    flex-grow: 1;
+    white-space: normal;
+    margin: 0;
+    picking-mode: ignore;
+}
+
+/* ------------------------------------------------------- Dimension rule -- */
+/* A short ruler before each measurement — the drawing convention for a
+   dimensioned edge. Built from RulerTicks child elements in C#. */
+.blueprint-part-ruler {
+    flex-direction: row;
+    align-items: flex-end;
+    height: 12px;
+    width: 120px;
+    flex-shrink: 0;
+    margin-right: 16px;
+    picking-mode: ignore;
+}
+
+.blueprint-part-tick {
+    width: 2px;
+    height: 6px;
+    margin-right: 3px;
+    background-color: rgba(120, 228, 236, 0.3);
+}
+
+.blueprint-part-tick--major {
+    height: 12px;
+}
+
+.blueprint-part-size {
+    font-size: 20px;
+    color: rgba(214, 246, 250, 0.72);
+    width: 240px;
+    -unity-text-align: middle-right;
+    flex-shrink: 0;
+    margin: 0;
+    picking-mode: ignore;
+}
+
+/* --------------------------------------------------------- Title block -- */
+/* The drafting convention: a sheet's identity in a bordered strip along its
+   edge, not in a heading. Every value is read off the recipe. */
+.blueprint-title-block {
+    flex-direction: row;
+    flex-grow: 1;
+    margin-right: 14px;
+    border-width: 1px;
+    border-color: rgba(120, 228, 236, 0.2);
+    picking-mode: ignore;
+}
+
+.blueprint-title-cell {
+    flex-direction: column;
+    padding: 8px 16px;
+    border-right-width: 1px;
+    border-right-color: rgba(120, 228, 236, 0.2);
+    picking-mode: ignore;
+}
+
+/* The last cell must not carry a trailing divider. UI Toolkit has no :last-child,
+   so CreateTitleBlock tags the final cell with this class explicitly. */
+.blueprint-title-cell--last {
+    border-right-width: 0;
+}
+
+.blueprint-title-key {
+    font-size: 12px;
+    color: rgba(214, 246, 250, 0.4);
+    letter-spacing: 4px;
+    margin: 0;
+    picking-mode: ignore;
+}
+
+.blueprint-title-value {
+    font-size: 20px;
+    color: #EAF8FB;
+    margin: 2px 0 0 0;
+    picking-mode: ignore;
+}
+
+/* Kept for the "Parts needed: N" summary line and any other free-form detail. */
+.blueprint-detail-label {
+    font-size: 20px;
+    color: rgba(214, 246, 250, 0.55);
+    white-space: normal;
+    margin: 0 0 4px 0;
+    picking-mode: ignore;
+}
+
+/* -------------------------------------------------------- Action buttons -- */
+/* Ghost buttons — transparent fill, coloured outline that fills in on hover.
+   64px tall so a controller ray can land on them. */
+.bp-action-btn {
+    min-height: 64px;
+    min-width: 160px;
+    padding: 10px 24px;
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: 3px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition-property: background-color, border-color, color, scale;
     transition-duration: 0.12s;
 }
 
@@ -126,18 +404,65 @@
     scale: 0.96;
 }
 
+/* Select is the ordinary accent action. */
 .bp-btn-select {
-    background-color: #2E7D32;
+    color: #67DDE8;
+    border-color: rgba(120, 228, 236, 0.55);
 }
 
 .bp-btn-select:hover {
-    background-color: #388E3C;
+    background-color: rgba(103, 221, 232, 0.18);
+    border-color: #67DDE8;
+    color: #CFF6FA;
 }
 
+.bp-btn-select:active {
+    background-color: rgba(103, 221, 232, 0.34);
+    color: #FFFFFF;
+}
+
+/* Buy is jade — the same colour the wallet uses, because it is a spend. */
 .bp-btn-buy {
-    background-color: #BF6900;
+    color: #8DEBAF;
+    border-color: rgba(141, 235, 175, 0.6);
 }
 
 .bp-btn-buy:hover {
-    background-color: #E08200;
+    background-color: rgba(141, 235, 175, 0.18);
+    border-color: #8DEBAF;
+    color: #D6F8E4;
+}
+
+.bp-btn-buy:active {
+    background-color: rgba(141, 235, 175, 0.34);
+    color: #FFFFFF;
+}
+
+/* ---------------------------------------------------------------- Arabic -- */
+/* Toggled onto every text element by UiLanguage.ApplyScript while the player's
+   language setting is Arabic.
+
+   The Standard text generator draws code points in order with no shaping, so
+   Arabic comes out as disconnected letters in reverse; Advanced does the bidi
+   reordering and the contextual joining.
+
+   letter-spacing returns to 0 — the tracking on the eyebrow, headings and
+   buttons would pull joined letterforms apart and break the cursive
+   connections outright.
+
+   The panel must sit on a PanelSettings whose text settings carry an
+   Arabic-capable font (Cairo Panel Text Settings) or every glyph is a box. */
+.ui-arabic {
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+/* UI Toolkit has no `direction` property, so right-alignment is as close to an
+   RTL layout as free-flowing text gets. Only prose is flipped — the cut list's
+   dimension column stays right-aligned and its slot names stay beside the
+   ruler, because those are a table, not a sentence. */
+.ui-arabic.blueprint-chip-name,
+.ui-arabic.blueprint-chip-meta,
+.ui-arabic.blueprint-detail-label {
+    -unity-text-align: upper-right;
 }

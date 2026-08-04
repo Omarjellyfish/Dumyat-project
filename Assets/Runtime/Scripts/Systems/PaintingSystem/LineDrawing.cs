@@ -1,125 +1,141 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using Reflex.Attributes;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace DumyatRuntime
 {
+    /// <summary>
+    /// Shows the line-drawing preview - a LineRenderer between the pen's first contact
+    /// point and where the tip is now, plus a floating length readout - and commits the
+    /// line to the wood when the player lets go.
+    /// </summary>
+    /// <remarks>
+    /// Driven entirely by <see cref="SurfaceConstraintChangedEvent"/> rather than by the
+    /// grab interactable's own activate/deactivate events. Both this component and
+    /// <see cref="SurfaceConstraint"/> used to listen to <c>activated</c> directly, and
+    /// this one is ordered first on the pen, so it always ran while
+    /// <see cref="SurfaceConstraint.IsConstrained"/> was still false and bailed out -
+    /// the trigger appeared to do nothing at all. Reacting to the constraint's own
+    /// state change removes the ordering assumption completely.
+    /// </remarks>
     public class LineDrawing : MonoBehaviour
     {
-        [SerializeField] private XRGrabInteractable _grabInteractable;
         [SerializeField] private PenTip _penTip;
         [SerializeField] private SurfaceConstraint _surfaceConstraint;
         [SerializeField] private Material _lineMaterial;
         [SerializeField] private float _lineWidth = 0.005f;
-        private FloatingText _distanceText;
-        [SerializeField] Vector3 offset;
+        [FormerlySerializedAs("offset")]
+        [SerializeField] private Vector3 _distanceTextOffset;
 
         private LineRenderer _lineRenderer;
+        private FloatingText _distanceText;
+        private bool _lineActive;
+
         private IFloatingTextService _floatingTextService;
+        private IEventService _eventService;
 
         [Inject]
-        private void Inject(IFloatingTextService floatingTextService)
+        private void Inject(IFloatingTextService floatingTextService, IEventService eventService)
         {
             _floatingTextService = floatingTextService;
+            _eventService = eventService;
         }
 
         private void Awake()
         {
-            _grabInteractable = GetComponent<XRGrabInteractable>();
-
             if (_surfaceConstraint == null)
                 _surfaceConstraint = GetComponent<SurfaceConstraint>();
+
+            if (_penTip == null)
+                _penTip = GetComponentInChildren<PenTip>();
 
             SetupLineRenderer();
         }
 
         private void OnEnable()
         {
-            if (_grabInteractable == null)
+            if (_surfaceConstraint == null)
             {
-                Debug.LogWarning($"{nameof(LineDrawing)} on {name} needs an XRGrabInteractable.");
+                Debug.LogWarning(
+                    $"{nameof(LineDrawing)} on {name} needs a {nameof(SurfaceConstraint)}; " +
+                    "line drawing is disabled.", this);
                 return;
             }
 
-            _grabInteractable.activated.AddListener(StartLineDraw);
-            _grabInteractable.deactivated.AddListener(EndLineDraw);
+            if (_eventService == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(LineDrawing)} on {name} has no {nameof(IEventService)} injected, so it " +
+                    "cannot react to the pen touching a surface and line drawing will not start. " +
+                    "Does this scene have a ContainerScope?", this);
+                return;
+            }
+
+            _eventService.Subscribe<SurfaceConstraintChangedEvent>(OnConstraintChanged);
         }
 
         private void OnDisable()
         {
-            if (_grabInteractable == null)
+            _eventService?.Unsubscribe<SurfaceConstraintChangedEvent>(OnConstraintChanged);
+
+            if (_lineActive)
+                EndLineDraw();
+        }
+
+        private void OnConstraintChanged(SurfaceConstraintChangedEvent evt)
+        {
+            if (evt.Constraint != _surfaceConstraint)
                 return;
 
-            _grabInteractable.activated.RemoveListener(StartLineDraw);
-            _grabInteractable.deactivated.RemoveListener(EndLineDraw);
+            if (evt.IsConstrained)
+                StartLineDraw();
+            else
+                EndLineDraw();
         }
 
         private void SetupLineRenderer()
         {
-            // FIX 1: Prevent crash if gameObject is null (due to illegal "new" instantiation)
-            if (gameObject == null)
-            {
-                Debug.LogError($"[{nameof(LineDrawing)}] cannot setup. Script is not attached to an active GameObject!");
-                return;
-            }
-
-            // FIX 2: Check if a LineRenderer already exists first to avoid stacking duplicates
             _lineRenderer = GetComponent<LineRenderer>();
             if (_lineRenderer == null)
-            {
                 _lineRenderer = gameObject.AddComponent<LineRenderer>();
-            }
 
-            if (_lineRenderer != null)
-            {
-                _lineRenderer.material = _lineMaterial;
-                _lineRenderer.startWidth = _lineWidth;
-                _lineRenderer.endWidth = _lineWidth;
-                _lineRenderer.positionCount = 2;
-                _lineRenderer.enabled = false;
-            }
+            _lineRenderer.material = _lineMaterial;
+            _lineRenderer.startWidth = _lineWidth;
+            _lineRenderer.endWidth = _lineWidth;
+            _lineRenderer.positionCount = 2;
+            _lineRenderer.useWorldSpace = true;
+            _lineRenderer.enabled = false;
         }
 
-        private bool _lineActive;
+        private void StartLineDraw()
+        {
+            if (_lineActive)
+                return;
 
-        private void EndLineDraw(DeactivateEventArgs args)
+            _lineActive = true;
+
+            if (_penTip != null)
+                _penTip.CurrentMode = PenMode.LineDrawing;
+
+            if (_lineRenderer != null)
+                _lineRenderer.enabled = true;
+
+            if (_floatingTextService != null)
+                _distanceText = _floatingTextService.Show(transform.position, "0.0 cm");
+        }
+
+        private void EndLineDraw()
         {
             if (!_lineActive)
-                return; 
+                return;
 
             _lineActive = false;
             _penTip?.FinalizeLine();
-            
+
             if (_lineRenderer != null)
                 _lineRenderer.enabled = false;
 
             HideDistanceText();
-        }
-
-        private void StartLineDraw(ActivateEventArgs args)
-        {
-            if (_surfaceConstraint == null || !_surfaceConstraint.IsConstrained)
-                return;
-
-            _lineActive = true;
-            if (_penTip != null)
-                _penTip.CurrentMode = PenMode.LineDrawing;
-
-            // FIX 3: Safe null-check before trying to enable the renderer
-            if (_lineRenderer != null)
-            {
-                _lineRenderer.enabled = true;
-            }
-            else
-            {
-                Debug.LogError($"[{nameof(LineDrawing)}] LineRenderer is null. Cannot start drawing.");
-            }
-
-            if (_floatingTextService != null)
-            {
-                _distanceText = _floatingTextService.Show(transform.position, "0.0 cm");
-            }
         }
 
         public void UpdateLinePositions(Vector3 startWorldPoint, Vector3 currentWorldPoint)
@@ -135,7 +151,7 @@ namespace DumyatRuntime
 
             if (_distanceText != null)
             {
-                _distanceText.SetPosition(midpoint, offset);
+                _distanceText.SetPosition(midpoint, _distanceTextOffset);
                 _distanceText.SetText($"{distanceCm:F1} cm");
             }
             else if (_floatingTextService != null)

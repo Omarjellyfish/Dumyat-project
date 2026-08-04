@@ -20,12 +20,21 @@ namespace DumyatRuntime
 
         // AudioChannel is a contiguous 0..4 enum, so it indexes this directly.
         private readonly float[] _volumes = new float[5];
-        private SubtitleMode _subtitleMode;
 
-        public SubtitleMode SubtitleMode => _subtitleMode;
-        public bool SubtitlesEnabled => _subtitleMode != DumyatRuntime.SubtitleMode.Off;
-        public GameLanguage SubtitleLanguage =>
-            _subtitleMode == DumyatRuntime.SubtitleMode.Arabic ? GameLanguage.Arabic : GameLanguage.English;
+        // Two independent values, not one three-way enum. Language must always be a real language —
+        // it draws every panel in the game — while captions are free to be off. Folding them
+        // together meant turning captions off silently reset the interface to English.
+        private GameLanguage _language;
+        private bool _subtitlesOn;
+
+        public GameLanguage Language => _language;
+        public bool SubtitlesEnabled => _subtitlesOn;
+        public GameLanguage SubtitleLanguage => _language;
+
+        public SubtitleMode SubtitleMode =>
+            !_subtitlesOn ? DumyatRuntime.SubtitleMode.Off
+            : _language == GameLanguage.Arabic ? DumyatRuntime.SubtitleMode.Arabic
+            : DumyatRuntime.SubtitleMode.English;
 
         public SettingsService(IEventService eventService, ISoundMixerService mixer)
         {
@@ -58,15 +67,48 @@ namespace DumyatRuntime
             _eventService?.Publish(new AudioVolumeChangedEvent(channel, clamped));
         }
 
-        public void SetSubtitleMode(SubtitleMode mode)
+        public void SetLanguage(GameLanguage language)
         {
-            if (_subtitleMode == mode) return;
+            if (_language == language) return;
 
-            _subtitleMode = mode;
-            PlayerPrefs.SetInt(SettingsKeys.SubtitleMode, (int)mode);
+            _language = language;
+            PlayerPrefs.SetInt(SettingsKeys.Language, (int)language);
             PlayerPrefs.Save();
 
             PublishSubtitleState();
+        }
+
+        public void SetSubtitlesEnabled(bool enabled)
+        {
+            if (_subtitlesOn == enabled) return;
+
+            _subtitlesOn = enabled;
+            PlayerPrefs.SetInt(SettingsKeys.SubtitlesOn, enabled ? 1 : 0);
+            PlayerPrefs.Save();
+
+            PublishSubtitleState();
+        }
+
+        /// <summary>
+        /// Off turns captions off and leaves the language untouched — the old behaviour threw the
+        /// language away, which is exactly what made "Arabic interface, no captions" impossible.
+        /// </summary>
+        public void SetSubtitleMode(SubtitleMode mode)
+        {
+            if (mode == DumyatRuntime.SubtitleMode.Off)
+            {
+                SetSubtitlesEnabled(false);
+                return;
+            }
+
+            GameLanguage language = mode == DumyatRuntime.SubtitleMode.Arabic
+                ? GameLanguage.Arabic
+                : GameLanguage.English;
+
+            // Both may change, and each setter early-outs on no-op, so publishing is left to
+            // whichever actually moved.
+            SetLanguage(language);
+            SetSubtitlesEnabled(true);
         }
 
         public void ApplyAll()
@@ -88,8 +130,10 @@ namespace DumyatRuntime
                 _mixer?.SetVolume((AudioChannel)i, SettingsKeys.DefaultVolume);
             }
 
-            _subtitleMode = DumyatRuntime.SubtitleMode.English;
-            PlayerPrefs.SetInt(SettingsKeys.SubtitleMode, (int)_subtitleMode);
+            _language = GameLanguage.English;
+            _subtitlesOn = true;
+            PlayerPrefs.SetInt(SettingsKeys.Language, (int)_language);
+            PlayerPrefs.SetInt(SettingsKeys.SubtitlesOn, 1);
             PlayerPrefs.Save();
 
             PublishSubtitleState();
@@ -103,24 +147,71 @@ namespace DumyatRuntime
                     SettingsKeys.VolumeKey((AudioChannel)i), SettingsKeys.DefaultVolume));
             }
 
-            int stored = PlayerPrefs.GetInt(SettingsKeys.SubtitleMode, (int)DumyatRuntime.SubtitleMode.English);
-            _subtitleMode = stored >= (int)DumyatRuntime.SubtitleMode.Off &&
-                            stored <= (int)DumyatRuntime.SubtitleMode.Arabic
-                ? (SubtitleMode)stored
-                : DumyatRuntime.SubtitleMode.English;
+            ReadLanguageAndSubtitles();
         }
 
         /// <summary>
-        /// Publishes the new single-enum event plus the two older ones. The legacy contracts had no
-        /// publisher until now; emitting all three means anything written against either shape works.
+        /// Reads the two current keys, falling back to the legacy three-way
+        /// <see cref="SettingsKeys.SubtitleMode"/> for a player who last played before the split.
+        ///
+        /// The migration keeps the only meaning the old value could carry: Off meant captions off,
+        /// and it had no language to remember, so those players start in English with captions off
+        /// and can now pick a language independently.
+        /// </summary>
+        private void ReadLanguageAndSubtitles()
+        {
+            bool hasNew = PlayerPrefs.HasKey(SettingsKeys.Language) ||
+                          PlayerPrefs.HasKey(SettingsKeys.SubtitlesOn);
+
+            if (hasNew)
+            {
+                int lang = PlayerPrefs.GetInt(SettingsKeys.Language, (int)GameLanguage.English);
+                _language = lang == (int)GameLanguage.Arabic ? GameLanguage.Arabic : GameLanguage.English;
+                _subtitlesOn = PlayerPrefs.GetInt(SettingsKeys.SubtitlesOn, 1) != 0;
+                return;
+            }
+
+            int legacy = PlayerPrefs.GetInt(SettingsKeys.SubtitleMode, (int)DumyatRuntime.SubtitleMode.English);
+
+            switch (legacy)
+            {
+                case (int)DumyatRuntime.SubtitleMode.Off:
+                    _language = GameLanguage.English;
+                    _subtitlesOn = false;
+                    break;
+
+                case (int)DumyatRuntime.SubtitleMode.Arabic:
+                    _language = GameLanguage.Arabic;
+                    _subtitlesOn = true;
+                    break;
+
+                default:
+                    _language = GameLanguage.English;
+                    _subtitlesOn = true;
+                    break;
+            }
+
+            // Written through immediately so the legacy key is only ever read once.
+            PlayerPrefs.SetInt(SettingsKeys.Language, (int)_language);
+            PlayerPrefs.SetInt(SettingsKeys.SubtitlesOn, _subtitlesOn ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>
+        /// Announces the current state on every channel.
+        ///
+        /// <see cref="LanguageChangedEvent"/> is the one UI panels listen to — it fires whenever the
+        /// language moves, including while captions are off, which a
+        /// <see cref="SubtitleModeChangedEvent"/> alone would miss (the folded value stays Off in
+        /// that case, so a language switch would look like no change at all).
         /// </summary>
         private void PublishSubtitleState()
         {
             if (_eventService == null) return;
 
-            _eventService.Publish(new SubtitleModeChangedEvent(_subtitleMode));
+            _eventService.Publish(new LanguageChangedEvent(_language));
+            _eventService.Publish(new SubtitleModeChangedEvent(SubtitleMode));
             _eventService.Publish(new SubtitleSettingsChangedEvent(SubtitlesEnabled, 2));
-            _eventService.Publish(new LanguageChangedEvent(SubtitleLanguage));
         }
     }
 }

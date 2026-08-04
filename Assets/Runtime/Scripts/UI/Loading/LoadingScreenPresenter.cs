@@ -67,10 +67,9 @@ namespace DumyatRuntime
         {
             if (_view == null) return;
 
-            // SceneLoadService holds activation at allowSceneActivation = false, so AsyncOperation.progress
-            // tops out at 0.9 and its loop exits there. Bound raw, the bar would stall just short of full
-            // for the whole activation step and read as a hang — so 0.9 is remapped to 100%.
-            _view.SetProgress(Mathf.Clamp01(evt.Progress / 0.9f));
+            // Already a true 0..1 — SceneLoadService remaps AsyncOperation's 0.9 activation ceiling
+            // at the source, so every subscriber gets the same normalised value.
+            _view.SetProgress(evt.Progress);
         }
 
         private void HandleLoadComplete(SceneLoadCompleteEvent evt)
