@@ -58,12 +58,27 @@ namespace DumyatRuntime
 
         private SessionSaveData Session => _save?.CurrentSaveData?.sessionData;
 
+        /// <summary>
+        /// True when there is somewhere worth going back to.
+        ///
+        /// The recorded scene is re-checked against the catalog rather than trusted, because a save
+        /// outlives the rules that wrote it. A scene that was resumable when the stamp was written
+        /// and has since been excluded — or was recorded while the catalog named a DIFFERENT scene
+        /// as the main menu — would otherwise resume the player into the menu they are standing in.
+        /// Re-asking the current rules lets a stale target heal itself instead of needing the save
+        /// wiped by hand.
+        /// </summary>
         public bool HasSave
         {
             get
             {
                 SessionSaveData session = Session;
-                return session != null && session.hasSave && !string.IsNullOrEmpty(session.lastSceneName);
+
+                return session != null
+                       && session.hasSave
+                       && !string.IsNullOrEmpty(session.lastSceneName)
+                       && _catalog != null
+                       && _catalog.IsResumable(session.lastSceneName);
             }
         }
 
