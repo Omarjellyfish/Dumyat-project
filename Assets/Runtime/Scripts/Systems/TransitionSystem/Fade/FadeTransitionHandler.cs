@@ -70,11 +70,7 @@ namespace DumyatRuntime
                 if (arrivalPoint != null)
                 {
                     _playerObj.transform.position = arrivalPoint.transform.position;
-
-                    // Heading only — see PlayerSpawnPose. Copying the marker's full rotation used to
-                    // land the player leaning, because several ArrivalPoints carry a few degrees of
-                    // pitch that their Euler hints do not show.
-                    _playerObj.transform.rotation = PlayerSpawnPose.UprightFacing(arrivalPoint.transform);
+                    _playerObj.transform.rotation = arrivalPoint.transform.rotation;
                 }
                 else
                 {

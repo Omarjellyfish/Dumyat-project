@@ -19,36 +19,17 @@ namespace DumyatRuntime
     /// </summary>
     public sealed class LoadingScreenPresenter : ILoadingScreenService, IDisposable
     {
-        // Panel chrome in both languages. The destination name and the tips are content and come
-        // from the MenuCatalog, not from here.
-        private const string TitleEn = "LOADING";
-        private const string TitleAr = "جاري التحميل";
-        private const string StatusEn = "PREPARING";
-        private const string StatusAr = "بنجهز";
-
         private readonly IEventService _eventService;
-        private readonly ISettingsService _settings;
         private readonly MenuCatalogSO _catalog;
         private readonly LoadingScreenView _viewPrefab;
 
         private LoadingScreenView _view;
 
-        /// <summary>
-        /// The scene the visible overlay is announcing. Kept so a language change mid-load can rebuild
-        /// the panel's content — the begin event that carried the name is long gone by then.
-        /// </summary>
-        private string _targetSceneName;
-
         public bool IsVisible => _view != null && _view.IsVisible;
 
-        /// <summary>Whether the overlay should draw in Arabic.</summary>
-        private bool Arabic => UiLanguage.IsArabic(_settings);
-
-        public LoadingScreenPresenter(IEventService eventService, ISettingsService settings,
-                                      MenuCatalogSO catalog, LoadingScreenView viewPrefab)
+        public LoadingScreenPresenter(IEventService eventService, MenuCatalogSO catalog, LoadingScreenView viewPrefab)
         {
             _eventService = eventService;
-            _settings = settings;
             _catalog = catalog;
             _viewPrefab = viewPrefab;
 
@@ -56,16 +37,11 @@ namespace DumyatRuntime
                 Debug.LogWarning($"{nameof(LoadingScreenPresenter)} has no view prefab — scene loads will " +
                                  "show nothing. Assign it on the GameInstaller (ProjectScope prefab).");
 
-            if (_settings == null)
-                Debug.LogWarning($"{nameof(LoadingScreenPresenter)} has no {nameof(ISettingsService)} — the " +
-                                 "loading overlay will stay in English regardless of the Language setting.");
-
             if (_eventService == null) return;
 
             _eventService.Subscribe<SceneLoadBeginEvent>(HandleLoadBegin);
             _eventService.Subscribe<SceneLoadProgressEvent>(HandleLoadProgress);
             _eventService.Subscribe<SceneLoadCompleteEvent>(HandleLoadComplete);
-            _eventService.Subscribe<LanguageChangedEvent>(HandleLanguageChanged);
         }
 
         public void Dispose()
@@ -75,42 +51,16 @@ namespace DumyatRuntime
             _eventService.Unsubscribe<SceneLoadBeginEvent>(HandleLoadBegin);
             _eventService.Unsubscribe<SceneLoadProgressEvent>(HandleLoadProgress);
             _eventService.Unsubscribe<SceneLoadCompleteEvent>(HandleLoadComplete);
-            _eventService.Unsubscribe<LanguageChangedEvent>(HandleLanguageChanged);
         }
 
         private void HandleLoadBegin(SceneLoadBeginEvent evt)
         {
             if (!EnsureView()) return;
 
-            _targetSceneName = evt.TargetSceneName;
-
-            _view.Show(BuildContent(), _catalog != null ? _catalog.TipRotationSeconds : 4f);
-        }
-
-        /// <summary>
-        /// Redraws the overlay in the newly chosen language. Only meaningful while a load is on
-        /// screen — the next load rebuilds its content from scratch anyway — but a load started from
-        /// the pause menu right after switching language would otherwise show the old language until
-        /// it finished.
-        /// </summary>
-        private void HandleLanguageChanged(LanguageChangedEvent evt)
-        {
-            if (_view == null || !_view.IsVisible) return;
-
-            _view.ApplyContent(BuildContent());
-        }
-
-        /// <summary>Resolves every string the panel shows into the language that is current now.</summary>
-        private LoadingScreenContent BuildContent()
-        {
-            bool ar = Arabic;
-
-            return new LoadingScreenContent(
-                ar ? TitleAr : TitleEn,
-                _catalog != null ? _catalog.SceneLabelFor(_targetSceneName, ar) : _targetSceneName,
-                ar ? StatusAr : StatusEn,
-                _catalog != null ? _catalog.LoadingTipsFor(ar) : Array.Empty<string>(),
-                ar);
+            _view.Show(
+                evt.TargetSceneName,
+                _catalog != null ? _catalog.LoadingTips : Array.Empty<string>(),
+                _catalog != null ? _catalog.TipRotationSeconds : 4f);
         }
 
         private void HandleLoadProgress(SceneLoadProgressEvent evt)

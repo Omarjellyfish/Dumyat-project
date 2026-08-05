@@ -37,12 +37,6 @@ namespace DumyatRuntime
         [Tooltip("Smoothing time (s) for the re-centre ease. Lower = snappier follow, higher = lazier.")]
         [SerializeField, Min(0.01f)] private float _followSmoothTime = 0.18f;
 
-        [Header("Teleports")]
-        [Tooltip("If the camera jumps further than this in a single frame, treat it as a teleport and " +
-                 "snap the panel back in front of the player instead of leaving it behind at its old " +
-                 "world anchor. Set to 0 to disable.")]
-        [SerializeField, Min(0f)] private float _teleportSnapDistance = 1f;
-
         [Header("Pitch")]
         [Tooltip("Tilt the panel to face the camera vertically as well as horizontally. Off keeps it " +
                  "upright, which is steadier but reads badly if the panel sits well above or below eye level.")]
@@ -50,9 +44,6 @@ namespace DumyatRuntime
 
         private readonly LazyFollowYaw _follow = new LazyFollowYaw();
         private Camera _camera;
-
-        /// <summary>Camera position last frame, for spotting a teleport. Null until the first frame.</summary>
-        private Vector3? _lastCameraPosition;
 
         /// <summary>
         /// Snap to the current view instead of easing in — call when the panel is shown after being
@@ -80,8 +71,6 @@ namespace DumyatRuntime
         private void LateUpdate()
         {
             if (!EnsureCamera()) return;
-
-            SnapIfTeleported();
 
             // Yaw offset from the anchor to the panel's visual centre. A UIDocument world-space panel is
             // centred on its transform, so the placement offset IS the centre offset — no half-width
@@ -118,37 +107,6 @@ namespace DumyatRuntime
                 : yaw;
         }
 
-        /// <summary>
-        /// Re-anchors the panel when the player has been moved rather than walked.
-        ///
-        /// This solver anchors to a WORLD yaw and holds it, which is what stops the panel swimming
-        /// while the head turns — but it also means a panel is left behind wherever the player used to
-        /// be when they are teleported somewhere else. Two cases hit this regularly:
-        ///
-        ///  * Teleport locomotion. The panel stays at the old spot, out of view, until the player
-        ///    happens to turn far enough to drag it back.
-        ///  * Arriving in a new scene by bus. <see cref="FadeTransitionHandler"/> places the player at
-        ///    the ArrivalPoint on SceneLoadCompleteEvent, which is AFTER the new scene's objects have
-        ///    run Start — so a panel that showed itself on Start (the consent prompt) anchored against
-        ///    wherever the carried rig happened to be standing, not the spawn point.
-        ///
-        /// A per-frame distance test catches both without either of them having to know this component
-        /// exists. The threshold is far above any real locomotion speed — a metre in one frame is
-        /// roughly 90 m/s — so ordinary walking never trips it.
-        /// </summary>
-        private void SnapIfTeleported()
-        {
-            Vector3 position = _camera.transform.position;
-
-            if (_teleportSnapDistance > 0f && _lastCameraPosition.HasValue &&
-                Vector3.Distance(_lastCameraPosition.Value, position) > _teleportSnapDistance)
-            {
-                _follow.Reanchor();
-            }
-
-            _lastCameraPosition = position;
-        }
-
         private bool EnsureCamera()
         {
             if (_camera != null) return true;
@@ -156,9 +114,6 @@ namespace DumyatRuntime
             _camera = Camera.main;
             if (_camera == null) return false;
 
-            // A fresh camera means a fresh baseline: the distance from the old scene's camera to this
-            // one is meaningless, and comparing against it would fire a redundant snap.
-            _lastCameraPosition = null;
             _follow.Reanchor();
             return true;
         }

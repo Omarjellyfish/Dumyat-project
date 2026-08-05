@@ -140,7 +140,6 @@ MonoBehaviour:
     m_Bits: 16
   settleVelocityThreshold: 0.2
   maxFlightTime: 5
-  castSound: {fileID: 0}
 --- !u!1 &1174989399550488976
 GameObject:
   m_ObjectHideFlags: 0
@@ -249,7 +248,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c54b98167d2104e4d8a6d088c74e2bb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  _hookVoice: {fileID: 0}
+  HookFatherSound: {fileID: 8300000, guid: f3b6d3f21c6e6b64cb12cda9b27e503b, type: 3}
+  Rod: {fileID: 95635926486307591}
 --- !u!135 &9172186218120347746
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -748,8 +748,6 @@ MonoBehaviour:
   maxRopeLength: 20
   startSegmentCount: 6
   reelPivot: {fileID: 4576339752824899493}
-  _reelInSound: {fileID: 0}
-  _reelPos: {fileID: 0}
 --- !u!54 &1610293099859204335
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1218,7 +1216,6 @@ GameObject:
   - component: {fileID: 7473994981737354157}
   - component: {fileID: 830305937762628054}
   - component: {fileID: 3037436898992222196}
-  - component: {fileID: 6495387887345177355}
   m_Layer: 0
   m_Name: Rod
   m_TagString: Untagged
@@ -1448,26 +1445,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: FishingRod
---- !u!114 &6495387887345177355
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7801197442702505875}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 43f45df24a3ebc4438ccc42db642503c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.OneShotVoiceCue
-  _clip: {fileID: 8300000, guid: f3b6d3f21c6e6b64cb12cda9b27e503b, type: 3}
-  _cueId: HookSoundPlayed
-  _volume: 1
-  _playAt: {fileID: 0}
-  _scope: 0
-  _allowedScenes:
-  - El_manara
-  - ToBuild_El_manara
 --- !u!1 &7855720446633524620
 GameObject:
   m_ObjectHideFlags: 0

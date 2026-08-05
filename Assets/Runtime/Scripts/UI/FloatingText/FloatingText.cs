@@ -6,8 +6,7 @@ namespace DumyatRuntime
     public class FloatingText : MonoBehaviour
     {
         [SerializeField] private TextMeshPro _textMesh;
-
-        private readonly CameraBillboard _billboard = new CameraBillboard();
+        private Camera _mainCamera;
 
         private void Awake()
         {
@@ -15,11 +14,17 @@ namespace DumyatRuntime
                 _textMesh = GetComponentInChildren<TextMeshPro>();
         }
 
+        private void OnEnable()
+        {
+            _mainCamera = Camera.main;
+        }
+
         private void LateUpdate()
         {
-            // Upright, so the popup stops rolling with the player's head — the old inline billboard
-            // passed no up-vector, which tilted the text whenever they leaned.
-            _billboard.Apply(transform);
+            if (_mainCamera == null) return;
+
+            transform.rotation = Quaternion.LookRotation(
+                transform.position - _mainCamera.transform.position);
         }
 
         public void SetText(string text)

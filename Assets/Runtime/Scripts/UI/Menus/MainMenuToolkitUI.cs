@@ -1,3 +1,5 @@
+using System;
+using System.Globalization;
 using Reflex.Attributes;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -153,10 +155,31 @@ namespace DumyatRuntime
 
             if (_continueSubLabel == null) return;
 
-            // Shared with the carpentry menu's Continue NAIL — see ResumeDescription.
             _continueSubLabel.text = hasSave
-                ? ResumeDescription.For(_session.ResumeSceneName, _session.ResumeSavedAtUtc)
+                ? BuildResumeDescription(_session.ResumeSceneName, _session.ResumeSavedAtUtc)
                 : "No saved game";
+        }
+
+        /// <summary>Scene name, plus how long ago it was left when that can be worked out.</summary>
+        private static string BuildResumeDescription(string sceneName, string savedAtUtc)
+        {
+            if (string.IsNullOrEmpty(savedAtUtc)) return sceneName;
+
+            if (!DateTime.TryParse(savedAtUtc, CultureInfo.InvariantCulture,
+                                   DateTimeStyles.RoundtripKind, out DateTime saved))
+                return sceneName;
+
+            TimeSpan ago = DateTime.UtcNow - saved;
+
+            // A clock skew or an edited save can put the stamp in the future; showing the scene
+            // alone beats showing "in -3 hours".
+            if (ago < TimeSpan.Zero) return sceneName;
+
+            if (ago.TotalMinutes < 2) return $"{sceneName} · just now";
+            if (ago.TotalHours < 1) return $"{sceneName} · {(int)ago.TotalMinutes} min ago";
+            if (ago.TotalDays < 1) return $"{sceneName} · {(int)ago.TotalHours} h ago";
+
+            return $"{sceneName} · {(int)ago.TotalDays} d ago";
         }
 
         private void SetVersionLabel()

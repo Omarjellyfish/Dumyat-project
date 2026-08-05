@@ -17,8 +17,6 @@ GameObject:
   - component: {fileID: 3782302496308827466}
   - component: {fileID: 379044034080301257}
   - component: {fileID: 6775979057138280565}
-  - component: {fileID: 1146745686169232052}
-  - component: {fileID: 3388329944344415211}
   m_Layer: 0
   m_Name: Fish
   m_TagString: Fish
@@ -178,10 +176,8 @@ MonoBehaviour:
   m_Deactivated:
     m_PersistentCalls:
       m_Calls: []
-  m_StartingHoverFilters:
-  - {fileID: 1146745686169232052}
-  m_StartingSelectFilters:
-  - {fileID: 1146745686169232052}
+  m_StartingHoverFilters: []
+  m_StartingSelectFilters: []
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
@@ -252,7 +248,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8a04e0a377145c4ea86831b883148ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DehookingFish
-  _catchVoice: {fileID: 0}
 --- !u!114 &3782302496308827466
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -300,39 +295,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: Fish
---- !u!114 &1146745686169232052
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3256871146256090849}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f778f50d31d19f4dacab4acf7b1c687, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.HandsOnlyGrabFilter
-  _blockFarHover: 1
---- !u!114 &3388329944344415211
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3256871146256090849}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 43f45df24a3ebc4438ccc42db642503c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.OneShotVoiceCue
-  _clip: {fileID: 8300000, guid: b1aff45bef6abb048a63b5d3e9f70c39, type: 3}
-  _cueId: catch_fish_voice_played
-  _volume: 1
-  _playAt: {fileID: 0}
-  _scope: 0
-  _allowedScenes:
-  - El_manara
-  - ToBuild_El_manara
 --- !u!1001 &6839782929536139823
 PrefabInstance:
   m_ObjectHideFlags: 0

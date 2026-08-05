@@ -47,8 +47,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialRunner
   _autoStartSequence: {fileID: 0}
   _hoverUI: {fileID: 7515597535856769308}
-  _highlightPrefab: {fileID: 0}
-  _highlighter: {fileID: 0}
 --- !u!1 &9209832295141502072
 GameObject:
   m_ObjectHideFlags: 0
@@ -61,7 +59,6 @@ GameObject:
   - component: {fileID: 557327690813462651}
   - component: {fileID: 198052431385211797}
   - component: {fileID: 7515597535856769308}
-  - component: {fileID: 927020657027233790}
   m_Layer: 0
   m_Name: TutorialHoverUI
   m_TagString: Untagged
@@ -132,29 +129,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialHoverUI
   _animationDuration: 0.2
-  _minDistance: 0.65
-  _maxDistance: 1.5
-  _occlusionPadding: 0.2
-  _positionLerpSpeed: 8
-  _occluderMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
---- !u!114 &927020657027233790
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9209832295141502072}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cc8a0000bbd12d945a4769925431123f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialOffscreenPointer
-  _hoverUI: {fileID: 0}
-  _hiddenWithinDegrees: 45
-  _distance: 1.1
-  _drop: 0.25
-  _size: 0.09
-  _colour: {r: 0.4, g: 0.87, b: 0.91, a: 1}
-  _pulsesPerSecond: 1.4

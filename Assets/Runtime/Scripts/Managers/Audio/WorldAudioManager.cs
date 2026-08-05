@@ -43,15 +43,6 @@ namespace DumyatRuntime
             _currentMusicFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
             _activeMusicSource = fadingInSource;
         }
-        public void StopMusic(float fadeDuration = -1f)
-        {
-            if (_activeMusicSource == null || !_activeMusicSource.isPlaying) return;
-
-            float duration = fadeDuration < 0 ? defaultFadeDuration : fadeDuration;
-            if (_currentMusicFadeCoroutine != null) StopCoroutine(_currentMusicFadeCoroutine);
-
-            _currentMusicFadeCoroutine = StartCoroutine(FadeOutSource(_activeMusicSource, duration));
-        }
         #endregion
 
         #region Ambient Logic
@@ -69,15 +60,6 @@ namespace DumyatRuntime
 
             _currentAmbientFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
             _activeAmbientSource = fadingInSource;
-        }
-        public void StopAmbient(float fadeDuration = -1f)
-        {
-            if (_activeAmbientSource == null || !_activeAmbientSource.isPlaying) return;
-
-            float duration = fadeDuration < 0 ? defaultFadeDuration : fadeDuration;
-            if (_currentAmbientFadeCoroutine != null) StopCoroutine(_currentAmbientFadeCoroutine);
-
-            _currentAmbientFadeCoroutine = StartCoroutine(FadeOutSource(_activeAmbientSource, duration));
         }
         #endregion
 
@@ -104,24 +86,6 @@ namespace DumyatRuntime
             }
 
             fadeIn.volume = 1f;
-            fadeOut.volume = 0f;
-            fadeOut.Stop();
-        }
-
-        private IEnumerator FadeOutSource(AudioSource fadeOut, float duration)
-        {
-            if (fadeOut == null || !fadeOut.isPlaying) yield break;
-
-            float startVolume = fadeOut.volume;
-            float timeElapsed = 0f;
-
-            while (timeElapsed < duration)
-            {
-                timeElapsed += Time.deltaTime;
-                fadeOut.volume = Mathf.Lerp(startVolume, 0f, timeElapsed / duration);
-                yield return null;
-            }
-
             fadeOut.volume = 0f;
             fadeOut.Stop();
         }

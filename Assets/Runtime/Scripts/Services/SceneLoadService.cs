@@ -22,19 +22,15 @@ namespace DumyatRuntime
         private const float ActivationHoldProgress = 0.9f;
 
         private readonly IEventService _eventService;
-        private readonly IWorldAudioService _worldAudioService;
-        private readonly ISoundService _soundService;
         private AsyncOperation _currentLoadOp;
 
         /// <summary>Load progress, 0 to 1, already remapped off the 0.9 activation ceiling.</summary>
         public float CurrentProgress { get; private set; }
         public bool IsLoading { get; private set; }
 
-        public SceneLoadService(IEventService eventService, IWorldAudioService worldAudioService, ISoundService soundService)
+        public SceneLoadService(IEventService eventService)
         {
             _eventService = eventService;
-            _worldAudioService = worldAudioService;
-            _soundService = soundService;
         }
 
         public async void LoadScene(string targetSceneName, string loadingSceneName = "")
@@ -60,8 +56,6 @@ namespace DumyatRuntime
                 // Announce first: the blinder, the loading overlay and the audio fades all key off
                 // this, and the hold below is what gives them time to land.
                 _eventService.Publish(new SceneLoadBeginEvent { TargetSceneName = targetSceneName });
-                _worldAudioService?.StopAmbient(PreLoadHoldSeconds);
-                _soundService?.PlaySceneTransitionSound();
                 await Task.Delay((int)(PreLoadHoldSeconds * 1000f));
 
                 // No Resources.UnloadUnusedAssets()/GC.Collect() here on purpose. Both stall the main

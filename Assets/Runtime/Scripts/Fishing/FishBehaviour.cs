@@ -25,7 +25,7 @@ namespace DumyatRuntime
         public float maxReactionDelay = 0f;
 
         private Vector3 patrolTarget;
-        private bool isInsideFishArea = false;
+        private bool isInsideFishArea;
 
         private bool movingToHook;
         private bool isHooked;
@@ -45,14 +45,11 @@ namespace DumyatRuntime
                 fishArea = FindFirstObjectByType<FishArea>();
             }
 
-            if (fishArea != null)
-            {
-                fishArea.RegisterFish(this);
+            fishArea.RegisterFish(this);
 
-                PickNewPatrolTarget();
+            PickNewPatrolTarget();
 
-                StartCoroutine(PatrolTargetRoutine());
-            }
+            StartCoroutine(PatrolTargetRoutine());
         }
 
         private void OnDestroy()

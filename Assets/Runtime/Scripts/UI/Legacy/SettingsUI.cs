@@ -1,165 +1,189 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
-    /// <summary>
-    /// Settings panel of the carpentry (nail) main menu.
-    ///
-    /// WHY THIS TALKS TO <see cref="ISettingsService"/>
-    /// -----------------------------------------------
-    /// This panel used to drive <see cref="ILegacySettingsService"/>, which keeps its OWN PlayerPrefs
-    /// entries — "Language", "SubtitlesEnabled" — separate from the ones the UI Toolkit main menu
-    /// writes ("Dumyat.Language", "Dumyat.SubtitlesOn"). The two menus therefore disagreed: setting
-    /// the language here left every UI Toolkit panel in the game still drawing English, and the
-    /// volume sliders here covered only three of the mixer's five channels, so Ambience and Dialogue
-    /// could not be reached from this menu at all.
-    ///
-    /// Pointing this panel at the canonical service makes the two menus one setting rather than two
-    /// that merely look alike. The legacy service is still used for SUBTITLE SIZE, which is a
-    /// legacy-only control with no equivalent on the new menu.
-    ///
-    /// Every field below is optional: a scene that only wired three sliders keeps working, and the
-    /// two new channels light up as soon as sliders are added for them.
-    /// </summary>
     public class SettingsUI : MonoBehaviour
     {
+        private const string MASTER_VOLUME_KEY = "MasterVolume";
+        private const string MUSIC_VOLUME_KEY = "MusicVolume";
+        private const string SOUND_FX_VOLUME_KEY = "SFXVolume";
+
         [Header("Subtitles")]
         [SerializeField] private Toggle _subtitlesToggle;
-
-        [Tooltip("Legacy-only control — the UI Toolkit menu has no subtitle size, so this stays backed " +
-                 "by ILegacySettingsService.")]
         [SerializeField] private Slider _subtitleSizeSlider;
-
-        [Tooltip("Interface language. Option order must match the GameLanguage enum (English, Arabic).")]
         [SerializeField] private Dropdown _languageDropdown;
 
-        // The two FormerlySerializedAs entries keep the sliders already wired into
-        // Testing_MainMenu attached, and move them onto the channel their LABEL promises. The old
-        // code sent the "Voice" slider to Music and the "Ambient" slider to SFX, so dragging either
-        // changed something the player was not looking at.
-        [Header("Audio — one slider per mixer channel")]
+        [Header("Audio")]
         [SerializeField] private Slider _masterVolumeSlider;
-        [SerializeField] private Slider _musicVolumeSlider;
-        [SerializeField] private Slider _sfxVolumeSlider;
-        [FormerlySerializedAs("_ambientVolumeSlider")]
-        [SerializeField] private Slider _ambienceVolumeSlider;
-        [FormerlySerializedAs("_voiceVolumeSlider")]
-        [SerializeField] private Slider _dialogueVolumeSlider;
+        [SerializeField] private Slider _voiceVolumeSlider;
+        [SerializeField] private Slider _ambientVolumeSlider;
 
-        private ISettingsService _settings;
-        private ILegacySettingsService _legacySettings;
-
-        // Index matches _sliders, so one loop covers wiring, reading and writing.
-        private static readonly AudioChannel[] Channels =
-        {
-            AudioChannel.Master, AudioChannel.Music, AudioChannel.SoundFX,
-            AudioChannel.Ambience, AudioChannel.Dialogue
-        };
-
-        private Slider[] _sliders;
+        private ISoundMixerService _soundMixerService;
+        private ILegacySettingsService _settingsService;
 
         [Inject]
-        private void Inject(ISettingsService settings, ILegacySettingsService legacySettings)
+        private void Inject(ISoundMixerService soundMixerService, ILegacySettingsService settingsService)
         {
-            _settings = settings;
-            _legacySettings = legacySettings;
-        }
-
-        private void Awake()
-        {
-            _sliders = new[]
-            {
-                _masterVolumeSlider, _musicVolumeSlider, _sfxVolumeSlider,
-                _ambienceVolumeSlider, _dialogueVolumeSlider
-            };
+            _soundMixerService = soundMixerService;
+            _settingsService = settingsService;
         }
 
         private void OnEnable()
         {
-            if (_settings == null)
-                Debug.LogWarning($"{nameof(SettingsUI)} on '{name}' has no {nameof(ISettingsService)} — " +
-                                 "this menu's settings will not apply or persist. Is this UI under a " +
-                                 "Reflex scene scope?", this);
-
             InitializeUI();
-            Subscribe(true);
-        }
-
-        private void OnDisable() => Subscribe(false);
-
-        private void Subscribe(bool on)
-        {
-            if (_sliders == null) return;
-
-            for (int i = 0; i < _sliders.Length; i++)
-            {
-                Slider slider = _sliders[i];
-                if (slider == null) continue;
-
-                AudioChannel channel = Channels[i];
-
-                // Cleared in both cases so re-enabling the panel cannot stack a second listener.
-                slider.onValueChanged.RemoveAllListeners();
-                if (on) slider.onValueChanged.AddListener(value => OnVolumeChanged(channel, value));
-            }
+            WarnIfAudioServicesMissing();
 
             if (_subtitlesToggle != null)
             {
                 _subtitlesToggle.onValueChanged.RemoveListener(OnSubtitlesChanged);
-                if (on) _subtitlesToggle.onValueChanged.AddListener(OnSubtitlesChanged);
+                _subtitlesToggle.onValueChanged.AddListener(OnSubtitlesChanged);
             }
-
             if (_subtitleSizeSlider != null)
             {
                 _subtitleSizeSlider.onValueChanged.RemoveListener(OnSubtitleSizeChanged);
-                if (on) _subtitleSizeSlider.onValueChanged.AddListener(OnSubtitleSizeChanged);
+                _subtitleSizeSlider.onValueChanged.AddListener(OnSubtitleSizeChanged);
             }
-
             if (_languageDropdown != null)
             {
                 _languageDropdown.onValueChanged.RemoveListener(OnLanguageChanged);
-                if (on) _languageDropdown.onValueChanged.AddListener(OnLanguageChanged);
+                _languageDropdown.onValueChanged.AddListener(OnLanguageChanged);
+            }
+            if (_masterVolumeSlider != null)
+            {
+                _masterVolumeSlider.onValueChanged.RemoveListener(OnMasterVolumeChanged);
+                _masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
+            }
+            if (_voiceVolumeSlider != null)
+            {
+                _voiceVolumeSlider.onValueChanged.RemoveListener(OnVoiceVolumeChanged);
+                _voiceVolumeSlider.onValueChanged.AddListener(OnVoiceVolumeChanged);
+            }
+            if (_ambientVolumeSlider != null)
+            {
+                _ambientVolumeSlider.onValueChanged.RemoveListener(OnAmbientVolumeChanged);
+                _ambientVolumeSlider.onValueChanged.AddListener(OnAmbientVolumeChanged);
             }
         }
 
-        /// <summary>
-        /// Shows what the shared settings currently are, so opening this menu after changing something
-        /// on the main menu does not display stale values. Set-without-notify throughout: writing the
-        /// value back on open would be a no-op at best and would clobber a real setting at worst.
-        /// </summary>
+        private void OnDisable()
+        {
+            if (_subtitlesToggle != null)
+                _subtitlesToggle.onValueChanged.RemoveListener(OnSubtitlesChanged);
+            if (_subtitleSizeSlider != null)
+                _subtitleSizeSlider.onValueChanged.RemoveListener(OnSubtitleSizeChanged);
+            if (_languageDropdown != null)
+                _languageDropdown.onValueChanged.RemoveListener(OnLanguageChanged);
+            if (_masterVolumeSlider != null)
+                _masterVolumeSlider.onValueChanged.RemoveListener(OnMasterVolumeChanged);
+            if (_voiceVolumeSlider != null)
+                _voiceVolumeSlider.onValueChanged.RemoveListener(OnVoiceVolumeChanged);
+            if (_ambientVolumeSlider != null)
+                _ambientVolumeSlider.onValueChanged.RemoveListener(OnAmbientVolumeChanged);
+        }
+
         private void InitializeUI()
         {
-            if (_settings != null)
-            {
-                for (int i = 0; i < _sliders.Length; i++)
-                {
-                    if (_sliders[i] != null)
-                        _sliders[i].SetValueWithoutNotify(_settings.GetVolume(Channels[i]));
-                }
+            float masterVolume = _settingsService != null ? _settingsService.MasterVolume : GetSavedMasterVolumeFallback();
+            float voiceVolume = _settingsService != null ? _settingsService.MusicVolume : GetSavedMusicVolumeFallback();
+            float ambientVolume = _settingsService != null ? _settingsService.SoundFXVolume : GetSavedSoundFXVolumeFallback();
 
-                if (_subtitlesToggle != null)
-                    _subtitlesToggle.SetIsOnWithoutNotify(_settings.SubtitlesEnabled);
+            if (_masterVolumeSlider != null)
+                _masterVolumeSlider.SetValueWithoutNotify(masterVolume);
+            if (_voiceVolumeSlider != null)
+                _voiceVolumeSlider.SetValueWithoutNotify(voiceVolume);
+            if (_ambientVolumeSlider != null)
+                _ambientVolumeSlider.SetValueWithoutNotify(ambientVolume);
 
-                if (_languageDropdown != null)
-                    _languageDropdown.SetValueWithoutNotify((int)_settings.Language);
-            }
-
-            if (_legacySettings != null && _subtitleSizeSlider != null)
-                _subtitleSizeSlider.SetValueWithoutNotify(_legacySettings.SubtitleSize);
+            if (_subtitlesToggle != null && _settingsService != null)
+                _subtitlesToggle.SetIsOnWithoutNotify(_settingsService.SubtitlesEnabled);
+            if (_subtitleSizeSlider != null && _settingsService != null)
+                _subtitleSizeSlider.SetValueWithoutNotify(_settingsService.SubtitleSize);
+            if (_languageDropdown != null && _settingsService != null)
+                _languageDropdown.SetValueWithoutNotify((int)_settingsService.Language);
         }
 
-        private void OnVolumeChanged(AudioChannel channel, float value) =>
-            _settings?.SetVolume(channel, value);
+        private void OnSubtitlesChanged(bool value)
+        {
+            if (_settingsService == null) return;
+            _settingsService.SetSubtitles(value);
+        }
 
-        private void OnSubtitlesChanged(bool value) => _settings?.SetSubtitlesEnabled(value);
+        private void OnSubtitleSizeChanged(float value)
+        {
+            if (_settingsService == null) return;
+            _settingsService.SetSubtitleSize(Mathf.RoundToInt(value));
+        }
 
-        private void OnLanguageChanged(int value) => _settings?.SetLanguage((GameLanguage)value);
+        private void OnLanguageChanged(int value)
+        {
+            if (_settingsService == null) return;
+            _settingsService.SetLanguage((GameLanguage)value);
+        }
 
-        // Legacy-only: the new menu has no subtitle size, so this stays on the legacy service.
-        private void OnSubtitleSizeChanged(float value) =>
-            _legacySettings?.SetSubtitleSize(Mathf.RoundToInt(value));
+        private void OnMasterVolumeChanged(float value)
+        {
+            if (_settingsService != null) _settingsService.SetMasterVolume(value);
+            else _soundMixerService?.SetMasterVolume(value);
+
+            if (_settingsService == null && _soundMixerService == null)
+                ApplyMasterVolumeFallback(value);
+        }
+
+        private void OnVoiceVolumeChanged(float value)
+        {
+            if (_settingsService != null) _settingsService.SetMusicVolume(value);
+            else _soundMixerService?.SetMusicVolume(value);
+
+            if (_settingsService == null && _soundMixerService == null)
+                SaveVolumeFallback(MUSIC_VOLUME_KEY, value);
+        }
+
+        private void OnAmbientVolumeChanged(float value)
+        {
+            if (_settingsService != null) _settingsService.SetSoundFXVolume(value);
+            else _soundMixerService?.SetSoundFXVolume(value);
+
+            if (_settingsService == null && _soundMixerService == null)
+                SaveVolumeFallback(SOUND_FX_VOLUME_KEY, value);
+        }
+
+        private float GetSavedMasterVolumeFallback()
+        {
+            return _soundMixerService != null ? _soundMixerService.GetSavedMasterVolume() : PlayerPrefs.GetFloat(MASTER_VOLUME_KEY, 1f);
+        }
+
+        private float GetSavedMusicVolumeFallback()
+        {
+            return _soundMixerService != null ? _soundMixerService.GetSavedMusicVolume() : PlayerPrefs.GetFloat(MUSIC_VOLUME_KEY, 1f);
+        }
+
+        private float GetSavedSoundFXVolumeFallback()
+        {
+            return _soundMixerService != null ? _soundMixerService.GetSavedSoundFXVolume() : PlayerPrefs.GetFloat(SOUND_FX_VOLUME_KEY, 1f);
+        }
+
+        private void ApplyMasterVolumeFallback(float value)
+        {
+            float volume = Mathf.Clamp01(value);
+            AudioListener.volume = volume;
+            SaveVolumeFallback(MASTER_VOLUME_KEY, volume);
+            Debug.LogWarning("SettingsUI: Audio services were not injected, applied Master volume directly as fallback.");
+        }
+
+        private void SaveVolumeFallback(string key, float value)
+        {
+            PlayerPrefs.SetFloat(key, Mathf.Clamp01(value));
+            PlayerPrefs.Save();
+        }
+
+        private void WarnIfAudioServicesMissing()
+        {
+            if (_settingsService == null && _soundMixerService == null)
+            {
+                Debug.LogWarning("SettingsUI: Settings/audio services are not injected. Check that this UI is under a Reflex scene scope. Master volume fallback is active.");
+            }
+        }
     }
 }

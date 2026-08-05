@@ -16,13 +16,8 @@ namespace DumyatRuntime
     public class NotificationHudManager : MonoBehaviour, INotificationService
     {
         [Header("Style")]
-        [Tooltip("Card used for NotificationStyle.Toast (quest progress, frequent beats). " +
-                 "Auto-found in children if empty.")]
-        [SerializeField] private NotificationToastView _toastView;
-
-        [Tooltip("Card used for NotificationStyle.Medal (quest/sale completion). " +
-                 "Auto-found in children if empty.")]
-        [SerializeField] private NotificationMedalView _medalView;
+        [Tooltip("The notification visual (Toast card or Achievement medal). Auto-found in children if empty.")]
+        [SerializeField] private NotificationView _view;
 
         [Header("Timing")]
         [Tooltip("Seconds each notification stays fully shown (before fading out).")]
@@ -55,46 +50,20 @@ namespace DumyatRuntime
         private readonly Queue<NotificationData> _queue = new Queue<NotificationData>();
         private Coroutine _runner;
 
-        /// <summary>
-        /// The view drawing the card on screen right now. Held because the manager animates and
-        /// positions whichever card is up, and that is no longer a fixed choice — a quest ticking
-        /// forward draws as a toast while its completion draws as a medal.
-        /// </summary>
-        private NotificationView _active;
-
         // Shared comfort-cone follow, identical to the one driving the inventory panel.
         private readonly LazyFollowYaw _follow = new LazyFollowYaw();
 
         private void Awake()
         {
-            if (_toastView == null) _toastView = GetComponentInChildren<NotificationToastView>(true);
-            if (_medalView == null) _medalView = GetComponentInChildren<NotificationMedalView>(true);
-
+            if (_view == null) _view = GetComponentInChildren<NotificationView>(true);
             _camera = Camera.main;
             BuildCanvas();
 
-            if (_toastView == null && _medalView == null)
-            {
+            if (_view == null)
                 Debug.LogWarning($"{nameof(NotificationHudManager)} on '{name}' has no NotificationView " +
                                  "assigned/in children — notifications will not render.", this);
-                return;
-            }
-
-            if (_toastView != null) _toastView.Attach(_root);
-            if (_medalView != null) _medalView.Attach(_root);
-        }
-
-        /// <summary>
-        /// The view for <paramref name="style"/>, falling back to the other one when only a single
-        /// view is present. The fallback keeps a scene that was authored before styles existed — and
-        /// so carries just one view — showing its notifications rather than silently dropping them.
-        /// </summary>
-        private NotificationView ViewFor(NotificationStyle style)
-        {
-            NotificationView preferred = style == NotificationStyle.Toast ? _toastView : (NotificationView)_medalView;
-            if (preferred != null) return preferred;
-
-            return style == NotificationStyle.Toast ? _medalView : (NotificationView)_toastView;
+            else
+                _view.Attach(_root);
         }
 
         private void BuildCanvas()
@@ -133,8 +102,8 @@ namespace DumyatRuntime
             // hangs down-left from it, so its centre is half a card-width further in. Clamping the
             // corner would let the body swing much further left than right; centring on the card
             // keeps looking left and right symmetric.
-            float cardHalfWidth = (_active != null && _active.ContentHandle != null)
-                ? _active.ContentHandle.rect.width * 0.5f * _canvasScale
+            float cardHalfWidth = (_view != null && _view.ContentHandle != null)
+                ? _view.ContentHandle.rect.width * 0.5f * _canvasScale
                 : 0f;
             float centreRightOffset = _rightOffset - cardHalfWidth;
             float panelYawOffset = Mathf.Atan2(centreRightOffset, _distance) * Mathf.Rad2Deg;
@@ -159,15 +128,12 @@ namespace DumyatRuntime
             while (_queue.Count > 0)
             {
                 NotificationData data = _queue.Dequeue();
-
-                // Resolved per notification, not once at Awake: the style travels with the card.
-                _active = ViewFor(data.Style);
-                if (_active == null) { _runner = null; yield break; }
+                if (_view == null) { _runner = null; yield break; }
 
                 _follow.Reanchor();      // snap the fresh card into the current view, then world-anchor
-                _active.Build(data);
-                CanvasGroup g = _active.GroupHandle;
-                RectTransform c = _active.ContentHandle;
+                _view.Build(data);
+                CanvasGroup g = _view.GroupHandle;
+                RectTransform c = _view.ContentHandle;
                 if (g == null) { yield return null; continue; }
 
                 // Fade + slide + scale in (unscaled, so a paused game still animates it).
@@ -193,10 +159,10 @@ namespace DumyatRuntime
                 while (t < _holdSeconds)
                 {
                     t += Time.unscaledDeltaTime;
-                    _active.SetProgress(1f - t / _holdSeconds);
+                    _view.SetProgress(1f - t / _holdSeconds);
                     yield return null;
                 }
-                _active.SetProgress(0f);
+                _view.SetProgress(0f);
 
                 // Fade out.
                 t = 0f;
@@ -209,8 +175,7 @@ namespace DumyatRuntime
                     yield return null;
                 }
                 g.alpha = 0f;
-                _active.HideCard();
-                _active = null;
+                _view.HideCard();
             }
 
             _runner = null;

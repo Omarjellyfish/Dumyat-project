@@ -22,9 +22,7 @@ namespace DumyatRuntime
 
         private VisualElement _root;
         private VisualElement _progressFill;
-        private Label _titleLabel;
         private Label _sceneLabel;
-        private Label _statusLabel;
         private Label _percentLabel;
         private Label _tipLabel;
 
@@ -44,9 +42,7 @@ namespace DumyatRuntime
             if (_root == null) return;
 
             _progressFill = _root.Q<VisualElement>("LoadingProgressFill");
-            _titleLabel = _root.Q<Label>("LoadingTitleLabel");
             _sceneLabel = _root.Q<Label>("LoadingSceneLabel");
-            _statusLabel = _root.Q<Label>("LoadingStatusLabel");
             _percentLabel = _root.Q<Label>("LoadingPercentLabel");
             _tipLabel = _root.Q<Label>("LoadingTipLabel");
 
@@ -57,22 +53,11 @@ namespace DumyatRuntime
             SetVisible(IsVisible);
         }
 
-        /// <summary>
-        /// Shows the panel at 0%, drawing <paramref name="content"/> and cycling its tips every
-        /// <paramref name="tipSeconds"/>.
-        /// </summary>
-        public void Show(in LoadingScreenContent content, float tipSeconds)
+        /// <summary>Shows the panel at 0%, with <paramref name="tips"/> cycling every <paramref name="tipSeconds"/>.</summary>
+        public void Show(string destinationName, IReadOnlyList<string> tips, float tipSeconds)
         {
-            // Start somewhere random in the list rather than always at the first tip.
-            //
-            // A load lasts a handful of seconds and a tip holds for several, so a player only ever
-            // reads the first two or three of them. Always starting at index 0 meant the other
-            // twenty-odd tips were, in practice, unreachable — they existed only for anyone who sat
-            // through an unusually long load. Cycling onwards from a random start still reads in
-            // order; it just does not always begin in the same place.
-            _tipIndex = content.Tips != null && content.Tips.Count > 0
-                ? Random.Range(0, content.Tips.Count)
-                : 0;
+            _tips = tips;
+            _tipIndex = 0;
 
             // The GameObject never actually disables between loads — only the root's display flips —
             // so LazyFollowAnchor's OnEnable re-anchor does not fire on the second and later loads.
@@ -80,36 +65,12 @@ namespace DumyatRuntime
             // can be off to the side or behind the player.
             if (_followAnchor != null) _followAnchor.Reanchor();
 
-            ApplyContent(content);
+            if (_sceneLabel != null) _sceneLabel.text = destinationName ?? string.Empty;
 
             SetProgress(0f);
+            ShowCurrentTip();
             StartTipRotation(tipSeconds);
             SetVisible(true);
-        }
-
-        /// <summary>
-        /// Redraws every string from <paramref name="content"/> without touching the progress bar or
-        /// restarting the tip rotation, so the presenter can re-apply a language change mid-load and
-        /// the player does not see the bar jump back or the current tip cut short.
-        /// </summary>
-        public void ApplyContent(in LoadingScreenContent content)
-        {
-            _tips = content.Tips;
-
-            // The two lists are the same tips in two languages, so holding the index keeps the player
-            // on the same sentence across a language change. Clamped in case they are not equal length.
-            if (_tips == null || _tips.Count == 0) _tipIndex = 0;
-            else if (_tipIndex >= _tips.Count) _tipIndex = 0;
-
-            if (_titleLabel != null) _titleLabel.text = content.Title ?? string.Empty;
-            if (_sceneLabel != null) _sceneLabel.text = content.Destination ?? string.Empty;
-            if (_statusLabel != null) _statusLabel.text = content.Status ?? string.Empty;
-
-            ShowCurrentTip();
-
-            // Last, so every label above already carries its final string: ApplyScript walks the tree
-            // and switches the Arabic text generator on for whatever it finds.
-            UiLanguage.ApplyScript(_root, content.Arabic);
         }
 
         /// <summary>Sets the bar from a 0..1 value that has ALREADY been remapped by the presenter.</summary>

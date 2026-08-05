@@ -3,20 +3,38 @@ using UnityEngine;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Y-axis billboard that faces the XR camera. Placed on the tutorial hover UI so the panel always
-    /// faces the player without tilting vertically. The facing itself — and the camera lookup behind
-    /// it — belong to <see cref="CameraBillboard"/>, which every world-space panel in the project
-    /// shares; this component only decides WHICH transform gets billboarded and in which mode.
+    /// Y-axis billboard that faces the XR camera. Placed on the tutorial hover UI
+    /// so the panel always faces the player without tilting vertically.
     /// </summary>
     public class TutorialBillboard : MonoBehaviour
     {
-        private readonly CameraBillboard _billboard = new CameraBillboard();
+        private Transform _cameraTransform;
+
+        private void Awake()
+        {
+            _cameraTransform = Camera.main != null ? Camera.main.transform : null;
+        }
 
         private void LateUpdate()
         {
-            // YawOnly: the hover panel is anchored in the world and should read as a standing sign,
-            // never tipping toward a head that is above or below it.
-            _billboard.Apply(transform, BillboardMode.YawOnly);
+            if (_cameraTransform == null)
+            {
+                // Retry — camera may spawn after this component
+                if (Camera.main != null)
+                {
+                    _cameraTransform = Camera.main.transform;
+                }
+                return;
+            }
+
+            // Y-axis only rotation — keeps the panel upright
+            Vector3 lookDirection = _cameraTransform.position - transform.position;
+            lookDirection.y = 0f;
+
+            if (lookDirection.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(-lookDirection.normalized, Vector3.up);
+            }
         }
     }
 }

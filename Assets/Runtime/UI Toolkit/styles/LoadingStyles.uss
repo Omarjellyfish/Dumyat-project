@@ -102,26 +102,3 @@
     border-top-width: 1px;
     border-top-color: rgba(120, 228, 236, 0.14);
 }
-
-/* ============================================================================
-   Arabic
-   ============================================================================
-   Added to every text element by UiLanguage.ApplyScript while drawing Arabic.
-   The advanced text generator is what shapes and joins the glyphs; the tracking
-   this panel uses for its Latin chrome must go to zero, or it would pull joined
-   letterforms apart and break the cursive connections outright.
-
-   The panel must sit on a PanelSettings whose text settings carry an
-   Arabic-capable font (Cairo Panel Text Settings) or every glyph is a box. */
-.ui-arabic {
-    -unity-text-generator: advanced;
-    letter-spacing: 0;
-}
-
-/* UI Toolkit has no `direction` property, so right-alignment is as close to an
-   RTL layout as prose gets. Only the tip is flipped — the header and the meta
-   row are a two-column layout whose alignment comes from the row, and the
-   percentage stays a right-aligned number in both languages. */
-.ui-arabic.loading-tip {
-    -unity-text-align: upper-right;
-}

@@ -56,7 +56,7 @@ namespace DumyatRuntime
         [SerializeField] private Color _outlineColor = Color.black;
         [SerializeField, Range(0f, 1f)] private float _outlineWidth = 0.2f;
 
-        private readonly CameraBillboard _billboard = new CameraBillboard();
+        private Camera _camera;
         private Coroutine _typing;
 
         /// <summary>True while a line is still being revealed.</summary>
@@ -88,19 +88,17 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
-            // Face the player on the very first frame rather than one frame late, so the caption is
-            // never glimpsed at its authored rotation.
-            FaceCamera();
+            _camera = Camera.main;
         }
 
         private void LateUpdate()
         {
-            FaceCamera();
-        }
+            if (!_faceCamera || _camera == null) return;
 
-        private void FaceCamera()
-        {
-            if (_faceCamera) _billboard.Apply(transform);
+            // Vector3.up keeps the panel upright: without an explicit up-vector the text rolls with the
+            // camera, which is unreadable in VR when the player tilts their head.
+            transform.rotation = Quaternion.LookRotation(
+                transform.position - _camera.transform.position, Vector3.up);
         }
 
         /// <summary>Shows a line, revealing it at <see cref="_charactersPerSecond"/>.</summary>

@@ -20,7 +20,6 @@ namespace DumyatRuntime
         private void Awake()
         {
             SetupDebugLine();
-            _showDebugRayInGame = false;
         }
 
         public void CheckContact()

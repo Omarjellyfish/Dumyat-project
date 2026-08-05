@@ -1,10 +1,7 @@
 using UnityEngine;
 using UnityEngine.Pool;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.Audio;
-using UnityEngine.UIElements;
-
 namespace DumyatRuntime
 {
     public class SoundManager : MonoBehaviour, ISoundService
@@ -13,17 +10,7 @@ namespace DumyatRuntime
         [SerializeField] private AudioSource _sfxAudioSourcePrefab;
         [SerializeField] private AudioMixerGroup _defaultMixerGroup;
 
-        [Header("Scene Transition Audio")]
-        [SerializeField] private AudioClip[] _sceneTransitionClips;
-        [SerializeField] private float _transitionVolume = 1f;
-
-        [Header("UI Audio")]
-        [SerializeField] private AudioClip _uiHoverClip;
-        [SerializeField] private AudioClip _uiClickClip;
-        [SerializeField] private float _uiVolume = 1f;
-
         private IObjectPool<AudioSource> _audioPool;
-        private HashSet<UIDocument> _registeredUIDocuments = new HashSet<UIDocument>();
 
         /// <summary>
         /// Lazy-initialized pool. Guarantees the pool exists regardless of Unity's
@@ -50,56 +37,6 @@ namespace DumyatRuntime
         }
 
         #region Pooling Logic
-        private void Start()
-        {
-            StartCoroutine(PollUIDocuments());
-        }
-
-        private IEnumerator PollUIDocuments()
-        {
-            while (true)
-            {
-                RegisterAllUIDocuments();
-                yield return new WaitForSecondsRealtime(1f);
-            }
-        }
-
-        private void RegisterAllUIDocuments()
-        {
-            UIDocument[] documents = FindObjectsByType<UIDocument>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            _registeredUIDocuments.RemoveWhere(doc => doc == null);
-
-            foreach (var doc in documents)
-            {
-                if (doc != null && doc.rootVisualElement != null)
-                {
-                    if (_registeredUIDocuments.Add(doc))
-                    {
-                        doc.rootVisualElement.RegisterCallback<PointerEnterEvent>(OnPointerEnter, TrickleDown.TrickleDown);
-                        doc.rootVisualElement.RegisterCallback<ClickEvent>(OnClick, TrickleDown.TrickleDown);
-                    }
-                }
-            }
-        }
-
-        private void OnPointerEnter(PointerEnterEvent evt)
-        {
-            if (_uiHoverClip == null) return;
-            if (evt.target is Button || evt.target is Toggle || evt.target is DropdownField || evt.target is RadioButton)
-            {
-                PlayUISoundFx(_uiHoverClip, _uiVolume);
-            }
-        }
-
-        private void OnClick(ClickEvent evt)
-        {
-            if (_uiClickClip == null) return;
-            if (evt.target is Button || evt.target is Toggle || evt.target is DropdownField || evt.target is RadioButton)
-            {
-                PlayUISoundFx(_uiClickClip, _uiVolume);
-            }
-        }
-
         private AudioSource CreatePooledItem()
         {
             AudioSource source = Instantiate(_sfxAudioSourcePrefab, transform);
@@ -188,30 +125,6 @@ namespace DumyatRuntime
             source.Play();
 
             StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
-        }
-
-        public void PlayUISoundFx(AudioClip clip, float volume = 1f)
-        {
-            if (clip == null) return;
-            AudioSource source = AudioPool.Get();
-            source.spatialBlend = 0f; // 2D purely
-            source.clip = clip;
-            source.volume = volume;
-            source.outputAudioMixerGroup = _defaultMixerGroup;
-            source.Play();
-            StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
-        }
-
-        public void PlaySceneTransitionSound()
-        {
-            if (_sceneTransitionClips != null && _sceneTransitionClips.Length > 0)
-            {
-                AudioClip clip = _sceneTransitionClips[Random.Range(0, _sceneTransitionClips.Length)];
-                if (clip != null)
-                {
-                    PlayUISoundFx(clip, _transitionVolume);
-                }
-            }
         }
         #endregion
 

@@ -78,7 +78,7 @@ namespace DumyatRuntime
         [SerializeField] private bool _faceCamera = true;
 
         private IEventService _events;
-        private readonly CameraBillboard _billboard = new CameraBillboard();
+        private Camera _camera;
 
         // Prices the merchant has called out, in order. All but the last are shown struck through.
         private readonly List<float> _offers = new List<float>();
@@ -111,6 +111,7 @@ namespace DumyatRuntime
 
         private void OnEnable()
         {
+            _camera = Camera.main;
             HidePaper();   // stays hidden until the merchant starts speaking
 
             if (_events == null)
@@ -135,11 +136,13 @@ namespace DumyatRuntime
             _events.Unsubscribe<ScaleContentsChangedEvent>(HandleScaleChanged);
         }
 
-        // Note this card normally has _faceCamera OFF: nested in the SubtitlePanelWithSummary variant it
-        // simply inherits the subtitle panel's facing, so this only runs when the card is used alone.
         private void LateUpdate()
         {
-            if (_faceCamera) _billboard.Apply(transform);
+            if (!_faceCamera || _camera == null) return;
+
+            // Vector3.up keeps the paper upright so it never rolls with the player's head tilt in VR.
+            transform.rotation = Quaternion.LookRotation(
+                transform.position - _camera.transform.position, Vector3.up);
         }
 
         // Every merchant shares the channel — only react to our own merchant (or any, if unresolved).

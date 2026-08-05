@@ -22,7 +22,7 @@ namespace DumyatRuntime
             var bg = NotifUI.Image(Card, "BG", NotifUI.Rounded(14), NotifUI.Glass, true);
             NotifUI.Fill(bg.rectTransform);
 
-            var kicker = NotifUI.Label(Card, "Kicker", data.Kicker, 15f, NotifUI.Muted,
+            var kicker = NotifUI.Label(Card, "Kicker", "SALE COMPLETE", 15f, NotifUI.Muted,
                 TextAlignmentOptions.Center, bold: true);
             kicker.characterSpacing = 10f;
             NotifUI.Anchor(kicker.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),

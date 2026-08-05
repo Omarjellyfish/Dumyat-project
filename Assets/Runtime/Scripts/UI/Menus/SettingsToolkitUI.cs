@@ -31,11 +31,13 @@ namespace DumyatRuntime
         [SerializeField] private string _previewOff = "Subtitles are off. Merchants still speak.";
 
         private ISettingsService _settings;
+        private MenuCatalogSO _catalog;
 
         [Inject]
-        private void Inject(ISettingsService settings)
+        private void Inject(ISettingsService settings, MenuCatalogSO catalog)
         {
             _settings = settings;
+            _catalog = catalog;
         }
 
         /// <summary>Raised by the Back button. The owning menu decides what to show next.</summary>
@@ -58,6 +60,7 @@ namespace DumyatRuntime
         private Button[] _subtitleButtons;
 
         private Label _previewLabel;
+        private VisualElement _controlsImage;
 
         // Index of each slider matches the AudioChannel enum, which is contiguous from 0.
         private static readonly AudioChannel[] Channels =
@@ -197,9 +200,10 @@ namespace DumyatRuntime
             BindSubtitleSegment();
 
             _previewLabel = _root.Q<Label>("SubtitlePreviewLabel");
+            _controlsImage = _root.Q<VisualElement>("ControlsImage");
 
-            // The Controls page is static markup — rows of action and binding, authored in
-            // SettingsPage.uxml. Nothing here to bind until the player can actually rebind.
+            if (_controlsImage != null && _catalog != null && _catalog.ControlsImage != null)
+                _controlsImage.style.backgroundImage = new StyleBackground(_catalog.ControlsImage);
         }
 
         private void BindSliders()

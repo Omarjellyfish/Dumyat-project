@@ -27,6 +27,7 @@ namespace DumyatRuntime
         [SerializeField] private MerchantNegotiationLLM _negotiationLLM;
         [SerializeField] private NegotiationFlowController _flow;
         [SerializeField] private ScriptedSaleController _scriptedSale;
+        [SerializeField] private NotificationHudManager _notifications;
 
         public override void InstallBindings(ContainerBuilder containerBuilder)
         {
@@ -40,12 +41,7 @@ namespace DumyatRuntime
             Register<MerchantNegotiationLLM, IMerchantNegotiationService>(containerBuilder, _negotiationLLM);
             Register<NegotiationFlowController, INegotiationService>(containerBuilder, _flow);
             Register<ScriptedSaleController, IScriptedSaleService>(containerBuilder, _scriptedSale);
-
-            // INotificationService is deliberately NOT registered here any more. The HUD is now a root
-            // binding (see NotificationHudPresenter): quests progress in scenes this installer is not
-            // in, so a per-scene HUD meant they could not be announced there. Sale notifications keep
-            // working because the scene container falls through to the root one. Re-registering it
-            // here would put a second HUD in the same corner of the player's view.
+            Register<NotificationHudManager, INotificationService>(containerBuilder, _notifications);
         }
     }
 }
