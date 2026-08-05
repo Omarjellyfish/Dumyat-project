@@ -20,6 +20,12 @@ namespace DumyatRuntime
         [SerializeField] private float _driveDistancePerHit = 0.01f;
         [SerializeField] private float _minHitSpeed = 0.5f;
 
+        [Tooltip("Seconds this nail ignores further blows after one lands. A hammer held in VR rattles " +
+                 "against a nail rather than striking it cleanly, so the same swing can arrive as several " +
+                 "separate contacts. Long enough to swallow those, far shorter than the time it takes to " +
+                 "raise the hammer for a real second blow.")]
+        [SerializeField] private float _hitCooldown = 0.25f;
+
         [Header("Presentation")]
         [Tooltip("Look and timing preset shared by every reaction component on this nail. Each one " +
                  "can override it, but leaving them empty means the whole nail is retuned from here.")]
@@ -68,6 +74,7 @@ namespace DumyatRuntime
         private Vector3 _nailVisualStartLocalPosition;
         private int _currentHits;
         private bool _isDriven;
+        private float _nextHitTime;
 
         private void Awake()
         {
@@ -85,6 +92,13 @@ namespace DumyatRuntime
         {
             if (_isDriven) return;
             if (impactSpeed < _minHitSpeed) return;
+
+            // Guards the blow itself rather than the striker, so it holds however the hit arrives:
+            // a bounce the hammer reads as a genuine second contact, a second collider on the same
+            // swing, or some other tool calling Hit. Set before the refusal below so a nail that
+            // cannot be driven knocks once per swing instead of buzzing.
+            if (Time.time < _nextHitTime) return;
+            _nextHitTime = Time.time + Mathf.Max(0f, _hitCooldown);
 
             if (!IsAvailable)
             {
@@ -122,6 +136,11 @@ namespace DumyatRuntime
         {
             _currentHits = 0;
             _isDriven = false;
+
+            // Re-arms the cooldown as well: a nail is usually reset at the moment its group comes back
+            // into view, and the hammer that closed the panel may still be sitting where it will be.
+            // Without this it takes a blow from a hammer that was never swung at it.
+            _nextHitTime = Time.time + Mathf.Max(0f, _hitCooldown);
 
             if (_nailVisual != null)
                 _nailVisual.localPosition = _nailVisualStartLocalPosition;
