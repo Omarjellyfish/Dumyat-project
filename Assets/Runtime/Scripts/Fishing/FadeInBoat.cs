@@ -17,17 +17,66 @@ namespace DumyatRuntime
         [SerializeField] private Transform fatherFadeOutTarget;
         [SerializeField] private float fadeOutReachDistance = 0.5f;
 
+        [SerializeField] private Transform fadeOutTargetLand;
+        [SerializeField] private Transform fatherFadeOutTargetLand;
+
+
         [SerializeField] private Transform father;
         [SerializeField] private GameObject fishingRod;
         [SerializeField] private Transform fishingRodTransform;
         [SerializeField] private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable fishingRodInteractable;
 
+
         private CanvasGroup _fadeCanvasGroup;
         private bool _fadeOutTriggered;
         private bool _isFading;
+        private GameObject _movementController;
 
-        public async void StartTransition(Transform player)
+        private void ToggleMovement()
         {
+            // FindGameObjectWithTag can't find inactive objects, so cache the
+            // reference once while it's still active instead of re-finding it
+            // every call (which returned null after the first toggle disabled it).
+            if (_movementController == null)
+            {
+                _movementController = GameObject.FindGameObjectWithTag("Move");
+            }
+
+            if (_movementController == null)
+            {
+                Debug.LogWarning("[FadeInBoat] No GameObject tagged 'Move' was found in the scene.", this);
+                return;
+            }
+
+            _movementController.SetActive(!_movementController.activeSelf);
+        }
+
+        /// <summary>
+        /// Finds the player by the "Player" tag. Called fresh each time instead of
+        /// caching, so it stays correct even if the player object is swapped/respawned.
+        /// </summary>
+        private Transform FindPlayer()
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject == null)
+            {
+                Debug.LogWarning("[FadeInBoat] No GameObject tagged 'Player' was found in the scene.", this);
+                return null;
+            }
+
+            return playerObject.transform;
+        }
+
+        /// <summary>
+        /// Parameterless so it can be wired directly into a UI Button's OnClick().
+        /// Finds the player by tag instead of relying on a passed-in Transform.
+        /// </summary>
+        public async void StartTransition()
+        {
+            Transform player = FindPlayer();
+            if (player == null)
+                return;
+
             if (_isFading)
                 return;
 
@@ -38,13 +87,15 @@ namespace DumyatRuntime
             await FadeAsync(_fadeCanvasGroup.alpha, 1f, fadeInDuration);
 
             // Teleport player while the screen is black
-            if (player != null && fadeOutTarget != null)
+            if (fadeOutTarget != null)
             {
                 player.position = fadeOutTarget.position;
                 player.rotation = fadeOutTarget.rotation;
 
                 father.position = fatherFadeOutTarget.position;
                 father.rotation = fatherFadeOutTarget.rotation;
+
+                ToggleMovement();
 
                 if (!fishingRodInteractable.isSelected)
                 {
@@ -58,6 +109,41 @@ namespace DumyatRuntime
 
             _isFading = false;
         }
+
+        /// <summary>
+        /// Parameterless so it can be wired directly into a UI Button's OnClick().
+        /// Finds the player by tag instead of relying on a passed-in Transform.
+        /// </summary>
+        public async void StartTransitionToLand()
+        {
+            Transform player = FindPlayer();
+            if (player == null)
+                return;
+
+            if (_isFading)
+                return;
+
+            EnsureFadeCanvas();
+            _isFading = true;
+
+            ToggleMovement();
+
+            // Fade to black
+            await FadeAsync(_fadeCanvasGroup.alpha, 1f, fadeInDuration);
+
+            // Teleport player while the screen is black
+            player.position = fadeOutTargetLand.position;
+            player.rotation = fadeOutTargetLand.rotation;
+
+            father.position = fatherFadeOutTargetLand.position;
+            father.rotation = fatherFadeOutTargetLand.rotation;
+
+            // Fade back to gameplay
+            await FadeAsync(_fadeCanvasGroup.alpha, 0f, fadeOutDuration);
+
+            _isFading = false;
+        }
+
         private async Task FadeAsync(float from, float to, float duration)
         {
             float timer = 0f;
