@@ -35,6 +35,16 @@ namespace DumyatRuntime
                  "one persistent copy on launch, so no scene needs its own. Do NOT also place it in a scene.")]
         [SerializeField] private PauseMenuToolkitUI _pauseMenuPrefab;
 
+        [Tooltip("Notification HUD PREFAB (toast + medal views). Spawned once, on the first notification, " +
+                 "and kept across scene loads so every scene can raise one. Do NOT also place it in a scene.")]
+        [SerializeField] private NotificationHudManager _notificationHudPrefab;
+
+        [Header("Player")]
+        [Tooltip("XR Origin (XR Rig) PREFAB. Spawned by PlayerRigSpawner ONLY into scenes that do not " +
+                 "author their own rig, after the previous scene is gone — never alongside an existing " +
+                 "one. Scenes with a rig are left untouched.")]
+        [SerializeField] private GameObject _playerRigPrefab;
+
         [Header("Global MonoBehaviour Services (Prefabs)")]
         [Tooltip("Pooled positional SFX prefab. Will be instantiated on launch.")]
         [SerializeField] private SoundManager _soundManagerPrefab;
@@ -170,6 +180,37 @@ namespace DumyatRuntime
             // Persistent loading overlay. EAGER: it subscribes to SceneLoadBeginEvent, and nothing
             // ever resolves it by hand.
             containerBuilder.RegisterType(typeof(LoadingScreenPresenter), new[] { typeof(ILoadingScreenService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Notification HUD prefab, as an ASSET reference. NotificationHudPresenter instantiates it
+            // on first use; Reflex never touches it.
+            if (_notificationHudPrefab != null)
+                containerBuilder.RegisterValue(_notificationHudPrefab, new[] { typeof(NotificationHudManager) });
+            else
+                Debug.LogWarning("GameInstaller: Notification HUD prefab is not assigned; quest and sale " +
+                                 "notifications will not be shown.");
+
+            // The one persistent notification HUD, shared by every scene. LAZY: it must not spawn
+            // before a scene with a camera exists, and the first notification is a fine trigger.
+            containerBuilder.RegisterType(typeof(NotificationHudPresenter), new[] { typeof(INotificationService) },
+                Lifetime.Singleton, Resolution.Lazy);
+
+            // Quest progress toasts / completion medals. EAGER: it subscribes to the quest events, and
+            // nothing ever resolves it by hand.
+            containerBuilder.RegisterType(typeof(QuestNotificationPresenter), new[] { typeof(QuestNotificationPresenter) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // The XR rig prefab, as an ASSET reference. PlayerRigSpawner instantiates it; Reflex
+            // never touches it.
+            if (_playerRigPrefab != null)
+                containerBuilder.RegisterValue(_playerRigPrefab, new[] { typeof(GameObject) });
+            else
+                Debug.LogWarning("GameInstaller: Player Rig prefab is not assigned; scenes without their " +
+                                 "own XR Origin will load with no camera and no interactors.");
+
+            // Gives rigless scenes a rig on arrival. EAGER: it subscribes to SceneLoadCompleteEvent,
+            // and nothing ever resolves it by hand.
+            containerBuilder.RegisterType(typeof(PlayerRigSpawner), new[] { typeof(PlayerRigSpawner) },
                 Lifetime.Singleton, Resolution.Eager);
 
             // Pause menu prefab, registered as an ASSET reference for PauseMenuPresenter to spawn.

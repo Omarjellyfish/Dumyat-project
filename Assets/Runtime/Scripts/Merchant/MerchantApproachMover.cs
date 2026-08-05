@@ -38,8 +38,17 @@ namespace DumyatRuntime
         [Tooltip("Walk speed in metres per second.")]
         [SerializeField, Min(0.1f)] private float _walkSpeed = 1.4f;
 
-        [Tooltip("Turn speed while walking, in degrees per second.")]
-        [SerializeField, Min(10f)] private float _turnSpeed = 360f;
+        [Tooltip("Fastest the merchant may turn, in degrees per second. A cap, not the speed itself — " +
+                 "the turn eases within it (see Face Responsiveness).")]
+        [SerializeField, Min(10f)] private float _turnSpeed = 220f;
+
+        [Tooltip("How eagerly he eases round to face the player. Higher is snappier, lower is more " +
+                 "languid; around 5-8 reads as a person turning to greet someone.")]
+        [SerializeField, Min(0.5f)] private float _faceResponsiveness = 6f;
+
+        [Tooltip("Keep facing the player for as long as the conversation lasts, so he follows them if " +
+                 "they move around him rather than staring at where they used to be.")]
+        [SerializeField] private bool _keepFacingPlayerWhileEngaged = true;
 
         [Tooltip("Distance from the player at which the merchant stops and starts the conversation.")]
         [SerializeField, Min(0.5f)] private float _stopDistance = 1.7f;
@@ -48,7 +57,8 @@ namespace DumyatRuntime
         [SerializeField, Min(0.01f)] private float _homeArriveDistance = 0.2f;
 
         [Header("Animator States")]
-        [Tooltip("Animator to drive. Auto-resolved from this GameObject or its children when empty.")]
+        [Tooltip("Animator to drive. Leave empty to take it from the merchant's character body (the " +
+                 "'Character' child), so a swapped-in model is picked up automatically.")]
         [SerializeField] private Animator _animator;
 
         [Tooltip("Name of the looping walk state in the controller.")]
@@ -60,6 +70,12 @@ namespace DumyatRuntime
         [Header("Wiring")]
         [Tooltip("Coordinator that owns the negotiation lock. Auto-resolved from the scene when empty.")]
         [SerializeField, FormerlySerializedAs("_spawner")] private MerchantApproachCoordinator _coordinator;
+
+        private readonly AnimatorStateSwitcher _states = new AnimatorStateSwitcher();
+        private readonly YawTurner _turner = new YawTurner();
+
+        // Set while the merchant still has to ease back to the rotation he started the scene in.
+        private bool _settlingHome;
 
         private MerchantNPC _merchant;
         private NavMeshAgent _agent;
@@ -75,11 +91,13 @@ namespace DumyatRuntime
         private void Awake()
         {
             _merchant = GetComponent<MerchantNPC>();
-            if (_animator == null) _animator = GetComponentInChildren<Animator>();
             if (_coordinator == null) _coordinator = FindFirstObjectByType<MerchantApproachCoordinator>();
 
             // Rotate only the merchant's visual body, so siblings (the sell scale) don't turn with him.
             _facing = _merchant != null ? _merchant.CharacterRoot : transform;
+
+            // Same body carries the Animator, so a swapped-in character model brings its own.
+            _states.Resolve(this, _animator, _facing);
 
             _homePosition = transform.position;
             _homeRotation = _facing.rotation;
@@ -191,6 +209,20 @@ namespace DumyatRuntime
                 case State.WalkingHome:
                     UpdateWalkHome();
                     break;
+                case State.Engaged:
+                    // Turning to the player is a per-frame ease rather than a snap on arrival, and it
+                    // keeps tracking them for the whole conversation.
+                    if (_keepFacingPlayerWhileEngaged && _playerTarget != null)
+                        _turner.Step(_facing, _playerTarget.position, _faceResponsiveness, _turnSpeed,
+                                     Time.deltaTime);
+                    break;
+                case State.AtHome:
+                    // Ease back to the rotation he was authored with, instead of clicking round to it
+                    // the instant he arrives.
+                    if (_settlingHome &&
+                        _turner.StepTo(_facing, _homeRotation, _faceResponsiveness, _turnSpeed, Time.deltaTime))
+                        _settlingHome = false;
+                    break;
             }
         }
 
@@ -224,7 +256,8 @@ namespace DumyatRuntime
         private void EngageInPlace()
         {
             StopAgent();
-            if (_playerTarget != null) FaceToward(_playerTarget.position);
+            _settlingHome = false;
+            // No snap here — State.Engaged eases him round to the player each frame (see Update).
             _state = State.Engaged;
             EnsureAnimatorState(_idleState);
 
@@ -241,7 +274,7 @@ namespace DumyatRuntime
             if (HasArrivedHome(toHome))
             {
                 StopAgent();
-                _facing.rotation = _homeRotation;
+                _settlingHome = true;     // eased back to _homeRotation by the AtHome case in Update
                 _state = State.AtHome;
                 EnsureAnimatorState(_idleState);
                 return;
@@ -307,15 +340,12 @@ namespace DumyatRuntime
             FaceDirection(v);
         }
 
-        // Rotates ONLY the visual body toward a flat world direction, smoothly by default or instantly
-        // (e.g. snapping to face the player on arrival). The root stays put so siblings don't rotate.
-        private void FaceDirection(Vector3 flatDirection, bool instant = false)
+        // Eases ONLY the visual body toward a flat world direction. The root stays put so siblings — the
+        // sell scale, the subtitle panel — never rotate with him.
+        private void FaceDirection(Vector3 flatDirection)
         {
-            if (_facing == null || flatDirection.sqrMagnitude < 0.0001f) return;
-            Quaternion look = Quaternion.LookRotation(flatDirection.normalized, Vector3.up);
-            _facing.rotation = instant
-                ? look
-                : Quaternion.RotateTowards(_facing.rotation, look, _turnSpeed * Time.deltaTime);
+            if (_facing == null || !YawTurner.TryFlatLookDirection(flatDirection, out Quaternion look)) return;
+            _turner.StepTo(_facing, look, _faceResponsiveness, _turnSpeed, Time.deltaTime);
         }
 
         // Invoke target: the coordinator rejected the approach (busy / no fish) if this merchant never
@@ -344,7 +374,7 @@ namespace DumyatRuntime
             if (toHome.magnitude <= _homeArriveDistance)
             {
                 StopAgent();
-                _facing.rotation = _homeRotation;
+                _settlingHome = true;     // eased back to _homeRotation by the AtHome case in Update
                 _state = State.AtHome;
                 EnsureAnimatorState(_idleState);
                 return;
@@ -354,24 +384,11 @@ namespace DumyatRuntime
             DriveAgentTo(_homePosition, toHome);
         }
 
-        private void FaceToward(Vector3 worldPoint)
-        {
-            Vector3 flat = worldPoint - transform.position;
-            flat.y = 0f;
-            FaceDirection(flat, instant: true);
-        }
-
-        // Cross-fades to the named state unless the animator is already in (or blending to) it.
-        private void EnsureAnimatorState(string stateName)
-        {
-            if (_animator == null || string.IsNullOrEmpty(stateName)) return;
-
-            int hash = Animator.StringToHash(stateName);
-            if (!_animator.HasState(0, hash)) return;
-            if (_animator.GetCurrentAnimatorStateInfo(0).shortNameHash == hash) return;
-            if (_animator.IsInTransition(0) && _animator.GetNextAnimatorStateInfo(0).shortNameHash == hash) return;
-
-            _animator.CrossFadeInFixedTime(hash, 0.15f);
-        }
+        // Cross-fades to the named state, skipping if the Animator is already in (or blending to) it —
+        // which matters because this is called every walking frame. Every state is optional: a merchant
+        // model with no Walk state (the current ones only have Idle/Talk) still walks and trades, just
+        // without changing pose. See AnimatorStateSwitcher for the missing-state and null-controller
+        // handling, which MerchantAnimationDriver shares.
+        private void EnsureAnimatorState(string stateName) => _states.Play(stateName, 0.15f);
     }
 }

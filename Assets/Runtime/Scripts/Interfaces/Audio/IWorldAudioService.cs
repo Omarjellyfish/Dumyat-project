@@ -9,6 +9,8 @@ namespace DumyatRuntime
     public interface IWorldAudioService
     {
         void PlayMusic(AudioClip newClip, float fadeDuration = -1f);
+        void StopMusic(float fadeDuration = -1f);
         void PlayAmbient(AudioClip newClip, float fadeDuration = -1f);
+        void StopAmbient(float fadeDuration = -1f);
     }
 }
