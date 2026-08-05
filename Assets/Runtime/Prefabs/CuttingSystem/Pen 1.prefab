@@ -190,13 +190,13 @@ MonoBehaviour:
   _woodLayer:
     serializedVersion: 2
     m_Bits: 1073741824
-  _rayDistance: 0.05
+  _rayDistance: 0.02
   _rayBackOffset: 0.02
   _paintBrush: {fileID: 4057587704098017535}
   _lineDraw: {fileID: 1886754577400463337}
   _penColor: {r: 0, g: 0, b: 0, a: 1}
-  _brushSize: 0.012
-  _brushSizeLine: 0.012
+  _brushSize: 0.003
+  _brushSizeLine: 0.003
   _timeInterval: 0.01
   _maxStrokeUvGap: 0.15
   _freeDrawEnabled: 1
@@ -261,7 +261,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
@@ -348,7 +348,7 @@ MonoBehaviour:
   m_SnapToColliderVolume: 1
   m_ReinitializeDynamicAttachEverySingleGrab: 1
   m_AttachEaseInTime: 0.15
-  m_MovementType: 0
+  m_MovementType: 2
   m_PredictedVisualsTransform: {fileID: 0}
   m_VelocityDamping: 1
   m_VelocityScale: 1
@@ -458,6 +458,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: Pen
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!1 &7089041419396340366
 GameObject:
   m_ObjectHideFlags: 0

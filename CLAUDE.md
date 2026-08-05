@@ -147,6 +147,24 @@ Principles that matter more than the hex values:
 **VR sizing floor** (world-space panels): body text ≥ 26 px, headers ≥ 32 px, and any ray-clickable
 control ≥ 64 px tall — measured against a 900 × 620 panel. Below that it is unreadable in a headset.
 
+**The one sanctioned exception — "Workshop"**
+([WorkshopMenuStyles.uss](Assets/Runtime/UI%20Toolkit/styles/WorkshopMenuStyles.uss)). The carpentry
+menu's settings page lies **flat on the workbench** rather than floating in front of the player, and
+Delta's dark frosted glass reads there as a tablet left on the table. That page is re-skinned in the
+room's palette — bone `#F6E7CC` lettering, ember `#FFB347` accents, scored `#160C03` dividers. It has
+**no panel ground and no border at all**: the bench is the frame. Contrast lives where the data is
+instead — every row carrying a value is a branded strip (`rgba(26,15,6,0.42)` + ember outline) with
+its value punched into a pale `#C9C2B6` iron plate, and every loose string carries a `text-shadow`
+heavy enough to hold against grain. Because there is no card edge to respect, that document is
+**1450 × 680** rather than the Delta menus' 900 × 620 — about 1.6 × 0.75 m, stretched across the
+bench without covering it. Every rule is scoped under a `.workshop` class on the panel root, which is
+what lets it share `SettingsPage.uxml` and `SettingsToolkitUI` with the main and pause menus without
+touching either.
+Do not "fix" this back to Delta, and do not copy it to a panel that floats — it is specifically a
+treatment for UI lying on a surface. `text-shadow` IS valid USS (unlike `box-shadow`) and is what
+carries legibility over wood grain; `text-shadow: none` is not — the property needs two or three
+lengths plus a colour, so replace the shadow rather than clearing it.
+
 **UI Toolkit cannot do**: `box-shadow`, gradients, `backdrop-filter`, `text-transform`, `clip-path`,
 or `::before`/`::after`. The frosted effect is opacity only (it does **not** blur what is behind it),
 and uppercase strings must be authored uppercase in the UXML.
@@ -214,6 +232,36 @@ or changing code, prefer the option that keeps pieces decoupled and reusable:
   via `ISaveService`/`PlayerPersistence`, haptics via `IHapticService`). Extend the shared system
   rather than duplicating it.
 
+### Never write the same logic in two scripts — extract it
+
+**This is a hard rule, not a preference.** The moment the same behaviour is needed by a second
+component, it moves into one shared piece and BOTH call sites are changed to use it. Never copy a
+working block into a new script, and never leave an existing copy behind while adding a "correct"
+version next to it — that is how one fix becomes three files that silently disagree.
+
+Applies to logic, not to structure: two components both having an `OnEnable` that subscribes to an
+event is not duplication. Two components both computing *the same answer* is.
+
+- **Extract on the SECOND use, not the third.** If you are writing a second copy, stop and extract
+  first. Do not defer it; a `// TODO: share this later` never gets done and the copies drift.
+- **When you fix a bug, grep for its twins.** A bug that came from a copy exists in every copy. Fix
+  the shared version and delete the others in the same change — `Quaternion.LookRotation`,
+  `Camera.main`, and blendshape lookups have all been duplicated in this project and each one had to
+  be fixed more than once before it was extracted.
+- **Prefer a plain C# class over a base class or a MonoBehaviour.** A solver held as a field composes
+  freely and needs no scene or prefab change to adopt; inheritance forces a hierarchy on components
+  that have nothing else in common. `LazyFollowYaw` (the comfort-cone follow solver shared by
+  `LazyFollowAnchor` and `NotificationHudManager`) and `CameraBillboard` (world-space facing plus
+  `Camera.main` re-resolution, shared by `SubtitlePanel`, `SummaryCard`, `TutorialBillboard` and
+  `FloatingText`) are the pattern to copy. Static helpers are fine for pure functions with no state —
+  `PlayerSpawnPose`, `ArabicTextShaper`, `UiLanguage`.
+- **Put the "why" in the shared class, once.** The extracted piece is where the reasoning lives, so
+  the next person meets it exactly where it matters. `CameraBillboard` explains why `Camera.main` must
+  be re-resolved rather than cached; none of its four callers repeat that.
+- **Shared placement/UI primitives live in `UI/Placement/`**; shared per-domain helpers live beside
+  the feature that owns them. A shared piece with no obvious home is a sign the concern is not yet
+  clear — name the concern first, then place it.
+
 ## File architecture — decide where a script lives before you write it
 
 **Never drop a script into a folder root and move on.** Every new file needs a deliberate home, and
@@ -249,6 +297,7 @@ Current `Assets/Runtime/Scripts/UI/` layout — extend it, don't flatten it:
 | `Subtitles/` | `SubtitlePanel`, `PlayerCaptionPresenter` |
 | `Notifications/` | HUD manager + card views + data |
 | `FloatingText/` | Pooled world-space popups |
+| `NailMenu/` | The carpentry main menu: hittable nails, the hammer head, and the small per-channel impact reactions (`NailLabelDrive` colour, `NailLabelShake` position, `NailLabelPulse` scale, `NailLabelJolt` mesh, `NailImpactDust`, `NailImpactHaptics`). Look and timing come from a `NailLabelStyleSO` preset, so a different treatment is a second asset, not a second set of components. |
 | `Inventory/`, `Crafting/`, `Quests/`, `Achievements/` | Per-system panels |
 | `Sales/` | Merchant sale panel + summary card |
 | `Travel/`, `Consent/`, `Testing/` | Destination board, consent prompt, dev harnesses |
@@ -271,14 +320,26 @@ Current `Assets/Runtime/Scripts/UI/` layout — extend it, don't flatten it:
   checks are brittle and wrong; adjust the scoring context or thresholds instead of pattern-matching text.
 
 ## Gotchas
-- **Build Settings — `MainMenu_UI` is referenced but not enabled.** Six scenes are enabled:
-  `Testing_MainMenu` (index 0, so a player build boots into the **legacy** uGUI nail menu),
-  `First_room`, `carpentar_room`, `El_manara`, `Shipyard`, `ToBuild_EzbetAlBourg`. Every scene the
-  `TravelDestination` assets name is enabled, but `MenuCatalog._mainMenuSceneName` is `MainMenu_UI`,
-  whose scene is in the list with `enabled: 0` — so `GameSessionService.ExitToMainMenu()` throws in a
-  player build. That scene also contains no project scripts; the UI Toolkit menu lives in
-  `Assets/Runtime/Prefabs/UI/MainMenuUIDocument.prefab` and is not placed in any scene yet.
-  (`carpentar_room.unity` does exist — an older note here claiming otherwise was wrong.)
+- **Build Settings — `Testing_MainMenu` is the main menu.** Six scenes are enabled:
+  `Testing_MainMenu` (index 0, the carpentry **nail menu** the player boots into), `First_room`,
+  `carpentar_room`, `El_manara`, `Shipyard`, `ToBuild_EzbetAlBourg`. Every scene the
+  `TravelDestination` assets name is enabled. `MenuCatalog._mainMenuSceneName` now names
+  `Testing_MainMenu`; it used to name `MainMenu_UI`, whose scene is in the list with `enabled: 0`, so
+  `GameSessionService.ExitToMainMenu()` threw in a player build **and** the menu scene was never
+  excluded from resume targets — Continue pointed back at the menu itself. `MainMenu_UI`
+  (`Assets/Scenes/DemoScenes/`) does contain the UI Toolkit menu via the
+  `Assets/Runtime/Prefabs/UI/MainMenuUIDocument.prefab` instance, and is kept as the panel-based
+  alternative; it is not the shipping menu. (`carpentar_room.unity` does exist — an older note here
+  claiming otherwise was wrong.)
+- **The Controls page is a hand-placed diagram, not a layout.** `SettingsPage.uxml` draws two
+  controllers from plain elements (a lead is a 2 px-tall `VisualElement` — UI Toolkit has no line
+  primitive). Every offset is absolute inside a **fixed 524 × 230** box, so it is **not responsive**:
+  it is sized to the smallest panel that instances the page — the Delta menus' Controls page measures
+  545 × 447 — and the carpentry bench scales the whole box by 1.75 rather than re-laying it out.
+  Resize the box and every lead must be re-measured. Only three parts per hand can carry a label:
+  pins are ~36 px tall, so anything closer than 44 px collides (which is why the menu button is drawn
+  but named in the footnote). There is **no controls image** — `MenuCatalogSO._controlsImage` was
+  never assigned and the binding has been removed.
 - When editing, **match the target file's existing namespace** — nearly all runtime code (including
   `EventBus`, `IGameEvent`, and the `Events/` structs) is `DumyatRuntime`.
 - Never edit `Library/` or `Assets/Samples/` — generated / third-party.

@@ -44,6 +44,14 @@ namespace DumyatRuntime
         private const string StabilizationFlagField = "m_InitializedStabilizationOrigin";
         private const string StabilizationAnchorField = "m_StabilizationAnchor";
 
+        /// <summary>
+        /// How far the smoothed cast origin may sit from the hand before it is treated as left behind by
+        /// a teleport rather than merely lagging. Half a metre is far beyond anything the easing produces
+        /// from real hand movement — a hand would have to cross that in one frame, roughly 40 m/s — and
+        /// far below the distance any scene arrival or teleport hop moves the rig.
+        /// </summary>
+        private const float TeleportSnapDistance = 0.5f;
+
         private NearFarInteractor _interactor;
         private CurveInteractionCaster _farCaster;
 
@@ -83,6 +91,37 @@ namespace DumyatRuntime
 
             RepairAttachAnchor();
             RepairStabilizationAnchor();
+            SnapStabilizationAnchorAfterTeleport();
+        }
+
+        /// <summary>
+        /// Re-seats the smoothed cast origin on the hand after the rig has been MOVED rather than walked.
+        ///
+        /// The far ray is not cast from the controller — it is cast from a "Stabilization Cast Origin"
+        /// that eases toward the controller to take the jitter out of the ray. Easing is the whole point,
+        /// and it is also the bug: teleporting, or arriving in a new scene, moves the rig in a single
+        /// jump, and the smoothed origin is left behind at the world position the player used to be
+        /// standing. The curve is then drawn from there to the hand, which reads in the headset as
+        /// spawning with a twisted arc locked onto some arbitrary object across the room. It untangles
+        /// itself only as the smoothing crawls back, and not at all if it is never driven.
+        ///
+        /// <see cref="RepairStabilizationAnchor"/> cannot catch this: its guard is a null check, and this
+        /// anchor is alive — merely in the wrong place.
+        ///
+        /// The test is a distance no real hand movement can produce in one frame, the same reasoning as
+        /// <see cref="LazyFollowAnchor.SnapIfTeleported"/>. Below it, the easing is left completely alone
+        /// so the stabilisation it exists for still works.
+        /// </summary>
+        private void SnapStabilizationAnchorAfterTeleport()
+        {
+            if (_anchorField == null || _farCaster == null) return;
+            if (!(_anchorField.GetValue(_farCaster) is Transform anchor) || anchor == null) return;
+
+            Transform hand = _farCaster.transform;
+            if ((anchor.position - hand.position).sqrMagnitude < TeleportSnapDistance * TeleportSnapDistance)
+                return;
+
+            anchor.SetPositionAndRotation(hand.position, hand.rotation);
         }
 
         /// <summary>

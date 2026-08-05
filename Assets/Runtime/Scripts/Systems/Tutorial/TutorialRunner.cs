@@ -35,6 +35,7 @@ namespace DumyatRuntime
         private IHapticService _hapticService;
         private TutorialService _tutorialService;
         private ISoundService _soundService;
+        private ISceneLoadService _sceneLoadService;
 
         private TutorialSequenceSO _activeSequence;
         private int _currentStepIndex;
@@ -74,13 +75,15 @@ namespace DumyatRuntime
         }
 
         [Inject]
-        private void Inject(IEventService eventService, IHapticService hapticService, ITutorialService tutorialService, ISoundService soundService)
+        private void Inject(IEventService eventService, IHapticService hapticService, ITutorialService tutorialService,
+                            ISoundService soundService, ISceneLoadService sceneLoadService)
         {
             _eventService = eventService;
             _hapticService = hapticService;
             // Cache the concrete type for internal callback
             _tutorialService = tutorialService as TutorialService;
             _soundService = soundService;
+            _sceneLoadService = sceneLoadService;
         }
 
         private void Start()
@@ -99,10 +102,43 @@ namespace DumyatRuntime
                                ?? gameObject.AddComponent<TutorialHighlighter>();
             }
 
-            if (_autoStartSequence != null && _tutorialService != null)
+            if (_autoStartSequence == null || _tutorialService == null) return;
+
+            // A scene entered by TRAVEL has not placed the player yet. FadeTransitionHandler and
+            // PlayerRigSpawner both position the rig on SceneLoadCompleteEvent, which SceneLoadService
+            // publishes AFTER every new-scene Start has run — so for at least one frame (and one
+            // physics tick) the rig is still standing at its DEPARTURE scene's world coordinates.
+            //
+            // Arming a ZoneEnter step here therefore tests it against those stale coordinates. That is
+            // why arriving in the workshop from First_room skipped straight to the second tip while
+            // arriving by bus did not: First_room's interior happens to map inside carpentar_room's
+            // WorkshopZone box, so the brand-new trigger reported an overlap the instant it existed.
+            // The bus stops sit far outside it, so the same code looked correct from there.
+            //
+            // Waiting for the placement makes every route behave the same, in every scene.
+            if (_sceneLoadService != null && _sceneLoadService.IsLoading)
             {
-                _tutorialService.StartTutorial(_autoStartSequence);
+                _eventService.Subscribe<SceneLoadCompleteEvent>(HandlePlayerPlaced);
+                return;
             }
+
+            _tutorialService.StartTutorial(_autoStartSequence);
+        }
+
+        // Opening a scene directly in the editor never goes through a load, so that path starts above
+        // and this one only ever runs for a travelled-into scene.
+        private void HandlePlayerPlaced(SceneLoadCompleteEvent evt)
+        {
+            _eventService.Unsubscribe<SceneLoadCompleteEvent>(HandlePlayerPlaced);
+            StartCoroutine(StartWhenPhysicsSettled());
+        }
+
+        // One fixed step after the teleport, so the physics engine has flushed the exit/enter
+        // bookkeeping for the rig's jump before any zone sensor is armed against it.
+        private IEnumerator StartWhenPhysicsSettled()
+        {
+            yield return new WaitForFixedUpdate();
+            _tutorialService?.StartTutorial(_autoStartSequence);
         }
 
         /// <summary>Begin running a tutorial sequence. Called by <see cref="TutorialService"/>.</summary>
@@ -450,21 +486,31 @@ namespace DumyatRuntime
             // Layer 3. Skipped when custom art is assigned — the prefab loop below covers it.
             if (_highlightPrefab == null) _highlighter?.Apply(step);
 
+            // HighlightIds is the ONLY source of highlight targets. PrimaryAnchorId deliberately is
+            // not one: it positions the instruction CARD, and it is routinely set to 'Hands' or
+            // 'Player' for steps that are pure narration ("Thumb the X button to open the menu").
+            // Treating it as a highlight target planted a 2.6 m beacon through the player's own
+            // controller on twelve steps — the "highlight in a meaningless place". A step that names
+            // no object in HighlightIds now correctly shows no highlight at all.
             List<TutorialAnchor> anchorsToHighlight = new List<TutorialAnchor>();
-
-            if (step.HighlightPrimaryAnchor && !string.IsNullOrEmpty(step.PrimaryAnchorId))
-            {
-                var primaryAnchors = TutorialAnchorRegistry.GetAllAnchors(step.PrimaryAnchorId);
-                if (primaryAnchors != null) anchorsToHighlight.AddRange(primaryAnchors);
-            }
 
             if (step.HighlightIds != null)
             {
                 foreach (var id in step.HighlightIds)
                 {
                     if (string.IsNullOrEmpty(id)) continue;
+
                     var anchors = TutorialAnchorRegistry.GetAllAnchors(id);
-                    if (anchors != null) anchorsToHighlight.AddRange(anchors);
+                    if (anchors == null || anchors.Count == 0)
+                    {
+                        // Named but absent is an authoring mistake, not a design choice — say which
+                        // step, and pass the asset as context so the console entry selects it.
+                        Debug.LogWarning($"[TutorialRunner] Step '{step.name}' asks to highlight '{id}', but " +
+                                         "no TutorialAnchor with that id is active in scene " +
+                                         $"'{UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}'.", step);
+                        continue;
+                    }
+                    anchorsToHighlight.AddRange(anchors);
                 }
             }
 
@@ -539,6 +585,10 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
+            // The deferred auto-start may still be waiting on the load; dropping it here stops a
+            // destroyed runner from being handed a scene-load it can no longer act on.
+            _eventService?.Unsubscribe<SceneLoadCompleteEvent>(HandlePlayerPlaced);
+
             if (_isRunning)
             {
                 CleanupCurrentStep();

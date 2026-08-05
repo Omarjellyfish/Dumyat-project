@@ -13,5 +13,7 @@ namespace DumyatRuntime
         void PlayRandomSoundFxAtPosition(AudioClip[] clips, Transform targetTransform, float volume, AudioMixerGroup mixerGroup = null);
         void PlayLoopingSoundFxAtPosition(AudioClip clip, Transform targetTransform, float volume);
         void PlayVoiceLine(AudioClip clip, Transform targetTransform, float volume, AudioMixerGroup mixerGroup = null);
+        void PlayUISoundFx(AudioClip clip, float volume = 1f);
+        void PlaySceneTransitionSound();
     }
 }
