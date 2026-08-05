@@ -86,9 +86,10 @@ namespace DumyatRuntime
             // show up as "why is that one glowing harder".
             var ids = new HashSet<string>();
 
-            if (step.HighlightPrimaryAnchor && !string.IsNullOrEmpty(step.PrimaryAnchorId))
-                ids.Add(step.PrimaryAnchorId);
-
+            // PrimaryAnchorId is NOT a highlight target — it positions the instruction card, and is
+            // commonly 'Hands' or 'Player' on steps that describe a button rather than an object.
+            // Only what the author explicitly listed in HighlightIds gets a highlight, so a step that
+            // names nothing highlights nothing. See TutorialRunner.ApplyHighlights for the full note.
             if (step.HighlightIds != null)
             {
                 foreach (string id in step.HighlightIds)

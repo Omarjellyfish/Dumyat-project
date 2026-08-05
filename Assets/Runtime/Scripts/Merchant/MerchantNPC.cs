@@ -41,10 +41,24 @@ namespace DumyatRuntime
         public ISellScale SellScale => _sellScale;
 
         /// <summary>
-        /// The transform that carries the merchant's facing rotation (his visual body), so siblings like
-        /// the sell scale stay put when he turns to face the player. Never null — falls back to the root.
+        /// The transform that carries the merchant's facing rotation and his Animator — his visual body —
+        /// so siblings like the sell scale stay put when he turns to face the player. Never null; falls
+        /// back to the root if the rig has no 'Character' child.
+        ///
+        /// Resolved ON FIRST ACCESS rather than in Awake. Awake would be a race: MerchantApproachMover
+        /// and MerchantAnimationDriver both read this from their OWN Awake, and Unity does not order
+        /// Awake between components of one GameObject — so whoever ran first could silently get the root
+        /// instead of the character, rotating the sell scale with the merchant and hunting for an
+        /// Animator in the wrong place.
         /// </summary>
-        public Transform CharacterRoot => _characterRoot != null ? _characterRoot : transform;
+        public Transform CharacterRoot
+        {
+            get
+            {
+                if (_characterRoot == null) ResolveCharacterRoot();
+                return _characterRoot;
+            }
+        }
 
         private int _conversationCount;
 
@@ -81,23 +95,6 @@ namespace DumyatRuntime
             // Fall back to a scale nested under this merchant if the field was left unassigned.
             if (_sellScale == null) _sellScale = GetComponentInChildren<FishSellScale>(true);
 
-            // Rotate only the visual body when turning, so siblings (the sell scale) don't spin with him.
-            // 'Character' is nested under the rig, not a direct child, so search all descendants for it.
-            if (_characterRoot == null)
-            {
-                foreach (Transform t in GetComponentsInChildren<Transform>(true))
-                {
-                    if (t.name == "Character") { _characterRoot = t; break; }
-                }
-                if (_characterRoot == null)
-                {
-                    _characterRoot = transform;
-                    Debug.LogWarning($"MerchantNPC '{name}': no 'Character' child found — facing rotation " +
-                                     "will fall back to the root (the sell scale will rotate with him). " +
-                                     "Assign Character Root explicitly.");
-                }
-            }
-
             // The merchant's voice is defined by its config archetype, and stays fixed for this NPC's
             // lifetime so its voice never changes between TTS lines.
             AssignedVoiceId = _config != null ? _config.VoiceId : null;
@@ -109,6 +106,24 @@ namespace DumyatRuntime
             else if (string.IsNullOrWhiteSpace(AssignedVoiceId))
                 Debug.LogWarning($"MerchantNPC '{name}' (config '{_config.MerchantName}'): MerchantConfig " +
                                  "has no ElevenLabs VoiceId; this merchant will have no voice.");
+        }
+
+        // Finds the visual body: a descendant named 'Character' (it is nested under the rig, not always a
+        // direct child), else the root. Cached into _characterRoot, so this runs once.
+        private void ResolveCharacterRoot()
+        {
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name != "Character") continue;
+                _characterRoot = t;
+                return;
+            }
+
+            _characterRoot = transform;
+            Debug.LogWarning($"MerchantNPC '{name}': no 'Character' child found — facing rotation will " +
+                             "fall back to the root (the sell scale will rotate with him) and the Animator " +
+                             "will be searched for across the whole rig. Assign Character Root explicitly.",
+                             this);
         }
 
         /// <summary>

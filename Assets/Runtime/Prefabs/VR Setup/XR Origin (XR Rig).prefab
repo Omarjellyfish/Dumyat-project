@@ -4146,6 +4146,7 @@ GameObject:
   - component: {fileID: 4172830596611238475}
   - component: {fileID: 1414386326929583998}
   - component: {fileID: 120540875971191045}
+  - component: {fileID: 1497774923093033577}
   m_Layer: 2
   m_Name: XR Origin (XR Rig)
   m_TagString: Player
@@ -4365,6 +4366,29 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 88d2d6a68fc1dde45b7995f44b390820, type: 3}
   _stepDistance: 1.2
   _volume: 0.5
+--- !u!114 &1497774923093033577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3309285002930837712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97e3df9fa6b500b49a394cdcedbe0d8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlayerFallGuard
+  _fallDistance: 3
+  _killPlaneY: -25
+  _groundProbeDistance: 1.2
+  _groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _safePointInterval: 0.75
+  _recoveryLift: 0.05
+  _fadeOutSeconds: 0.12
+  _fadeInSeconds: 0.25
+  _recoveryCooldown: 1
 --- !u!1 &3322255530926025890
 GameObject:
   m_ObjectHideFlags: 0

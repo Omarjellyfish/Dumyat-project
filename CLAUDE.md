@@ -214,6 +214,36 @@ or changing code, prefer the option that keeps pieces decoupled and reusable:
   via `ISaveService`/`PlayerPersistence`, haptics via `IHapticService`). Extend the shared system
   rather than duplicating it.
 
+### Never write the same logic in two scripts — extract it
+
+**This is a hard rule, not a preference.** The moment the same behaviour is needed by a second
+component, it moves into one shared piece and BOTH call sites are changed to use it. Never copy a
+working block into a new script, and never leave an existing copy behind while adding a "correct"
+version next to it — that is how one fix becomes three files that silently disagree.
+
+Applies to logic, not to structure: two components both having an `OnEnable` that subscribes to an
+event is not duplication. Two components both computing *the same answer* is.
+
+- **Extract on the SECOND use, not the third.** If you are writing a second copy, stop and extract
+  first. Do not defer it; a `// TODO: share this later` never gets done and the copies drift.
+- **When you fix a bug, grep for its twins.** A bug that came from a copy exists in every copy. Fix
+  the shared version and delete the others in the same change — `Quaternion.LookRotation`,
+  `Camera.main`, and blendshape lookups have all been duplicated in this project and each one had to
+  be fixed more than once before it was extracted.
+- **Prefer a plain C# class over a base class or a MonoBehaviour.** A solver held as a field composes
+  freely and needs no scene or prefab change to adopt; inheritance forces a hierarchy on components
+  that have nothing else in common. `LazyFollowYaw` (the comfort-cone follow solver shared by
+  `LazyFollowAnchor` and `NotificationHudManager`) and `CameraBillboard` (world-space facing plus
+  `Camera.main` re-resolution, shared by `SubtitlePanel`, `SummaryCard`, `TutorialBillboard` and
+  `FloatingText`) are the pattern to copy. Static helpers are fine for pure functions with no state —
+  `PlayerSpawnPose`, `ArabicTextShaper`, `UiLanguage`.
+- **Put the "why" in the shared class, once.** The extracted piece is where the reasoning lives, so
+  the next person meets it exactly where it matters. `CameraBillboard` explains why `Camera.main` must
+  be re-resolved rather than cached; none of its four callers repeat that.
+- **Shared placement/UI primitives live in `UI/Placement/`**; shared per-domain helpers live beside
+  the feature that owns them. A shared piece with no obvious home is a sign the concern is not yet
+  clear — name the concern first, then place it.
+
 ## File architecture — decide where a script lives before you write it
 
 **Never drop a script into a folder root and move on.** Every new file needs a deliberate home, and

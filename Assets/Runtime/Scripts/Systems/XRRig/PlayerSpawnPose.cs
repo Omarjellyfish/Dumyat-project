@@ -40,5 +40,16 @@ namespace DumyatRuntime
         /// <summary>Convenience overload for the common "I have the marker's transform" case.</summary>
         public static Quaternion UprightFacing(Transform marker) =>
             marker == null ? Quaternion.identity : UprightFacing(marker.rotation);
+
+        // NOTE ON SPAWN HEIGHT — why placement does NOT auto-ground the rig to the floor.
+        //
+        // An ArrivalPoint authored above the floor drops the player on arrival, and the obvious fix is
+        // to raycast down at spawn time and snap the rig to whatever is beneath. That was tried and
+        // reverted, because "whatever is beneath" is not the floor: in First_room the spawn area is
+        // blanketed by ST_Steel_Table's collider, whose top sits at y = 0.418, so grounding stood the
+        // arriving player on a table. Every scene here has furniture, rugs and crates over its floor.
+        //
+        // Spawn height is therefore authored, not computed — the marker's Y is the answer, and a wrong
+        // one is a scene fix. PlayerFallGuard is the safety net for the cases this leaves open.
     }
 }
