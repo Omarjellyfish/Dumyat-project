@@ -300,7 +300,43 @@ namespace DumyatRuntime
                 }
             }
 
-            // Grant reward if one is assigned.
+            GrantRewards(def);
+        }
+
+        /// <summary>
+        /// Pays out everything the definition promises: the inline money and item lines, then the
+        /// optional scripted reward asset. All three are independent and optional, so a quest can
+        /// hand out cash, goods, both, or nothing.
+        /// </summary>
+        private void GrantRewards(QuestDefinitionSO def)
+        {
+            if (def.moneyReward > 0)
+            {
+                if (_rewardContext.WalletService != null)
+                    _rewardContext.WalletService.Add(def.moneyReward, $"Quest reward: {def.displayName}");
+                else
+                    Debug.LogWarning($"[QuestService] '{def.displayName}' promises {def.moneyReward} EGP but " +
+                                     "no wallet service is registered — the money was not paid.");
+            }
+
+            if (def.itemRewards != null)
+            {
+                for (int i = 0; i < def.itemRewards.Count; i++)
+                {
+                    QuestItemReward line = def.itemRewards[i];
+                    if (!line.IsValid) continue;
+
+                    if (_rewardContext.InventoryService == null)
+                    {
+                        Debug.LogWarning($"[QuestService] '{def.displayName}' promises items but no inventory " +
+                                         "service is registered — they were not granted.");
+                        break;
+                    }
+
+                    _rewardContext.InventoryService.AddItemToInventory(line.item.ItemID, line.EffectiveQuantity);
+                }
+            }
+
             if (def.reward != null)
             {
                 def.reward.GrantReward(_rewardContext);
