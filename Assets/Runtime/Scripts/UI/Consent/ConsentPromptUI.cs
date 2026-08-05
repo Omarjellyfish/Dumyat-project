@@ -31,6 +31,9 @@ namespace DumyatRuntime
                  "merchant approach instead of mid-negotiation.")]
         [SerializeField] private bool _promptOnStartWhenNotAsked = true;
 
+        [Tooltip("Placement solver on this GameObject. Auto-resolved if empty.")]
+        [SerializeField] private LazyFollowAnchor _followAnchor;
+
         // Injected consent service (replaces the former _consent).
         private IConsentService _consent;
 
@@ -47,6 +50,7 @@ namespace DumyatRuntime
         private void Awake()
         {
             _document = GetComponent<UIDocument>();
+            if (_followAnchor == null) _followAnchor = GetComponent<LazyFollowAnchor>();
         }
 
         private void OnEnable()
@@ -120,6 +124,12 @@ namespace DumyatRuntime
         public void Show()
         {
             if (_panel == null) return;
+
+            // Showing the prompt only flips a display style — the GameObject itself never disables, so
+            // LazyFollowAnchor's OnEnable re-anchor does not fire on the second and later shows. Without
+            // this the panel reappears at whatever world yaw it was left at, which after a scene load is
+            // wherever the previous scene's camera happened to be looking.
+            if (_followAnchor != null) _followAnchor.Reanchor();
 
             // Previously-declined players see their choice reflected; first-timers default to on.
             if (_consent != null)

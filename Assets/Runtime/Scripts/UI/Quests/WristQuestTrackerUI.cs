@@ -12,23 +12,28 @@ namespace DumyatRuntime
 
         private IQuestService _questService;
         private IEventService _eventService;
-        
+        private ISettingsService _settings;
+
+        private VisualElement _root;
         private VisualElement _listContainer;
+
+        private bool Arabic => UiLanguage.IsArabic(_settings);
         private Dictionary<string, VisualElement> _activeQuestElements = new Dictionary<string, VisualElement>();
 
         [Inject]
-        public void Construct(IQuestService questService, IEventService eventService)
+        public void Construct(IQuestService questService, IEventService eventService, ISettingsService settings)
         {
             _questService = questService;
             _eventService = eventService;
+            _settings = settings;
         }
 
         private void OnEnable()
         {
-            var root = GetComponent<UIDocument>().rootVisualElement;
-            if (root == null) return;
+            _root = GetComponent<UIDocument>().rootVisualElement;
+            if (_root == null) return;
 
-            _listContainer = root.Q<VisualElement>("QuestListContainer");
+            _listContainer = _root.Q<VisualElement>("QuestListContainer");
 
             if (_questService != null && _eventService != null)
             {
@@ -47,6 +52,7 @@ namespace DumyatRuntime
             _eventService.Subscribe<QuestActivatedEvent>(OnQuestActivated);
             _eventService.Subscribe<QuestProgressedEvent>(OnQuestProgressed);
             _eventService.Subscribe<QuestCompletedEvent>(OnQuestCompleted);
+            _eventService.Subscribe<LanguageChangedEvent>(OnLanguageChanged);
         }
 
         private void UnsubscribeFromEvents()
@@ -56,8 +62,13 @@ namespace DumyatRuntime
                 _eventService.Unsubscribe<QuestActivatedEvent>(OnQuestActivated);
                 _eventService.Unsubscribe<QuestProgressedEvent>(OnQuestProgressed);
                 _eventService.Unsubscribe<QuestCompletedEvent>(OnQuestCompleted);
+                _eventService.Unsubscribe<LanguageChangedEvent>(OnLanguageChanged);
             }
         }
+
+        // Rebuilt rather than patched in place: the rows are template instances, so re-running the
+        // build is both simpler and the only way the Arabic text generator gets reapplied.
+        private void OnLanguageChanged(LanguageChangedEvent evt) => InitializeList();
 
         private void InitializeList()
         {
@@ -83,7 +94,7 @@ namespace DumyatRuntime
             var progressLabel = container.Q<Label>("ProgressLabel");
             var progressBar = container.Q<ProgressBar>("ProgressBar");
 
-            titleLabel.text = def.displayName;
+            titleLabel.text = def.DisplayNameFor(Arabic);
             
             int currentProgress = _questService.GetProgress(def.questID);
             progressLabel.text = $"{currentProgress}/{def.targetCount}";
@@ -93,6 +104,8 @@ namespace DumyatRuntime
 
             _listContainer.Add(itemInstance);
             _activeQuestElements.Add(def.questID, itemInstance);
+
+            UiLanguage.ApplyScript(_root, Arabic);
         }
 
         private void OnQuestActivated(QuestActivatedEvent evt)

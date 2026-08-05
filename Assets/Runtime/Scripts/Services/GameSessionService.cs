@@ -22,6 +22,7 @@ namespace DumyatRuntime
         private readonly ISceneLoadService _sceneLoad;
         private readonly IGameStateService _gameState;
         private readonly IEventService _eventService;
+        private readonly IFadeTransitionService _fadeTransition;
         private readonly MenuCatalogSO _catalog;
 
         public GameSessionService(
@@ -29,12 +30,14 @@ namespace DumyatRuntime
             ISceneLoadService sceneLoad,
             IGameStateService gameState,
             IEventService eventService,
+            IFadeTransitionService fadeTransition,
             MenuCatalogSO catalog)
         {
             _save = save;
             _sceneLoad = sceneLoad;
             _gameState = gameState;
             _eventService = eventService;
+            _fadeTransition = fadeTransition;
             _catalog = catalog;
 
             if (_catalog == null)
@@ -55,12 +58,27 @@ namespace DumyatRuntime
 
         private SessionSaveData Session => _save?.CurrentSaveData?.sessionData;
 
+        /// <summary>
+        /// True when there is somewhere worth going back to.
+        ///
+        /// The recorded scene is re-checked against the catalog rather than trusted, because a save
+        /// outlives the rules that wrote it. A scene that was resumable when the stamp was written
+        /// and has since been excluded — or was recorded while the catalog named a DIFFERENT scene
+        /// as the main menu — would otherwise resume the player into the menu they are standing in.
+        /// Re-asking the current rules lets a stale target heal itself instead of needing the save
+        /// wiped by hand.
+        /// </summary>
         public bool HasSave
         {
             get
             {
                 SessionSaveData session = Session;
-                return session != null && session.hasSave && !string.IsNullOrEmpty(session.lastSceneName);
+
+                return session != null
+                       && session.hasSave
+                       && !string.IsNullOrEmpty(session.lastSceneName)
+                       && _catalog != null
+                       && _catalog.IsResumable(session.lastSceneName);
             }
         }
 
@@ -78,7 +96,7 @@ namespace DumyatRuntime
             // the pause menu, and a scene that starts frozen looks like a hang.
             _gameState?.SetState(GameState.FreeRoaming);
 
-            _sceneLoad.LoadScene(_catalog.NewGameSceneName);
+            EnterScene(_catalog.NewGameSceneName);
         }
 
         public void Continue()
@@ -92,8 +110,23 @@ namespace DumyatRuntime
             }
 
             _gameState?.SetState(GameState.FreeRoaming);
-            _sceneLoad.LoadScene(ResumeSceneName);
+            EnterScene(ResumeSceneName);
         }
+
+        /// <summary>
+        /// Loads a gameplay scene, deliberately WITHOUT carrying the player across.
+        ///
+        /// Travelling by bus does carry the rig (see <see cref="FadeTransitionHandler"/>), and it is
+        /// tempting to reuse that here so scenes with no rig of their own still get one. Doing so is
+        /// a trap: <c>LoadSceneMode.Single</c> wakes the new scene before destroying the old one, so
+        /// a carried rig briefly coexists with the destination's own rig, and XRI's global XR Origin
+        /// lookup lets the destination's interactors bind their runtime anchors to the wrong one.
+        /// Whichever rig is disposed of afterwards takes the other's anchors with it.
+        ///
+        /// <see cref="PlayerRigSpawner"/> covers the rigless scenes instead, spawning after the old
+        /// scene is already gone — so there is never a moment with two rigs alive.
+        /// </summary>
+        private void EnterScene(string sceneName) => _sceneLoad.LoadScene(sceneName);
 
         public void ExitToMainMenu()
         {
@@ -134,6 +167,15 @@ namespace DumyatRuntime
             if (_sceneLoad.IsLoading)
             {
                 Debug.LogWarning($"{nameof(GameSessionService)}: ignoring a menu action — a scene load is already running.");
+                return false;
+            }
+
+            // A travel transition can be in flight without ISceneLoadService reporting a load yet:
+            // StartTransition reparents the player first. Pressing Continue in that window would leave
+            // the handler holding a stale player reference for a scene it is no longer arriving in.
+            if (_fadeTransition != null && _fadeTransition.IsTransitioning)
+            {
+                Debug.LogWarning($"{nameof(GameSessionService)}: ignoring a menu action — a travel transition is already running.");
                 return false;
             }
 

@@ -105,11 +105,90 @@
                 </ui:VisualElement>
 
                 <!-- ========================================================= CONTROLS -->
-                <!-- View only: the player cannot rebind. The image comes from MenuCatalogSO so it
-                     is data a designer can swap, not something baked into USS. -->
+                <!-- View only: the player cannot rebind.
+
+                     This used to be a single image sourced from MenuCatalogSO. That image was never
+                     assigned, so the tab opened on an empty box — and an image is the wrong shape
+                     for this anyway: it cannot be translated, it cannot be read at a glance at an
+                     angle, and every edit means going back to an image editor.
+
+                     Drawn instead, from plain elements — two controllers, a ring for each stick, a
+                     nub for each trigger, and leader lines out to the labels. A controls page's real
+                     job is spatial (which hand, which finger), and a list can only tell you that
+                     while a diagram shows you.
+
+                     THE GEOMETRY IS FIXED AT 524 x 280 AND CENTRED, not responsive. Every position
+                     below is an absolute offset inside that box, and they only line up at that one
+                     size — so the box must fit the SMALLEST panel that instances this page. That is
+                     the 900 x 620 Delta menus, whose Controls page measures 545 x 447. The carpentry
+                     bench's 1450 x 680 has room to spare and scales the whole box up instead (see
+                     WorkshopMenuStyles.uss). Resize it and every lead has to be re-measured by hand. -->
                 <ui:VisualElement name="ControlsPage" class="settings-page">
-                    <ui:Label text="CONTROLS" class="settings-field-label" />
-                    <ui:VisualElement name="ControlsImage" class="controls-image" picking-mode="Ignore" />
+
+                    <ui:VisualElement name="ControlsSchematic" class="controls-schematic" picking-mode="Ignore">
+
+                        <ui:Label text="LEFT" class="ctrl-hand ctrl-hand--left" />
+                        <ui:Label text="RIGHT" class="ctrl-hand ctrl-hand--right" />
+
+                        <ui:VisualElement class="ctrl-body ctrl-body--left" />
+                        <ui:VisualElement class="ctrl-body ctrl-body--right" />
+
+                        <ui:VisualElement class="ctrl-stick ctrl-stick--left" />
+                        <ui:VisualElement class="ctrl-stick ctrl-stick--right" />
+
+                        <ui:VisualElement class="ctrl-trigger ctrl-trigger--left" />
+                        <ui:VisualElement class="ctrl-trigger ctrl-trigger--right" />
+
+                        <ui:VisualElement class="ctrl-grip" />
+                        <ui:VisualElement class="ctrl-menu" />
+
+                        <!-- Leads run from the part outward to its label, and each one's `top` is
+                             the vertical centre of the part it points at.
+
+                             ONLY THREE PARTS PER HAND CARRY A LEAD, at 44px apart. A pin is an
+                             action over a key plate, about 36px tall, so parts closer together than
+                             that put their labels on top of each other — which is exactly what the
+                             menu button did when it had a lead of its own. It is still drawn; it is
+                             named in the footnote below instead. -->
+                        <ui:VisualElement class="ctrl-lead" style="left: 122px; top: 84px; width: 18px;" />
+                        <ui:VisualElement class="ctrl-lead" style="left: 122px; top: 140px; width: 18px;" />
+                        <ui:VisualElement class="ctrl-lead" style="left: 122px; top: 225px; width: 18px;" />
+
+                        <ui:VisualElement class="ctrl-lead" style="left: 380px; top: 84px; width: 18px;" />
+                        <ui:VisualElement class="ctrl-lead" style="left: 380px; top: 140px; width: 18px;" />
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--left" style="top: 63px;">
+                            <ui:Label text="Walk" class="ctrl-pin-action" />
+                            <ui:Label text="STICK" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--left" style="top: 119px;">
+                            <ui:Label text="Use the tool" class="ctrl-pin-action" />
+                            <ui:Label text="TRIGGER" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--left" style="top: 204px;">
+                            <ui:Label text="Pick up" class="ctrl-pin-action" />
+                            <ui:Label text="GRIP" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--right" style="top: 63px;">
+                            <ui:Label text="Turn · Teleport" class="ctrl-pin-action" />
+                            <ui:Label text="STICK" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--right" style="top: 119px;">
+                            <ui:Label text="Point at a panel" class="ctrl-pin-action" />
+                            <ui:Label text="TRIGGER" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- The two controls with nowhere sensible to run a lead: one is a button too
+                         close to its neighbours to label, the other is a gesture with no button at
+                         all — and the one thing in this game nobody finds on their own. -->
+                    <ui:Label text="Pause with the MENU button. Open your bag by reaching over your shoulder."
+                              class="controls-gesture" />
+
                     <ui:Label name="ControlsHint" text="Controls cannot be changed." class="settings-note" />
                 </ui:VisualElement>
             </ui:VisualElement>

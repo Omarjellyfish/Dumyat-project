@@ -62,15 +62,29 @@ namespace DumyatRuntime
             _activeRunner.Run(sequence, this);
         }
 
+        /// <summary>
+        /// Whether the step on screen may be skipped. UI asks this before offering the buttons; the
+        /// skip methods below enforce it regardless, so a stale button or a direct call cannot get
+        /// past a mandatory step.
+        /// </summary>
+        public bool CanSkip => IsActive && _activeRunner.CanSkipCurrentStep;
+
         public void SkipCurrentStep()
         {
             if (!IsActive) return;
+            if (!RefuseIfMandatory("skip this step")) return;
+
             _activeRunner.SkipStep();
         }
 
         public void SkipTutorial()
         {
             if (!IsActive || _activeSequence == null) return;
+
+            // A mandatory step blocks abandoning the WHOLE tutorial too, not just stepping over it —
+            // otherwise "you must walk into the workshop first" is one button press away from being
+            // no rule at all.
+            if (!RefuseIfMandatory("skip the tutorial")) return;
 
             int skippedAt = _activeRunner.CurrentStepIndex;
             _activeRunner.Stop();
@@ -86,6 +100,19 @@ namespace DumyatRuntime
         public void ReplayTutorial(TutorialSequenceSO sequence)
         {
             StartTutorial(sequence, force: true);
+        }
+
+        /// <summary>
+        /// Returns true when the caller may proceed. Logs rather than throwing: a refused skip is a
+        /// designed outcome, not an error.
+        /// </summary>
+        private bool RefuseIfMandatory(string action)
+        {
+            if (_activeRunner.CanSkipCurrentStep) return true;
+
+            Debug.Log($"[TutorialService] Refused to {action} — step {_activeRunner.CurrentStepIndex} of " +
+                      $"'{_activeSequence?.SequenceId}' is marked mandatory and has to complete on its own.");
+            return false;
         }
 
         /// <summary>Called by <see cref="TutorialRunner"/> when the sequence finishes normally.</summary>

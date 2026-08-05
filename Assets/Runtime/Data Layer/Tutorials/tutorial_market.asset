@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 232650c3afa3ce140b34ccf5402ff986, type: 3}
+  m_Name: tutorial_market
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialSequenceSO
+  SequenceId: tutorial_market
+  DisplayName: Selling at the Market
+  Steps:
+  - {fileID: 11400000, guid: 28b08d4540d349e428b678988e0bd254, type: 2}
+  - {fileID: 11400000, guid: b7134d541539ead47b47c582764ecad3, type: 2}
+  - {fileID: 11400000, guid: 83de135df70e13a4486c86278eb2866c, type: 2}
+  - {fileID: 11400000, guid: b0b1afd1f93f154448a3820652067909, type: 2}
+  PersistCompletion: 1
+  CompletionDialogue: {fileID: 0}
+  Branches: []

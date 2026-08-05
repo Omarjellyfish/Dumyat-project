@@ -39,6 +39,12 @@ namespace DumyatRuntime
                  "player when they come into range.")]
         [SerializeField] private bool _facePlayerOnApproach = true;
 
+        [Tooltip("Legacy mode only: fastest he may turn, in degrees per second — a cap on the ease below.")]
+        [SerializeField, Min(10f)] private float _turnSpeed = 220f;
+
+        [Tooltip("Legacy mode only: how eagerly he eases round to face the player. Higher is snappier.")]
+        [SerializeField, Min(0.5f)] private float _faceResponsiveness = 6f;
+
         [Header("Detection Range")]
         [Tooltip("Horizontal distance (metres) at which the merchant notices the player and engages, and " +
                  "— once negotiating — beyond which the sale is cancelled. Make it comfortably larger than " +
@@ -56,6 +62,11 @@ namespace DumyatRuntime
 
         [Tooltip("Height off the merchant's base to draw the range ring / distance line at, for clarity.")]
         [SerializeField] private float _gizmoHeight = 1f;
+
+        private readonly YawTurner _turner = new YawTurner();
+
+        // World point the merchant is easing round to face, or null when he is already facing it.
+        private Vector3? _faceTarget;
 
         private MerchantNPC _merchant;
         private MerchantApproachMover _mover;
@@ -81,6 +92,9 @@ namespace DumyatRuntime
 
         private void Update()
         {
+            // Before the early-outs below, so a turn already under way still completes.
+            UpdateFacing();
+
             if (_merchant == null || _coordinator == null) return;
 
             Transform player = ResolvePlayer();
@@ -158,15 +172,19 @@ namespace DumyatRuntime
             return d.magnitude;
         }
 
-        // Yaw-only look-at so the merchant turns to the player without pitching the body. Rotates only
-        // the visual body (not the root), so siblings like the sell scale don't turn with him.
-        private void FaceToward(Vector3 worldPoint)
+        // Asks for a smooth turn toward the point; the ease itself happens in Update via the shared
+        // YawTurner, so the merchant swings round to greet the player instead of clicking to face them.
+        // Rotates only the visual body (not the root), so siblings like the sell scale don't turn.
+        private void FaceToward(Vector3 worldPoint) => _faceTarget = worldPoint;
+
+        // Legacy path only (no MerchantApproachMover): the mover owns facing when one is present.
+        private void UpdateFacing()
         {
+            if (!_faceTarget.HasValue) return;
+
             Transform facing = _merchant != null ? _merchant.CharacterRoot : transform;
-            Vector3 flat = worldPoint - facing.position;
-            flat.y = 0f;
-            if (flat.sqrMagnitude < 0.001f) return;
-            facing.rotation = Quaternion.LookRotation(flat.normalized, Vector3.up);
+            if (_turner.Step(facing, _faceTarget.Value, _faceResponsiveness, _turnSpeed, Time.deltaTime))
+                _faceTarget = null;
         }
 
         // Scene-view visualisation: the detection range ring plus a live line to the player showing the
