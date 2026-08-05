@@ -204,6 +204,15 @@ namespace DumyatRuntime
         {
             if (((1 << other.gameObject.layer) & _sweepLayers) == 0) return;
 
+            // Only something that MOVES may sweep. The drift lies on the bench, so the bench top and
+            // the menu nails standing in it are inside this trigger volume permanently — and a layer
+            // mask cannot tell them apart from the hammer, which shares the Default layer with the
+            // bench. Left unguarded they sweep from the first frame the credits open: the drift
+            // appears already worn through around the bench centre and the Settings nail, and because
+            // something has "already been cleared" the nudge that teaches the gesture never shows.
+            // Static scenery has no Rigidbody; every tool the player can pick up has one.
+            if (other.attachedRigidbody == null) return;
+
             // Where on the sweeping thing to clear from. A SawdustBrush marks the business end
             // explicitly, which matters most for the hammer: one collider covers the whole tool, so
             // its centre is halfway down the handle. Without a brush, fall back to the nearest point

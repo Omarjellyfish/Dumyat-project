@@ -681,6 +681,7 @@ MonoBehaviour:
   _hitsRequired: 1
   _driveDistancePerHit: 0.03
   _minHitSpeed: 0.5
+  _hitCooldown: 0.25
   _labelStyle: {fileID: 11400000, guid: 089826fef9f23664e8246e3e820c6464, type: 2}
   _hitAudioSource: {fileID: 761716511}
   _hitClip: {fileID: 8300000, guid: 4a076c186f191e34296ead479ad6760b, type: 3}
@@ -1422,6 +1423,7 @@ MonoBehaviour:
   _hitsRequired: 3
   _driveDistancePerHit: 0.012
   _minHitSpeed: 0.5
+  _hitCooldown: 0.25
   _labelStyle: {fileID: 11400000, guid: 089826fef9f23664e8246e3e820c6464, type: 2}
   _hitAudioSource: {fileID: 761716511}
   _hitClip: {fileID: 8300000, guid: 4a076c186f191e34296ead479ad6760b, type: 3}
@@ -3846,6 +3848,7 @@ MonoBehaviour:
   _hitsRequired: 1
   _driveDistancePerHit: 0.03
   _minHitSpeed: 0.5
+  _hitCooldown: 0.25
   _labelStyle: {fileID: 11400000, guid: 089826fef9f23664e8246e3e820c6464, type: 2}
   _hitAudioSource: {fileID: 761716511}
   _hitClip: {fileID: 8300000, guid: 4a076c186f191e34296ead479ad6760b, type: 3}
@@ -5144,6 +5147,7 @@ MonoBehaviour:
   _hitsRequired: 3
   _driveDistancePerHit: 0.012
   _minHitSpeed: 0.5
+  _hitCooldown: 0.25
   _labelStyle: {fileID: 11400000, guid: 089826fef9f23664e8246e3e820c6464, type: 2}
   _hitAudioSource: {fileID: 761716511}
   _hitClip: {fileID: 8300000, guid: 4a076c186f191e34296ead479ad6760b, type: 3}
@@ -5325,6 +5329,7 @@ MonoBehaviour:
   _hitsRequired: 3
   _driveDistancePerHit: 0.012
   _minHitSpeed: 0.5
+  _hitCooldown: 0.25
   _labelStyle: {fileID: 11400000, guid: 089826fef9f23664e8246e3e820c6464, type: 2}
   _hitAudioSource: {fileID: 761716511}
   _hitClip: {fileID: 8300000, guid: 4a076c186f191e34296ead479ad6760b, type: 3}
@@ -5582,6 +5587,7 @@ MonoBehaviour:
   _hitsRequired: 1
   _driveDistancePerHit: 0.03
   _minHitSpeed: 0.5
+  _hitCooldown: 0.25
   _labelStyle: {fileID: 11400000, guid: 089826fef9f23664e8246e3e820c6464, type: 2}
   _hitAudioSource: {fileID: 761716511}
   _hitClip: {fileID: 8300000, guid: 4a076c186f191e34296ead479ad6760b, type: 3}
@@ -6524,7 +6530,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1836668229
 Transform:
   m_ObjectHideFlags: 0
@@ -7431,6 +7437,7 @@ MonoBehaviour:
   _hitsRequired: 1
   _driveDistancePerHit: 0.03
   _minHitSpeed: 0.5
+  _hitCooldown: 0.25
   _labelStyle: {fileID: 11400000, guid: 089826fef9f23664e8246e3e820c6464, type: 2}
   _hitAudioSource: {fileID: 761716511}
   _hitClip: {fileID: 8300000, guid: 4a076c186f191e34296ead479ad6760b, type: 3}
@@ -7686,6 +7693,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: XR Origin (XR Rig)
       objectReference: {fileID: 0}
+    - target: {fileID: 7592668055181980100, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7730,7 +7741,7 @@ Transform:
   m_GameObject: {fileID: 5242325738699642478}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7008225, y: -0, z: -0, w: 0.7133358}
-  m_LocalPosition: {x: 17.655, y: 1.075, z: 8.487}
+  m_LocalPosition: {x: 17.655, y: 1.1399, z: 8.4881}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
