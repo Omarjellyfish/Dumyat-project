@@ -50,6 +50,43 @@ void EvaluateWaveSet(
     }
 }
 
+void EvaluateWaveSetComplex(
+    StructuredBuffer<WaveData> waveBuffer, 
+    int waveCount, 
+    float3 Position, 
+    float Time, 
+    out float3 outOffset, 
+    out float3 outTangent, 
+    out float3 outBinormal
+)
+{
+    outOffset = float3(0, 0, 0);
+    outTangent = float3(1, 0, 0);
+    outBinormal = float3(0, 0, 1);
+
+    int count = min(waveCount, 16);
+    for (int i = 0; i < count; i++)
+    {
+        WaveData w = waveBuffer[i];
+
+        float theta = (dot(w.direction, Position.xz) * w.frequency) + (Time * w.phase);
+        float sinTheta = sin(theta);
+        float cosTheta = cos(theta);
+
+        // Sharpen crests / flatten troughs: e^(sin-1) ranges [e^-2, 1]
+        // instead of sin's symmetric [-1, 1]
+        float sharpened = exp(sinTheta - 1.0);
+
+        outOffset.y += w.amplitude * sharpened;
+
+        // The exp factor carries through into the derivative too (chain rule),
+        // so it multiplies the slope the same way it multiplies the height
+        float slope = w.frequency * w.amplitude * sharpened * cosTheta;
+        outTangent.y += w.direction.x * slope;
+        outBinormal.y += w.direction.y * slope;
+    }
+}
+
 // Shader Graph entry point for blending Nile (A) & Ocean (B)
 void BarzakhMultiWaveDisplacement_float(
     float3 Position, 
@@ -63,8 +100,8 @@ void BarzakhMultiWaveDisplacement_float(
     float3 offsetA, tangentA, binormalA;
     float3 offsetB, tangentB, binormalB;
 
-    EvaluateWaveSet(_WavesA, _WaveCountA, Position, Time, offsetA, tangentA, binormalA);
-    EvaluateWaveSet(_WavesB, _WaveCountB, Position, Time, offsetB, tangentB, binormalB);
+    EvaluateWaveSetComplex(_WavesA, _WaveCountA, Position, Time, offsetA, tangentA, binormalA);
+    EvaluateWaveSetComplex(_WavesB, _WaveCountB, Position, Time, offsetB, tangentB, binormalB);
 
     float t = saturate(BlendFactor);
 
