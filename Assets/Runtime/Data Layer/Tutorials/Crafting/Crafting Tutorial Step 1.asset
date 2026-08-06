@@ -12,9 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: Crafting Tutorial Step 1
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Select a Recipe to make
-
-'
+  InstructionText: "Pick a blueprint from the board \u2014 that's what you'll be
+    building."
+  InstructionTextArabic: "\u0627\u062E\u062A\u0627\u0631 \u0631\u0633\u0645\u0629
+    \u0645\u0646 \u0627\u0644\u0644\u0648\u062D\u0629 \u2014 \u062F\u064A \u0627\u0644\u0644\u064A
+    \u0647\u062A\u0634\u062A\u063A\u0644 \u0639\u0644\u064A\u0647\u0627."
+  Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
@@ -23,8 +26,8 @@ MonoBehaviour:
   ZoneId: 
   DelaySeconds: 0
   PrimaryAnchorId: BlueprintSelection
-  HighlightIds: []
-  HighlightPrimaryAnchor: 1
+  HighlightIds:
+  - BlueprintSelection
   AnchorOffset: {x: 0, y: 1, z: -1.5}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
   PersistenceConditionKey: 

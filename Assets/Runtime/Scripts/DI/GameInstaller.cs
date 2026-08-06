@@ -23,6 +23,27 @@ namespace DumyatRuntime
         [SerializeField] private QuestDatabaseSO _questDatabase;
         [Tooltip("Achievement database, injected into AchievementService.")]
         [SerializeField] private AchievementDatabaseSO _achievementDatabase;
+        [Tooltip("Menu scene names, loading tips and the controls image, injected into GameSessionService.")]
+        [SerializeField] private MenuCatalogSO _menuCatalog;
+
+        [Header("Menus")]
+        [Tooltip("Loading overlay PREFAB (asset reference, not instantiated here). LoadingScreenPresenter " +
+                 "spawns it on the first scene load and keeps it alive across loads.")]
+        [SerializeField] private LoadingScreenView _loadingScreenViewPrefab;
+
+        [Tooltip("Pause menu PREFAB (asset reference, not instantiated here). PauseMenuPresenter spawns " +
+                 "one persistent copy on launch, so no scene needs its own. Do NOT also place it in a scene.")]
+        [SerializeField] private PauseMenuToolkitUI _pauseMenuPrefab;
+
+        [Tooltip("Notification HUD PREFAB (toast + medal views). Spawned once, on the first notification, " +
+                 "and kept across scene loads so every scene can raise one. Do NOT also place it in a scene.")]
+        [SerializeField] private NotificationHudManager _notificationHudPrefab;
+
+        [Header("Player")]
+        [Tooltip("XR Origin (XR Rig) PREFAB. Spawned by PlayerRigSpawner ONLY into scenes that do not " +
+                 "author their own rig, after the previous scene is gone — never alongside an existing " +
+                 "one. Scenes with a rig are left untouched.")]
+        [SerializeField] private GameObject _playerRigPrefab;
 
         [Header("Global MonoBehaviour Services (Prefabs)")]
         [Tooltip("Pooled positional SFX prefab. Will be instantiated on launch.")]
@@ -36,14 +57,21 @@ namespace DumyatRuntime
         [Tooltip("Floating world-space text/damage-number pool prefab. Will be instantiated on launch.")]
         [SerializeField] private FloatingUIManager _floatingUIManagerPrefab;
 
+        [Header("Debug")]
+        [Tooltip("Log routine save activity (loaded / written / reset) to the Console. OFF by default — " +
+                 "SaveAsync runs after every inventory mutation, so this is very noisy. Save FAILURES are " +
+                 "always logged regardless of this setting.")]
+        [SerializeField] private bool _verboseSaveLogging = false;
+
         [Header("Other Global Prefabs (No DI)")]
         [Tooltip("Standard Unity/XR prefabs (EventSystem, XR UI Toolkit) to spawn globally. These don't get DI registered, they just live forever.")]
         [SerializeField] private GameObject[] _otherGlobalPrefabs;
         public void InstallBindings(ContainerBuilder containerBuilder)
         {
-            // Shared save store. Eager so CurrentSaveData is loaded before dependents resolve.
-            containerBuilder.RegisterType(typeof(SaveService), new[] { typeof(ISaveService) },
-                Lifetime.Singleton, Resolution.Eager);
+            // Shared save store. Constructed here rather than via RegisterType so the verbose-logging
+            // checkbox can be passed in; RegisterValue is still a disposed singleton, and building it
+            // now keeps the old Eager behaviour (CurrentSaveData is ready before dependents resolve).
+            containerBuilder.RegisterValue(new SaveService(_verboseSaveLogging), new[] { typeof(ISaveService) });
 
             // Item database asset, resolvable by type for constructor injection.
             if (_itemDatabase != null)
@@ -54,6 +82,12 @@ namespace DumyatRuntime
             // Inventory — plain C# service constructed from ISaveService + ItemDatabase.
             containerBuilder.RegisterType(typeof(InventoryService), new[] { typeof(IInventoryService) },
                 Lifetime.Singleton, Resolution.Lazy);
+
+            // Player EGP balance — constructed from ISaveService + IEventService.
+            // EAGER because it self-subscribes to SellScoreEvent: it must exist before the first sale,
+            // not lazily on the first UI query, or a sale made before the bag is opened is lost.
+            containerBuilder.RegisterType(typeof(WalletService), new[] { typeof(IWalletService) },
+                Lifetime.Singleton, Resolution.Eager);
 
             // Recipe database asset for CraftingService.
             if (_recipeDatabase != null)
@@ -118,6 +152,78 @@ namespace DumyatRuntime
             containerBuilder.RegisterType(typeof(TutorialService), new[] { typeof(ITutorialService) },
                 Lifetime.Singleton, Resolution.Lazy);
 
+            // Menu content (scene names, loading tips, controls image).
+            if (_menuCatalog != null)
+                containerBuilder.RegisterValue(_menuCatalog, new[] { typeof(MenuCatalogSO) });
+            else
+                Debug.LogWarning("GameInstaller: MenuCatalog is not assigned; the menus will not be able to change scene.");
+
+            // Loading overlay prefab, registered as an ASSET reference. LoadingScreenPresenter
+            // instantiates it lazily; Reflex never touches it.
+            if (_loadingScreenViewPrefab != null)
+                containerBuilder.RegisterValue(_loadingScreenViewPrefab, new[] { typeof(LoadingScreenView) });
+            else
+                Debug.LogWarning("GameInstaller: LoadingScreenView prefab is not assigned; scene loads will show nothing.");
+
+            // Player options (audio levels, subtitle mode), persisted to PlayerPrefs.
+            // EAGER: saved volumes must reach the mixer and the subtitle mode must be published
+            // before the main menu or any caption presenter exists.
+            containerBuilder.RegisterType(typeof(SettingsService), new[] { typeof(ISettingsService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // New Game / Continue / Exit.
+            // EAGER: it subscribes to SceneManager.sceneLoaded to record the Continue target, which
+            // has to be live from the first scene, not from the first time a menu asks.
+            containerBuilder.RegisterType(typeof(GameSessionService), new[] { typeof(IGameSessionService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Persistent loading overlay. EAGER: it subscribes to SceneLoadBeginEvent, and nothing
+            // ever resolves it by hand.
+            containerBuilder.RegisterType(typeof(LoadingScreenPresenter), new[] { typeof(ILoadingScreenService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Notification HUD prefab, as an ASSET reference. NotificationHudPresenter instantiates it
+            // on first use; Reflex never touches it.
+            if (_notificationHudPrefab != null)
+                containerBuilder.RegisterValue(_notificationHudPrefab, new[] { typeof(NotificationHudManager) });
+            else
+                Debug.LogWarning("GameInstaller: Notification HUD prefab is not assigned; quest and sale " +
+                                 "notifications will not be shown.");
+
+            // The one persistent notification HUD, shared by every scene. LAZY: it must not spawn
+            // before a scene with a camera exists, and the first notification is a fine trigger.
+            containerBuilder.RegisterType(typeof(NotificationHudPresenter), new[] { typeof(INotificationService) },
+                Lifetime.Singleton, Resolution.Lazy);
+
+            // Quest progress toasts / completion medals. EAGER: it subscribes to the quest events, and
+            // nothing ever resolves it by hand.
+            containerBuilder.RegisterType(typeof(QuestNotificationPresenter), new[] { typeof(QuestNotificationPresenter) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // The XR rig prefab, as an ASSET reference. PlayerRigSpawner instantiates it; Reflex
+            // never touches it.
+            if (_playerRigPrefab != null)
+                containerBuilder.RegisterValue(_playerRigPrefab, new[] { typeof(GameObject) });
+            else
+                Debug.LogWarning("GameInstaller: Player Rig prefab is not assigned; scenes without their " +
+                                 "own XR Origin will load with no camera and no interactors.");
+
+            // Gives rigless scenes a rig on arrival. EAGER: it subscribes to SceneLoadCompleteEvent,
+            // and nothing ever resolves it by hand.
+            containerBuilder.RegisterType(typeof(PlayerRigSpawner), new[] { typeof(PlayerRigSpawner) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Pause menu prefab, registered as an ASSET reference for PauseMenuPresenter to spawn.
+            if (_pauseMenuPrefab != null)
+                containerBuilder.RegisterValue(_pauseMenuPrefab, new[] { typeof(PauseMenuToolkitUI) });
+            else
+                Debug.LogWarning("GameInstaller: PauseMenu prefab is not assigned; no scene will have a pause menu.");
+
+            // The one persistent pause menu, shared by every scene. EAGER: it must spawn on launch so
+            // the input relay on it is live from the first scene; nothing ever resolves it by hand.
+            containerBuilder.RegisterType(typeof(PauseMenuPresenter), new[] { typeof(PauseMenuPresenter) },
+                Lifetime.Singleton, Resolution.Eager);
+
             // Global MonoBehaviour services — registered as values.
             // Reflex does NOT instantiate the ProjectScope prefab. It only reads from it.
             // Therefore, we must manually Instantiate these prefabs to create real scene objects.
@@ -165,7 +271,15 @@ namespace DumyatRuntime
             else
                 Debug.LogWarning("GameInstaller: FloatingUIManager prefab is not assigned.");
 
-            // Fade transition — plain C# service, constructor-injected.
+            // VR blackout for scene loads. EAGER: it drives itself off SceneLoadBegin/Complete and
+            // nothing ever resolves it by hand, so it has to exist before the first load.
+            // Handler order against FadeTransitionHandler does not matter — the fade-in only advances
+            // on later frames, so that handler's player-placement always lands first either way.
+            containerBuilder.RegisterType(typeof(ScreenFadeService), new[] { typeof(IScreenFadeService) },
+                Lifetime.Singleton, Resolution.Eager);
+
+            // Travel/door transition — carries the player across the load. Fading is the blackout's
+            // job now, not this one's.
             containerBuilder.RegisterType(typeof(FadeTransitionHandler), new[] { typeof(IFadeTransitionService) },
                 Lifetime.Singleton, Resolution.Eager);
 

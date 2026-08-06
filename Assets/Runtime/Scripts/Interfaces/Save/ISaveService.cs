@@ -19,6 +19,13 @@ namespace DumyatRuntime
         void SaveAsync();
 
         /// <summary>
+        /// Wipes every slice back to its defaults for a New Game, and writes the empty save.
+        /// <see cref="CurrentSaveData"/> and each of its slice objects keep their identity, so
+        /// services that cached a slice reference stay valid.
+        /// </summary>
+        void ResetSave();
+
+        /// <summary>
         /// Completes once every requested save has reached disk. <see cref="SaveAsync"/> coalesces
         /// writes, so the newest state can still be pending when the game shuts down; await this to
         /// guarantee it is durable. Safe to call when nothing is pending (completes immediately).

@@ -21,24 +21,29 @@ namespace DumyatRuntime
         private readonly QuestDatabaseSO _questDatabase;
         private readonly QuestSaveData _questData;
         private readonly QuestRewardContext _rewardContext;
+        private readonly IPlayerPersistenceService _persistenceService;
 
         public QuestService(
             ISaveService saveService,
             IEventService eventService,
             QuestDatabaseSO questDatabase,
             ICraftingService craftingService,
-            IInventoryService inventoryService)
+            IInventoryService inventoryService,
+            IPlayerPersistenceService persistenceService,
+            IWalletService walletService)
         {
             _saveService = saveService;
             _eventService = eventService;
             _questDatabase = questDatabase;
             _questData = _saveService.CurrentSaveData.questData;
+            _persistenceService = persistenceService;
 
             _rewardContext = new QuestRewardContext
             {
                 EventService = eventService,
                 CraftingService = craftingService,
-                InventoryService = inventoryService
+                InventoryService = inventoryService,
+                WalletService = walletService
             };
 
             SubscribeToGameplayEvents();
@@ -284,7 +289,54 @@ namespace DumyatRuntime
             _eventService.Publish(new QuestCompletedEvent(questID));
             Debug.Log($"[QuestService] Quest COMPLETED: '{def.displayName}' ({questID})");
 
-            // Grant reward if one is assigned.
+            if (def.persistenceKeysOnComplete != null)
+            {
+                foreach (string key in def.persistenceKeysOnComplete)
+                {
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        _persistenceService.AddKey(key);
+                    }
+                }
+            }
+
+            GrantRewards(def);
+        }
+
+        /// <summary>
+        /// Pays out everything the definition promises: the inline money and item lines, then the
+        /// optional scripted reward asset. All three are independent and optional, so a quest can
+        /// hand out cash, goods, both, or nothing.
+        /// </summary>
+        private void GrantRewards(QuestDefinitionSO def)
+        {
+            if (def.moneyReward > 0)
+            {
+                if (_rewardContext.WalletService != null)
+                    _rewardContext.WalletService.Add(def.moneyReward, $"Quest reward: {def.displayName}");
+                else
+                    Debug.LogWarning($"[QuestService] '{def.displayName}' promises {def.moneyReward} EGP but " +
+                                     "no wallet service is registered — the money was not paid.");
+            }
+
+            if (def.itemRewards != null)
+            {
+                for (int i = 0; i < def.itemRewards.Count; i++)
+                {
+                    QuestItemReward line = def.itemRewards[i];
+                    if (!line.IsValid) continue;
+
+                    if (_rewardContext.InventoryService == null)
+                    {
+                        Debug.LogWarning($"[QuestService] '{def.displayName}' promises items but no inventory " +
+                                         "service is registered — they were not granted.");
+                        break;
+                    }
+
+                    _rewardContext.InventoryService.AddItemToInventory(line.item.ItemID, line.EffectiveQuantity);
+                }
+            }
+
             if (def.reward != null)
             {
                 def.reward.GrantReward(_rewardContext);

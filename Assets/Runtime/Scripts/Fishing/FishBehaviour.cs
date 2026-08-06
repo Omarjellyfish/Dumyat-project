@@ -31,6 +31,8 @@ namespace DumyatRuntime
         private bool isHooked;
         private Transform hookTarget;
 
+        private Coroutine investigateCoroutine;
+
 
         private void Awake()
         {
@@ -119,6 +121,8 @@ namespace DumyatRuntime
                 // }
                 fishArea.hookedRb.useGravity = true;
 
+                UpdateGravity();
+
                 Debug.Log(name + " reached the hook and is now hooked.");
 
                 return;
@@ -181,8 +185,8 @@ namespace DumyatRuntime
             if (Random.value > biteChance)
                 return;
 
-            StartCoroutine(
-                InvestigateAfterDelay(hook));
+            investigateCoroutine =
+                StartCoroutine(InvestigateAfterDelay(hook));
         }
 
         private IEnumerator InvestigateAfterDelay(Transform hook)
@@ -200,19 +204,63 @@ namespace DumyatRuntime
 
             movingToHook = true;
 
+            investigateCoroutine = null;
+
             Debug.Log(name + " moving to hook");
         }
+
+        /// <summary>
+        /// Call this when the hook should no longer be pursued — e.g. it
+        /// left the water before this fish reached it. Cancels the
+        /// investigation (whether still in its reaction delay or already
+        /// swimming) and lets the fish resume patrolling. Does nothing if
+        /// the fish has already reached the hook (isHooked).
+        /// </summary>
+        public void CancelHookInvestigation()
+        {
+            if (isHooked)
+                return;
+
+            if (investigateCoroutine != null)
+            {
+                StopCoroutine(investigateCoroutine);
+                investigateCoroutine = null;
+            }
+
+            if (movingToHook)
+            {
+                movingToHook = false;
+                hookTarget = null;
+
+                Debug.Log(name + " hook left, returning to patrol");
+            }
+        }
+
         public void SetInsideFishArea(bool inside)
         {
             isInsideFishArea = inside;
 
             Debug.Log($"{name} inside fish area = {inside}");
 
-            if (!inside && fishRb != null)
-            {
-                Debug.Log($"{name} enabling gravity");
-                fishRb.useGravity = true;
-            }
+            UpdateGravity();
+        }
+
+        /// <summary>
+        /// Central authority for this fish's gravity state.
+        /// Rules:
+        /// - Outside the fish area: gravity ON (fish falls/behaves normally).
+        /// - Inside the fish area, not hooked: gravity OFF (fish "swims" via
+        ///   scripted movement).
+        /// - Inside the fish area AND hooked: gravity ON, so the hooked fish
+        ///   is pulled by the line/rig physics instead of floating in place.
+        /// Called whenever isInsideFishArea or isHooked changes.
+        /// </summary>
+        private void UpdateGravity()
+        {
+            if (fishRb == null)
+                return;
+
+            fishRb.useGravity = isHooked || !isInsideFishArea;
         }
     }
 }

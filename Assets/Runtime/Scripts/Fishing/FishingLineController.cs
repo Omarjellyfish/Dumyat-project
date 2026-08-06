@@ -20,7 +20,7 @@ namespace DumyatRuntime
         //Rope data
         [SerializeField] private float ropeLength = 1f;
         [SerializeField] private float minRopeLength = 15f;
-        [SerializeField] private float maxRopeLength = 20f;
+        [SerializeField] private float maxRopeLength = 100f;
         //Mass of what the rope is carrying
         private float loadMass = 100f;
         //How fast we can add more/less rope
@@ -43,6 +43,9 @@ namespace DumyatRuntime
         [SerializeField] private AudioClip _reelInSound;
         private SoundManager _soundManager;
         [SerializeField] private Transform _reelPos;
+
+        private bool isPositionLocked;
+        private Vector3 lockedPosition;
 
         private void Awake()
         {
@@ -88,6 +91,14 @@ namespace DumyatRuntime
         {
             UpdateWinch();
             Simulation();
+
+            if (isPositionLocked)
+            {
+                var rb = whatIsHangingFromTheRope.GetComponent<Rigidbody>();
+                rb.position = lockedPosition;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
         }
 
         private void InitRope()
@@ -270,19 +281,19 @@ namespace DumyatRuntime
             // Reel turned forward
             if (deltaRotation > 0f && ropeLength < maxRopeLength)
             {
+                UnlockHookPosition();
+
                 ropeLength += winchSpeed * Time.deltaTime;
-
                 InitRope();
-
                 whatIsHangingFromTheRope.GetComponent<Rigidbody>().WakeUp();
-
                 hasChangedRope = true;
-
                 _soundManager.PlaySoundFxAtPosition(_reelInSound, _reelPos, 1f);
             }
             // Reel turned backward
             else if (deltaRotation < 0f && ropeLength > minRopeLength)
             {
+                UnlockHookPosition();
+
                 ropeLength -= winchSpeed * Time.deltaTime;
 
                 InitRope();
@@ -332,14 +343,20 @@ namespace DumyatRuntime
         public void EnterFreeCast()
         {
             isFreeCasting = true;
+            isPositionLocked = false;
+
+            var rb = whatIsHangingFromTheRope.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                springJoint.connectedBody = whatTheRopeIsConnectedTo.GetComponent<Rigidbody>();
+                rb.constraints = RigidbodyConstraints.None;
+            }
 
             if (springJoint != null)
             {
-                // Neutralize the joint instead of disabling it —
-                // SpringJoint has no .enabled, so we just remove its pull.
                 springJoint.spring = 0f;
                 springJoint.damper = 0f;
-                springJoint.maxDistance = maxRopeLength * 10f; // plenty of slack
+                springJoint.maxDistance = maxRopeLength * 10f;
             }
         }
 
@@ -355,6 +372,16 @@ namespace DumyatRuntime
 
             InitRope();
             UpdateSpring(); // restores real spring/damper/maxDistance values
+        }
+        public void LockHookPosition()
+        {
+            isPositionLocked = true;
+            lockedPosition = whatIsHangingFromTheRope.position;
+        }
+
+        private void UnlockHookPosition()
+        {
+            isPositionLocked = false;
         }
     }
 }

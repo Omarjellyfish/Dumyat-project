@@ -1,0 +1,31 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/LoadingStyles.uss" />
+
+    <!-- Driven by LoadingScreenView. Non-interactive: the view sets pickingMode = Ignore on this
+         root in code so the panel can never swallow an XR ray while it floats in front of the
+         player. Authored for a 900 x 400 world-space panel. -->
+    <ui:VisualElement name="LoadingPanel" class="loading-panel">
+
+        <!-- Every label is named: the title and the status read as fixed chrome but are rewritten
+             from code so the panel follows the Language setting like every other panel. -->
+        <ui:VisualElement name="LoadingHeader" class="loading-header">
+            <ui:Label name="LoadingTitleLabel" text="LOADING" class="loading-title" />
+            <ui:Label name="LoadingSceneLabel" text="" class="loading-destination" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="LoadingBody" class="loading-body">
+
+            <ui:VisualElement name="LoadingMeta" class="loading-meta">
+                <ui:Label name="LoadingStatusLabel" text="PREPARING" class="loading-status" />
+                <ui:Label name="LoadingPercentLabel" text="0%" class="loading-percent" />
+            </ui:VisualElement>
+
+            <!-- LoadingProgressFill's width is set from code as a percentage. -->
+            <ui:VisualElement name="LoadingProgressBar" class="loading-bar">
+                <ui:VisualElement name="LoadingProgressFill" class="loading-bar-fill" />
+            </ui:VisualElement>
+
+            <ui:Label name="LoadingTipLabel" text="" class="loading-tip" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

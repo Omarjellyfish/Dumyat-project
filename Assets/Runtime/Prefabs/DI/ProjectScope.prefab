@@ -65,13 +65,19 @@ MonoBehaviour:
   _recipeDatabase: {fileID: 11400000, guid: 99b2c14eede8aee4e9cf12cce18bf939, type: 2}
   _questDatabase: {fileID: 11400000, guid: 709d31ea898bb7845a905a312bacd434, type: 2}
   _achievementDatabase: {fileID: 11400000, guid: c977cf7a5f14aab4e98c8f725625b32e, type: 2}
+  _menuCatalog: {fileID: 11400000, guid: 932c2fc0b70817e4297952536ad2919e, type: 2}
+  _loadingScreenViewPrefab: {fileID: 8866297197300448023, guid: e0297c4c84ba68547842f29573cdd148, type: 3}
+  _pauseMenuPrefab: {fileID: 6015049264774636766, guid: 9542a683604790a4ebc7a6c8fdfab00a, type: 3}
+  _notificationHudPrefab: {fileID: 644835478199548420, guid: 2f57908995b29e24aad849768bf2ccc2, type: 3}
+  _playerRigPrefab: {fileID: 3309285002930837712, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
   _soundManagerPrefab: {fileID: 1453524357494444773}
   _worldAudioManagerPrefab: {fileID: 4802278190228979233}
   _hapticFeedbackPrefab: {fileID: 2332915895640605032}
   _soundMixerManagerPrefab: {fileID: 4244566762734776811}
   _floatingUIManagerPrefab: {fileID: 6511843507933377424, guid: 4a4d65efdca229e4f904f1c582994e1d, type: 3}
+  _verboseSaveLogging: 0
   _otherGlobalPrefabs:
-  - {fileID: 8257593708854495834, guid: 58ede15199d012d44b64dd6cc8783e6c, type: 3}
+  - {fileID: 5470541723009077305, guid: 58ede15199d012d44b64dd6cc8783e6c, type: 3}
   - {fileID: 1935183223752103130, guid: 60d3ebe2dc2ad0a498a9bb9423a82d1e, type: 3}
   - {fileID: 6260750110670036502, guid: 5a96cac7741043545bb95e96bbe97e34, type: 3}
 --- !u!1001 &1892430702125935132
@@ -309,6 +315,18 @@ PrefabInstance:
       value: SoundManager
       objectReference: {fileID: 0}
     - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: _uiClickClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2a3e53350024e314291e0143c95ba7e5, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: _uiHoverClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 3f047e4f03abbff43b5010827a77644a, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: _transitionVolume
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
       propertyPath: _defaultMixerGroup
       value: 
       objectReference: {fileID: 24300002, guid: 233ff8984c06c4f49b2c465831a77077, type: 2}
@@ -316,6 +334,62 @@ PrefabInstance:
       propertyPath: _sfxAudioSourcePrefab
       value: 
       objectReference: {fileID: 5438773861651403346, guid: 6a06569637663b540bd7231b7a853c15, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: _sceneTransitionClips.Array.size
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[0]'
+      value: 
+      objectReference: {fileID: 8300000, guid: ea25eebc98432bf468a7f296b31640ca, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[1]'
+      value: 
+      objectReference: {fileID: 8300000, guid: c3db5231f7271b546954d96fb7feb784, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[2]'
+      value: 
+      objectReference: {fileID: 8300000, guid: aba459ce4791e424c80fc6f6945fa4e1, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[3]'
+      value: 
+      objectReference: {fileID: 8300000, guid: c0ca6af4f50fb6e40b3195b58afa24df, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[4]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f2f8596cc6d8a14cb02665430c76d4e, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[5]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 2aace69ef894bd44d8129857501d2969, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[6]'
+      value: 
+      objectReference: {fileID: 8300000, guid: e0bcd80873ebe5249ad7342e8c428760, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[7]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 34e613d6cd2b5314995918084975a2d4, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[8]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 069b00f866403f746a07a20573579241, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[9]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 32b8381b5fecff945b7002c50b0a3ace, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[10]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 2e57e14123007464f8060ccd80d01fed, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[11]'
+      value: 
+      objectReference: {fileID: 8300000, guid: d7445870facb0834ea13e768b6cf3781, type: 3}
+    - target: {fileID: 6360802494237510531, guid: 5cc5df436280e654da98ab1678793f44, type: 3}
+      propertyPath: '_sceneTransitionClips.Array.data[12]'
+      value: 
+      objectReference: {fileID: 8300000, guid: b96f3bb0f0bd3a84eb02f7c80e3a9952, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/MenuStyles.uss" />
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/WorkshopMenuStyles.uss" />
+    <ui:Template name="SettingsPage" src="project://database/Assets/Runtime/UI%20Toolkit/Menus/SettingsPage.uxml" />
+
+    <!-- ========================================================================================
+         Settings page for the carpentry (nail) main menu.
+
+         SAME page as the main menu and the pause menu — the same SettingsPage template, driven by
+         the same SettingsToolkitUI. Only the skin differs. This file exists to give that template a
+         surface of its own and to put the "workshop" class on it.
+
+         The nail menu has no button stack to swap the page with, because the nails on the bench ARE
+         the button stack, so there is nothing here but the page.
+
+         WHY NOT DELTA. This panel lies flat on the workbench rather than floating in front of the
+         player, and Delta's frosted deep-water glass reads as a tablet left on the table. The
+         `workshop` class re-skins it in the room's own palette so the table becomes the window —
+         see WorkshopMenuStyles.uss. MenuStyles.uss is still loaded first: it supplies the layout and
+         the VR sizing, and the workshop sheet overrides only colour and decoration on top.
+         ======================================================================================== -->
+    <ui:VisualElement name="NailMenuSettingsPanel" class="workshop">
+        <ui:Instance template="SettingsPage" name="SettingsPageInstance" />
+    </ui:VisualElement>
+</ui:UXML>

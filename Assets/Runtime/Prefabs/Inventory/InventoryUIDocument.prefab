@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8369863388991741817}
   - component: {fileID: 6131209127949929607}
   - component: {fileID: 7650373832005620188}
+  - component: {fileID: 3310457720018844901}
   m_Layer: 5
   m_Name: InventoryUIDocument
   m_TagString: Untagged
@@ -53,8 +54,8 @@ MonoBehaviour:
   m_SortingOrder: 0
   m_Position: 0
   m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 500
-  m_WorldSpaceHeight: 500
+  m_WorldSpaceWidth: 900
+  m_WorldSpaceHeight: 620
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
@@ -98,3 +99,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a410b213209442fb15a69799f0240a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UIElements.PanelEventHandler
+--- !u!114 &3310457720018844901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 190245443742673548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23f1d9cbb9a07ed47a9e0b30575f235f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.LazyFollowAnchor
+  _distance: 0.8
+  _rightOffset: 0
+  _upOffset: -0.12
+  _followDeadzoneDeg: 30
+  _followSmoothTime: 0.18
+  _faceCameraPitch: 1

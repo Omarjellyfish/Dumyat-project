@@ -12,20 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: IntroTutorial Step 1
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Look at your hands, move around with the stick
-
-'
+  InstructionText: 'Look down — those are your hands. Push the stick to walk.'
+  InstructionTextArabic: 'بصّ تحت — دي إيديك. ادفع العصاية عشان تمشي.'
+  Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 32900000, guid: 40540b3af8d342843912d359b2779b22, type: 3}
-  CompletionType: 2
+  CompletionType: 3
   EventTypeName: 
   ZoneId: 
-  DelaySeconds: 6
-  PrimaryAnchorId: Hands
-  HighlightIds: []
-  HighlightPrimaryAnchor: 1
-  AnchorOffset: {x: 0, y: 0.3, z: 5}
+  DelaySeconds: 0
+  PrimaryAnchorId: Player
+  HighlightIds:
+  - Hands
+  AnchorOffset: {x: 0, y: 0, z: 0}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
   PersistenceConditionKey: 
   RequiredState: 1

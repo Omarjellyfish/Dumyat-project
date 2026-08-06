@@ -1,20 +1,64 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Runtime/UI Toolkit/Crafting/CraftingValidation.uss" />
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/Crafting/CraftingValidation.uss" />
+
+    <!-- Delta v2 "workshop drawing" — inspection sheet. Authored for a 900 x 620 world-space panel.
+
+         Verdict, readouts and BOTH BUTTONS live in a fixed left rail; faults scroll independently
+         on the right, so VALIDATE BUILD never scrolls away however long the fault list gets.
+
+         CraftingValidationUI queries by name; status-title, status-indicator, quality-score,
+         diagnostic-scroll, validate-button and reset-button all keep their names. -->
     <ui:VisualElement class="validation-root">
         <ui:VisualElement class="container">
-            <ui:VisualElement class="header-area">
-                <ui:Label text="READY TO VALIDATE" name="status-title" class="status-title" />
+
+            <ui:VisualElement class="corner corner--tl" picking-mode="Ignore" />
+            <ui:VisualElement class="corner corner--tr" picking-mode="Ignore" />
+            <ui:VisualElement class="corner corner--bl" picking-mode="Ignore" />
+            <ui:VisualElement class="corner corner--br" picking-mode="Ignore" />
+
+            <!-- ── Left rail ── -->
+            <ui:VisualElement class="verdict-rail">
+                <ui:Label name="verdict-eyebrow" text="INSPECTION" class="verdict-eyebrow" />
+
+                <!-- The stamp is the one deliberate off-axis element in an otherwise square
+                     system. This panel's whole job is delivering a judgement, so the judgement
+                     gets to break the grid. -->
+                <ui:VisualElement name="verdict-stamp" class="verdict-stamp">
+                    <ui:Label text="READY TO VALIDATE" name="status-title" class="status-title" />
+                    <ui:Label text="" name="stamp-sub" class="stamp-sub" />
+                </ui:VisualElement>
+
                 <ui:VisualElement name="status-indicator" class="status-indicator" />
+
+                <!-- Shown only on a passing build, matching the existing behaviour. -->
+                <ui:VisualElement name="quality-readout" class="verdict-readout" style="display: none;">
+                    <ui:Label name="quality-label" text="QUALITY" class="verdict-readout-label" />
+                    <ui:Label text="100%" name="quality-score" class="verdict-readout-value" />
+                </ui:VisualElement>
+
+                <!-- Mirror readout for failures. Additive and null-guarded on the C# side. -->
+                <ui:VisualElement name="issue-readout" class="verdict-readout" style="display: none;">
+                    <ui:Label name="faults-label" text="FAULTS" class="verdict-readout-label" />
+                    <ui:Label text="0" name="issue-count" class="verdict-readout-value verdict-readout-value--fail" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="verdict-spacer" />
+
+                <ui:VisualElement class="button-area">
+                    <ui:Button text="VALIDATE BUILD" name="validate-button" class="action-button action-button--primary" />
+                    <ui:Button text="CLEAR LOG" name="reset-button" class="action-button action-button--quiet" />
+                </ui:VisualElement>
             </ui:VisualElement>
 
-            <ui:Label text="Quality: 100%" name="quality-score" class="quality-score" style="display: none;" />
-
-            <ui:ScrollView name="diagnostic-scroll" class="diagnostic-list" />
-
-            <ui:VisualElement class="button-area">
-                <ui:Button text="CLEAR LOG" name="reset-button" class="action-button" />
-                <ui:Button text="VALIDATE BUILD" name="validate-button" class="action-button" />
+            <!-- ── Right column: the fault list ── -->
+            <ui:VisualElement class="diagnostic-column">
+                <ui:VisualElement class="diagnostic-heading-row">
+                    <ui:Label name="fault-heading" text="FAULT" class="diagnostic-heading" />
+                    <ui:Label name="detail-heading" text="DETAIL" class="diagnostic-heading" />
+                </ui:VisualElement>
+                <ui:ScrollView name="diagnostic-scroll" class="diagnostic-list" />
             </ui:VisualElement>
+
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -1,0 +1,197 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/MenuStyles.uss" />
+
+    <!-- ========================================================================================
+         Shared settings page. Instantiated as a TEMPLATE inside both MainMenu.uxml and
+         PauseMenu.uxml and driven by SettingsToolkitUI, rather than being its own prefab with its
+         own UIDocument: a second world-space UIDocument would mean a second panel transform, a
+         second raycaster and a depth-sorting fight with its parent, which looks wrong in VR.
+
+         Element names below are the contract with SettingsToolkitUI — renaming one silently breaks
+         a binding, since Q<T>() returns null rather than throwing.
+
+         Uppercase strings are authored uppercase: UI Toolkit has no text-transform.
+         ======================================================================================== -->
+    <ui:VisualElement name="SettingsRoot" class="menu-page">
+
+        <ui:VisualElement name="SettingsHeader" class="menu-header">
+            <ui:Label text="SETTINGS" class="menu-title menu-title--sub" />
+            <ui:Button name="SettingsBackButton" text="BACK" class="menu-btn menu-btn--compact" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="SettingsBody" class="settings-body">
+
+            <!-- A persistent rail. The active tab takes a 3px cyan left bar, the same idiom the
+                 inventory uses for a hovered row. -->
+            <ui:VisualElement name="SettingsRail" class="settings-rail">
+                <ui:Button name="TabAudioButton" text="AUDIO" class="settings-tab settings-tab--active" />
+                <ui:Button name="TabLanguageButton" text="LANGUAGE" class="settings-tab" />
+                <ui:Button name="TabControlsButton" text="CONTROLS" class="settings-tab" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="SettingsPages" class="settings-pages">
+
+                <!-- ============================================================ AUDIO -->
+                <!-- Sliders are 0..1 to match ISettingsService; the labels beside them show 0-100. -->
+                <ui:VisualElement name="AudioPage" class="settings-page settings-page--active">
+
+                    <ui:VisualElement class="slider-row">
+                        <ui:Label text="MASTER" class="slider-label" />
+                        <ui:Slider name="MasterSlider" low-value="0" high-value="1" value="1" class="slider-control" />
+                        <ui:Label name="MasterValue" text="100" class="slider-value" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="slider-row">
+                        <ui:Label text="MUSIC" class="slider-label" />
+                        <ui:Slider name="MusicSlider" low-value="0" high-value="1" value="1" class="slider-control" />
+                        <ui:Label name="MusicValue" text="100" class="slider-value" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="slider-row">
+                        <ui:Label text="EFFECTS" class="slider-label" />
+                        <ui:Slider name="SfxSlider" low-value="0" high-value="1" value="1" class="slider-control" />
+                        <ui:Label name="SfxValue" text="100" class="slider-value" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="slider-row">
+                        <ui:Label text="AMBIENCE" class="slider-label" />
+                        <ui:Slider name="AmbienceSlider" low-value="0" high-value="1" value="1" class="slider-control" />
+                        <ui:Label name="AmbienceValue" text="100" class="slider-value" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="slider-row">
+                        <ui:Label text="VOICES" class="slider-label" />
+                        <ui:Slider name="DialogueSlider" low-value="0" high-value="1" value="1" class="slider-control" />
+                        <ui:Label name="DialogueValue" text="100" class="slider-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- ========================================================= LANGUAGE -->
+                <!-- TWO independent controls, not one three-way.
+
+                     It used to be a single OFF / ENGLISH / العربية segment, on the reasoning that
+                     an on/off plus a language picker could disagree. That held while the setting
+                     only governed merchant captions. It stopped holding once language drove every
+                     panel in the game: "off" is not a language, and choosing it threw the player's
+                     language away and silently reverted the whole interface to English.
+
+                     Split apart, the two cannot contradict each other — a language is always set,
+                     and captions are independently on or off. -->
+                <ui:VisualElement name="LanguagePage" class="settings-page">
+
+                    <ui:Label text="LANGUAGE" class="settings-field-label" />
+
+                    <ui:VisualElement name="LanguageSegment" class="segment-row">
+                        <ui:Button name="LanguageEnglishButton" text="ENGLISH" class="segment-btn segment-btn--selected" />
+                        <ui:Button name="LanguageArabicButton" text="العربية" class="segment-btn segment-btn--arabic" />
+                    </ui:VisualElement>
+
+                    <ui:Label text="MERCHANT SUBTITLES" class="settings-field-label settings-field-label--stacked" />
+
+                    <ui:VisualElement name="SubtitleSegment" class="segment-row">
+                        <ui:Button name="SubtitlesOnButton" text="ON" class="segment-btn segment-btn--selected" />
+                        <ui:Button name="SubtitlesOffButton" text="OFF" class="segment-btn" />
+                    </ui:VisualElement>
+
+                    <!-- A live sample, so the Arabic font and its right-to-left shaping can be
+                         checked in the headset without starting a negotiation. -->
+                    <ui:VisualElement name="SubtitlePreview" class="subtitle-preview">
+                        <ui:Label name="SubtitlePreviewSpeaker" text="AM HASSAN" class="subtitle-preview-speaker" />
+                        <ui:Label name="SubtitlePreviewLabel" text="" class="subtitle-preview-line" />
+                    </ui:VisualElement>
+
+                    <ui:Label text="Language changes every panel in the game. Subtitles can be off in either language."
+                              class="settings-note" />
+                </ui:VisualElement>
+
+                <!-- ========================================================= CONTROLS -->
+                <!-- View only: the player cannot rebind.
+
+                     This used to be a single image sourced from MenuCatalogSO. That image was never
+                     assigned, so the tab opened on an empty box — and an image is the wrong shape
+                     for this anyway: it cannot be translated, it cannot be read at a glance at an
+                     angle, and every edit means going back to an image editor.
+
+                     Drawn instead, from plain elements — two controllers, a ring for each stick, a
+                     nub for each trigger, and leader lines out to the labels. A controls page's real
+                     job is spatial (which hand, which finger), and a list can only tell you that
+                     while a diagram shows you.
+
+                     THE GEOMETRY IS FIXED AT 524 x 280 AND CENTRED, not responsive. Every position
+                     below is an absolute offset inside that box, and they only line up at that one
+                     size — so the box must fit the SMALLEST panel that instances this page. That is
+                     the 900 x 620 Delta menus, whose Controls page measures 545 x 447. The carpentry
+                     bench's 1450 x 680 has room to spare and scales the whole box up instead (see
+                     WorkshopMenuStyles.uss). Resize it and every lead has to be re-measured by hand. -->
+                <ui:VisualElement name="ControlsPage" class="settings-page">
+
+                    <ui:VisualElement name="ControlsSchematic" class="controls-schematic" picking-mode="Ignore">
+
+                        <ui:Label text="LEFT" class="ctrl-hand ctrl-hand--left" />
+                        <ui:Label text="RIGHT" class="ctrl-hand ctrl-hand--right" />
+
+                        <ui:VisualElement class="ctrl-body ctrl-body--left" />
+                        <ui:VisualElement class="ctrl-body ctrl-body--right" />
+
+                        <ui:VisualElement class="ctrl-stick ctrl-stick--left" />
+                        <ui:VisualElement class="ctrl-stick ctrl-stick--right" />
+
+                        <ui:VisualElement class="ctrl-trigger ctrl-trigger--left" />
+                        <ui:VisualElement class="ctrl-trigger ctrl-trigger--right" />
+
+                        <ui:VisualElement class="ctrl-grip" />
+                        <ui:VisualElement class="ctrl-menu" />
+
+                        <!-- Leads run from the part outward to its label, and each one's `top` is
+                             the vertical centre of the part it points at.
+
+                             ONLY THREE PARTS PER HAND CARRY A LEAD, at 44px apart. A pin is an
+                             action over a key plate, about 36px tall, so parts closer together than
+                             that put their labels on top of each other — which is exactly what the
+                             menu button did when it had a lead of its own. It is still drawn; it is
+                             named in the footnote below instead. -->
+                        <ui:VisualElement class="ctrl-lead" style="left: 122px; top: 84px; width: 18px;" />
+                        <ui:VisualElement class="ctrl-lead" style="left: 122px; top: 140px; width: 18px;" />
+                        <ui:VisualElement class="ctrl-lead" style="left: 122px; top: 225px; width: 18px;" />
+
+                        <ui:VisualElement class="ctrl-lead" style="left: 380px; top: 84px; width: 18px;" />
+                        <ui:VisualElement class="ctrl-lead" style="left: 380px; top: 140px; width: 18px;" />
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--left" style="top: 63px;">
+                            <ui:Label text="Walk" class="ctrl-pin-action" />
+                            <ui:Label text="STICK" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--left" style="top: 119px;">
+                            <ui:Label text="Use the tool" class="ctrl-pin-action" />
+                            <ui:Label text="TRIGGER" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--left" style="top: 204px;">
+                            <ui:Label text="Pick up" class="ctrl-pin-action" />
+                            <ui:Label text="GRIP" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--right" style="top: 63px;">
+                            <ui:Label text="Turn · Teleport" class="ctrl-pin-action" />
+                            <ui:Label text="STICK" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="ctrl-pin ctrl-pin--right" style="top: 119px;">
+                            <ui:Label text="Point at a panel" class="ctrl-pin-action" />
+                            <ui:Label text="TRIGGER" class="ctrl-pin-key" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- The two controls with nowhere sensible to run a lead: one is a button too
+                         close to its neighbours to label, the other is a gesture with no button at
+                         all — and the one thing in this game nobody finds on their own. -->
+                    <ui:Label text="Pause with the MENU button. Open your bag by reaching over your shoulder."
+                              class="controls-gesture" />
+
+                    <ui:Label name="ControlsHint" text="Controls cannot be changed." class="settings-note" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

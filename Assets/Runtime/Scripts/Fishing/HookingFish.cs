@@ -1,6 +1,5 @@
 using UnityEngine;
 using Reflex.Attributes;
-using System.Security.Permissions;
 
 namespace DumyatRuntime
 {
@@ -9,16 +8,19 @@ namespace DumyatRuntime
         private bool isFishHooked = false;
         private FixedJoint currentJoint;
         private IHapticService _haptics;
-        private ISoundService _soundService;
-        private IPlayerPersistenceService _playerPreistence;
 
         [Header("Audio Feedback")]
-        [SerializeField] private AudioClip HookFatherSound;
-
-        [SerializeField] Transform Rod;
+        [Tooltip("Voice line for the moment a fish takes the hook. Auto-resolved from this GameObject " +
+                 "or its parents if empty. Owns its own 'play once' and per-scene rules.")]
+        [SerializeField] private OneShotVoiceCue _hookVoice;
 
         [Inject]
-        private void Inject(IHapticService haptics, ISoundService soundService, IPlayerPersistenceService playerPreistence) => (_haptics, _soundService, _playerPreistence) = (haptics, soundService, playerPreistence);
+        private void Inject(IHapticService haptics) => _haptics = haptics;
+
+        private void Awake()
+        {
+            if (_hookVoice == null) _hookVoice = GetComponentInParent<OneShotVoiceCue>();
+        }
 
         private void OnTriggerEnter(Collider collision)
         {
@@ -54,11 +56,7 @@ namespace DumyatRuntime
             currentJoint = joint;
             isFishHooked = true;
 
-            // if (!_playerPreistence.HasKey("fish_hooked"))
-            // {
-            _soundService.PlaySoundFxAtPosition(HookFatherSound, Rod.transform, 1f);
-            // _playerPreistence.AddKey("fish_hooked");
-            // }
+            _hookVoice?.TryPlay();
 
             _haptics?.TriggerVibration(1f, 2f, 0.5f, HapticHand.Right);
 

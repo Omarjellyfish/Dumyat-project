@@ -31,6 +31,15 @@ namespace DumyatRuntime
         [Tooltip("The instruction text shown on the hover UI panel")]
         public string InstructionText;
 
+        [TextArea(2, 4)]
+        [Tooltip("Egyptian-Arabic version of the instruction, shown when the player's subtitle " +
+                 "setting is Arabic. Leave empty and the card falls back to InstructionText, so a " +
+                 "step without a translation still reads rather than going blank.")]
+        public string InstructionTextArabic;
+
+        [Tooltip("Optional audio for the tutorial step")]
+        public AudioClip Audio;
+
         [Tooltip("Optional voice line played when this step activates")]
         public DialogueSequenceSO VoiceLine;
 
@@ -43,6 +52,12 @@ namespace DumyatRuntime
         [Header("Completion")]
         public TutorialCompletionType CompletionType;
 
+        [Tooltip("Uncheck to make this step MANDATORY: the Skip and Next buttons are hidden and the " +
+                 "step can only end by its own completion trigger firing. Use it for a step the rest " +
+                 "of the tutorial makes no sense without — walking into the workshop, say, when every " +
+                 "later step points at a tool inside it.")]
+        public bool Skippable = true;
+
         [Tooltip("Event completion: full event type name (e.g. 'RecipeSelectedEvent')")]
         public string EventTypeName;
 
@@ -53,14 +68,15 @@ namespace DumyatRuntime
         public float DelaySeconds;
 
         [Header("Anchors & Presentation")]
-        [Tooltip("Primary anchor ID — the hover UI positions near the FIRST TutorialAnchor found with this ID")]
+        [Tooltip("Primary anchor ID — WHERE THE INSTRUCTION CARD SITS. This is placement only and is " +
+                 "NOT highlighted; it is routinely set to Hands or Player, which are not objects the " +
+                 "tip is about. To highlight something, name it in Highlight Ids below.")]
         public string PrimaryAnchorId;
 
-        [Tooltip("Additional IDs to highlight. ALL TutorialAnchors matching ANY of these IDs get visual attention")]
+        [Tooltip("IDs of the objects THIS TIP TALKS ABOUT. Every TutorialAnchor matching any of these " +
+                 "is highlighted. Leave EMPTY for a tip that names no object (a button instruction, or " +
+                 "narration) — empty means no highlight, which is the correct look for those steps.")]
         public string[] HighlightIds;
-
-        [Tooltip("If true, the TutorialAnchor with PrimaryAnchorId is also treated as a highlight target")]
-        public bool HighlightPrimaryAnchor = true;
 
         [Tooltip("World-space offset from the primary anchor where the hover UI is positioned")]
         public Vector3 AnchorOffset = new Vector3(0f, 0.3f, 0f);

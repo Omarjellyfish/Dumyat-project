@@ -1,9 +1,13 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/InventoryStyles.uss" />
+    <!-- Element NAMES are contract: InventoryToolkitUI resolves ItemIcon / ItemName /
+         ItemQuantity / DropButton by name. Nesting them is fine; renaming them is not. -->
     <ui:VisualElement class="slot-row">
         <ui:VisualElement name="ItemIcon" class="slot-icon" />
-        <ui:Label name="ItemName" text="Item Name" class="slot-name" />
-        <ui:Label name="ItemQuantity" text="x0" class="slot-quantity" />
+        <ui:VisualElement class="slot-text">
+            <ui:Label name="ItemName" text="Item Name" class="slot-name" />
+            <ui:Label name="ItemQuantity" text="×0" class="slot-quantity" />
+        </ui:VisualElement>
         <ui:Button name="DropButton" text="Drop" class="slot-drop-btn" />
     </ui:VisualElement>
 </ui:UXML>

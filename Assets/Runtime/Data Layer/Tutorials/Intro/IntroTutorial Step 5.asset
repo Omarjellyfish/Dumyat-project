@@ -12,19 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: IntroTutorial Step 5
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Grab the inventory to open it
-
-'
+  InstructionText: 'Grab your bag to open it. Everything you pick up ends up in there.'
+  InstructionTextArabic: 'امسك شنطتك عشان تفتحها. أي حاجة تشيلها هتلاقيها جواها.'
+  Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: b658f477a2ba14f238604081771bf274, type: 3}
-  CompletionType: 2
+  Video: {fileID: 0}
+  CompletionType: 3
   EventTypeName: 
   ZoneId: 
   DelaySeconds: 1.5
   PrimaryAnchorId: Inventory
-  HighlightIds: []
-  HighlightPrimaryAnchor: 1
-  AnchorOffset: {x: 0, y: 0.3, z: 5}
+  HighlightIds:
+  - Inventory
+  AnchorOffset: {x: 0, y: 1, z: -0.5}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
   PersistenceConditionKey: 
   RequiredState: 1

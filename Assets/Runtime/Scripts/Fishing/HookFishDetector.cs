@@ -10,6 +10,8 @@ namespace DumyatRuntime
         public float fishDetectionRadius = 8f;
         private bool fishAlreadyCalled;
 
+        private FishBehaviour investigatingFish;
+
         private void Awake()
         {
             if (hookingFish == null)
@@ -39,6 +41,8 @@ namespace DumyatRuntime
             if (nearestFish != null)
             {
                 nearestFish.InvestigateHook(transform);
+                investigatingFish = nearestFish;
+
                 Debug.Log(
                     "Nearest fish found: " +
                     nearestFish.name);
@@ -50,6 +54,12 @@ namespace DumyatRuntime
             if (other.CompareTag("Water"))
             {
                 fishAlreadyCalled = false;
+
+                if (investigatingFish != null)
+                {
+                    investigatingFish.CancelHookInvestigation();
+                    investigatingFish = null;
+                }
             }
         }
     }

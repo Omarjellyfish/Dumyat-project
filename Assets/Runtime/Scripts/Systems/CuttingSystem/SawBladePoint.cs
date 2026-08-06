@@ -6,7 +6,7 @@ namespace DumyatRuntime
     {
         [SerializeField] private LayerMask _woodLayer;
         [SerializeField] private float _rayDistance = 0.05f;
-        [SerializeField] private bool _showDebugRayInGame = true;
+        [SerializeField] private bool _showDebugRayInGame = false;
         [SerializeField] private float _debugRayWidth = 0.005f;
 
         private LineRenderer _debugLine;
@@ -20,6 +20,7 @@ namespace DumyatRuntime
         private void Awake()
         {
             SetupDebugLine();
+            _showDebugRayInGame = false;
         }
 
         public void CheckContact()

@@ -1,0 +1,127 @@
+/* ============================================================================
+   Loading overlay — "Delta" treatment.
+
+   Authored against a 900 x 400 world-space panel (shorter than the 900 x 620
+   menus: there is nothing to interact with, so it should not fill the view).
+
+   Nothing here is clickable. LoadingScreenView sets pickingMode = Ignore on the
+   root in code so the panel can never eat an XR ray while it floats in front of
+   the player.
+   ============================================================================ */
+
+.loading-panel {
+    background-color: rgba(8, 26, 34, 0.84);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.42);
+    border-radius: 22px;
+    padding: 28px 32px;
+    width: 100%;
+    height: 100%;
+}
+
+.loading-header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.2);
+}
+
+.loading-title {
+    font-size: 32px;
+    color: #D6F6FA;
+    letter-spacing: 7px;
+    margin: 0;
+}
+
+/* Destination scene name, right-aligned opposite the title. */
+.loading-destination {
+    font-size: 20px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 4px;
+    -unity-text-align: middle-right;
+    margin: 0;
+}
+
+.loading-body {
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.loading-meta {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 14px;
+}
+
+.loading-status {
+    font-size: 26px;
+    color: rgba(214, 246, 250, 0.55);
+    letter-spacing: 3px;
+    margin: 0;
+}
+
+/* The percentage is the one bright number on the panel. */
+.loading-percent {
+    font-size: 34px;
+    color: #67DDE8;
+    -unity-text-align: middle-right;
+    margin: 0;
+}
+
+/* A plain track + fill rather than ui:ProgressBar: the built-in one's inner
+   elements are awkward to restyle, and this matches the hairline treatment. */
+.loading-bar {
+    height: 14px;
+    border-radius: 7px;
+    background-color: rgba(120, 228, 236, 0.16);
+    border-width: 1px;
+    border-color: rgba(120, 228, 236, 0.14);
+    overflow: hidden;
+}
+
+/* Width is driven from code as a percentage. */
+.loading-bar-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 7px;
+    background-color: #67DDE8;
+}
+
+.loading-tip {
+    font-size: 24px;
+    color: rgba(214, 246, 250, 0.55);
+    white-space: normal;
+    margin-top: 26px;
+    padding-top: 20px;
+    /* Fixed height so a short tip following a long one does not resize the
+       panel mid-load. */
+    min-height: 76px;
+    border-top-width: 1px;
+    border-top-color: rgba(120, 228, 236, 0.14);
+}
+
+/* ============================================================================
+   Arabic
+   ============================================================================
+   Added to every text element by UiLanguage.ApplyScript while drawing Arabic.
+   The advanced text generator is what shapes and joins the glyphs; the tracking
+   this panel uses for its Latin chrome must go to zero, or it would pull joined
+   letterforms apart and break the cursive connections outright.
+
+   The panel must sit on a PanelSettings whose text settings carry an
+   Arabic-capable font (Cairo Panel Text Settings) or every glyph is a box. */
+.ui-arabic {
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+/* UI Toolkit has no `direction` property, so right-alignment is as close to an
+   RTL layout as prose gets. Only the tip is flipped — the header and the meta
+   row are a two-column layout whose alignment comes from the row, and the
+   percentage stays a right-aligned number in both languages. */
+.ui-arabic.loading-tip {
+    -unity-text-align: upper-right;
+}

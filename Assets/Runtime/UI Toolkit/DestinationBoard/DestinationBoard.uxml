@@ -1,9 +1,31 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Runtime/UI%20Toolkit/DestinationBoard/DestinationBoard.uss?fileID=7433441132597879392&amp;guid=a0597e905f6b7d74980894d2d4b58eba&amp;type=3#DestinationBoard"/>
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/DestinationBoard/DestinationBoard.uss" />
+
+    <!-- Delta v2 "workshop drawing" — departure stubs. Authored for a 900 x 620 world-space
+         panel, the same canvas as the inventory, main menu and pause menu.
+
+         DestinationBoardUI queries HeaderLabel and DestinationContainer by name; both keep
+         their names. RouteCount is additive and null-guarded on the C# side. -->
     <ui:VisualElement name="DestinationRoot" class="destination-root">
+
+        <!-- Crop marks. -->
+        <ui:VisualElement class="corner corner--tl" picking-mode="Ignore" />
+        <ui:VisualElement class="corner corner--tr" picking-mode="Ignore" />
+        <ui:VisualElement class="corner corner--bl" picking-mode="Ignore" />
+        <ui:VisualElement class="corner corner--br" picking-mode="Ignore" />
+
         <ui:VisualElement class="destination-header-container">
-            <ui:Label name="HeaderLabel" text="AVAILABLE DESTINATIONS" class="destination-header" style="-unity-text-generator: advanced; -unity-font-definition: url(&quot;project://database/Assets/Runtime/UI%20Toolkit/Fonts/Cairo-VariableFont_slnt,wght.ttf?fileID=12800000&amp;guid=7d8050dfeb2d6c64ab82de5bd3f91742&amp;type=3#Cairo-VariableFont_slnt,wght&quot;);"/>
+            <ui:VisualElement class="destination-title-group">
+                <ui:Label name="BoardEyebrow" text="DAMIETTA · LOCAL SERVICE" class="destination-eyebrow" />
+                <ui:Label name="HeaderLabel" text="DEPARTURES" class="destination-header" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="route-readout">
+                <ui:Label name="RouteCountLabel" text="ROUTES" class="route-readout-label" />
+                <ui:Label name="RouteCount" text="0" class="route-readout-value" />
+            </ui:VisualElement>
         </ui:VisualElement>
-        <ui:ScrollView name="DestinationContainer" class="destination-scroll"/>
+
+        <ui:ScrollView name="DestinationContainer" class="destination-scroll" />
     </ui:VisualElement>
 </ui:UXML>

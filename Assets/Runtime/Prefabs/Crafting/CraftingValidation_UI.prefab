@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.00004346404, y: 0.9961947, z: 0.08715578, w: 0.0000038026126}
   m_LocalPosition: {x: -0.17404604, y: 1.9659816, z: -2.4095907}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -52,9 +52,9 @@ MonoBehaviour:
   sourceAsset: {fileID: 9197481963319205126, guid: 9e8758d2ec9b9ec46a3534f84b2b7d8c, type: 3}
   m_SortingOrder: 0
   m_Position: 0
-  m_WorldSpaceSizeMode: 0
-  m_WorldSpaceWidth: 350
-  m_WorldSpaceHeight: 200
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 900
+  m_WorldSpaceHeight: 620
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
@@ -72,9 +72,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CraftingValidationUI
   _station: {fileID: 0}
   _diagnosticItemTemplate: {fileID: 9197481963319205126, guid: eb75f5df91f142241aa67693244b0802, type: 3}
-  _successColor: {r: 0, g: 0.9, b: 0.46, a: 1}
-  _failColor: {r: 1, g: 0.09, b: 0.26, a: 1}
-  _idleColor: {r: 0.21, g: 0.27, b: 0.31, a: 1}
+  _successColor: {r: 0.5529412, g: 0.92156863, b: 0.6862745, a: 1}
+  _failColor: {r: 1, g: 0.60784316, b: 0.5411765, a: 1}
+  _idleColor: {r: 0.47058824, g: 0.89411765, b: 0.9254902, a: 0.2}
   _successIcon: {fileID: 2800000, guid: db3e7b7c8db355e499429545071a0321, type: 3}
   _failureIcon: {fileID: 4456449167576933126, guid: 511976cd788ea5442a20b479849b0cef, type: 3}
   _afterMakingChairSequence: {fileID: 11400000, guid: 57cc133c0e31cd94dbab69330e6f23db, type: 2}

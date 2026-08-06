@@ -63,31 +63,27 @@ namespace DumyatRuntime
         }
 
         private void OnPartSocketed(SelectEnterEventArgs args)
-        {
-            IsFilled = true;
+{
+    if (IsFilled) return; // guard against re-entrant/duplicate select events
 
-            if (_hoverHighlight != null)
-                _hoverHighlight.SetActive(false);
+    IsFilled = true;
 
-            if (args.interactableObject is XRGrabInteractable grabInteractable)
-            {
-                _socketedGrabInteractable = grabInteractable;
-                _originalInteractionLayers = grabInteractable.interactionLayers;
+    if (_hoverHighlight != null)
+        _hoverHighlight.SetActive(false);
 
-                // IMPORTANT: we do NOT set grabInteractable.enabled = false here. Disabling an
-                // XRBaseInteractable forces the interaction manager to cancel its current
-                // selection (i.e. it would immediately pop back OUT of the socket). Instead we
-                // strip its interaction layers so no hand/ray interactor can select it anymore,
-                // while leaving the component enabled so the socket's own selection is undisturbed.
-                grabInteractable.interactionLayers = 0;
-            }
-            else
-            {
-                Debug.LogWarning($"ShipPartSocket '{_socketID}': socketed object has no XRGrabInteractable to lock.");
-            }
+    if (args.interactableObject is XRGrabInteractable grabInteractable)
+    {
+        _socketedGrabInteractable = grabInteractable;
+        _originalInteractionLayers = grabInteractable.interactionLayers;
+        grabInteractable.interactionLayers = 0;
+    }
+    else
+    {
+        Debug.LogWarning($"ShipPartSocket '{_socketID}': socketed object has no XRGrabInteractable to lock.");
+    }
 
-            ShipAssemblyManager.Instance?.NotifySocketFilled(this);
-        }
+    ShipAssemblyManager.Instance?.NotifySocketFilled(this);
+}
 
         private void OnPartUnsocketed(SelectExitEventArgs args)
         {

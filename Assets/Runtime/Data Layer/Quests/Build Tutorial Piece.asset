@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a010ad0c88c72e043aaa325262b851ca, type: 3}
+  m_Name: Build Tutorial Piece
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.QuestDefinitionSO
+  questID: Build_1_Chair
+  displayName: Build a Chair
+  displayNameArabic: "\u0627\u0639\u0645\u0644 \u0643\u0631\u0633\u064A"
+  description: "Build a chair at the crafting station, then place it on the validation board to have your work checked."
+  descriptionArabic: "\u0627\u0639\u0645\u0644 \u0643\u0631\u0633\u064A \u0639\u0644\u0649 \u0645\u0646\u0636\u062F\u0629 \u0627\u0644\u0634\u063A\u0644\u060C \u0648\u0628\u0639\u062F\u064A\u0646 \u062D\u0637\u0647 \u0639\u0644\u0649 \u0644\u0648\u062D\u0629 \u0627\u0644\u0645\u0631\u0627\u062C\u0639\u0629 \u0639\u0634\u0627\u0646 \u064A\u062A\u0631\u0627\u062C\u0639 \u0634\u063A\u0644\u0643."
+  sceneName: carpentar_room
+  triggerType: 0
+  targetCount: 1
+  targetAsset: {fileID: 0}
+  targetNameFallback: 
+  rewardDescription: A piece for your ship
+  rewardDescriptionArabic: "\u0642\u0637\u0639\u0629 \u0645\u0646 \u0645\u0631\u0643\u0628\u0643"
+  reward: {fileID: 11400000, guid: c56be3ba69e1ba040868149440378658, type: 2}
+  persistenceKeysOnComplete:
+  - HasShipPiece1
+  - HasUnlockedRasElBar
