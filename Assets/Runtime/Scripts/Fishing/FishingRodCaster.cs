@@ -30,6 +30,7 @@ namespace DumyatRuntime
 
         private bool previousPrimaryButtonState;
         [SerializeField] private AudioClip castSound;
+        [SerializeField] private SpringJoint springJoint;
         private ISoundService _soundService;
 
         [Inject]
@@ -137,18 +138,15 @@ namespace DumyatRuntime
         {
             castTimer += Time.deltaTime;
 
-            bool hitWater = false;
-            // Prefer a real collision check against your water volume:
-            if (Physics.CheckSphere(hookRb.position, 0.05f, waterLayer))
-                hitWater = true;
+            bool hitWater = Physics.CheckSphere(hookRb.position, 0.05f, waterLayer);
 
-            // Fallback: hook has basically stopped moving (e.g. no water layer set yet)
-            bool settled = hookRb.linearVelocity.magnitude < settleVelocityThreshold;
-
-            if (hitWater || settled || castTimer > maxFlightTime)
+            if (hitWater || castTimer > maxFlightTime)
             {
                 isCasting = false;
                 fishingLine.SettleCastAtCurrentDistance();
+
+                fishingLine.LockHookPosition();
+
             }
         }
     }

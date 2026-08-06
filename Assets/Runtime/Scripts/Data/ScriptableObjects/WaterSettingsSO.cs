@@ -55,9 +55,9 @@ namespace DumyatRuntime
                 WaterVFX[] instances = FindObjectsByType<WaterVFX>(FindObjectsSortMode.None);
                 foreach (var water in instances) {
                      water.UpdateWaves();
-                    // if (water != null && water.settings == this) {
-                    //     water.UpdateWaves();
-                    // }
+                    if (water != null && water.settings == this) {
+                         water.UpdateWaves();
+                    }
                 }
             };
             #endif

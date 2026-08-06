@@ -47,7 +47,6 @@ namespace DumyatRuntime
 
         [Header("Fade Out")]
         [SerializeField] private FadeInBoat fadeInBoat;
-        private Transform player;
 
         private IEventService _eventService;
         private Coroutine pathRoutine;
@@ -65,7 +64,6 @@ namespace DumyatRuntime
             {
                 animator = GetComponentInChildren<Animator>();
             }
-            player = GameObject.FindGameObjectWithTag("Player").transform;
         }
 
         private void OnEnable()
@@ -153,23 +151,28 @@ namespace DumyatRuntime
 
                     if (i == 0)
                     {
-                        // Point 0: father talks and stays put. This script does
-                        // NOT publish firstPointDialogue itself; it just waits
-                        // for whoever triggers it (e.g. the player) to finish.
-                        SetTalking(true);
+                        // Point 0: father stays put and idles while waiting
+                        // (e.g. for the player to select the rod / trigger firstPointDialogue).
+                        // This script does NOT publish firstPointDialogue itself; it just
+                        // waits for whoever triggers it to finish.
+                        SetTalking(false);
                         yield return WaitForExternalDialogue(firstPointDialogue);
                         SetTalking(false);
                     }
                     else if (current.waitTimeAtPoint > 0f)
                     {
+                        // Idle while waiting at this point.
+                        SetTalking(false);
                         yield return new WaitForSeconds(current.waitTimeAtPoint);
                     }
                 }
+
                 if (!loopPath)
                 {
-                    fadeInBoat.StartTransition(player);
-                    animator.SetBool(isWalkingHash, false);
-                    animator.SetBool(isTalkingHash, true);
+                    // Reached the final point: back to idle, then trigger the transition.
+                    SetWalking(false);
+                    SetTalking(false);
+                    fadeInBoat.StartTransition();
                 }
             }
             while (loopPath);
