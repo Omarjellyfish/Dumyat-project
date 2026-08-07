@@ -218,20 +218,39 @@ namespace DumyatRuntime
         // -------------------------------------------------------------------
 
         /// <summary>
-        /// Resolves the target filter string from a quest definition.
-        /// Prefers the SO reference (<see cref="IQuestTarget.TargetID"/>), falls back
-        /// to the plain string <c>targetNameFallback</c> for non-SO targets (e.g. fish).
-        /// Returns <c>null</c> if no filter is set (matches any event).
+        /// Checks if the given eventName matches any of the quest's target filters.
+        /// Returns true if no filters are set, or if the eventName matches a target.
         /// </summary>
-        private static string ResolveTargetID(QuestDefinitionSO def)
+        private static bool IsTargetMatch(QuestDefinitionSO def, string eventName)
         {
-            if (def.targetAsset is IQuestTarget questTarget)
-                return questTarget.TargetID;
+            bool hasValidTarget = false;
+
+            if (def.targetAssets != null)
+            {
+                for (int i = 0; i < def.targetAssets.Count; i++)
+                {
+                    if (def.targetAssets[i] is IQuestTarget questTarget)
+                    {
+                        hasValidTarget = true;
+                        if (string.Equals(questTarget.TargetID, eventName, System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
 
             if (!string.IsNullOrEmpty(def.targetNameFallback))
-                return def.targetNameFallback;
+            {
+                hasValidTarget = true;
+                if (string.Equals(def.targetNameFallback, eventName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
 
-            return null;
+            // If no filters were set, matches anything
+            return !hasValidTarget;
         }
 
         /// <summary>
@@ -252,11 +271,7 @@ namespace DumyatRuntime
                 if (def == null) continue;
                 if (def.triggerType != triggerType) continue;
 
-                // Resolve the target filter: SO reference first, then string fallback.
-                string targetID = ResolveTargetID(def);
-
-                if (targetID != null &&
-                    !string.Equals(targetID, eventName, System.StringComparison.OrdinalIgnoreCase))
+                if (!IsTargetMatch(def, eventName))
                 {
                     continue;
                 }

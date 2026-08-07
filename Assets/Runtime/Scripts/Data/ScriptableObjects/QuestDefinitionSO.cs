@@ -43,12 +43,12 @@ namespace DumyatRuntime
         public int targetCount = 1;
 
         [Header("Target (leave empty for 'any')")]
-        [Tooltip("Drag any ScriptableObject that implements IQuestTarget (ItemData, CraftingRecipe). " +
-                 "The service reads TargetID from this to filter events. Leave empty to match any event of the trigger type.")]
-        public ScriptableObject targetAsset;
+        [Tooltip("Drag any ScriptableObjects that implement IQuestTarget (ItemData, CraftingRecipe). " +
+                 "The service reads TargetID from these to filter events. Leave empty to match any event of the trigger type.")]
+        public List<ScriptableObject> targetAssets = new List<ScriptableObject>();
 
         [Tooltip("Fallback string filter for targets that aren't ScriptableObjects (e.g. fish names). " +
-                 "Ignored if targetAsset is set.")]
+                 "Ignored if targetAssets is set.")]
         public string targetNameFallback;
 
         [Header("Presentation")]
