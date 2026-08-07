@@ -12,13 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: Crafting Tutorial Step 5
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Glue joins two pieces. Squeeze out a blob, then bring the second piece close.'
-  InstructionTextArabic: 'الغرا بيلزّق قطعتين. اضغط الزناد وحطّ نقطة، وبعدين قرّب القطعة التانية.'
+  InstructionText: Glue joins two pieces. Squeeze out a blob, then bring the second
+    piece close.
+  InstructionTextArabic: "\u0627\u0644\u063A\u0631\u0627 \u0628\u064A\u0644\u0632\u0651\u0642
+    \u0642\u0637\u0639\u062A\u064A\u0646. \u0627\u0636\u063A\u0637 \u0627\u0644\u0632\u0646\u0627\u062F
+    \u0648\u062D\u0637\u0651 \u0646\u0642\u0637\u0629\u060C \u0648\u0628\u0639\u062F\u064A\u0646
+    \u0642\u0631\u0651\u0628 \u0627\u0644\u0642\u0637\u0639\u0629 \u0627\u0644\u062A\u0627\u0646\u064A\u0629."
   Audio: {fileID: 0}
   VoiceLine: {fileID: 11400000, guid: 8017978b6a7f4074cb68c63bef5adce4, type: 2}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
   CompletionType: 0
+  Skippable: 0
   EventTypeName: GlueAppliedEvent
   ZoneId: 
   DelaySeconds: 3

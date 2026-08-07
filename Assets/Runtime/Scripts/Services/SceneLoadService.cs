@@ -83,6 +83,9 @@ namespace DumyatRuntime
 
                 SetProgress(1f);
 
+                // Hold for 1.5 seconds before activating the new scene, ensuring the loading screen is visible
+                await Task.Delay(1500);
+
                 AllowSceneActivation(targetSceneName);
             }
             catch (Exception e)

@@ -12,14 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: Crafting Tutorial Step 6
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Changed your mind? Bring this near a joint and it comes apart.'
-  InstructionTextArabic: 'غيّرت رأيك؟ قرّب دي من الوصلة وهي هتفكّها.'
+  InstructionText: Changed your mind? Bring this near a joint and it comes apart.
+  InstructionTextArabic: "\u063A\u064A\u0651\u0631\u062A \u0631\u0623\u064A\u0643\u061F
+    \u0642\u0631\u0651\u0628 \u062F\u064A \u0645\u0646 \u0627\u0644\u0648\u0635\u0644\u0629
+    \u0648\u0647\u064A \u0647\u062A\u0641\u0643\u0651\u0647\u0627."
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
-  CompletionType: 3
-  EventTypeName: 
+  CompletionType: 0
+  Skippable: 1
+  EventTypeName: AttachmentRemovedEvent
   ZoneId: 
   DelaySeconds: 3
   PrimaryAnchorId: Deattach
