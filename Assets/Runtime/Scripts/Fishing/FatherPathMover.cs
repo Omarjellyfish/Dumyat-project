@@ -48,6 +48,9 @@ namespace DumyatRuntime
         [Header("Fade Out")]
         [SerializeField] private FadeInBoat fadeInBoat;
 
+        [Header("Block Buttons")]
+        [SerializeField] private BlockTeleportButtons blockTeleportButtons;
+
         private IEventService _eventService;
         private Coroutine pathRoutine;
         private bool waitingForDialogue;
@@ -173,6 +176,8 @@ namespace DumyatRuntime
                     SetWalking(false);
                     SetTalking(false);
                     fadeInBoat.StartTransition();
+                    blockTeleportButtons.UnblockButtons();
+
                 }
             }
             while (loopPath);
