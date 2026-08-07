@@ -17,9 +17,6 @@ namespace DumyatRuntime
         public float minimumCastVelocity = 1f;
         public LayerMask waterLayer;          // set this to your water surface layer
         public float settleVelocityThreshold = 0.2f;
-        public float maxFlightTime = 5f;
-
-        private float castTimer;
 
         private bool isHoldingCast;
         private bool isCasting;
@@ -118,7 +115,6 @@ namespace DumyatRuntime
                 return;
 
             isCasting = true;
-            castTimer = 0f;
 
             fishingLine.EnterFreeCast();
 
@@ -136,11 +132,9 @@ namespace DumyatRuntime
 
         private void UpdateLineLength()
         {
-            castTimer += Time.deltaTime;
-
             bool hitWater = Physics.CheckSphere(hookRb.position, 0.05f, waterLayer);
 
-            if (hitWater || castTimer > maxFlightTime)
+            if (hitWater)
             {
                 isCasting = false;
                 fishingLine.SettleCastAtCurrentDistance();
