@@ -70,9 +70,9 @@ namespace DumyatRuntime
         [Tooltip("Optional items to add to the player's inventory on completion.")]
         public List<QuestItemReward> itemRewards = new List<QuestItemReward>();
 
-        [Tooltip("Optional scripted reward to grant on completion, for anything the money/item fields " +
+        [Tooltip("Optional scripted rewards to grant on completion, for anything the money/item fields " +
                  "above cannot express (unlocking a blueprint, say). Create via Dumyat > Quests > Rewards.")]
-        public QuestRewardSO reward;
+        public List<QuestRewardSO> rewards = new List<QuestRewardSO>();
 
         [Header("Persistence")]
         [Tooltip("Optional persistence keys to unlock when this quest completes.")]

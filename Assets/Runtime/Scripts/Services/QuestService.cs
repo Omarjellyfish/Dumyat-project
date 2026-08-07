@@ -352,10 +352,17 @@ namespace DumyatRuntime
                 }
             }
 
-            if (def.reward != null)
+            if (def.rewards != null)
             {
-                def.reward.GrantReward(_rewardContext);
-                Debug.Log($"[QuestService] Reward granted for '{def.displayName}'.");
+                for (int i = 0; i < def.rewards.Count; i++)
+                {
+                    QuestRewardSO reward = def.rewards[i];
+                    if (reward != null)
+                    {
+                        reward.GrantReward(_rewardContext);
+                        Debug.Log($"[QuestService] Reward '{reward.name}' granted for '{def.displayName}'.");
+                    }
+                }
             }
         }
     }
