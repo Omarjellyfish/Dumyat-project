@@ -230,7 +230,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8a04e0a377145c4ea86831b883148ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DehookingFish
-  _catchVoice: {fileID: 0}
+  CatchFishVoice: {fileID: 0}
 --- !u!114 &6937025437335772083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -278,6 +278,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: Fish
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!114 &8786348690805371838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -323,7 +328,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7090295438093893417}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3f778f50d31d19f4dacab4acf7b1c687, type: 3}
   m_Name: 
