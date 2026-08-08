@@ -534,7 +534,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &16868437
 GameObject:
   m_ObjectHideFlags: 0
@@ -827,7 +827,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &30613119
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1437,96 +1437,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 40837902}
   m_Mesh: {fileID: 0}
---- !u!1 &43416506
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 43416507}
-  - component: {fileID: 43416509}
-  - component: {fileID: 43416508}
-  m_Layer: 0
-  m_Name: LOD_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &43416507
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 43416506}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1607361082}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &43416508
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 43416506}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 4e765f04350a471468c85a30dc218963, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &43416509
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 43416506}
-  m_Mesh: {fileID: 0}
 --- !u!1 &45746949
 GameObject:
   m_ObjectHideFlags: 0
@@ -1788,7 +1698,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &52362903
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1929,7 +1839,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &57800186
 GameObject:
   m_ObjectHideFlags: 0
@@ -2222,7 +2132,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &68858024
 GameObject:
   m_ObjectHideFlags: 0
@@ -2849,7 +2759,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &94130123
 GameObject:
   m_ObjectHideFlags: 0
@@ -3111,7 +3021,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &102728682
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3252,7 +3162,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &107524811
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3455,7 +3365,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &108766553
 GameObject:
   m_ObjectHideFlags: 0
@@ -4015,7 +3925,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &121579991
 GameObject:
   m_ObjectHideFlags: 0
@@ -4246,7 +4156,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &124688642
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4387,7 +4297,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &127953715
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4528,7 +4438,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &128227957
 GameObject:
   m_ObjectHideFlags: 0
@@ -4928,7 +4838,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &135573807
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5463,7 +5373,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &167965984
 GameObject:
   m_ObjectHideFlags: 0
@@ -5694,7 +5604,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &170771837
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6057,7 +5967,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &192975908
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6198,7 +6108,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &201916963
 GameObject:
   m_ObjectHideFlags: 0
@@ -7282,7 +7192,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &265304842
 GameObject:
   m_ObjectHideFlags: 0
@@ -7603,7 +7513,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &282636080
 GameObject:
   m_ObjectHideFlags: 0
@@ -7912,7 +7822,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &294957862
 GameObject:
   m_ObjectHideFlags: 0
@@ -8106,7 +8016,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &298015992
 GameObject:
   m_ObjectHideFlags: 0
@@ -8655,7 +8565,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &320934769
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8796,7 +8706,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &323339738
 GameObject:
   m_ObjectHideFlags: 0
@@ -9195,7 +9105,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &338840452
 GameObject:
   m_ObjectHideFlags: 0
@@ -9389,7 +9299,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &354227066
 GameObject:
   m_ObjectHideFlags: 0
@@ -9620,7 +9530,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &358742510
 GameObject:
   m_ObjectHideFlags: 0
@@ -10061,7 +9971,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &372039779
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10446,7 +10356,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &379246169
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10587,7 +10497,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &382038742
 GameObject:
   m_ObjectHideFlags: 0
@@ -11406,7 +11316,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &420175929
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11805,7 +11715,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &444317319
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11946,7 +11856,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &457070702
 GameObject:
   m_ObjectHideFlags: 0
@@ -12235,7 +12145,6 @@ Transform:
   - {fileID: 521807056}
   - {fileID: 444317320}
   - {fileID: 1235198094}
-  - {fileID: 1607361082}
   - {fileID: 320934770}
   - {fileID: 1282668682}
   - {fileID: 1047860804}
@@ -12462,7 +12371,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &464862690
 GameObject:
   m_ObjectHideFlags: 0
@@ -12656,7 +12565,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &471836933
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12797,7 +12706,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &481188325
 GameObject:
   m_ObjectHideFlags: 0
@@ -13637,7 +13546,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &524861363
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14532,7 +14441,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &542805519
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14807,7 +14716,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &558245527
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15010,7 +14919,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &561380249
 GameObject:
   m_ObjectHideFlags: 0
@@ -15331,7 +15240,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &569390920
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15808,7 +15717,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &577447875
 GameObject:
   m_ObjectHideFlags: 0
@@ -16414,7 +16323,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &607804785
 GameObject:
   m_ObjectHideFlags: 0
@@ -16735,7 +16644,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &622283887
 GameObject:
   m_ObjectHideFlags: 0
@@ -17201,7 +17110,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &634807352
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17823,7 +17732,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &651298173
 GameObject:
   m_ObjectHideFlags: 0
@@ -18178,7 +18087,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &669589119
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18319,7 +18228,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &670459754
 GameObject:
   m_ObjectHideFlags: 0
@@ -18776,7 +18685,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &692003585
 GameObject:
   m_ObjectHideFlags: 0
@@ -19349,7 +19258,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &712073719
 GameObject:
   m_ObjectHideFlags: 0
@@ -19580,7 +19489,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &718778317
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19721,7 +19630,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &721373659
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20197,7 +20106,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &730197893
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20580,7 +20489,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &737187926
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20880,7 +20789,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &753226025
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21721,7 +21630,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &803329764
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22166,7 +22075,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &827150163
 GameObject:
   m_ObjectHideFlags: 0
@@ -22397,7 +22306,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &835459747
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22997,7 +22906,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &852052913
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23437,7 +23346,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &868006385
 GameObject:
   m_ObjectHideFlags: 0
@@ -24766,97 +24675,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
---- !u!1 &906769296
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 906769297}
-  - component: {fileID: 906769299}
-  - component: {fileID: 906769298}
-  m_Layer: 0
-  m_Name: LOD_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &906769297
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 906769296}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1607361082}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &906769298
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 906769296}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 4e765f04350a471468c85a30dc218963, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &906769299
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 906769296}
-  m_Mesh: {fileID: 0}
+  quadRes: 1
 --- !u!1 &910577612
 GameObject:
   m_ObjectHideFlags: 0
@@ -25624,7 +25443,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &951329518
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -25884,7 +25703,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &960348358
 GameObject:
   m_ObjectHideFlags: 0
@@ -26115,7 +25934,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &972013457
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26408,7 +26227,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &978876656
 GameObject:
   m_ObjectHideFlags: 0
@@ -26959,7 +26778,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1017965775
 GameObject:
   m_ObjectHideFlags: 0
@@ -27190,7 +27009,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1029283535
 GameObject:
   m_ObjectHideFlags: 0
@@ -27716,7 +27535,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1048258713
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -27857,7 +27676,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1053084681
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -28072,7 +27891,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1060339210
 GameObject:
   m_ObjectHideFlags: 0
@@ -28753,7 +28572,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1096242010
 GameObject:
   m_ObjectHideFlags: 0
@@ -29677,7 +29496,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1141424963
 GameObject:
   m_ObjectHideFlags: 0
@@ -29908,7 +29727,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1161310312
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30049,7 +29868,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1163359756
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30190,7 +30009,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1164195991
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30331,7 +30150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1165413194
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30472,7 +30291,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1166337400
 GameObject:
   m_ObjectHideFlags: 0
@@ -30793,7 +30612,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1171233791
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30996,7 +30815,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1181870365
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -31210,7 +31029,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1192435528
 GameObject:
   m_ObjectHideFlags: 0
@@ -31441,7 +31260,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1193408396
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -31775,7 +31594,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1214726625
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -31978,7 +31797,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1216422495
 GameObject:
   m_ObjectHideFlags: 0
@@ -32299,7 +32118,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1222066374
 GameObject:
   m_ObjectHideFlags: 0
@@ -32878,7 +32697,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1235848690
 GameObject:
   m_ObjectHideFlags: 0
@@ -34097,7 +33916,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1283358068
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -34238,7 +34057,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1287126625
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -34515,7 +34334,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1298446276
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -34890,7 +34709,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1314360020
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -35486,7 +35305,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1340788450
 GameObject:
   m_ObjectHideFlags: 0
@@ -35717,7 +35536,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1344252953
 GameObject:
   m_ObjectHideFlags: 0
@@ -36388,7 +36207,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1371514065
 GameObject:
   m_ObjectHideFlags: 0
@@ -36619,7 +36438,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1379778057
 GameObject:
   m_ObjectHideFlags: 0
@@ -37092,7 +36911,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1390259565
 GameObject:
   m_ObjectHideFlags: 0
@@ -37522,7 +37341,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1411636498
 GameObject:
   m_ObjectHideFlags: 0
@@ -37983,7 +37802,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!54 &1432126350
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -39729,7 +39548,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1530157278
 GameObject:
   m_ObjectHideFlags: 0
@@ -40503,7 +40322,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1549739847
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -40856,7 +40675,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1578417860
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -40997,7 +40816,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1584839037
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -41207,7 +41026,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1587679074
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -41409,7 +41228,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1590601035
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -41550,7 +41369,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1595429933
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -41691,7 +41510,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1602847985
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -41844,147 +41663,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1603545959}
   m_Mesh: {fileID: 0}
---- !u!1001 &1607361081
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 459485411}
-    m_Modifications:
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -13.989998
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -16.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 76.899994
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1149193567067095573, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 2839989316979628580, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_Name
-      value: Barzakh Water_95
-      objectReference: {fileID: 0}
-    - target: {fileID: 5334524762176946269, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_Size
-      value: 30
-      objectReference: {fileID: 0}
-    - target: {fileID: 5334524762176946269, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LODs.Array.data[0].screenRelativeHeight
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5334524762176946269, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LODs.Array.data[1].screenRelativeHeight
-      value: 0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5334524762176946269, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LODs.Array.data[2].screenRelativeHeight
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5334524762176946269, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LODs.Array.data[1].renderers.Array.data[0].renderer
-      value: 
-      objectReference: {fileID: 906769298}
-    - target: {fileID: 5334524762176946269, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: m_LODs.Array.data[2].renderers.Array.data[0].renderer
-      value: 
-      objectReference: {fileID: 43416508}
-    - target: {fileID: 5682919604067666145, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: planeSize
-      value: 30
-      objectReference: {fileID: 0}
-    - target: {fileID: 5682919604067666145, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: subdivisionStep
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5682919604067666145, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      propertyPath: subdivisionLevel
-      value: 6
-      objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 5682919604067666145, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    - {fileID: 5334524762176946269, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    m_RemovedGameObjects:
-    - {fileID: 5482933788924971199, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    - {fileID: 9113658134998553819, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    - {fileID: 3938651064805326296, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    - {fileID: 8700103403372756130, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    - {fileID: 8213241038723752140, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    - {fileID: 8205563008137292627, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    - {fileID: 2483722301168969077, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    - {fileID: 2455311180841442778, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 906769297}
-    - targetCorrespondingSourceObject: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 43416507}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2839989316979628580, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1607361084}
-  m_SourcePrefab: {fileID: 100100000, guid: 6571d13365ebd0142852c09486be464b, type: 3}
---- !u!4 &1607361082 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 879189453684913831, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-  m_PrefabInstance: {fileID: 1607361081}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1607361083 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2839989316979628580, guid: 6571d13365ebd0142852c09486be464b, type: 3}
-  m_PrefabInstance: {fileID: 1607361081}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1607361084
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1607361083}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57d93005d6e37fe4baabb2f7fe969825, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
-  realTimeMeshUpdates: 1
-  planeLength: 30
-  quadRes: 2
 --- !u!1001 &1607626816
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -42125,7 +41803,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1607924416
 GameObject:
   m_ObjectHideFlags: 0
@@ -42868,7 +42546,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1649399299
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -43157,7 +42835,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1659802888
 GameObject:
   m_ObjectHideFlags: 0
@@ -43872,7 +43550,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1688386848
 GameObject:
   m_ObjectHideFlags: 0
@@ -43966,6 +43644,143 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3975157729289343698, guid: adc32f75397d0774f8405aa8bc996b07, type: 3}
   m_PrefabInstance: {fileID: 1690425149}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1694027104
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1694027108}
+  - component: {fileID: 1694027107}
+  - component: {fileID: 1694027106}
+  - component: {fileID: 1694027105}
+  m_Layer: 0
+  m_Name: Camera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1694027105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1694027104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
+--- !u!81 &1694027106
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1694027104}
+  m_Enabled: 1
+--- !u!20 &1694027107
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1694027104}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!4 &1694027108
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1694027104}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.73196095, z: -0, w: 0.68134665}
+  m_LocalPosition: {x: -16.26, y: 5.58, z: -1.06}
+  m_LocalScale: {x: 0.22, y: 1.6544, z: 0.1964864}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 94.102, z: 0}
 --- !u!1001 &1695008350
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -44359,7 +44174,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1700806385
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -44500,7 +44315,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1702526175
 GameObject:
   m_ObjectHideFlags: 0
@@ -44731,7 +44546,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1707115949
 GameObject:
   m_ObjectHideFlags: 0
@@ -45232,7 +45047,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1714410382
 GameObject:
   m_ObjectHideFlags: 0
@@ -47519,7 +47334,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1840082731
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -48070,7 +47885,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1858757435
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -48681,7 +48496,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1873346134
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -48822,7 +48637,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1875638618
 GameObject:
   m_ObjectHideFlags: 0
@@ -49143,7 +48958,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1887686986
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -49284,7 +49099,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1889583656
 GameObject:
   m_ObjectHideFlags: 0
@@ -49769,7 +49584,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1923654981
 GameObject:
   m_ObjectHideFlags: 0
@@ -50155,7 +49970,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1933050153
 GameObject:
   m_ObjectHideFlags: 0
@@ -50386,7 +50201,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1942480526
 GameObject:
   m_ObjectHideFlags: 0
@@ -51073,7 +50888,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &1958588355
 GameObject:
   m_ObjectHideFlags: 0
@@ -51304,7 +51119,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1967807567
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -51919,7 +51734,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &1983743337
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -53663,7 +53478,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &2084724904
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -54065,7 +53880,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1001 &2107421476
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -54330,7 +54145,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlaneGenerator
   realTimeMeshUpdates: 1
   planeLength: 30
-  quadRes: 2
+  quadRes: 1
 --- !u!1 &2111692061
 GameObject:
   m_ObjectHideFlags: 0
@@ -131084,4 +130899,5 @@ SceneRoots:
   - {fileID: 1463737221}
   - {fileID: 611478281}
   - {fileID: 464701699}
+  - {fileID: 1694027108}
   - {fileID: 501825781}
