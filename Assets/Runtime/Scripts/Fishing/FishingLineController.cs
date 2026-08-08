@@ -43,6 +43,8 @@ namespace DumyatRuntime
         [SerializeField] private AudioClip _reelInSound;
         private SoundManager _soundManager;
         [SerializeField] private Transform _reelPos;
+        [SerializeField] private float _reelSoundInterval = 0.08f;
+        private float _nextReelSoundTime;
 
         private bool isPositionLocked;
         private Vector3 lockedPosition;
@@ -287,7 +289,7 @@ namespace DumyatRuntime
                 InitRope();
                 whatIsHangingFromTheRope.GetComponent<Rigidbody>().WakeUp();
                 hasChangedRope = true;
-                _soundManager.PlaySoundFxAtPosition(_reelInSound, _reelPos, 1f);
+                PlayReelSound();
             }
             // Reel turned backward
             else if (deltaRotation < 0f && ropeLength > minRopeLength)
@@ -300,7 +302,7 @@ namespace DumyatRuntime
 
                 whatIsHangingFromTheRope.GetComponent<Rigidbody>().WakeUp();
 
-                _soundManager.PlaySoundFxAtPosition(_reelInSound, _reelPos, 1f);
+                PlayReelSound();
 
                 hasChangedRope = true;
             }
@@ -372,6 +374,14 @@ namespace DumyatRuntime
 
             InitRope();
             UpdateSpring(); // restores real spring/damper/maxDistance values
+        }
+        private void PlayReelSound()
+        {
+            if (Time.time < _nextReelSoundTime)
+                return;
+
+            _nextReelSoundTime = Time.time + _reelSoundInterval;
+            _soundManager.PlaySoundFxAtPosition(_reelInSound, _reelPos, 1f);
         }
         public void LockHookPosition()
         {

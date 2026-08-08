@@ -45,12 +45,13 @@ namespace DumyatRuntime
         [SerializeField] private bool loopPath = false;
         [SerializeField] private bool playOnStart = true;
 
-        [Header("Fade Out")]
-        [SerializeField] private FadeInBoat fadeInBoat;
+
+
 
         private IEventService _eventService;
         private Coroutine pathRoutine;
         private bool waitingForDialogue;
+        public FatherTeleportInteractable fatherTeleportInteractable;
 
         [Inject]
         private void Inject(IEventService eventService) => _eventService = eventService;
@@ -166,13 +167,13 @@ namespace DumyatRuntime
                         yield return new WaitForSeconds(current.waitTimeAtPoint);
                     }
                 }
-
                 if (!loopPath)
                 {
-                    // Reached the final point: back to idle, then trigger the transition.
                     SetWalking(false);
                     SetTalking(false);
-                    fadeInBoat.StartTransition();
+
+                    if (fatherTeleportInteractable != null)
+                        fatherTeleportInteractable.enabled = true;
                 }
             }
             while (loopPath);
