@@ -124,7 +124,9 @@ namespace DumyatRuntime
             _destinationContainer.Clear();
             ApplyStaticLanguage();
 
-            var destinations = _station.Destinations;
+            // AvailableDestinations, not Destinations: the station drops the route back into its own
+            // scene, so the board never offers the town the player is standing in.
+            var destinations = _station.AvailableDestinations;
 
             if (destinations == null || destinations.Count == 0)
             {
