@@ -169,3 +169,29 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# ---------------------------------------------------------------------------
+# Project-specific: oversized scenes on LFS
+#
+# Everything above this line is the upstream Unity template; keep additions
+# down here so a re-sync of that template is a clean overwrite of the top.
+#
+# `*.unity` stays unity-yaml on purpose. Scenes merge as text, and that is
+# worth keeping: it is what let the El_manara rewrite and a concurrent edit
+# to the same file auto-merge instead of forcing a pick-one-side conflict.
+# LFS makes a file opaque to the merge driver, so a scene tracked here can
+# only ever be resolved by taking one side whole.
+#
+# These three are past GitHub's 50 MB warning and near its 100 MB hard limit,
+# where the trade stops being a trade — a push that is refused loses the work
+# outright. They are listed by exact path rather than by a glob so the other
+# ~50 scenes keep text merging. Add a scene here only when it actually crosses
+# 50 MB; Shipyard.unity is the next candidate at ~30 MB.
+#
+# Rules later in the file win, so these override the `*.unity` line above.
+# `!eol` clears the eol=lf that unity-yaml sets: eol implies text, which
+# contradicts the -text the lfs macro needs.
+# ---------------------------------------------------------------------------
+"Assets/Scenes/ToBuildScene/ToBuild_EzbetAlBourg.unity"    lfs !eol
+"Assets/Runtime/Art/Scenes/Fishing/Ezbet Al-Bourg.unity"   lfs !eol
+"Assets/Runtime/Art/Scenes/Fishing/Fishing.unity"          lfs !eol
