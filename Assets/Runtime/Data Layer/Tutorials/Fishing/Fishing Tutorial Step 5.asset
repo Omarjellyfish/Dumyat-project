@@ -12,16 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: Fishing Tutorial Step 5
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Something''s biting — reel it up fast before it wriggles free!'
-  InstructionTextArabic: 'في حاجة بتشدّ — لفّ بسرعة قبل ما تفلت!'
+  InstructionText: "Something's biting \u2014 reel it up fast before it wriggles
+    free!"
+  InstructionTextArabic: "\u0641\u064A \u062D\u0627\u062C\u0629 \u0628\u062A\u0634\u062F\u0651
+    \u2014 \u0644\u0641\u0651 \u0628\u0633\u0631\u0639\u0629 \u0642\u0628\u0644 \u0645\u0627
+    \u062A\u0641\u0644\u062A!"
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
-  CompletionType: 3
+  CompletionType: 2
+  Skippable: 1
   EventTypeName: 
   ZoneId: 
-  DelaySeconds: 3
+  DelaySeconds: 5
   PrimaryAnchorId: ReelWheel
   HighlightIds:
   - ReelWheel

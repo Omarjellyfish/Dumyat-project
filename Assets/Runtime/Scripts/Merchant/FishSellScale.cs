@@ -6,6 +6,23 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace DumyatRuntime
 {
+    /// <summary>The plan shape of a scale's acceptance region, inscribed in its trigger box.</summary>
+    public enum ScaleFootprint
+    {
+        /// <summary>
+        /// The ellipse inscribed in the trigger box. Correct for a ROUND basket: a box tight enough to
+        /// hold the rim still leaves four corners of dead space beside it, and a fish set down there
+        /// would otherwise have counted as sold.
+        /// </summary>
+        Ellipse,
+
+        /// <summary>
+        /// The trigger box itself. Correct for a RECTANGULAR crate, where an inscribed ellipse throws
+        /// away the four corners — about a fifth of a floor the player can plainly see fish lying on.
+        /// </summary>
+        Rectangle
+    }
+
     /// <summary>
     /// A merchant's physical fish scale. Its trigger collider identifies the <see cref="Fish"/> making
     /// contact and tracks which of them are actually RESTING IN it (released from the hand and settled
@@ -25,15 +42,22 @@ namespace DumyatRuntime
     /// <see cref="IsInsideVolume"/>, not from the collider silhouette — a fish that is merely brushing
     /// the volume, or balanced half-outside the basket, does not count.
     ///
-    /// The basket's footprint is an ellipse, so the acceptance region is the ellipse INSCRIBED in the
-    /// trigger box, not the box itself. A box tight enough to hold the ellipse still leaves four corners
-    /// of dead space beside the basket, and a fish set down there would otherwise have counted. The box
-    /// remains the (cheap) broadphase that decides what is tracked; the ellipse decides what sells.
+    /// The acceptance region is a shape INSCRIBED in the trigger box rather than the box itself, chosen
+    /// by <see cref="_footprint"/> to match the container the merchant actually uses: an ellipse for a
+    /// round basket, the box for a rectangular crate. The box always remains the (cheap) broadphase that
+    /// decides what is tracked; the footprint decides what sells. Set it wrong and the scale silently
+    /// refuses fish the player can see are sitting in the container — an ellipse in a crate discards the
+    /// four corners, roughly a fifth of the floor.
     /// </summary>
     [RequireComponent(typeof(BoxCollider))]
     public class FishSellScale : MonoBehaviour, ISellScale
     {
         [Header("Placement")]
+        [Tooltip("Plan shape of the acceptance region inside the trigger box. Ellipse for a round " +
+                 "basket, Rectangle for a crate. Defaults to Ellipse so existing round-basket scales " +
+                 "keep their behaviour; a crate MUST be set to Rectangle or its corners will not sell.")]
+        [SerializeField] private ScaleFootprint _footprint = ScaleFootprint.Ellipse;
+
         [Tooltip("How often (seconds) to re-check that tracked fish are still inside the volume. Piles " +
                  "settle and shift after landing, so membership cannot be decided on trigger events alone.")]
         [SerializeField, Min(0.02f)] private float _recheckInterval = 0.2f;
@@ -224,9 +248,10 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// True if <paramref name="worldPoint"/> lies within the scale's acceptance volume — the
-        /// elliptical cylinder inscribed in the trigger box. Public so placement aids and diagnostics
-        /// can ask the same question the sale does, rather than re-deriving the shape.
+        /// True if <paramref name="worldPoint"/> lies within the scale's acceptance volume — the prism
+        /// inscribed in the trigger box whose plan shape is <see cref="_footprint"/>. Public so
+        /// placement aids and diagnostics can ask the same question the sale does, rather than
+        /// re-deriving the shape.
         /// </summary>
         public bool IsPointInside(Vector3 worldPoint)
         {
@@ -240,10 +265,13 @@ namespace DumyatRuntime
             if (half.x <= 0f || half.y <= 0f || half.z <= 0f) return false;
             if (Mathf.Abs(local.y) > half.y) return false;               // below the floor / above the pile
 
-            // Normalising by the half-extents turns the ellipse into a unit circle.
+            // Normalising by the half-extents turns the box into a unit square and the inscribed
+            // ellipse into a unit circle, so both footprints are one comparison against 1.
             float x = local.x / half.x;
             float z = local.z / half.z;
-            return x * x + z * z <= 1f;
+            return _footprint == ScaleFootprint.Rectangle
+                ? Mathf.Abs(x) <= 1f && Mathf.Abs(z) <= 1f
+                : x * x + z * z <= 1f;
         }
 
         /// <summary>
@@ -330,8 +358,8 @@ namespace DumyatRuntime
                 : null;
 
 #if UNITY_EDITOR
-        // Draws the elliptical acceptance volume — NOT the box — so what is drawn is what actually counts.
-        // Size the box handles until this cylinder matches the basket interior and clears the tallest pile.
+        // Draws the ACCEPTANCE volume, not merely the box, so what is drawn is what actually counts.
+        // Size the box handles until this shape matches the container interior and clears the tallest pile.
         private void OnDrawGizmosSelected()
         {
             BoxCollider box = null;
@@ -341,6 +369,13 @@ namespace DumyatRuntime
 
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(0.2f, 0.9f, 0.4f, 1f);
+
+            // A rectangular footprint accepts the whole box, so the box IS the acceptance volume.
+            if (_footprint == ScaleFootprint.Rectangle)
+            {
+                Gizmos.DrawWireCube(box.center, box.size);
+                return;
+            }
 
             Vector3 half = box.size * 0.5f;
             const int segments = 32;
