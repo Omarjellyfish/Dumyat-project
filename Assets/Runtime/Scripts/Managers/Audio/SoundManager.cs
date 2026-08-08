@@ -13,6 +13,11 @@ namespace DumyatRuntime
         [SerializeField] private AudioSource _sfxAudioSourcePrefab;
         [SerializeField] private AudioMixerGroup _defaultMixerGroup;
 
+        [Tooltip("Mixer group spoken lines are routed through — the 'Dialouge' group of MainMixer. " +
+                 "Kept separate from the default group so voice obeys the Voice slider in Settings " +
+                 "rather than whichever channel general SFX happen to be on.")]
+        [SerializeField] private AudioMixerGroup _voiceMixerGroup;
+
         [Header("Scene Transition Audio")]
         [SerializeField] private AudioClip[] _sceneTransitionClips;
         [SerializeField] private float _transitionVolume = 1f;
@@ -113,6 +118,13 @@ namespace DumyatRuntime
             // this, a recycled source stays 3D/looping forever and later one-shots come out attenuated.
             source.spatialBlend = 0f;
             source.loop = false;
+
+            // Same reasoning for the mixer group, and it matters more now that PlayVoiceLine routes to
+            // Dialogue rather than the default: PlayLoopingSoundFxAtPosition never assigns a group at
+            // all, so a source recycled from a voice line would leave an ambient loop following the
+            // Voice slider.
+            source.outputAudioMixerGroup = _defaultMixerGroup;
+
             source.gameObject.SetActive(true);
         }
 
@@ -184,7 +196,14 @@ namespace DumyatRuntime
 
             source.clip = clip;
             source.volume = volume;
-            source.outputAudioMixerGroup = mixerGroup != null ? mixerGroup : _defaultMixerGroup;
+
+            // Voice defaults to the Dialogue group, NOT to _defaultMixerGroup. Every narrative caller
+            // — the 2D fallback in DialoguePresentationManager, TutorialRunner — passes no group, and
+            // the general-purpose default is the mixer's Master group, so all of them used to obey
+            // Master while ignoring the Voice slider entirely.
+            source.outputAudioMixerGroup =
+                VoiceMixerRouting.ResolveGroup(mixerGroup, _voiceMixerGroup, _defaultMixerGroup, this);
+
             source.Play();
 
             StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
@@ -202,16 +221,17 @@ namespace DumyatRuntime
             StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
         }
 
-        public void PlaySceneTransitionSound()
+        public float PlaySceneTransitionSound()
         {
-            if (_sceneTransitionClips != null && _sceneTransitionClips.Length > 0)
-            {
-                AudioClip clip = _sceneTransitionClips[Random.Range(0, _sceneTransitionClips.Length)];
-                if (clip != null)
-                {
-                    PlayUISoundFx(clip, _transitionVolume);
-                }
-            }
+            if (_sceneTransitionClips == null || _sceneTransitionClips.Length == 0) return 0f;
+
+            AudioClip clip = _sceneTransitionClips[Random.Range(0, _sceneTransitionClips.Length)];
+            if (clip == null) return 0f;
+
+            PlayUISoundFx(clip, _transitionVolume);
+
+            // The caller gates scene activation on this — see ISoundService.PlaySceneTransitionSound.
+            return clip.length;
         }
         #endregion
 

@@ -14,6 +14,16 @@ namespace DumyatRuntime
         void PlayLoopingSoundFxAtPosition(AudioClip clip, Transform targetTransform, float volume);
         void PlayVoiceLine(AudioClip clip, Transform targetTransform, float volume, AudioMixerGroup mixerGroup = null);
         void PlayUISoundFx(AudioClip clip, float volume = 1f);
-        void PlaySceneTransitionSound();
+
+        /// <summary>
+        /// Plays the loading/transition sting and returns how long it will last, in seconds — 0 when
+        /// nothing was played.
+        ///
+        /// The length is returned rather than fired-and-forgotten because
+        /// <see cref="SceneLoadService"/> treats this clip as part of the load: it holds scene
+        /// activation until the clip has finished, so the sting always lands over the loading screen
+        /// instead of bleeding into the first seconds of the destination.
+        /// </summary>
+        float PlaySceneTransitionSound();
     }
 }
