@@ -40,6 +40,13 @@ namespace DumyatRuntime
         private IPlayerPersistenceService _persistenceService;
         private ISettingsService _settings;
 
+        /// <summary>
+        /// Whether the "this board is not wired up" warning has already been logged. Populate runs
+        /// again on every key unlock and language change, and a board missing its station would
+        /// otherwise fill the console with the same line.
+        /// </summary>
+        private bool _loggedSetupWarning;
+
         /// <summary>Whether the board is currently drawn in Arabic.</summary>
         private bool Arabic => UiLanguage.IsArabic(_settings);
 
@@ -72,6 +79,7 @@ namespace DumyatRuntime
             if (_eventService != null)
             {
                 _eventService.Subscribe<SceneLoadBeginEvent>(OnSceneLoadBegin);
+                _eventService.Subscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
                 _eventService.Subscribe<KeyUnlockedEvent>(OnKeyUnlocked);
                 _eventService.Subscribe<LanguageChangedEvent>(OnLanguageChanged);
             }
@@ -82,6 +90,7 @@ namespace DumyatRuntime
             if (_eventService != null)
             {
                 _eventService.Unsubscribe<SceneLoadBeginEvent>(OnSceneLoadBegin);
+                _eventService.Unsubscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
                 _eventService.Unsubscribe<KeyUnlockedEvent>(OnKeyUnlocked);
                 _eventService.Unsubscribe<LanguageChangedEvent>(OnLanguageChanged);
             }
@@ -119,7 +128,11 @@ namespace DumyatRuntime
 
         private void PopulateDestinations()
         {
-            if (_destinationContainer == null || _station == null) return;
+            if (_destinationContainer == null || _station == null)
+            {
+                WarnMissingSetup();
+                return;
+            }
 
             _destinationContainer.Clear();
             ApplyStaticLanguage();
@@ -165,6 +178,29 @@ namespace DumyatRuntime
 
             // Last, so every stub built above is covered.
             UiLanguage.ApplyScript(_root, Arabic);
+        }
+
+        /// <summary>
+        /// Says out loud why the board came up blank, once.
+        ///
+        /// Both causes are silent otherwise: an unassigned station leaves a perfectly rendered but
+        /// empty departure board, and a missing DestinationContainer means the UXML was swapped for
+        /// one without that element. Neither throws, so a board that was never wired up looks like a
+        /// town with no bus service (CLAUDE.md ▸ "Keep components self-contained and null-safe").
+        /// </summary>
+        private void WarnMissingSetup()
+        {
+            if (_loggedSetupWarning) return;
+            _loggedSetupWarning = true;
+
+            if (_station == null)
+                Debug.LogWarning($"{nameof(DestinationBoardUI)} on '{name}' has no BusStation assigned — " +
+                                 "the departure board will stay empty. Assign it in the Inspector.", this);
+
+            if (_destinationContainer == null)
+                Debug.LogWarning($"{nameof(DestinationBoardUI)} on '{name}' found no ScrollView named " +
+                                 "'DestinationContainer' — check the UIDocument's source asset is " +
+                                 "DestinationBoard.uxml.", this);
         }
 
         /// <summary>
@@ -263,9 +299,28 @@ namespace DumyatRuntime
         private void OnSceneLoadBegin(SceneLoadBeginEvent evt)
         {
             // Disable interaction while a scene is loading
+            SetBoardInteractable(false);
+        }
+
+        /// <summary>
+        /// Hands the board back to the player once the load is over.
+        ///
+        /// On a successful trip this board is already gone with its scene, so the pairing looks
+        /// redundant — it is not. <see cref="SceneLoadService"/> also publishes completion when a
+        /// load FAILS (a scene missing from Build Settings, say), and the player is left standing at
+        /// this very board. Without this it would stay dead for the rest of the session, with no way
+        /// to leave the town.
+        /// </summary>
+        private void OnSceneLoadComplete(SceneLoadCompleteEvent evt)
+        {
+            SetBoardInteractable(true);
+        }
+
+        private void SetBoardInteractable(bool interactable)
+        {
             if (_uiDocument != null && _uiDocument.rootVisualElement != null)
             {
-                _uiDocument.rootVisualElement.SetEnabled(false);
+                _uiDocument.rootVisualElement.SetEnabled(interactable);
             }
         }
     }
