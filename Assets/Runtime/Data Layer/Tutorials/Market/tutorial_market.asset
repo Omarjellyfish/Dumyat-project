@@ -10,13 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 232650c3afa3ce140b34ccf5402ff986, type: 3}
-  m_Name: tutorial_shipyard
+  m_Name: tutorial_market
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialSequenceSO
-  SequenceId: tutorial_shipyard
-  DisplayName: Building the Boat
+  SequenceId: tutorial_market
+  DisplayName: Selling at the Market
   Steps:
-  - {fileID: 11400000, guid: 0bd0d53e13cf0744caa70146d995a713, type: 2}
-  - {fileID: 11400000, guid: 0e158ff69edab044eb9f12f0aed3f46a, type: 2}
-  PersistCompletion: 1
+  - {fileID: 11400000, guid: 3507d587141e8e7439f7c5c1d2d4ef63, type: 2}
+  - {fileID: 11400000, guid: 28b08d4540d349e428b678988e0bd254, type: 2}
+  - {fileID: 11400000, guid: b7134d541539ead47b47c582764ecad3, type: 2}
+  - {fileID: 11400000, guid: 83de135df70e13a4486c86278eb2866c, type: 2}
+  - {fileID: 11400000, guid: b0b1afd1f93f154448a3820652067909, type: 2}
+  PersistCompletion: 0
   CompletionDialogue: {fileID: 0}
   Branches: []

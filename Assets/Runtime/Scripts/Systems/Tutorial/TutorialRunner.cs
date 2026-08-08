@@ -10,6 +10,17 @@ namespace DumyatRuntime
     /// Scene-side tutorial executor. Iterates through a <see cref="TutorialSequenceSO"/>,
     /// managing the hover UI, completion triggers, and branch evaluation for each step.
     /// Place one of these in every scene that has tutorials.
+    ///
+    /// A step has two distinct moments, and keeping them apart is the point of this class:
+    ///
+    ///   SATISFIED — the completion trigger fired; the player has done what the card asked.
+    ///               <see cref="MarkStepSatisfied"/>. Unlocks NEXT. Does NOT advance.
+    ///   COMPLETED — the player pressed NEXT on a satisfied step. <see cref="AdvanceStep"/>.
+    ///
+    /// They used to be the same instant: any trigger auto-advanced, and the NEXT button was wired
+    /// straight to the skip path, so a player could click through an entire tutorial without touching
+    /// a tool. Splitting them is what makes NEXT mean "I've done this and I'm ready" instead of
+    /// "get out of my way".
     /// </summary>
     public class TutorialRunner : MonoBehaviour
     {
@@ -31,6 +42,12 @@ namespace DumyatRuntime
                  "so no scene has to remember to wire it. Ignored when a Highlight Prefab is assigned.")]
         [SerializeField] private TutorialHighlighter _highlighter;
 
+        [Header("Safety")]
+        [Tooltip("If a step's completion trigger has not fired after this long, NEXT unlocks anyway so " +
+                 "the player is never trapped on a card they cannot dismiss. 0 disables it. Any step " +
+                 "can override it with TutorialStepSO.FallbackUnlockSeconds.")]
+        [SerializeField, Min(0f)] private float _defaultFallbackUnlockSeconds = 120f;
+
         private IEventService _eventService;
         private IHapticService _hapticService;
         private TutorialService _tutorialService;
@@ -42,7 +59,9 @@ namespace DumyatRuntime
         private float _stepStartTime;
         private float _sequenceStartTime;
         private bool _isRunning;
+        private bool _stepSatisfied;
         private Coroutine _delayCoroutine;
+        private Coroutine _fallbackCoroutine;
 
         private List<GameObject> _spawnedHighlights = new List<GameObject>();
         private List<TutorialAnchor> _currentlyHighlightedAnchors = new List<TutorialAnchor>();
@@ -53,24 +72,27 @@ namespace DumyatRuntime
         public int CurrentStepIndex => _currentStepIndex;
         public TutorialSequenceSO SceneTutorial => _autoStartSequence;
 
-        /// <summary>
-        /// The step on screen right now, or null when nothing is running. Exposed so
-        /// <see cref="TutorialService"/> can honour <see cref="TutorialStepSO.Skippable"/> — the skip
-        /// request arrives at the service, but only the runner knows which step it lands on.
-        /// </summary>
+        /// <summary>The step on screen right now, or null when nothing is running.</summary>
         public TutorialStepSO CurrentStep =>
             _isRunning && _activeSequence != null &&
             _currentStepIndex >= 0 && _currentStepIndex < _activeSequence.Steps.Count
                 ? _activeSequence.Steps[_currentStepIndex]
                 : null;
 
-        /// <summary>Whether the player is currently allowed to skip past what is on screen.</summary>
-        public bool CanSkipCurrentStep
+        /// <summary>
+        /// Whether NEXT may move on from the step on screen — either because the player has done what
+        /// it asked, or because it is an <see cref="TutorialNextButton.Always"/> step, which by
+        /// definition lets them leave without the game having observed anything.
+        /// </summary>
+        public bool CanAdvanceCurrentStep
         {
             get
             {
+                if (!_isRunning) return false;
+                if (_stepSatisfied) return true;
+
                 TutorialStepSO step = CurrentStep;
-                return step == null || step.Skippable;
+                return step != null && step.NextButton == TutorialNextButton.Always;
             }
         }
 
@@ -172,25 +194,39 @@ namespace DumyatRuntime
             }
 
             _isRunning = false;
+            _stepSatisfied = false;
             _activeSequence = null;
         }
 
-        /// <summary>Skip the current step and advance to the next.</summary>
-        internal void SkipStep()
-        {
-            if (!_isRunning) return;
-            CompleteCurrentStep();
-        }
-
         /// <summary>
-        /// Called externally (e.g. by a game mechanic script) to mark the current step as done.
-        /// Only works if the step's <see cref="TutorialCompletionType"/> is <c>Manual</c>.
+        /// Force past the current step whether or not the player did it. This is the developer
+        /// step-over, reached through <c>ITutorialService.SkipCurrentStep</c>. The card's NEXT button
+        /// does NOT come through here — it uses <see cref="AdvanceStep"/>, which insists the step was
+        /// actually satisfied.
         /// </summary>
-        public void CompleteCurrentStep()
+        internal void SkipStep()
         {
             if (!_isRunning) return;
             OnStepCompleted();
         }
+
+        /// <summary>
+        /// The player pressed NEXT. Refuses until the step's action has actually happened — the card
+        /// keeps NEXT disabled until then too, so reaching this in an unsatisfied state means
+        /// something called it directly.
+        /// </summary>
+        internal void AdvanceStep()
+        {
+            if (!CanAdvanceCurrentStep) return;
+            OnStepCompleted();
+        }
+
+        /// <summary>
+        /// Answer the current step from a game mechanic — the escape hatch for an action that has no
+        /// event worth publishing. Equivalent to that step's trigger firing: it unlocks NEXT, it does
+        /// not advance.
+        /// </summary>
+        public void MarkCurrentStepSatisfied() => MarkStepSatisfied();
 
         // ─────────────────────────────────────────────────────────────
         // Step Lifecycle
@@ -206,15 +242,12 @@ namespace DumyatRuntime
 
             TutorialStepSO step = _activeSequence.Steps[index];
 
-            // Check persistence condition — skip step if not met
-            if (!string.IsNullOrEmpty(step.PersistenceConditionKey))
-            {
-                // TODO: When persistence key access is added to TutorialService, 
-                // evaluate the key against step.RequiredState here and skip if needed.
-            }
-
             _currentStepIndex = index;
             _stepStartTime = Time.time;
+
+            // Cleared before the card is drawn, so it opens with NEXT locked rather than inheriting
+            // the previous step's unlocked state for a frame.
+            _stepSatisfied = false;
 
             // Show hover UI
             ShowHoverUI(step);
@@ -248,8 +281,74 @@ namespace DumyatRuntime
             // on the same frame.
             ApplyHighlights(step);
 
-            // Set up completion trigger
+            // Arm the trigger that unlocks NEXT. ReadAndContinue satisfies synchronously in here, so
+            // nothing below may assume the step is still locked.
             SetupCompletionTrigger(step);
+
+            ArmFallbackUnlock(step);
+        }
+
+        /// <summary>
+        /// The step's action has happened. Lights NEXT and stops listening; deliberately does NOT
+        /// advance — the player presses NEXT when they are ready, which is the whole point of the gate.
+        /// Idempotent, because a trigger firing more than once is normal (a second fish, a second cast).
+        /// </summary>
+        private void MarkStepSatisfied()
+        {
+            if (!_isRunning || _stepSatisfied) return;
+            _stepSatisfied = true;
+
+            // Triggers only — the highlights stay up, because the card is still on screen talking
+            // about that object and dropping its beacon mid-read would look like a glitch.
+            //
+            // This commonly runs INSIDE an EventService dispatch (HandleGenericEvent), and both
+            // unsubscribes and publishes from there. That is safe: EventService buffers subscription
+            // changes while a publish is in flight and applies them once dispatch unwinds.
+            CleanupTriggers();
+
+            _hoverUI?.SetStepSatisfied(true);
+
+            _eventService?.Publish(new TutorialStepSatisfiedEvent(_activeSequence.SequenceId, _currentStepIndex));
+
+            // A step with no NEXT button has nothing left to wait for: the action the card asked for
+            // has happened, and there is no control for the player to press. Doing anything else here
+            // would strand them on a card with no way out.
+            TutorialStepSO step = CurrentStep;
+            if (step != null && ResolveNextButton(step) == TutorialNextButton.Hidden)
+            {
+                OnStepCompleted();
+            }
+        }
+
+        /// <summary>
+        /// Unlocks NEXT after a while even though the trigger never fired. Every trigger here depends
+        /// on something outside this class — an event another system has to publish, a collider the
+        /// player has to walk into — and when one of those is missing in a particular scene the step
+        /// would otherwise have no exit at all on a mandatory card. Better a tutorial that lets you
+        /// past than one that ends the session.
+        /// </summary>
+        private void ArmFallbackUnlock(TutorialStepSO step)
+        {
+            if (_stepSatisfied) return;
+
+            float seconds = step.FallbackUnlockSeconds > 0f
+                ? step.FallbackUnlockSeconds
+                : _defaultFallbackUnlockSeconds;
+
+            if (seconds <= 0f) return;
+
+            _fallbackCoroutine = StartCoroutine(FallbackUnlockAfter(seconds, step));
+        }
+
+        private IEnumerator FallbackUnlockAfter(float seconds, TutorialStepSO step)
+        {
+            yield return new WaitForSeconds(seconds);
+            _fallbackCoroutine = null;
+
+            Debug.LogWarning($"[TutorialRunner] Step '{step.name}' was never satisfied after {seconds:F0}s — " +
+                             "unlocking NEXT so the player is not stuck. Its completion trigger " +
+                             "probably cannot fire in this scene.", step);
+            MarkStepSatisfied();
         }
 
         private void OnStepCompleted()
@@ -286,6 +385,7 @@ namespace DumyatRuntime
             }
 
             _isRunning = false;
+            _stepSatisfied = false;
 
             _tutorialService?.OnSequenceCompleted(_activeSequence, totalDuration);
             _activeSequence = null;
@@ -302,6 +402,18 @@ namespace DumyatRuntime
             // Find the primary anchor via registry
             Transform anchor = TutorialAnchorRegistry.GetPrimaryAnchor(step.PrimaryAnchorId);
 
+            // A missing PrimaryAnchorId used to be silent, unlike a missing HighlightId — and silent
+            // is exactly wrong, because the failure is a card that quietly stops following anything
+            // and hangs wherever it was last placed. 'Hands' and 'Inventory' in particular ride in on
+            // the XR rig and are simply absent from some scenes.
+            if (!string.IsNullOrEmpty(step.PrimaryAnchorId) && anchor == null)
+            {
+                Debug.LogWarning($"[TutorialRunner] Step '{step.name}' places its card at anchor " +
+                                 $"'{step.PrimaryAnchorId}', but no TutorialAnchor with that id is active " +
+                                 $"in scene '{UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}'. " +
+                                 "The card will not follow anything.", step);
+            }
+
             _hoverUI.ShowStep(
                 step,
                 _currentStepIndex,
@@ -314,33 +426,60 @@ namespace DumyatRuntime
         // Completion Triggers
         // ─────────────────────────────────────────────────────────────
 
+        // Every arm path below ends in "satisfied", never in "advanced" — and every path that CANNOT be
+        // armed satisfies immediately. A trigger that could not be set up used to strand the step while
+        // NEXT still worked; now that NEXT is gated, failing closed would be a dead session.
         private void SetupCompletionTrigger(TutorialStepSO step)
         {
             switch (step.CompletionType)
             {
                 case TutorialCompletionType.Event:
-                    SetupEventTrigger(step.EventTypeName);
+                    SetupEventTrigger(step.EventTypeName, step);
                     break;
 
                 case TutorialCompletionType.ZoneEnter:
-                    SetupZoneTrigger(step.ZoneId);
+                    SetupZoneTrigger(step.ZoneId, step);
                     break;
 
                 case TutorialCompletionType.Delay:
-                    _delayCoroutine = StartCoroutine(DelayCompletion(step.DelaySeconds));
+                    _delayCoroutine = StartCoroutine(DelaySatisfy(step.DelaySeconds));
                     break;
 
-                case TutorialCompletionType.Manual:
-                    // Nothing to set up — external code calls CompleteCurrentStep()
+                case TutorialCompletionType.ReadAndContinue:
+                    // Nothing to wait for — this card is narration, so NEXT is live at once.
+                    MarkStepSatisfied();
                     break;
             }
         }
 
-        private void SetupEventTrigger(string eventTypeName)
+        /// <summary>
+        /// ReadAndContinue satisfies the instant the card opens, and a Hidden step advances the
+        /// instant it is satisfied — together they would flash the card past unread AND re-enter
+        /// ActivateStep from inside itself. There is no sensible reading of that pairing, so it is
+        /// coerced to Always: the card stays up with a live NEXT.
+        /// </summary>
+        private static TutorialNextButton ResolveNextButton(TutorialStepSO step)
+        {
+            if (step.NextButton == TutorialNextButton.Hidden &&
+                step.CompletionType == TutorialCompletionType.ReadAndContinue)
+            {
+                Debug.LogWarning($"[TutorialRunner] Step '{step.name}' hides NEXT but has nothing to wait " +
+                                 "for (ReadAndContinue), so it would vanish the moment it appeared. " +
+                                 "Showing NEXT instead — give it a real completion trigger, or set " +
+                                 "Next Button to Always.", step);
+                return TutorialNextButton.Always;
+            }
+
+            return step.NextButton;
+        }
+
+        private void SetupEventTrigger(string eventTypeName, TutorialStepSO step)
         {
             if (string.IsNullOrEmpty(eventTypeName))
             {
-                Debug.LogWarning("[TutorialRunner] Event completion type but no EventTypeName set.");
+                Debug.LogError($"[TutorialRunner] Step '{step.name}' uses Event completion but names no " +
+                               "EventTypeName. Unlocking NEXT immediately so it is not a dead end.", step);
+                MarkStepSatisfied();
                 return;
             }
 
@@ -354,8 +493,13 @@ namespace DumyatRuntime
 
             if (eventType == null)
             {
-                Debug.LogError($"[TutorialRunner] Could not find event type '{eventTypeName}'. " +
-                               "Make sure it's the correct type name (e.g. 'RecipeSelectedEvent').");
+                // Type.GetType searches the calling assembly (Project.Runtime) and corelib only, so an
+                // event that lives outside Assets/Runtime/Scripts/Events will never resolve here
+                // regardless of spelling.
+                Debug.LogError($"[TutorialRunner] Step '{step.name}' waits on event type '{eventTypeName}', " +
+                               "which does not exist in Project.Runtime. Check the spelling (e.g. " +
+                               "'RecipeSelectedEvent'). Unlocking NEXT so the step is not a dead end.", step);
+                MarkStepSatisfied();
                 return;
             }
 
@@ -395,7 +539,7 @@ namespace DumyatRuntime
 
         private void HandleGenericEvent<T>(T evt) where T : IGameEvent
         {
-            OnStepCompleted();
+            MarkStepSatisfied();
         }
 
 
@@ -414,18 +558,24 @@ namespace DumyatRuntime
             }
         }
 
-        private void SetupZoneTrigger(string zoneId)
+        private void SetupZoneTrigger(string zoneId, TutorialStepSO step)
         {
             if (string.IsNullOrEmpty(zoneId))
             {
-                Debug.LogWarning("[TutorialRunner] ZoneEnter completion type but no ZoneId set.");
+                Debug.LogError($"[TutorialRunner] Step '{step.name}' uses ZoneEnter completion but names " +
+                               "no ZoneId. Unlocking NEXT so it is not a dead end.", step);
+                MarkStepSatisfied();
                 return;
             }
 
             Transform zoneAnchor = TutorialAnchorRegistry.GetPrimaryAnchor(zoneId);
             if (zoneAnchor == null)
             {
-                Debug.LogError($"[TutorialRunner] No TutorialAnchor found with ID '{zoneId}' for zone trigger.");
+                Debug.LogError($"[TutorialRunner] Step '{step.name}' waits on zone '{zoneId}', but no " +
+                               "TutorialAnchor with that id is active in scene " +
+                               $"'{UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}'. " +
+                               "Unlocking NEXT so it is not a dead end.", step);
+                MarkStepSatisfied();
                 return;
             }
 
@@ -435,34 +585,48 @@ namespace DumyatRuntime
                 _activeZoneSensor = zoneAnchor.gameObject.AddComponent<TutorialZoneSensor>();
             }
 
-            _activeZoneSensor.Activate(OnStepCompleted);
+            _activeZoneSensor.Activate(MarkStepSatisfied);
         }
 
-        private IEnumerator DelayCompletion(float seconds)
+        private IEnumerator DelaySatisfy(float seconds)
         {
             yield return new WaitForSeconds(seconds);
-            OnStepCompleted();
+            _delayCoroutine = null;
+            MarkStepSatisfied();
         }
 
-        private void CleanupCurrentStep()
+        /// <summary>
+        /// Drops everything that could still satisfy the current step, leaving its highlights alone.
+        /// Split out from <see cref="CleanupCurrentStep"/> because satisfying a step stops the
+        /// listening but keeps the card — and its beacon — on screen until the player presses NEXT.
+        /// Idempotent.
+        /// </summary>
+        private void CleanupTriggers()
         {
-            // Stop delay coroutine
             if (_delayCoroutine != null)
             {
                 StopCoroutine(_delayCoroutine);
                 _delayCoroutine = null;
             }
 
-            // Unsubscribe event trigger
+            if (_fallbackCoroutine != null)
+            {
+                StopCoroutine(_fallbackCoroutine);
+                _fallbackCoroutine = null;
+            }
+
             CleanupEventTrigger();
 
-            // Deactivate zone sensor
             if (_activeZoneSensor != null)
             {
                 _activeZoneSensor.Deactivate();
                 _activeZoneSensor = null;
             }
+        }
 
+        private void CleanupCurrentStep()
+        {
+            CleanupTriggers();
             ClearHighlights();
         }
 

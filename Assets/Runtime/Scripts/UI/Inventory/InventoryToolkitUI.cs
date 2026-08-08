@@ -36,6 +36,11 @@ namespace DumyatRuntime
         private Label _emptyHint;
         private Dictionary<string, VisualElement> _activeSlots = new Dictionary<string, VisualElement>();
 
+        // Open/closed is tracked here rather than read back off _root.style.display: an inline style
+        // that has never been assigned does not compare cleanly against DisplayStyle, so a panel whose
+        // OnEnable bailed early would read as already-open and refuse to open at all.
+        private bool _isOpen;
+
         private void OnEnable()
         {
             if (_uiDocument == null)
@@ -59,6 +64,7 @@ namespace DumyatRuntime
             _eventService.Subscribe<InventoryChangedEvent>(HandleInventoryChanged);
             _eventService.Subscribe<MoneyChangedEvent>(HandleMoneyChanged);
 
+            _isOpen = _startOpen;
             _root.style.display = _startOpen ? DisplayStyle.Flex : DisplayStyle.None;
 
             if (_startOpen)
@@ -78,29 +84,28 @@ namespace DumyatRuntime
         public void ToggleUI()
         {
             if (_root == null) return;
-            
-            bool isCurrentlyOpen = _root.style.display == DisplayStyle.Flex;
-            if (isCurrentlyOpen)
-            {
-                CloseUI();
-            }
-            else
-            {
-                OpenUI();
-            }
+
+            if (_isOpen) CloseUI();
+            else OpenUI();
         }
 
         public void OpenUI()
         {
-            if (_root == null) return;
+            if (_root == null || _isOpen) return;
+
+            _isOpen = true;
             _root.style.display = DisplayStyle.Flex;
             RefreshFullUI();
+            _eventService?.Publish(new InventoryPanelToggledEvent(true));
         }
 
         public void CloseUI()
         {
-            if (_root == null) return;
+            if (_root == null || !_isOpen) return;
+
+            _isOpen = false;
             _root.style.display = DisplayStyle.None;
+            _eventService?.Publish(new InventoryPanelToggledEvent(false));
         }
 
         private void HandleInventoryChanged(InventoryChangedEvent evt)

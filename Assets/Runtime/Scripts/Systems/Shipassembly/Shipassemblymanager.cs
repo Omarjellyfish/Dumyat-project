@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -14,11 +15,21 @@ namespace DumyatRuntime
     /// rather than reworking this class.
     ///
     /// Other systems (cutscenes, dialogue, quest triggers, etc.) can subscribe to
-    /// <see cref="OnShipFullyAssembled"/> without ShipAssemblyManager knowing anything about them.
+    /// <see cref="OnShipFullyAssembled"/> without ShipAssemblyManager knowing anything about them —
+    /// or, for anything that shouldn't hold a reference to this manager at all, to
+    /// <see cref="ShipPartSocketedEvent"/> / <see cref="ShipAssembledEvent"/> on the EventBus.
     /// </summary>
     public class ShipAssemblyManager : MonoBehaviour
     {
         public static ShipAssemblyManager Instance { get; private set; }
+
+        private IEventService _eventService;
+
+        // The class note above says a future need for DI should arrive as an [Inject] method rather
+        // than a rework, so here it is: the sockets are a scene fact the tutorial and the quest system
+        // both want, and neither should have to find this manager to hear about them.
+        [Inject]
+        private void Inject(IEventService eventService) => _eventService = eventService;
 
         [Header("Sockets")]
         [Tooltip("All sockets that must be filled for the ship to count as assembled. Leave empty to auto-discover every ShipPartSocket in the scene on Awake.")]
@@ -63,6 +74,10 @@ namespace DumyatRuntime
                 return;
 
             _filledSockets.Add(socket);
+
+            _eventService?.Publish(new ShipPartSocketedEvent(
+                socket.SocketID, _filledSockets.Count, RequiredSocketCount));
+
             CheckCompletion();
         }
 
@@ -82,6 +97,7 @@ namespace DumyatRuntime
             _hasFiredCompletion = true;
             Debug.Log("ShipAssemblyManager: ship fully assembled.");
             OnShipFullyAssembled?.Invoke();
+            _eventService?.Publish(new ShipAssembledEvent(_filledSockets.Count));
         }
     }
 }

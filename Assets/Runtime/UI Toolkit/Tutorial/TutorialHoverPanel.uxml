@@ -37,6 +37,11 @@
                  the current step is a full-height cyan tick, past steps are half-height. -->
             <ui:VisualElement name="ProgressDots" class="progress-dots-row" />
 
+            <!-- Shown by SetStepSatisfied() the moment the player does what the card asked, which is
+                 also when NEXT unlocks. Hidden by default and on narration steps, which never asked
+                 for anything. -->
+            <ui:Label name="StepDoneBadge" text="DONE" class="step-done-badge" />
+
             <ui:VisualElement class="tutorial-footer">
                 <ui:Button name="SkipButton" text="SKIP" class="tutorial-btn tutorial-btn--quiet" />
                 <ui:Button name="NextButton" text="NEXT" class="tutorial-btn" />

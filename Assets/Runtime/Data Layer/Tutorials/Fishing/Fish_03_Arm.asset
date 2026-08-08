@@ -10,24 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
-  m_Name: Mkt_04_Close
+  m_Name: Fish_03_Arm
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: Say yes when the price suits you, and the money goes straight
-    into your pocket.
-  InstructionTextArabic: "\u0648\u0627\u0641\u0642 \u0644\u0645\u0627 \u0627\u0644\u0633\u0639\u0631
-    \u064A\u0639\u062C\u0628\u0643\u060C \u0648\u0627\u0644\u0641\u0644\u0648\u0633
-    \u0647\u062A\u062F\u062E\u0644 \u062C\u064A\u0628\u0643 \u0639\u0644\u0649 \u0637\u0648\u0644."
+  InstructionText: "Hold down the A button on your right controller. That winds the
+    cast up \u2014 keep holding it."
+  InstructionTextArabic: "\u062F\u0648\u0633 \u0645\u0637\u0648\u0651\u0644 \u0639\u0644\u0649
+    \u0632\u0631\u0627\u0631 A \u0641\u064A \u062F\u0631\u0627\u0639 \u0627\u0644\u064A\u0645\u064A\u0646.
+    \u062F\u0647 \u0628\u064A\u0644\u0645\u0651 \u0627\u0644\u0631\u0645\u064A\u0629
+    \u2014 \u0641\u0636\u0644 \u0636\u0627\u063A\u0637 \u0639\u0644\u064A\u0647."
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 0}
   Video: {fileID: 0}
   CompletionType: 0
-  EventTypeName: FishSaleRecordedEvent
+  NextButton: 2
+  EventTypeName: RodCastArmedEvent
   ZoneId: 
   DelaySeconds: 0
-  PrimaryAnchorId: Hands
+  FallbackUnlockSeconds: 0
+  PrimaryAnchorId: FishingRod
   HighlightIds: []
   AnchorOffset: {x: 0, y: 0.3, z: 0}
   HapticOnActivate: {fileID: 0}
-  PersistenceConditionKey: 
-  RequiredState: 1

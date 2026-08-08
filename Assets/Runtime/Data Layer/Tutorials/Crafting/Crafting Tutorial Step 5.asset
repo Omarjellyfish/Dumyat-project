@@ -23,14 +23,13 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
   CompletionType: 0
-  Skippable: 0
+  NextButton: 2
   EventTypeName: GlueAppliedEvent
   ZoneId: 
   DelaySeconds: 3
+  FallbackUnlockSeconds: 0
   PrimaryAnchorId: Glue
   HighlightIds:
   - Glue
   AnchorOffset: {x: 0, y: 0.8, z: 0}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
-  PersistenceConditionKey: 
-  RequiredState: 1

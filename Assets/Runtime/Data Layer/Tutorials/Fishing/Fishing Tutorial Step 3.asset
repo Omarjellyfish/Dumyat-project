@@ -12,20 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: Fishing Tutorial Step 3
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Grab the reel and turn it to let the line out or wind it back in.'
-  InstructionTextArabic: 'امسك البكرة ولفّها عشان تنزّل الخيط أو ترجّعه.'
+  InstructionText: Grab the reel handle and turn it. Forward pays line out, back
+    winds it in.
+  InstructionTextArabic: "\u0627\u0645\u0633\u0643 \u064A\u062F \u0627\u0644\u0628\u0643\u0631\u0629
+    \u0648\u0644\u0641\u0651\u0647\u0627. \u0644\u0642\u062F\u0651\u0627\u0645 \u0628\u064A\u0646\u0632\u0651\u0644
+    \u062E\u064A\u0637\u060C \u0648\u0644\u0648\u0631\u0627 \u0628\u064A\u0644\u0645\u0651\u0647."
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
-  CompletionType: 3
-  EventTypeName: 
+  CompletionType: 0
+  NextButton: 2
+  EventTypeName: ReelTurnedEvent
   ZoneId: 
-  DelaySeconds: 2
+  DelaySeconds: 0
+  FallbackUnlockSeconds: 0
   PrimaryAnchorId: ReelWheel
   HighlightIds:
   - ReelWheel
   AnchorOffset: {x: 0, y: 1, z: 0.5}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
-  PersistenceConditionKey: 
-  RequiredState: 1
