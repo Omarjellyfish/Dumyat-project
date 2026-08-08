@@ -12,20 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: Fishing Tutorial Step 1
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Pick up the fishing rod. The lake has been waiting all morning.'
-  InstructionTextArabic: 'شيل السنارة. البحيرة مستنياك من الصبح.'
+  InstructionText: Pick up the fishing rod. Squeeze the grip button on your controller
+    to take hold of it.
+  InstructionTextArabic: "\u0634\u064A\u0644 \u0627\u0644\u0633\u0646\u0627\u0631\u0629.
+    \u0627\u0636\u063A\u0637 \u0632\u0631\u0627\u0631 \u0627\u0644\u0645\u0633\u0643\u0629
+    \u0627\u0644\u0644\u064A \u0641\u064A \u0627\u0644\u062F\u0631\u0627\u0639 \u0639\u0634\u0627\u0646
+    \u062A\u0645\u0633\u0643\u0647\u0627."
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
-  CompletionType: 3
-  EventTypeName: 
+  CompletionType: 0
+  NextButton: 2
+  EventTypeName: FishingRodPickedUpEvent
   ZoneId: 
-  DelaySeconds: 2
+  DelaySeconds: 0
+  FallbackUnlockSeconds: 0
   PrimaryAnchorId: FishingRod
   HighlightIds:
   - FishingRod
   AnchorOffset: {x: 0, y: 1, z: 0.5}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
-  PersistenceConditionKey: 
-  RequiredState: 1

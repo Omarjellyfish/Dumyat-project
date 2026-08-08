@@ -3,18 +3,60 @@ using UnityEngine;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// The way a tutorial step detects completion.
+    /// How a tutorial step decides the player has DONE the thing it asked for.
+    ///
+    /// Note the wording: satisfying a step no longer advances it. The trigger unlocks the card's NEXT
+    /// button and the player presses it when they are ready — see <c>TutorialRunner.MarkStepSatisfied</c>.
+    ///
+    /// The ordinals are pinned because <c>CompletionType</c> serialises as an int in 20-odd authored
+    /// step assets; reordering these members would silently re-point every one of them.
     /// </summary>
     public enum TutorialCompletionType
     {
-        /// <summary>Completed when a specific <see cref="IGameEvent"/> fires.</summary>
-        Event,
-        /// <summary>Completed when the player enters a tagged trigger zone.</summary>
-        ZoneEnter,
-        /// <summary>Auto-advances after <see cref="TutorialStepSO.DelaySeconds"/>.</summary>
-        Delay,
-        /// <summary>Completed by an external script calling <c>TutorialRunner.CompleteCurrentStep()</c>.</summary>
-        Manual
+        /// <summary>Satisfied when a specific <see cref="IGameEvent"/> fires.</summary>
+        Event = 0,
+        /// <summary>Satisfied when the player enters a tagged trigger zone.</summary>
+        ZoneEnter = 1,
+        /// <summary>
+        /// Minimum read time: satisfied after <see cref="TutorialStepSO.DelaySeconds"/>. Keep it short
+        /// (≤3s) — the player still has to press NEXT afterwards, so a long delay just reads as a
+        /// broken button.
+        /// </summary>
+        Delay = 2,
+        /// <summary>
+        /// Nothing to do. NEXT is live the moment the card appears. For pure narration, or for an
+        /// action the game genuinely cannot detect. (Named <c>Manual</c> until the NEXT gate landed;
+        /// the ordinal is unchanged, so no asset needed migrating.)
+        /// </summary>
+        ReadAndContinue = 3
+    }
+
+    /// <summary>
+    /// What the card's NEXT button does on a given step. Independent of
+    /// <see cref="TutorialCompletionType"/>, which says how the step is SATISFIED; this says how the
+    /// player gets to leave it.
+    /// </summary>
+    public enum TutorialNextButton
+    {
+        /// <summary>
+        /// No NEXT button at all — the step ends itself the moment its trigger fires. For a step
+        /// whose action IS the transition and where a button would be noise: walking into the
+        /// workshop, entering a zone. Needs a real trigger; pair it with ReadAndContinue and the card
+        /// flashes past.
+        /// </summary>
+        Hidden = 0,
+
+        /// <summary>
+        /// NEXT is live as soon as the card appears. For narration, and for a tip whose action the
+        /// game cannot observe — the player reads it and moves on in their own time.
+        /// </summary>
+        Always = 1,
+
+        /// <summary>
+        /// NEXT is shown but dimmed and unclickable until the step's trigger fires. The default for
+        /// any tip that names an action, so the player cannot click past without doing it.
+        /// </summary>
+        AfterAction = 2
     }
 
     /// <summary>
@@ -52,11 +94,15 @@ namespace DumyatRuntime
         [Header("Completion")]
         public TutorialCompletionType CompletionType;
 
-        [Tooltip("Uncheck to make this step MANDATORY: the Skip and Next buttons are hidden and the " +
-                 "step can only end by its own completion trigger firing. Use it for a step the rest " +
-                 "of the tutorial makes no sense without — walking into the workshop, say, when every " +
-                 "later step points at a tool inside it.")]
-        public bool Skippable = true;
+        [Tooltip("How the player leaves this step.\n\n" +
+                 "AfterAction — NEXT is dimmed until the trigger below fires. The default for any tip " +
+                 "that names an action.\n" +
+                 "Always — NEXT is live at once. For narration, or an action the game cannot detect.\n" +
+                 "Hidden — no NEXT at all; the step ends itself when the trigger fires. For a step " +
+                 "whose action IS the transition, like walking into the workshop.\n\n" +
+                 "SKIP is separate and always available: the player can abandon the tutorial from any " +
+                 "step.")]
+        public TutorialNextButton NextButton = TutorialNextButton.AfterAction;
 
         [Tooltip("Event completion: full event type name (e.g. 'RecipeSelectedEvent')")]
         public string EventTypeName;
@@ -64,8 +110,15 @@ namespace DumyatRuntime
         [Tooltip("ZoneEnter completion: ID of the TutorialAnchor acting as a trigger zone")]
         public string ZoneId;
 
-        [Tooltip("Delay completion: seconds before auto-advancing")]
+        [Tooltip("Delay completion: seconds of reading before NEXT unlocks")]
         public float DelaySeconds;
+
+        [Tooltip("Safety valve. Seconds after which NEXT unlocks even though this step's trigger never " +
+                 "fired, so a player is never trapped on a card they cannot dismiss. 0 uses the " +
+                 "runner's default. Set it explicitly on any step whose trigger depends on something " +
+                 "that can legitimately go missing — a cast that lands out of bounds, an NPC that " +
+                 "never gets approached.")]
+        [Min(0f)] public float FallbackUnlockSeconds;
 
         [Header("Anchors & Presentation")]
         [Tooltip("Primary anchor ID — WHERE THE INSTRUCTION CARD SITS. This is placement only and is " +
@@ -84,11 +137,9 @@ namespace DumyatRuntime
         [Tooltip("Optional haptic pulse when this step activates")]
         public HapticProfileSO HapticOnActivate;
 
-        [Header("Conditions (Optional)")]
-        [Tooltip("If set, this step only runs when this persistence key matches RequiredState")]
-        public string PersistenceConditionKey;
-
-        [Tooltip("true = key must exist for step to run, false = key must NOT exist")]
-        public bool RequiredState = true;
+        // PersistenceConditionKey / RequiredState used to live here. They were authored on every step
+        // asset but never read — TutorialRunner.ActivateStep held a TODO where the evaluation would
+        // have gone. Removed rather than implemented: no sequence needs a conditional step yet, and a
+        // field that looks like it gates something but doesn't is worse than no field.
     }
 }

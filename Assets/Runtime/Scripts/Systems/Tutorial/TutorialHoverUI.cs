@@ -23,9 +23,13 @@ namespace DumyatRuntime
         private const string SkipArabic = "تخطّي";
         private const string NextEnglish = "NEXT";
         private const string NextArabic = "التالي";
+        private const string DoneEnglish = "DONE";
+        private const string DoneArabic = "تمام";
 
         private const string ArabicClass = "tutorial-arabic";
         private const string InstructionArabicClass = "instruction-text--arabic";
+        private const string LockedButtonClass = "tutorial-btn--locked";
+        private const string DoneBadgeVisibleClass = "step-done-badge--visible";
 
         [Header("Animation")]
         [SerializeField, Range(0.05f, 0.5f)] private float _animationDuration = 0.2f;
@@ -61,6 +65,7 @@ namespace DumyatRuntime
         private VisualElement _iconContainer;
         private Button _skipButton;
         private Button _nextButton;
+        private Label _doneBadge;
 
         private ITutorialService _tutorialService;
         private ISettingsService _settings;
@@ -127,6 +132,7 @@ namespace DumyatRuntime
             _iconContainer = _root.Q<VisualElement>("IconContainer");
             _skipButton = _root.Q<Button>("SkipButton");
             _nextButton = _root.Q<Button>("NextButton");
+            _doneBadge = _root.Q<Label>("StepDoneBadge");
         }
 
         private void SetupButtons()
@@ -146,9 +152,12 @@ namespace DumyatRuntime
             _tutorialService?.SkipTutorial();
         }
 
+        // Not SkipCurrentStep: NEXT means "I've done this and I'm ready", so it goes through the
+        // route that insists the step was actually satisfied — and that, unlike skipping, is allowed
+        // on a mandatory step once the player has done it.
         private void OnNextClicked()
         {
-            _tutorialService?.SkipCurrentStep();
+            _tutorialService?.AdvanceCurrentStep();
         }
 
         /// <summary>
@@ -174,7 +183,11 @@ namespace DumyatRuntime
             // language-dependent, so they are written in one place.
             ApplyLanguage();
 
-            ApplySkippability(step);
+            ApplyStepChrome(step);
+
+            // Every card opens locked. TutorialRunner immediately calls back with true for a
+            // ReadAndContinue step, so narration never actually renders in the locked state.
+            SetStepSatisfied(false);
 
             // The step number is the one string that never translates. Zero-padded so the numeral
             // does not change width between steps.
@@ -202,23 +215,52 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Shows or hides the two ways out of a step — Skip (abandons the tutorial) and Next (steps
-        /// over it) — according to <see cref="TutorialStepSO.Skippable"/>.
+        /// Sets up the card's two controls for a new step.
         ///
-        /// Hidden rather than merely disabled: a greyed-out button in VR invites the player to keep
-        /// pointing at it and wondering what is broken, whereas a card with no exit reads as "this
-        /// one you actually have to do". <see cref="TutorialService"/> refuses the calls as well, so
-        /// nothing depends on the card getting this right.
+        /// SKIP abandons the whole tutorial and is ALWAYS available — a player who is stuck, or who
+        /// has played before, must never be trapped in a tutorial, whatever the step asks for.
+        ///
+        /// NEXT follows the step's <see cref="TutorialStepSO.NextButton"/> mode. Hidden removes it
+        /// entirely, for a step that ends itself; the other two both show it, and
+        /// <see cref="SetStepSatisfied"/> decides whether it is live.
         /// </summary>
-        private void ApplySkippability(TutorialStepSO step)
+        private void ApplyStepChrome(TutorialStepSO step)
         {
-            bool skippable = step == null || step.Skippable;
-
             if (_skipButton != null)
-                _skipButton.style.display = skippable ? DisplayStyle.Flex : DisplayStyle.None;
+                _skipButton.style.display = DisplayStyle.Flex;
 
             if (_nextButton != null)
-                _nextButton.style.display = skippable ? DisplayStyle.Flex : DisplayStyle.None;
+            {
+                bool hidden = step != null && step.NextButton == TutorialNextButton.Hidden;
+                _nextButton.style.display = hidden ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+        }
+
+        /// <summary>
+        /// Locks or unlocks NEXT. <see cref="TutorialRunner"/> drives this: false as a step opens,
+        /// true the moment its completion trigger fires.
+        ///
+        /// An <see cref="TutorialNextButton.Always"/> step ignores the lock entirely — its whole point
+        /// is that the player may move on without the game having observed anything.
+        ///
+        /// The DONE badge is suppressed on those steps too: a card that never asked for anything
+        /// should not congratulate the player for doing nothing.
+        /// </summary>
+        public void SetStepSatisfied(bool satisfied)
+        {
+            TutorialNextButton mode = _currentStep != null ? _currentStep.NextButton : TutorialNextButton.Always;
+            bool live = satisfied || mode == TutorialNextButton.Always;
+
+            if (_nextButton != null)
+            {
+                // SetEnabled also stops the element being picked, so the ray cannot click through a
+                // locked button — the service check behind it is belt-and-braces.
+                _nextButton.SetEnabled(live);
+                _nextButton.EnableInClassList(LockedButtonClass, !live);
+            }
+
+            bool showBadge = satisfied && mode == TutorialNextButton.AfterAction;
+            _doneBadge?.EnableInClassList(DoneBadgeVisibleClass, showBadge);
         }
 
         /// <summary>Show the panel with a scale animation.</summary>
@@ -303,6 +345,12 @@ namespace DumyatRuntime
             {
                 _nextButton.text = arabic ? NextArabic : NextEnglish;
                 _nextButton.EnableInClassList(ArabicClass, arabic);
+            }
+
+            if (_doneBadge != null)
+            {
+                _doneBadge.text = arabic ? DoneArabic : DoneEnglish;
+                _doneBadge.EnableInClassList(ArabicClass, arabic);
             }
         }
 

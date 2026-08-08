@@ -197,6 +197,22 @@
     background-color: rgba(120, 228, 236, 0.28);
 }
 
+/* ------------------------------------------------------------ Done badge -- */
+/* Appears the instant the player does what the card asked, alongside NEXT
+   unlocking. It is the reason the button changed, so it sits in the body next
+   to the instruction rather than in the footer next to the button. */
+.step-done-badge {
+    display: none;
+    font-size: 15px;
+    letter-spacing: 5px;
+    color: #67DDE8;
+    margin: 0 0 8px 0;
+}
+
+.step-done-badge--visible {
+    display: flex;
+}
+
 /* ---------------------------------------------------------------- Footer -- */
 .tutorial-footer {
     flex-direction: row;
@@ -215,7 +231,7 @@
     border-width: 2px;
     border-color: rgba(120, 228, 236, 0.5);
     border-radius: 4px;
-    transition-property: background-color, border-color, color, scale;
+    transition-property: background-color, border-color, color, scale, opacity;
     transition-duration: 0.12s;
 }
 
@@ -242,6 +258,25 @@
     background-color: rgba(214, 246, 250, 0.1);
     border-color: rgba(214, 246, 250, 0.5);
     color: #EAF8FB;
+}
+
+/* Next, before the player has done what the step asked. Kept on screen rather
+   than hidden: the player needs to see that there IS a way on and that it is
+   waiting on them — an absent button says neither. The hover/active overrides
+   matter as much as the dimming, because a controller ray sweeping the card
+   would otherwise still light the button up and promise something. */
+.tutorial-btn--locked {
+    opacity: 0.3;
+    color: rgba(214, 246, 250, 0.4);
+    border-color: rgba(214, 246, 250, 0.16);
+}
+
+.tutorial-btn--locked:hover,
+.tutorial-btn--locked:active {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(214, 246, 250, 0.16);
+    color: rgba(214, 246, 250, 0.4);
+    scale: 1;
 }
 
 /* ---------------------------------------------------------------- Arabic -- */

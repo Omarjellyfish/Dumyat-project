@@ -12,19 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: IntroTutorial Step 3
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'The trigger uses whatever you''re holding. Point it, pull it, see what happens.'
-  InstructionTextArabic: 'الزناد بيشغّل اللي في إيدك. صوّب، اضغط، وشوف بيحصل إيه.'
+  InstructionText: The trigger uses whatever you're holding. Point it, pull it, see
+    what happens.
+  InstructionTextArabic: "\u0627\u0644\u0632\u0646\u0627\u062F \u0628\u064A\u0634\u063A\u0651\u0644
+    \u0627\u0644\u0644\u064A \u0641\u064A \u0625\u064A\u062F\u0643. \u0635\u0648\u0651\u0628\u060C
+    \u0627\u0636\u063A\u0637\u060C \u0648\u0634\u0648\u0641 \u0628\u064A\u062D\u0635\u0644
+    \u0625\u064A\u0647."
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: a6721511441c05a43964dac58584c890, type: 3}
   Video: {fileID: 0}
-  CompletionType: 3
-  EventTypeName: 
+  CompletionType: 0
+  NextButton: 2
+  EventTypeName: PlayerUsedHeldItemEvent
   ZoneId: 
   DelaySeconds: 2
+  FallbackUnlockSeconds: 0
   PrimaryAnchorId: Player
   HighlightIds: []
   AnchorOffset: {x: 0, y: 0, z: 0}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
-  PersistenceConditionKey: 
-  RequiredState: 1
