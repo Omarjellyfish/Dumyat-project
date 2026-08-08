@@ -5107,7 +5107,7 @@ Transform:
   m_GameObject: {fileID: 1270250220}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.02, y: 0.42, z: 0}
+  m_LocalPosition: {x: -0.0556, y: 0.42, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7372,13 +7372,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2120468756}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0.205, z: -0}
+  m_LocalRotation: {x: -0.26825887, y: -0.65424556, z: -0.26825887, w: 0.65424556}
+  m_LocalPosition: {x: 0, y: 0.127, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4867172763932298452}
-  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
+  m_LocalEulerAnglesHint: {x: -44.59, y: -90, z: 0}
 --- !u!114 &312018063090289069
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7603,15 +7603,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5242325738699642478}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 18.402, y: 1.121, z: 9.549}
+  m_LocalRotation: {x: 0.4957981, y: 0.50416684, z: -0.50416684, w: 0.4957981}
+  m_LocalPosition: {x: 17.631, y: 1.176, z: 9.662}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2120468757}
   - {fileID: 1270250221}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 128.61, z: 37.651}
 --- !u!1 &5242325738699642478
 GameObject:
   m_ObjectHideFlags: 0
@@ -7626,8 +7626,9 @@ GameObject:
   - component: {fileID: 4582356191954239656}
   - component: {fileID: 312018063090289069}
   - component: {fileID: 8368937436879455091}
-  - component: {fileID: 8368937436879455092}
   - component: {fileID: 8368937436879455093}
+  - component: {fileID: 8368937436879455095}
+  - component: {fileID: 8368937436879455094}
   m_Layer: 0
   m_Name: Hammer_A3
   m_TagString: T_Hammer
@@ -7707,28 +7708,6 @@ MonoBehaviour:
   _nailLayer:
     serializedVersion: 2
     m_Bits: 2097152
---- !u!64 &8368937436879455092
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5242325738699642478}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 2096452181840518461, guid: db4cc2f075470cc47b6e05579fdc39a0, type: 3}
 --- !u!114 &8368937436879455093
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7787,6 +7766,48 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_EnableMultiPick: 0
+--- !u!65 &8368937436879455094
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5242325738699642478}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.07578103, y: 0.05202959, z: 0.05793534}
+  m_Center: {x: -0.05, y: 0.42, z: 0.0047174115}
+--- !u!65 &8368937436879455095
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5242325738699642478}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.056482315, y: 0.19507694, z: 0.06}
+  m_Center: {x: -0.00042819977, y: 0.16885507, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
