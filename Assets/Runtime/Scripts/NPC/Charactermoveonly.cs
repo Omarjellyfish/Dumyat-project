@@ -6,45 +6,60 @@ using UnityEngine;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Walks a character through an ordered list of waypoints, swapping to a Walk animator
-    /// controller for the whole route, then switching to a Talk animator controller once it
-    /// reaches the FINAL waypoint. Does NOT play any voice/dialogue itself - that's owned by
-    /// whatever triggers <see cref="Move"/> (e.g. a NarrativeTriggerZone-adjacent trigger, after
-    /// its dialogue finishes).
+    /// Walks a character through one or more ordered "routes", each a list of waypoints. Every
+    /// call to <see cref="Move"/> plays the NEXT unplayed route in order - so the same component
+    /// can be reused for multiple separate walk legs (e.g. one triggered by an early zone, a
+    /// second triggered later by a different zone), without needing a second component fighting
+    /// over the same Animator.
+    ///
+    /// While walking, switches to the Walk animator controller. On reaching the LAST waypoint of
+    /// the current route, optionally snaps to face that route's Look At target, then switches to
+    /// the Talk animator controller. Does NOT play any voice/dialogue itself - that's owned by
+    /// whatever triggers Move (e.g. a trigger zone, after its dialogue finishes).
     /// </summary>
     [RequireComponent(typeof(Animator))]
     public class CharacterMoveOnly : MonoBehaviour
     {
+        [Serializable]
+        public class Route
+        {
+            [Tooltip("Ordered points to walk through for this route.")]
+            public List<Transform> Waypoints = new List<Transform>();
+
+            [Tooltip("Once the character reaches the final waypoint of THIS route, it snaps to face " +
+                     "this transform (Y-axis only, stays upright). Leave empty to skip.")]
+            public Transform LookAtTarget;
+        }
+
         [Header("References")]
         [SerializeField] private Animator _animator;
 
         [Header("Animator Controllers")]
-        [Tooltip("Controller to switch to while walking through the waypoints.")]
+        [Tooltip("Controller to switch to while walking through a route's waypoints.")]
         [SerializeField] private RuntimeAnimatorController _walkController;
-        [Tooltip("Controller to switch to once the character reaches the FINAL waypoint.")]
+        [Tooltip("Controller to switch to once the character reaches the final waypoint of a route.")]
         [SerializeField] private RuntimeAnimatorController _talkController;
 
+        [Header("Routes")]
+        [Tooltip("Each call to Move() plays the next unplayed route in this list, in order. Add a " +
+                 "new route for each separate walk leg this character should do (e.g. one per " +
+                 "trigger zone).")]
+        [SerializeField] private List<Route> _routes = new List<Route>();
+
         [Header("Movement")]
-        [Tooltip("Ordered list of points to walk through. The character walks to each in order; " +
-                 "the Talk controller only plays once it reaches the LAST one in this list.")]
-        [SerializeField] private List<Transform> _waypoints = new List<Transform>();
         [SerializeField] private float _moveSpeed = 2f;
         [SerializeField] private float _arrivalThreshold = 0.05f;
         [SerializeField] private bool _rotateTowardsTarget = true;
         [SerializeField] private float _rotateSpeed = 10f;
 
-        [Header("Look At (on arrival)")]
-        [Tooltip("Once the character reaches the final waypoint, it snaps to face this transform " +
-                 "(Y-axis only, stays upright). Leave empty to skip.")]
-        [SerializeField] private Transform _lookAtTarget;
-
         public event Action MoveStarted;
         /// <summary>Fired every time a waypoint is reached, including intermediate ones.</summary>
         public event Action<int> WaypointReached;
-        /// <summary>Fired once the FINAL waypoint is reached.</summary>
+        /// <summary>Fired once the final waypoint of a route is reached.</summary>
         public event Action Arrived;
 
         private Coroutine _moveRoutine;
+        private int _nextRouteIndex;
 
         private void Reset()
         {
@@ -52,8 +67,8 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Call this to start walking through the waypoint list in order. Safe to call multiple
-        /// times - a call while already moving is ignored.
+        /// Plays the next unplayed route in order. Safe to call multiple times - a call while
+        /// already moving, or once all routes have been played, is ignored (logs a warning).
         /// </summary>
         public void Move()
         {
@@ -63,13 +78,22 @@ namespace DumyatRuntime
                 return;
             }
 
-            if (_waypoints == null || _waypoints.Count == 0)
+            if (_routes == null || _nextRouteIndex >= _routes.Count)
             {
-                Debug.LogWarning($"[{name}] No waypoints assigned, nothing to move to.", this);
+                Debug.LogWarning($"[{name}] No more routes to play (played {_nextRouteIndex}/{_routes?.Count ?? 0}).", this);
                 return;
             }
 
-            _moveRoutine = StartCoroutine(MoveRoutine());
+            Route route = _routes[_nextRouteIndex];
+            _nextRouteIndex++;
+
+            if (route.Waypoints == null || route.Waypoints.Count == 0)
+            {
+                Debug.LogWarning($"[{name}] Route {_nextRouteIndex - 1} has no waypoints, skipping.", this);
+                return;
+            }
+
+            _moveRoutine = StartCoroutine(MoveRoutine(route));
         }
 
         public void Stop()
@@ -81,15 +105,15 @@ namespace DumyatRuntime
             }
         }
 
-        private IEnumerator MoveRoutine()
+        private IEnumerator MoveRoutine(Route route)
         {
             MoveStarted?.Invoke();
 
             SwitchController(_walkController);
 
-            for (int i = 0; i < _waypoints.Count; i++)
+            for (int i = 0; i < route.Waypoints.Count; i++)
             {
-                Transform waypoint = _waypoints[i];
+                Transform waypoint = route.Waypoints[i];
                 if (waypoint == null)
                 {
                     Debug.LogWarning($"[{name}] Waypoint at index {i} is null, skipping.", this);
@@ -100,7 +124,7 @@ namespace DumyatRuntime
                 WaypointReached?.Invoke(i);
             }
 
-            FaceLookAtTarget();
+            FaceLookAtTarget(route.LookAtTarget);
 
             SwitchController(_talkController);
             Arrived?.Invoke();
@@ -109,14 +133,14 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Snaps the character to face _lookAtTarget on the Y axis only (stays upright), called
-        /// once after the final waypoint is reached. No-op if no target is assigned.
+        /// Snaps the character to face the given target on the Y axis only (stays upright), called
+        /// once after the final waypoint of a route is reached. No-op if target is null.
         /// </summary>
-        private void FaceLookAtTarget()
+        private void FaceLookAtTarget(Transform lookAtTarget)
         {
-            if (_lookAtTarget == null) return;
+            if (lookAtTarget == null) return;
 
-            Vector3 toTarget = _lookAtTarget.position - transform.position;
+            Vector3 toTarget = lookAtTarget.position - transform.position;
             toTarget.y = 0f;
 
             if (toTarget.sqrMagnitude <= 0.0001f) return;
