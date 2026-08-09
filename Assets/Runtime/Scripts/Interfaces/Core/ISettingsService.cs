@@ -47,6 +47,12 @@ namespace DumyatRuntime
         /// <summary>Which controller button holds the mic open in push-to-talk.</summary>
         PushToTalkButton PushToTalkButton { get; }
 
+        /// <summary>
+        /// Preferred microphone by device name; empty means the system default. A name that is no
+        /// longer connected is not an error — capture falls back to the first available device.
+        /// </summary>
+        string MicDevice { get; }
+
         /// <summary>Linear 0..1, as the sliders show it — not decibels.</summary>
         float GetVolume(AudioChannel channel);
 
@@ -83,6 +89,9 @@ namespace DumyatRuntime
         void SetMicThreshold(float threshold, bool persistNow = true);
 
         void SetPushToTalkButton(PushToTalkButton button);
+
+        /// <summary>Sets the preferred microphone by name. Pass null or empty for the system default.</summary>
+        void SetMicDevice(string deviceName);
 
         /// <summary>Pushes every current value to the mixer and republishes the settings events.</summary>
         void ApplyAll();

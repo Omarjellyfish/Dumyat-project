@@ -67,6 +67,10 @@ namespace DumyatRuntime
         private Label _thresholdValue;
         private VisualElement _sensitivityGroup;
         private VisualElement _talkButtonGroup;
+        private VisualElement _gateRow;
+        private VisualElement _deviceNav;
+        private Button _devicePrevButton;
+        private Button _deviceNextButton;
         private VisualElement _meterFill;
         private VisualElement _meterGate;
         private VisualElement _meterDot;
@@ -85,6 +89,16 @@ namespace DumyatRuntime
         /// </summary>
         private MicrophoneStreamCapture _micPreview;
         private bool _meterRunning;
+
+        /// <summary>
+        /// Connected microphones, re-read every time the Voice page opens rather than cached for the
+        /// session — a headset can gain a mic when a USB dongle or a Link cable is plugged in, and a
+        /// list captured at boot would never show it.
+        /// </summary>
+        private string[] _devices = System.Array.Empty<string>();
+
+        /// <summary>Index into <see cref="_devices"/> of the player's choice, or -1 when there is none.</summary>
+        private int _deviceIndex = -1;
 
         // Index of each slider matches the AudioChannel enum, which is contiguous from 0.
         private static readonly AudioChannel[] Channels =
@@ -204,6 +218,10 @@ namespace DumyatRuntime
             _thresholdValue = null;
             _sensitivityGroup = null;
             _talkButtonGroup = null;
+            _gateRow = null;
+            _deviceNav = null;
+            _devicePrevButton = null;
+            _deviceNextButton = null;
             _meterFill = null;
             _meterGate = null;
             _meterDot = null;
@@ -350,6 +368,14 @@ namespace DumyatRuntime
         {
             _sensitivityGroup = _root.Q<VisualElement>("SensitivityGroup");
             _talkButtonGroup = _root.Q<VisualElement>("TalkButtonGroup");
+            _gateRow = _root.Q<VisualElement>("GateRow");
+
+            _deviceNav = _root.Q<VisualElement>("MicDeviceNav");
+            _devicePrevButton = _root.Q<Button>("MicDevicePrevButton");
+            _deviceNextButton = _root.Q<Button>("MicDeviceNextButton");
+
+            if (_devicePrevButton != null) _devicePrevButton.clicked += () => CycleDevice(-1);
+            if (_deviceNextButton != null) _deviceNextButton.clicked += () => CycleDevice(1);
 
             _meterFill = _root.Q<VisualElement>("InputMeterFill");
             _meterGate = _root.Q<VisualElement>("InputMeterGate");
@@ -484,8 +510,9 @@ namespace DumyatRuntime
             _sensitivityGroup?.EnableInClassList(HiddenGroupClass, pushToTalk);
             _talkButtonGroup?.EnableInClassList(HiddenGroupClass, !pushToTalk);
 
-            // The threshold row is only meaningful while the gate is manual.
-            _thresholdSlider?.parent?.EnableInClassList(HiddenGroupClass, auto);
+            // The gate handle under the bar is only meaningful while the gate is manual, and only in
+            // voice activity — push-to-talk has no gate for it to move.
+            _gateRow?.EnableInClassList(HiddenGroupClass, auto || pushToTalk);
 
             float normalized = Mathf.Clamp01(_settings.MicThreshold / SettingsKeys.MaxMicThreshold);
             _thresholdSlider?.SetValueWithoutNotify(normalized);
@@ -579,6 +606,69 @@ namespace DumyatRuntime
             else StopMeter();
         }
 
+        // ----------------------------------------------------------------- Device --
+
+        /// <summary>
+        /// Re-reads the connected microphones and points the picker at the player's choice.
+        ///
+        /// The stored setting is a device NAME, so a machine whose device order changed — or that
+        /// has since lost the chosen mic — resolves to the first available one here, matching what
+        /// <c>MicrophoneStreamCapture.ResolveDevice</c> will do when capture actually starts. The two
+        /// must agree, or the menu would name one microphone while the merchant listened to another.
+        /// </summary>
+        private void RefreshDeviceList()
+        {
+            _devices = Microphone.devices ?? System.Array.Empty<string>();
+            _deviceIndex = -1;
+
+            string chosen = _settings?.MicDevice;
+            if (!string.IsNullOrEmpty(chosen))
+                _deviceIndex = System.Array.IndexOf(_devices, chosen);
+
+            // No stored choice, or one that is no longer plugged in.
+            if (_deviceIndex < 0 && _devices.Length > 0) _deviceIndex = 0;
+
+            // The arrows only exist where there is something to switch between. On a standalone
+            // headset that is one device, so the head stays a single line and the page keeps the
+            // 64px it would otherwise spend on a control that cannot do anything.
+            bool switchable = _devices.Length > 1;
+            _deviceNav?.EnableInClassList(HiddenGroupClass, !switchable);
+
+            UpdateDeviceLabel();
+        }
+
+        private void UpdateDeviceLabel()
+        {
+            if (_meterDevice == null) return;
+
+            _meterDevice.text = _deviceIndex >= 0 && _deviceIndex < _devices.Length
+                ? _devices[_deviceIndex]
+                : "No microphone found";
+        }
+
+        /// <summary>
+        /// Steps to the next or previous microphone and reopens the meter on it, so the bar is
+        /// answering for the device now named above it. Wraps, because with two devices a wrapping
+        /// pair of arrows is simply a toggle and never dead-ends.
+        /// </summary>
+        private void CycleDevice(int step)
+        {
+            if (_devices.Length <= 1 || _settings == null) return;
+
+            _deviceIndex = ((_deviceIndex + step) % _devices.Length + _devices.Length) % _devices.Length;
+            _settings.SetMicDevice(_devices[_deviceIndex]);
+
+            UpdateDeviceLabel();
+
+            // The preview is holding the OLD device open; it has to be released before the new one
+            // can be started, or the restart lands on a mic the OS still considers busy.
+            if (_meterRunning)
+            {
+                StopMeter();
+                StartMeter();
+            }
+        }
+
         // ------------------------------------------------------------------ Meter --
 
         /// <summary>
@@ -594,6 +684,11 @@ namespace DumyatRuntime
         private void StartMeter()
         {
             if (_meterRunning || _meterFill == null) return;
+
+            // Before the permission check: the picker has to show what is connected even when the
+            // meter itself cannot run, or a player who has denied the mic sees an empty control and
+            // no way to tell whether the game found their hardware.
+            RefreshDeviceList();
 
             if (!MicrophonePermission.IsGranted)
             {
@@ -613,6 +708,7 @@ namespace DumyatRuntime
             {
                 _micPreview.AutoAdjustSensitivity = _settings.MicAutoSensitivity;
                 _micPreview.ManualThreshold = _settings.MicThreshold;
+                _micPreview.Device = _settings.MicDevice;   // empty = system default
             }
 
             if (!_micPreview.Start(out string error))
@@ -623,7 +719,12 @@ namespace DumyatRuntime
             }
 
             _meterRunning = true;
-            if (_meterDevice != null) _meterDevice.text = _micPreview.ResolvedDevice;
+
+            // What the capture actually opened, which can differ from the stored name when that
+            // device has been unplugged. Naming the real one keeps the label honest.
+            if (_meterDevice != null && !string.IsNullOrEmpty(_micPreview.ResolvedDevice))
+                _meterDevice.text = _micPreview.ResolvedDevice;
+
             UpdateMeterCaption();
         }
 
@@ -652,9 +753,13 @@ namespace DumyatRuntime
             return false;
         }
 
+        /// <summary>
+        /// Explains why the bar is flat. The device LABEL is deliberately left alone — it was filled
+        /// by <see cref="RefreshDeviceList"/> and still answers "did the game find my microphone",
+        /// which is the first thing a player checks when the meter is not moving.
+        /// </summary>
         private void SetMeterUnavailable(string reason)
         {
-            if (_meterDevice != null) _meterDevice.text = "—";
             if (_meterCaption != null) _meterCaption.text = reason;
             DrawMeter(0f, 0f, open: false);
         }
@@ -704,15 +809,17 @@ namespace DumyatRuntime
         {
             if (_meterCaption == null || !_meterRunning || _settings == null) return;
 
+            // Kept to one line each. The caption is the last element on the page in its tightest
+            // state, so a string long enough to wrap is a string that pushes itself off the panel.
             if (_settings.MicCaptureMode == MicCaptureMode.PushToTalk)
             {
-                _meterCaption.text = "Hold the talk button and speak to test it.";
+                _meterCaption.text = "Hold the talk button to test it.";
                 return;
             }
 
             _meterCaption.text = _settings.MicAutoSensitivity
-                ? "Speak to test it. The gate follows the noise in your room."
-                : "Set the gate just above the bar when the room is quiet.";
+                ? "Speak to test. The gate follows your room."
+                : "Set the gate just above the bar when quiet.";
         }
     }
 }

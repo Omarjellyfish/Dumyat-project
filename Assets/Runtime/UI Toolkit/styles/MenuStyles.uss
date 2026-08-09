@@ -456,28 +456,73 @@
    default 0.02 gate is a sliver you cannot aim a controller at; against 0.5,
    speech lands across the middle of the bar and the gate is somewhere a player
    can actually put it. */
+/* padding-top is 10, not the 18 the other blocks use, and that is load-bearing.
+   The worst case this page has to survive is voice activity + a manual gate on
+   a machine with more than one microphone: mode segment, sensitivity segment,
+   the 64px device arrows, the bar, the gate handle and a caption. Measured, that
+   lands within a couple of pixels of the 449px the pages column gives us. The
+   8px saved here is the headroom. */
 .input-meter-block {
     margin-top: auto;
-    padding-top: 18px;
+    padding-top: 10px;
+}
+
+/* The Voice page runs closer to the bottom of the panel than the others, so its
+   second field group opens tighter. Scoped to this page by id — the Language
+   page's stacked label keeps the roomier shared value. */
+#VoicePage .settings-field-label--stacked {
+    margin-top: 10px;
 }
 
 .input-meter-head {
     flex-direction: row;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
-}
-
-.input-meter-title {
-    font-size: 19px;
-    letter-spacing: 4px;
-    color: rgba(214, 246, 250, 0.55);
-    margin: 0;
 }
 
 .input-meter-device {
     flex-direction: row;
     align-items: center;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+/* --- Device switching ---------------------------------------------------- */
+/* Hidden by code whenever there is one microphone or none. That is what keeps
+   the meter head a single 22px line on a headset and lets it grow to the 64px
+   VR ray-target floor only on a machine with something to switch between. */
+.device-nav-group {
+    flex-direction: row;
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+/* Square rather than the wide ghost buttons elsewhere: a chevron has no string
+   to size to, and two 64px squares read as a pair of steps rather than as two
+   competing actions. */
+.device-nav {
+    width: 64px;
+    min-height: 64px;
+    margin-left: 10px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.45);
+    border-radius: 8px;
+    color: #EAF8FB;
+    font-size: 30px;
+    -unity-text-align: middle-center;
+    transition-property: background-color, border-color;
+    transition-duration: 0.18s;
+}
+
+.device-nav:hover {
+    background-color: rgba(103, 221, 232, 0.14);
+    border-color: #67DDE8;
+}
+
+.device-nav:disabled {
+    opacity: 0.35;
 }
 
 /* Jade the moment the gate opens — the same "good" this project uses for money.
@@ -495,11 +540,34 @@
     background-color: #8DEBAF;
 }
 
+/* Device names run long on desktop ("Microphone (Realtek(R) Audio)"), and a
+   wrapped one would push the arrows out of the head. Clipped to one line
+   instead — the arrows and the meter matter more than the tail of a name. */
 .input-meter-device-name {
     font-size: 22px;
     color: #EAF8FB;
     letter-spacing: 1px;
     margin: 0;
+    flex-shrink: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- Manual gate, directly under the bar it marks ------------------------ */
+.gate-row {
+    flex-direction: row;
+    align-items: center;
+    height: 40px;
+    margin-top: 6px;
+}
+
+/* Overrides .slider-control's 20px side margins: the handle has to travel the
+   same track the bar above it draws, or the marker and the handle disagree. */
+.gate-slider {
+    flex-grow: 1;
+    margin: 0;
+    height: 40px;
 }
 
 .input-meter {

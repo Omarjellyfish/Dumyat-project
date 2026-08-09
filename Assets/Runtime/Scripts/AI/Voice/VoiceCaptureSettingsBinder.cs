@@ -60,7 +60,7 @@ namespace DumyatRuntime
             _eventService?.Subscribe<VoiceSettingsChangedEvent>(OnVoiceSettingsChanged);
 
             Apply(_settings.MicCaptureMode, _settings.MicAutoSensitivity,
-                  _settings.MicThreshold, _settings.PushToTalkButton);
+                  _settings.MicThreshold, _settings.PushToTalkButton, _settings.MicDevice);
         }
 
         private void OnDisable()
@@ -70,18 +70,18 @@ namespace DumyatRuntime
 
         private void OnVoiceSettingsChanged(VoiceSettingsChangedEvent evt)
         {
-            Apply(evt.CaptureMode, evt.AutoSensitivity, evt.Threshold, evt.TalkButton);
+            Apply(evt.CaptureMode, evt.AutoSensitivity, evt.Threshold, evt.TalkButton, evt.Device);
         }
 
         /// <summary>
-        /// Pushes all four values through the controller's public setters.
+        /// Pushes every microphone option through the controller's public setters.
         ///
         /// The mode is mapped by hand, not cast: <see cref="MicCaptureMode"/> and
         /// <see cref="VoiceCaptureController.CaptureMode"/> declare their two members in OPPOSITE
         /// order, so a cast would compile and silently select the other mode.
         /// </summary>
         private void Apply(MicCaptureMode mode, bool autoSensitivity, float threshold,
-                           PushToTalkButton talkButton)
+                           PushToTalkButton talkButton, string device)
         {
             if (_controller == null) return;
 
@@ -92,6 +92,12 @@ namespace DumyatRuntime
             _controller.AutoAdjustSensitivity = autoSensitivity;
             _controller.VadAmplitudeThreshold = threshold;
             _controller.PushToTalkButton = talkButton;
+
+            // Empty is meaningful, not missing: it is "whatever the system offers first", which is
+            // what MicrophoneStreamCapture.ResolveDevice falls back to. Pushed on every change so a
+            // device switched in the menu takes effect on the NEXT utterance rather than needing the
+            // negotiation restarted — the controller re-reads it in ConfigureSourceForMode.
+            _controller.MicrophoneDevice = device ?? string.Empty;
         }
     }
 }

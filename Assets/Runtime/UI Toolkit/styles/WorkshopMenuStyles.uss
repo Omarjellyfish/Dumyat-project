@@ -258,9 +258,18 @@
    same idiom as the sliders above. Jade would be a fourth colour on a board
    that only owns bone and ember, so "the gate is open" is carried by the pale
    BONE fill instead: dark groove, ember below the gate, bone above it. */
-.workshop .input-meter-title {
-    color: rgba(246, 231, 204, 0.62);
+.workshop .device-nav {
+    background-color: rgba(22, 12, 3, 0.35);
+    border-color: rgba(255, 179, 71, 0.40);
+    border-radius: 5px;
+    color: rgba(246, 231, 204, 0.82);
     text-shadow: 1px 1px 2px rgba(10, 5, 0, 0.9);
+}
+
+.workshop .device-nav:hover {
+    background-color: rgba(255, 179, 71, 0.16);
+    border-color: #FFB347;
+    color: #F6E7CC;
 }
 
 .workshop .input-meter-device-name {

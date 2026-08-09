@@ -136,14 +136,6 @@
                             <ui:Button name="MicManualButton" text="MANUAL" class="segment-btn" />
                         </ui:VisualElement>
 
-                        <!-- 0..1 like the volume sliders; SettingsToolkitUI scales it onto the
-                             0..SettingsKeys.MaxMicThreshold the capture source actually compares
-                             against, and shows it as 0-100. -->
-                        <ui:VisualElement name="ThresholdRow" class="slider-row">
-                            <ui:Label text="THRESHOLD" class="slider-label" />
-                            <ui:Slider name="MicThresholdSlider" low-value="0" high-value="1" value="0.04" class="slider-control" />
-                            <ui:Label name="MicThresholdValue" text="4" class="slider-value" />
-                        </ui:VisualElement>
                     </ui:VisualElement>
 
                     <!-- Push-to-talk only. A PICKER of the two free face buttons, not an open
@@ -156,7 +148,10 @@
                             <ui:Button name="TalkSecondaryButton" text="B / Y" class="segment-btn" />
                         </ui:VisualElement>
 
-                        <ui:Label text="Hold it while you speak. Space does the same on a keyboard."
+                        <!-- Kept short enough to stay on ONE line at this page width. Measured: the
+                             push-to-talk state is the tallest the Voice page gets, and a note that
+                             wraps to a second line is what pushes the meter off the panel. -->
+                        <ui:Label text="Hold it while you speak. Space works on a keyboard."
                                   class="settings-note" />
                     </ui:VisualElement>
 
@@ -165,17 +160,37 @@
                          The gate marker is hidden in push-to-talk, where there is no gate. -->
                     <ui:VisualElement name="InputMeterBlock" class="input-meter-block">
 
-                        <ui:VisualElement class="input-meter-head">
-                            <ui:Label text="INPUT" class="input-meter-title" />
+                        <!-- The head names the device AND switches it. The two arrows are hidden
+                             whenever there is only one microphone to choose from, which collapses
+                             this row back to a single line of text — so a standalone headset, where
+                             Microphone.devices is one entry, pays nothing for a control it cannot
+                             use. The 64px ray targets are only on screen where there is a choice. -->
+                        <ui:VisualElement name="InputMeterHead" class="input-meter-head">
                             <ui:VisualElement class="input-meter-device">
                                 <ui:VisualElement name="InputMeterDot" class="input-meter-dot" />
                                 <ui:Label name="InputMeterDevice" text="" class="input-meter-device-name" />
+                            </ui:VisualElement>
+
+                            <ui:VisualElement name="MicDeviceNav" class="device-nav-group">
+                                <ui:Button name="MicDevicePrevButton" text="‹" class="device-nav" />
+                                <ui:Button name="MicDeviceNextButton" text="›" class="device-nav" />
                             </ui:VisualElement>
                         </ui:VisualElement>
 
                         <ui:VisualElement name="InputMeterTrack" class="input-meter">
                             <ui:VisualElement name="InputMeterFill" class="input-meter-fill" />
                             <ui:VisualElement name="InputMeterGate" class="input-meter-gate" />
+                        </ui:VisualElement>
+
+                        <!-- The manual gate lives UNDER the bar rather than in a labelled row of its
+                             own further up the page. The handle then sits directly beneath the marker
+                             it drives, so the two read as one control instead of two things the
+                             player has to connect — and it costs 40px where the row cost 74, which is
+                             what buys the device arrows above. 0..1 like the volume sliders;
+                             SettingsToolkitUI scales it onto 0..SettingsKeys.MaxMicThreshold. -->
+                        <ui:VisualElement name="GateRow" class="gate-row">
+                            <ui:Slider name="MicThresholdSlider" low-value="0" high-value="1" value="0.04" class="slider-control gate-slider" />
+                            <ui:Label name="MicThresholdValue" text="4" class="slider-value" />
                         </ui:VisualElement>
 
                         <ui:Label name="InputMeterCaption" text="" class="input-meter-caption" />

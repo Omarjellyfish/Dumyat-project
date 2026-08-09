@@ -64,6 +64,17 @@ namespace DumyatRuntime
         /// <summary>Which controller button talks. Stored as <see cref="DumyatRuntime.PushToTalkButton"/>.</summary>
         public const string PushToTalkButton = "Dumyat.PushToTalkButton";
 
+        /// <summary>
+        /// Preferred microphone, by device name. EMPTY means "whatever the system offers first",
+        /// which is both the default and the honest answer on a headset with one built-in mic.
+        ///
+        /// Stored by name rather than by index because the index of a device changes as others are
+        /// plugged in and out — a saved index would silently start meaning a different microphone.
+        /// A name that is no longer connected falls back to the first available device, in
+        /// <c>MicrophoneStreamCapture.ResolveDevice</c>.
+        /// </summary>
+        public const string MicDevice = "Dumyat.MicDevice";
+
         /// <summary>Default for every audio channel, matching SoundMixerManager's PlayerPrefs fallback.</summary>
         public const float DefaultVolume = 1f;
 

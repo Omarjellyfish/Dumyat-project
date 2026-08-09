@@ -31,6 +31,7 @@ namespace DumyatRuntime
         private bool _micAutoSensitivity;
         private float _micThreshold;
         private PushToTalkButton _talkButton;
+        private string _micDevice = string.Empty;
 
         public GameLanguage Language => _language;
         public bool SubtitlesEnabled => _subtitlesOn;
@@ -40,6 +41,7 @@ namespace DumyatRuntime
         public bool MicAutoSensitivity => _micAutoSensitivity;
         public float MicThreshold => _micThreshold;
         public PushToTalkButton PushToTalkButton => _talkButton;
+        public string MicDevice => _micDevice;
 
         public SubtitleMode SubtitleMode =>
             !_subtitlesOn ? DumyatRuntime.SubtitleMode.Off
@@ -125,6 +127,18 @@ namespace DumyatRuntime
             PublishVoiceState();
         }
 
+        public void SetMicDevice(string deviceName)
+        {
+            string value = deviceName ?? string.Empty;
+            if (_micDevice == value) return;
+
+            _micDevice = value;
+            PlayerPrefs.SetString(SettingsKeys.MicDevice, value);
+            PlayerPrefs.Save();
+
+            PublishVoiceState();
+        }
+
         public void SetLanguage(GameLanguage language)
         {
             if (_language == language) return;
@@ -198,6 +212,7 @@ namespace DumyatRuntime
             _micAutoSensitivity = true;
             _micThreshold = SettingsKeys.DefaultMicThreshold;
             _talkButton = PushToTalkButton.Primary;
+            _micDevice = string.Empty;
             WriteVoicePrefs();
 
             PlayerPrefs.Save();
@@ -240,6 +255,8 @@ namespace DumyatRuntime
                           == (int)PushToTalkButton.Secondary
                 ? PushToTalkButton.Secondary
                 : PushToTalkButton.Primary;
+
+            _micDevice = PlayerPrefs.GetString(SettingsKeys.MicDevice, string.Empty);
         }
 
         private void WriteVoicePrefs()
@@ -248,6 +265,7 @@ namespace DumyatRuntime
             PlayerPrefs.SetInt(SettingsKeys.MicAutoSensitivity, _micAutoSensitivity ? 1 : 0);
             PlayerPrefs.SetFloat(SettingsKeys.MicThreshold, _micThreshold);
             PlayerPrefs.SetInt(SettingsKeys.PushToTalkButton, (int)_talkButton);
+            PlayerPrefs.SetString(SettingsKeys.MicDevice, _micDevice ?? string.Empty);
         }
 
         /// <summary>
@@ -259,7 +277,7 @@ namespace DumyatRuntime
         private void PublishVoiceState()
         {
             _eventService?.Publish(new VoiceSettingsChangedEvent(
-                _micMode, _micAutoSensitivity, _micThreshold, _talkButton));
+                _micMode, _micAutoSensitivity, _micThreshold, _talkButton, _micDevice));
         }
 
         /// <summary>

@@ -91,13 +91,17 @@ namespace DumyatRuntime
 
         public readonly PushToTalkButton TalkButton;
 
+        /// <summary>Preferred microphone by name; empty means the system default.</summary>
+        public readonly string Device;
+
         public VoiceSettingsChangedEvent(MicCaptureMode captureMode, bool autoSensitivity,
-                                         float threshold, PushToTalkButton talkButton)
+                                         float threshold, PushToTalkButton talkButton, string device)
         {
             CaptureMode = captureMode;
             AutoSensitivity = autoSensitivity;
             Threshold = threshold;
             TalkButton = talkButton;
+            Device = device;
         }
     }
 
