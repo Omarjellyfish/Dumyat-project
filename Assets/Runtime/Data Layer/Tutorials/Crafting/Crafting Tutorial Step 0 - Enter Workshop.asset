@@ -24,16 +24,14 @@ MonoBehaviour:
   Icon: {fileID: 0}
   Video: {fileID: 0}
   CompletionType: 1
-  Skippable: 0
+  NextButton: 0
   EventTypeName: 
   ZoneId: WorkshopZone
   DelaySeconds: 0
+  FallbackUnlockSeconds: 0
   PrimaryAnchorId: WorkshopEntrance
   HighlightIds:
   - WorkshopApproach
   - WorkshopEntrance
-  HighlightPrimaryAnchor: 1
   AnchorOffset: {x: 0, y: 1.6, z: 0}
   HapticOnActivate: {fileID: 0}
-  PersistenceConditionKey: 
-  RequiredState: 1

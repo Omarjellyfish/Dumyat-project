@@ -46,8 +46,49 @@ namespace DumyatRuntime
         /// </summary>
         public const string SubtitleMode = "Dumyat.SubtitleMode";
 
+        // --- Microphone. Namespaced like the language keys; nothing legacy reads them. ---
+
+        /// <summary>When the mic listens. Stored as <see cref="MicCaptureMode"/>.</summary>
+        public const string MicCaptureMode = "Dumyat.MicCaptureMode";
+
+        /// <summary>Adaptive noise-floor gate on/off. Stored as 0/1.</summary>
+        public const string MicAutoSensitivity = "Dumyat.MicAutoSensitivity";
+
+        /// <summary>
+        /// Manual voice gate, in the same peak-amplitude domain the capture source compares against —
+        /// NOT the 0-100 the slider shows. Only consulted while
+        /// <see cref="MicAutoSensitivity"/> is off.
+        /// </summary>
+        public const string MicThreshold = "Dumyat.MicThreshold";
+
+        /// <summary>Which controller button talks. Stored as <see cref="DumyatRuntime.PushToTalkButton"/>.</summary>
+        public const string PushToTalkButton = "Dumyat.PushToTalkButton";
+
+        /// <summary>
+        /// Preferred microphone, by device name. EMPTY means "whatever the system offers first",
+        /// which is both the default and the honest answer on a headset with one built-in mic.
+        ///
+        /// Stored by name rather than by index because the index of a device changes as others are
+        /// plugged in and out — a saved index would silently start meaning a different microphone.
+        /// A name that is no longer connected falls back to the first available device, in
+        /// <c>MicrophoneStreamCapture.ResolveDevice</c>.
+        /// </summary>
+        public const string MicDevice = "Dumyat.MicDevice";
+
         /// <summary>Default for every audio channel, matching SoundMixerManager's PlayerPrefs fallback.</summary>
         public const float DefaultVolume = 1f;
+
+        /// <summary>
+        /// Default manual voice gate. Mirrors <c>VoiceCaptureController._vadAmplitudeThreshold</c>, so
+        /// a player who never opens the Voice tab gets exactly the tuning the Inspector shipped with.
+        /// </summary>
+        public const float DefaultMicThreshold = 0.02f;
+
+        /// <summary>
+        /// Top of the manual gate range, mirroring the <c>[Range(0f, 0.5f)]</c> on that same field.
+        /// This is what the 0-100 shown beside the slider is a percentage OF.
+        /// </summary>
+        public const float MaxMicThreshold = 0.5f;
 
         /// <summary>PlayerPrefs key (and mixer parameter name) for a channel.</summary>
         public static string VolumeKey(AudioChannel channel)

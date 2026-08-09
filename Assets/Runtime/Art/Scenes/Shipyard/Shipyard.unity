@@ -3806,7 +3806,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f95d7282ad8d0a74d9912909e520fbd9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ShipAssemblyManager
-  _requiredSockets: []
+  _requiredSockets:
+  - {fileID: 2015650700}
+  - {fileID: 376322483}
+  - {fileID: 2044538358}
+  - {fileID: 1748002207}
 --- !u!4 &74556218
 Transform:
   m_ObjectHideFlags: 0
@@ -23662,6 +23666,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5489782591916106079, guid: 9542a683604790a4ebc7a6c8fdfab00a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8726360192094200839, guid: 9542a683604790a4ebc7a6c8fdfab00a, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8726360192094200839, guid: 9542a683604790a4ebc7a6c8fdfab00a, type: 3}
@@ -53116,6 +53124,8 @@ GameObject:
   - component: {fileID: 376322479}
   - component: {fileID: 376322478}
   - component: {fileID: 376322477}
+  - component: {fileID: 376322483}
+  - component: {fileID: 376322482}
   m_Layer: 0
   m_Name: ST_Base_7
   m_TagString: Untagged
@@ -55369,6 +55379,38 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 376322475}
   m_Mesh: {fileID: -2069121919815654937, guid: c98f8482e505c134286053222ee47e5c, type: 3}
+--- !u!114 &376322482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 376322475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipSocket
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
+--- !u!114 &376322483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 376322475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab0835d1df13bbf478e83cb141fcef6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ShipPartSocket
+  _socketID: ST_Base_7
+  _hoverHighlight: {fileID: 0}
 --- !u!1001 &378271272
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -72425,18 +72467,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 871988678790602921, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: _destinations.Array.size
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 871988678790602921, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: '_destinations.Array.data[2]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 048a8c381a242ed45aaea063326ba068, type: 2}
-    - target: {fileID: 871988678790602921, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      propertyPath: '_destinations.Array.data[3]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 2aa3e1d0ac0cc8a45b693c80e9e6a2e2, type: 2}
     - target: {fileID: 1471034364042049163, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
       propertyPath: m_Name
       value: BusStop
@@ -405995,6 +406025,8 @@ GameObject:
   - component: {fileID: 1748002204}
   - component: {fileID: 1748002203}
   - component: {fileID: 1748002202}
+  - component: {fileID: 1748002207}
+  - component: {fileID: 1748002208}
   m_Layer: 0
   m_Name: ST_Base_11
   m_TagString: Untagged
@@ -408648,6 +408680,38 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1748002200}
   m_Mesh: {fileID: -298706527612896801, guid: c98f8482e505c134286053222ee47e5c, type: 3}
+--- !u!114 &1748002207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748002200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab0835d1df13bbf478e83cb141fcef6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ShipPartSocket
+  _socketID: ST_Base_11
+  _hoverHighlight: {fileID: 0}
+--- !u!114 &1748002208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748002200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipSocket
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!1 &1751871253
 GameObject:
   m_ObjectHideFlags: 0
@@ -426008,6 +426072,8 @@ GameObject:
   - component: {fileID: 2015650697}
   - component: {fileID: 2015650696}
   - component: {fileID: 2015650695}
+  - component: {fileID: 2015650700}
+  - component: {fileID: 2015650699}
   m_Layer: 0
   m_Name: ST_Base_6
   m_TagString: Untagged
@@ -426156,6 +426222,38 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2015650693}
   m_Mesh: {fileID: 467610863256170584, guid: c98f8482e505c134286053222ee47e5c, type: 3}
+--- !u!114 &2015650699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2015650693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipSocket
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
+--- !u!114 &2015650700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2015650693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab0835d1df13bbf478e83cb141fcef6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ShipPartSocket
+  _socketID: ST_Base_6
+  _hoverHighlight: {fileID: 0}
 --- !u!1 &2021066279 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 199601405262751359, guid: faffcc31884ffe24b9f732d0d22c26b5, type: 3}
@@ -427130,6 +427228,8 @@ GameObject:
   - component: {fileID: 2044538355}
   - component: {fileID: 2044538354}
   - component: {fileID: 2044538353}
+  - component: {fileID: 2044538358}
+  - component: {fileID: 2044538357}
   m_Layer: 0
   m_Name: ST_Base_8
   m_TagString: Untagged
@@ -427278,6 +427378,38 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2044538351}
   m_Mesh: {fileID: -4021577005116082348, guid: c98f8482e505c134286053222ee47e5c, type: 3}
+--- !u!114 &2044538357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044538351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipSocket
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
+--- !u!114 &2044538358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044538351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab0835d1df13bbf478e83cb141fcef6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.ShipPartSocket
+  _socketID: ST_Base_8
+  _hoverHighlight: {fileID: 0}
 --- !u!1 &2045078061
 GameObject:
   m_ObjectHideFlags: 0
@@ -458107,6 +458239,7 @@ GameObject:
   - component: {fileID: 629338072}
   - component: {fileID: 8301468339299229797}
   - component: {fileID: 8301468339299229796}
+  - component: {fileID: 8301468339299229798}
   m_Layer: 0
   m_Name: ST_Base_6
   m_TagString: Untagged
@@ -483528,6 +483661,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4990412167024847211}
+  - component: {fileID: 5623396971562529746}
   m_Layer: 0
   m_Name: ST_Main_Ship_1
   m_TagString: Untagged
@@ -483535,6 +483669,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &5623396971562529746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5623396971562529745}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipFrame
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!33 &5637770577657718341
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -484090,6 +484242,7 @@ GameObject:
   - component: {fileID: 467439240}
   - component: {fileID: 5814481119943751796}
   - component: {fileID: 5814481119943751795}
+  - component: {fileID: 5814481119943751797}
   m_Layer: 0
   m_Name: ST_Base_11
   m_TagString: Untagged
@@ -484253,6 +484406,24 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &5814481119943751797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5814481119943751794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipParts
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!23 &5816085151994608470
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -522910,6 +523081,7 @@ GameObject:
   - component: {fileID: 1888994010}
   - component: {fileID: 9064428620330126070}
   - component: {fileID: 9064428620330126069}
+  - component: {fileID: 9064428620330126071}
   m_Layer: 0
   m_Name: ST_Base_7
   m_TagString: Untagged
@@ -526913,6 +527085,24 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &8301468339299229798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1985185053054825709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipParts
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!4 &8302092717875481726
 Transform:
   m_ObjectHideFlags: 0
@@ -534160,6 +534350,24 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &9064428620330126071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7590621877076039894}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipParts
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!1 &9077554555344312188
 GameObject:
   m_ObjectHideFlags: 0
@@ -535210,6 +535418,7 @@ GameObject:
   - component: {fileID: 1280705975}
   - component: {fileID: 9205622585972776084}
   - component: {fileID: 9205622585972776083}
+  - component: {fileID: 9205622585972776085}
   m_Layer: 0
   m_Name: ST_Base_8
   m_TagString: Untagged
@@ -535373,6 +535582,24 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &9205622585972776085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9205622585972776082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46631b04117d0b94391058a89d339935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
+  AnchorId: ShipParts
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
 --- !u!23 &9211823211770257024
 MeshRenderer:
   m_ObjectHideFlags: 0

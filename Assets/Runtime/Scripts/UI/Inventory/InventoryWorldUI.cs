@@ -49,35 +49,32 @@ namespace DumyatRuntime
             _eventService.Unsubscribe<InventoryChangedEvent>(HandleInventoryChanged);
         }
 
+        // Delegates rather than setting the panel itself, so opening the bag reports exactly once
+        // however it was opened — and so this class has one place that knows what "open" means.
+        // (InventoryToolkitUI, the UI Toolkit sibling, is built the same way.)
         public void ToggleUI()
         {
-            if (_uiPanel != null)
-            {
-                bool isActive = !_uiPanel.activeSelf;
-                _uiPanel.SetActive(isActive);
-                
-                if (isActive)
-                {
-                    RefreshFullUI();
-                }
-            }
+            if (_uiPanel == null) return;
+
+            if (_uiPanel.activeSelf) CloseUI();
+            else OpenUI();
         }
 
         public void OpenUI()
         {
-            if (_uiPanel != null && !_uiPanel.activeSelf)
-            {
-                _uiPanel.SetActive(true);
-                RefreshFullUI();
-            }
+            if (_uiPanel == null || _uiPanel.activeSelf) return;
+
+            _uiPanel.SetActive(true);
+            RefreshFullUI();
+            _eventService?.Publish(new InventoryPanelToggledEvent(true));
         }
 
         public void CloseUI()
         {
-            if (_uiPanel != null && _uiPanel.activeSelf)
-            {
-                _uiPanel.SetActive(false);
-            }
+            if (_uiPanel == null || !_uiPanel.activeSelf) return;
+
+            _uiPanel.SetActive(false);
+            _eventService?.Publish(new InventoryPanelToggledEvent(false));
         }
 
         private void HandleInventoryChanged(InventoryChangedEvent evt)

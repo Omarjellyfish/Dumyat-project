@@ -135,6 +135,7 @@ namespace DumyatRuntime
         private IVoiceCaptureSource _source;
         private bool _sourceSubscribed;
         private InputSystem_Actions _inputSystem;
+        private PushToTalkButton _pushToTalkButton = DumyatRuntime.PushToTalkButton.Primary;
         private bool _logInitialized;
         private string _logFilePath;
 
@@ -155,6 +156,20 @@ namespace DumyatRuntime
         public CaptureMode Mode { get => _captureMode; set => _captureMode = value; }
         public bool AutoReArm { get => _autoReArm; set => _autoReArm = value; }
         public string ControlBinding { get => _controlBinding; set => _controlBinding = value; }
+
+        /// <summary>
+        /// Which controller button holds the mic open. Set from the Voice settings page via
+        /// <see cref="VoiceCaptureSettingsBinder"/>.
+        ///
+        /// Applied as a binding override rather than by re-authoring the action, and it lives HERE
+        /// rather than in the binder because this class owns its own <see cref="InputSystem_Actions"/>
+        /// instance — an override applied to any other instance would take effect on nothing.
+        /// </summary>
+        public PushToTalkButton PushToTalkButton
+        {
+            get => _pushToTalkButton;
+            set { _pushToTalkButton = value; ApplyPushToTalkBinding(); }
+        }
         public float ReleaseTailSeconds { get => _pttReleaseTailSeconds; set => _pttReleaseTailSeconds = Mathf.Max(0f, value); }
         public float VadAmplitudeThreshold { get => _vadAmplitudeThreshold; set => _vadAmplitudeThreshold = Mathf.Clamp(value, 0f, 0.5f); }
         /// <summary>Discord-style auto input sensitivity (adaptive noise-floor gate). Pushed to the source live
@@ -214,6 +229,7 @@ namespace DumyatRuntime
             _inputSystem = new InputSystem_Actions();
             _inputSystem.Player.PushToTalk.started += OnTalkPressed;
             _inputSystem.Player.PushToTalk.canceled += OnTalkReleased;
+            ApplyPushToTalkBinding();   // the setter may have run before this instance existed
             _lastCaptureMode = _captureMode;
             ApplyDebugUI();   // spawn/enable the debug overlay if the checkbox is on
         }
@@ -440,6 +456,19 @@ namespace DumyatRuntime
 
         private void OnTalkPressed(InputAction.CallbackContext _) => _pttHeld = true;
         private void OnTalkReleased(InputAction.CallbackContext _) => _pttHeld = false;
+
+        // Repoints the action's XR binding at the chosen face button. Targeted by GROUP, so the
+        // keyboard binding (Space, for the XR Device Simulator) is left alone. Neither path names a
+        // hand, so one override covers both controllers.
+        private void ApplyPushToTalkBinding()
+        {
+            if (_inputSystem == null) return;   // Awake re-applies
+
+            _inputSystem.Player.PushToTalk.ApplyBindingOverride(
+                PushToTalkBinding.PathFor(_pushToTalkButton), PushToTalkBinding.XRGroup);
+
+            _controlBinding = PushToTalkBinding.LabelFor(_pushToTalkButton);
+        }
 
         // --- Source resolution + events --------------------------------------------
 

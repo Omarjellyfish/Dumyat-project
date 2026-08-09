@@ -27,9 +27,21 @@ namespace DumyatRuntime
         private GameLanguage _language;
         private bool _subtitlesOn;
 
+        private MicCaptureMode _micMode;
+        private bool _micAutoSensitivity;
+        private float _micThreshold;
+        private PushToTalkButton _talkButton;
+        private string _micDevice = string.Empty;
+
         public GameLanguage Language => _language;
         public bool SubtitlesEnabled => _subtitlesOn;
         public GameLanguage SubtitleLanguage => _language;
+
+        public MicCaptureMode MicCaptureMode => _micMode;
+        public bool MicAutoSensitivity => _micAutoSensitivity;
+        public float MicThreshold => _micThreshold;
+        public PushToTalkButton PushToTalkButton => _talkButton;
+        public string MicDevice => _micDevice;
 
         public SubtitleMode SubtitleMode =>
             !_subtitlesOn ? DumyatRuntime.SubtitleMode.Off
@@ -65,6 +77,66 @@ namespace DumyatRuntime
             if (persistNow) PlayerPrefs.Save();
 
             _eventService?.Publish(new AudioVolumeChangedEvent(channel, clamped));
+        }
+
+        public void SetMicCaptureMode(MicCaptureMode mode)
+        {
+            if (_micMode == mode) return;
+
+            _micMode = mode;
+            PlayerPrefs.SetInt(SettingsKeys.MicCaptureMode, (int)mode);
+            PlayerPrefs.Save();
+
+            PublishVoiceState();
+        }
+
+        public void SetMicAutoSensitivity(bool auto)
+        {
+            if (_micAutoSensitivity == auto) return;
+
+            _micAutoSensitivity = auto;
+            PlayerPrefs.SetInt(SettingsKeys.MicAutoSensitivity, auto ? 1 : 0);
+            PlayerPrefs.Save();
+
+            PublishVoiceState();
+        }
+
+        public void SetMicThreshold(float threshold, bool persistNow = true)
+        {
+            float clamped = Mathf.Clamp(threshold, 0f, SettingsKeys.MaxMicThreshold);
+
+            // No early-out on an unchanged value here, unlike the other setters: the caller is a
+            // dragged slider, and the meter beside it redraws off this event. Swallowing the repeat
+            // would freeze the gate marker whenever the drag paused on a value.
+            _micThreshold = clamped;
+            PlayerPrefs.SetFloat(SettingsKeys.MicThreshold, clamped);
+
+            if (persistNow) PlayerPrefs.Save();
+
+            PublishVoiceState();
+        }
+
+        public void SetPushToTalkButton(PushToTalkButton button)
+        {
+            if (_talkButton == button) return;
+
+            _talkButton = button;
+            PlayerPrefs.SetInt(SettingsKeys.PushToTalkButton, (int)button);
+            PlayerPrefs.Save();
+
+            PublishVoiceState();
+        }
+
+        public void SetMicDevice(string deviceName)
+        {
+            string value = deviceName ?? string.Empty;
+            if (_micDevice == value) return;
+
+            _micDevice = value;
+            PlayerPrefs.SetString(SettingsKeys.MicDevice, value);
+            PlayerPrefs.Save();
+
+            PublishVoiceState();
         }
 
         public void SetLanguage(GameLanguage language)
@@ -120,6 +192,7 @@ namespace DumyatRuntime
             }
 
             PublishSubtitleState();
+            PublishVoiceState();
         }
 
         public void ResetToDefaults()
@@ -134,9 +207,18 @@ namespace DumyatRuntime
             _subtitlesOn = true;
             PlayerPrefs.SetInt(SettingsKeys.Language, (int)_language);
             PlayerPrefs.SetInt(SettingsKeys.SubtitlesOn, 1);
+
+            _micMode = MicCaptureMode.VoiceActivity;
+            _micAutoSensitivity = true;
+            _micThreshold = SettingsKeys.DefaultMicThreshold;
+            _talkButton = PushToTalkButton.Primary;
+            _micDevice = string.Empty;
+            WriteVoicePrefs();
+
             PlayerPrefs.Save();
 
             PublishSubtitleState();
+            PublishVoiceState();
         }
 
         private void ReadFromPrefs()
@@ -148,6 +230,54 @@ namespace DumyatRuntime
             }
 
             ReadLanguageAndSubtitles();
+            ReadVoice();
+        }
+
+        /// <summary>
+        /// Reads the microphone options, defaulting to what <c>VoiceCaptureController</c> already
+        /// shipped with in the Inspector — voice activity, adaptive gate on. A player who never opens
+        /// the Voice tab keeps exactly the behaviour they had before it existed.
+        /// </summary>
+        private void ReadVoice()
+        {
+            _micMode = PlayerPrefs.GetInt(SettingsKeys.MicCaptureMode, (int)MicCaptureMode.VoiceActivity)
+                       == (int)MicCaptureMode.PushToTalk
+                ? MicCaptureMode.PushToTalk
+                : MicCaptureMode.VoiceActivity;
+
+            _micAutoSensitivity = PlayerPrefs.GetInt(SettingsKeys.MicAutoSensitivity, 1) != 0;
+
+            _micThreshold = Mathf.Clamp(
+                PlayerPrefs.GetFloat(SettingsKeys.MicThreshold, SettingsKeys.DefaultMicThreshold),
+                0f, SettingsKeys.MaxMicThreshold);
+
+            _talkButton = PlayerPrefs.GetInt(SettingsKeys.PushToTalkButton, (int)PushToTalkButton.Primary)
+                          == (int)PushToTalkButton.Secondary
+                ? PushToTalkButton.Secondary
+                : PushToTalkButton.Primary;
+
+            _micDevice = PlayerPrefs.GetString(SettingsKeys.MicDevice, string.Empty);
+        }
+
+        private void WriteVoicePrefs()
+        {
+            PlayerPrefs.SetInt(SettingsKeys.MicCaptureMode, (int)_micMode);
+            PlayerPrefs.SetInt(SettingsKeys.MicAutoSensitivity, _micAutoSensitivity ? 1 : 0);
+            PlayerPrefs.SetFloat(SettingsKeys.MicThreshold, _micThreshold);
+            PlayerPrefs.SetInt(SettingsKeys.PushToTalkButton, (int)_talkButton);
+            PlayerPrefs.SetString(SettingsKeys.MicDevice, _micDevice ?? string.Empty);
+        }
+
+        /// <summary>
+        /// Announces the whole microphone state. Republished by <see cref="ApplyAll"/> as well as by
+        /// each setter, because <see cref="VoiceCaptureSettingsBinder"/> lives in a scene and this
+        /// service is built once at boot — a binder that loads later has to be able to ask for the
+        /// state rather than having missed the announcement.
+        /// </summary>
+        private void PublishVoiceState()
+        {
+            _eventService?.Publish(new VoiceSettingsChangedEvent(
+                _micMode, _micAutoSensitivity, _micThreshold, _talkButton, _micDevice));
         }
 
         /// <summary>

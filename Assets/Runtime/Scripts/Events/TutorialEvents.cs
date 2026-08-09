@@ -31,8 +31,30 @@ namespace DumyatRuntime
     }
 
     /// <summary>
-    /// Published by <see cref="TutorialRunner"/> when a step completes.
-    /// Carries timing data for analytics.
+    /// Published by <see cref="TutorialRunner"/> the moment a step's completion trigger fires — the
+    /// player has DONE the thing the card asked for.
+    ///
+    /// The step is not over. This is what lights the card's NEXT button; the player still has to press
+    /// it, and that press is what <see cref="TutorialStepCompletedEvent"/> reports. Subscribe here for
+    /// a reaction that should land on the action itself (a chime, a "well done" line) rather than on
+    /// the player getting around to dismissing the card.
+    /// </summary>
+    public readonly struct TutorialStepSatisfiedEvent : IGameEvent
+    {
+        public readonly string SequenceId;
+        public readonly int StepIndex;
+
+        public TutorialStepSatisfiedEvent(string sequenceId, int stepIndex)
+        {
+            SequenceId = sequenceId;
+            StepIndex = stepIndex;
+        }
+    }
+
+    /// <summary>
+    /// Published by <see cref="TutorialRunner"/> when a step is left behind — i.e. the player pressed
+    /// NEXT on a satisfied step. Carries timing data for analytics: the duration spans the whole card,
+    /// from it appearing to it being dismissed, so it includes reading time after the action.
     /// </summary>
     public readonly struct TutorialStepCompletedEvent : IGameEvent
     {

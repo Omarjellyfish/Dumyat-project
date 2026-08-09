@@ -71,15 +71,20 @@ namespace DumyatRuntime
 
         private void OnSelectEntered(SelectEnterEventArgs args)
         {
-            if (_triggerOnce && hasTriggered) return;
-            if (_dialogueSequence == null) return;
-
             if (_eventService == null)
             {
-                Debug.LogWarning($"Fish '{name}' was grabbed but no IEventService was injected — " +
-                                 "its dialogue will not play. Does this scene have a ContainerScope?", this);
+                Debug.LogWarning($"Fish '{name}' was grabbed but no IEventService was injected — the " +
+                                 "grab will not be announced. Does this scene have a ContainerScope?", this);
                 return;
             }
+
+            // Announced ahead of the dialogue guards below: grabbing the fish is a fact about the
+            // player regardless of whether this particular fish has a line to say, or has already
+            // said it.
+            _eventService.Publish(new FishGrabbedEvent(this));
+
+            if (_triggerOnce && hasTriggered) return;
+            if (_dialogueSequence == null) return;
 
             hasTriggered = true;
             _eventService.Publish(new PlayDialogueEvent(_dialogueSequence, _priority));

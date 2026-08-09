@@ -14,16 +14,30 @@ namespace DumyatRuntime
         /// </summary>
         void StartTutorial(TutorialSequenceSO sequence, bool force = false);
 
-        /// <summary>Skip the current step (advances to next). No-op on a mandatory step.</summary>
+        /// <summary>
+        /// The player pressed NEXT — the tutorial card's route forward. Moves on once the step's
+        /// action has happened, or immediately on a <see cref="TutorialNextButton.Always"/> step.
+        /// </summary>
+        void AdvanceCurrentStep();
+
+        /// <summary>
+        /// Whether NEXT should be live. The card mirrors this into the button's enabled state; the
+        /// service enforces it regardless.
+        /// </summary>
+        bool CanAdvance { get; }
+
+        /// <summary>
+        /// Force past the current step without doing it — the developer step-over, not the card's
+        /// NEXT button (that is <see cref="AdvanceCurrentStep"/>).
+        /// </summary>
         void SkipCurrentStep();
 
-        /// <summary>Skip the entire active tutorial. Marks as completed. No-op on a mandatory step.</summary>
+        /// <summary>Abandon the entire active tutorial. Marks it completed. Always allowed.</summary>
         void SkipTutorial();
 
         /// <summary>
-        /// Whether the step on screen may be skipped — false while a step with
-        /// <see cref="TutorialStepSO.Skippable"/> unchecked is showing. UI should hide its skip
-        /// controls when this is false; both skip methods enforce it independently anyway.
+        /// Whether the player may abandon the tutorial — true whenever one is running. Kept as a
+        /// property so UI can bind to it, but there is no step that refuses a skip.
         /// </summary>
         bool CanSkip { get; }
 

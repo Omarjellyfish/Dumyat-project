@@ -4222,6 +4222,7 @@ GameObject:
   - component: {fileID: 1414386326929583998}
   - component: {fileID: 120540875971191045}
   - component: {fileID: 1497774923093033577}
+  - component: {fileID: 1597193452364294644}
   m_Layer: 2
   m_Name: XR Origin (XR Rig)
   m_TagString: Player
@@ -4464,6 +4465,21 @@ MonoBehaviour:
   _fadeOutSeconds: 0.12
   _fadeInSeconds: 0.25
   _recoveryCooldown: 1
+--- !u!114 &1597193452364294644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3309285002930837712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283a3e6cbb5c0ca47b5447d2b4ef6942, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PlayerActionProbe
+  _interactors: []
+  _rig: {fileID: 0}
+  _metresPerMoveReport: 1.5
 --- !u!1 &3322255530926025890
 GameObject:
   m_ObjectHideFlags: 0

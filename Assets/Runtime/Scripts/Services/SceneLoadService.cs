@@ -21,6 +21,15 @@ namespace DumyatRuntime
         // activation frame, which reports nothing.
         private const float ActivationHoldProgress = 0.9f;
 
+        /// <summary>
+        /// Floor on how long the loading screen stays up, measured from the moment it appears.
+        ///
+        /// It is a floor on the whole transition rather than a tail appended after the scene is ready:
+        /// a scene that loads in 4 s has already shown the panel for long enough, and adding a further
+        /// pause on top only reads as the load having stalled at 100%.
+        /// </summary>
+        private const float MinimumVisibleSeconds = 1.5f;
+
         private readonly IEventService _eventService;
         private readonly IWorldAudioService _worldAudioService;
         private readonly ISoundService _soundService;
@@ -61,7 +70,15 @@ namespace DumyatRuntime
                 // this, and the hold below is what gives them time to land.
                 _eventService.Publish(new SceneLoadBeginEvent { TargetSceneName = targetSceneName });
                 _worldAudioService?.StopAmbient(PreLoadHoldSeconds);
-                _soundService?.PlaySceneTransitionSound();
+
+                // The sting is part of the load, not decoration laid over it: the gate below refuses
+                // to activate the next scene until it has finished, and the reported progress is
+                // capped by how far through the clip we are. Timed from here — it plays across the
+                // load rather than after it, so a clip shorter than the load costs nothing.
+                float audioSeconds = _soundService?.PlaySceneTransitionSound() ?? 0f;
+                float startedAt = Time.realtimeSinceStartup;
+                float holdSeconds = Mathf.Max(MinimumVisibleSeconds, audioSeconds);
+
                 await Task.Delay((int)(PreLoadHoldSeconds * 1000f));
 
                 // No Resources.UnloadUnusedAssets()/GC.Collect() here on purpose. Both stall the main
@@ -72,19 +89,29 @@ namespace DumyatRuntime
                 _currentLoadOp = SceneManager.LoadSceneAsync(targetSceneName, LoadSceneMode.Single);
                 _currentLoadOp.allowSceneActivation = false;
 
-                // Publish on entry rather than only inside the loop: a scene light enough to be at 0.9
-                // by the time we get here would otherwise never publish anything, and the bar would
-                // jump 0% → 100% with a stall in between.
-                while (_currentLoadOp.progress < ActivationHoldProgress)
+                // One gate for both halves of the load — the scene being ready and the audio being
+                // done. The bar is the SLOWER of the two, so it only reaches 100% when the transition
+                // is genuinely about to happen; showing scene progress alone would sit full and silent
+                // while the sting played out, which reads as a hang.
+                //
+                // A do/while rather than a while: a scene light enough to already be at 0.9 by the
+                // time we get here would otherwise never publish anything, and the bar would jump
+                // 0% → 100% with a stall in between. Timed on realtime, since a load started from the
+                // pause menu runs with Time.timeScale at 0.
+                float progress;
+                do
                 {
-                    SetProgress(_currentLoadOp.progress / ActivationHoldProgress);
+                    float sceneFraction = Mathf.Clamp01(_currentLoadOp.progress / ActivationHoldProgress);
+                    float audioFraction = holdSeconds <= 0f
+                        ? 1f
+                        : Mathf.Clamp01((Time.realtimeSinceStartup - startedAt) / holdSeconds);
+
+                    progress = Mathf.Min(sceneFraction, audioFraction);
+                    SetProgress(progress);
+
                     await Task.Yield();
                 }
-
-                SetProgress(1f);
-
-                // Hold for 1.5 seconds before activating the new scene, ensuring the loading screen is visible
-                await Task.Delay(1500);
+                while (progress < 1f);
 
                 AllowSceneActivation(targetSceneName);
             }

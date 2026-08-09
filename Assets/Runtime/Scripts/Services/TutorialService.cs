@@ -63,28 +63,45 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Whether the step on screen may be skipped. UI asks this before offering the buttons; the
-        /// skip methods below enforce it regardless, so a stale button or a direct call cannot get
-        /// past a mandatory step.
+        /// Whether the player may abandon the tutorial — true whenever one is running. There is no
+        /// such thing as a step you cannot skip out of: being unable to leave a tutorial is worse for
+        /// a returning player than any step being missed.
         /// </summary>
-        public bool CanSkip => IsActive && _activeRunner.CanSkipCurrentStep;
+        public bool CanSkip => IsActive;
 
+        /// <summary>Whether the step on screen has been done, so NEXT may move on.</summary>
+        public bool CanAdvance => IsActive && _activeRunner.CanAdvanceCurrentStep;
+
+        public void AdvanceCurrentStep()
+        {
+            if (!IsActive) return;
+
+            if (!_activeRunner.CanAdvanceCurrentStep)
+            {
+                // Deliberately not a warning: a locked NEXT is the design, not a fault. Logged only so
+                // that "I pressed NEXT and nothing happened" is diagnosable from a console capture.
+                Debug.Log($"[TutorialService] NEXT refused — step {_activeRunner.CurrentStepIndex} of " +
+                          $"'{_activeSequence?.SequenceId}' has not been done yet.");
+                return;
+            }
+
+            _activeRunner.AdvanceStep();
+        }
+
+        /// <summary>
+        /// Force past the step on screen without doing it. This is the developer step-over — the
+        /// tutorial card's NEXT button uses <see cref="AdvanceCurrentStep"/>, which insists the player
+        /// actually performed the step.
+        /// </summary>
         public void SkipCurrentStep()
         {
             if (!IsActive) return;
-            if (!RefuseIfMandatory("skip this step")) return;
-
             _activeRunner.SkipStep();
         }
 
         public void SkipTutorial()
         {
             if (!IsActive || _activeSequence == null) return;
-
-            // A mandatory step blocks abandoning the WHOLE tutorial too, not just stepping over it —
-            // otherwise "you must walk into the workshop first" is one button press away from being
-            // no rule at all.
-            if (!RefuseIfMandatory("skip the tutorial")) return;
 
             int skippedAt = _activeRunner.CurrentStepIndex;
             _activeRunner.Stop();
@@ -100,19 +117,6 @@ namespace DumyatRuntime
         public void ReplayTutorial(TutorialSequenceSO sequence)
         {
             StartTutorial(sequence, force: true);
-        }
-
-        /// <summary>
-        /// Returns true when the caller may proceed. Logs rather than throwing: a refused skip is a
-        /// designed outcome, not an error.
-        /// </summary>
-        private bool RefuseIfMandatory(string action)
-        {
-            if (_activeRunner.CanSkipCurrentStep) return true;
-
-            Debug.Log($"[TutorialService] Refused to {action} — step {_activeRunner.CurrentStepIndex} of " +
-                      $"'{_activeSequence?.SequenceId}' is marked mandatory and has to complete on its own.");
-            return false;
         }
 
         /// <summary>Called by <see cref="TutorialRunner"/> when the sequence finishes normally.</summary>

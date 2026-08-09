@@ -12,19 +12,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: Fishing Tutorial Step 2
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Swing and cast. Aim for open water, not your own boat.'
-  InstructionTextArabic: 'لوّح وارمي. صوّب على الميّة المفتوحة، مش على مركبك.'
+  InstructionText: "Turn to face open water and point the rod out over it. Keep the
+    tip clear of the boat \u2014 and of your own head."
+  InstructionTextArabic: "\u0644\u0641 \u0646\u0627\u062D\u064A\u0629 \u0627\u0644\u0645\u064A\u0651\u0629
+    \u0627\u0644\u0645\u0641\u062A\u0648\u062D\u0629 \u0648\u0635\u0648\u0651\u0628
+    \u0627\u0644\u0633\u0646\u0627\u0631\u0629 \u0639\u0644\u064A\u0647\u0627. \u062E\u0644\u064A
+    \u0628\u0627\u0644\u0643 \u0645\u0646 \u0633\u0646\u0651\u0647\u0627\u060C \u0645\u062A\u062E\u0628\u0637\u0634
+    \u0641\u064A \u0627\u0644\u0645\u0631\u0643\u0628 \u0648\u0644\u0627 \u0641\u064A
+    \u0631\u0627\u0633\u0643."
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
   CompletionType: 3
+  NextButton: 1
   EventTypeName: 
   ZoneId: 
-  DelaySeconds: 1.5
+  DelaySeconds: 0
+  FallbackUnlockSeconds: 0
   PrimaryAnchorId: FishingRod
-  HighlightIds: []
+  HighlightIds:
+  - FishingRod
   AnchorOffset: {x: 0, y: 1, z: 0.5}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
-  PersistenceConditionKey: 
-  RequiredState: 1

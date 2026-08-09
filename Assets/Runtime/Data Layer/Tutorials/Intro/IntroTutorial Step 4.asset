@@ -12,19 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: IntroTutorial Step 4
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Thumb the X button to open the menu. The same button closes it again.'
-  InstructionTextArabic: 'اضغط زرار X بصباعك الكبير عشان تفتح القايمة. ونفس الزرار بيقفلها.'
+  InstructionText: Thumb the X button to open the menu. The same button closes it
+    again.
+  InstructionTextArabic: "\u0627\u0636\u063A\u0637 \u0632\u0631\u0627\u0631 X \u0628\u0635\u0628\u0627\u0639\u0643
+    \u0627\u0644\u0643\u0628\u064A\u0631 \u0639\u0634\u0627\u0646 \u062A\u0641\u062A\u062D
+    \u0627\u0644\u0642\u0627\u064A\u0645\u0629. \u0648\u0646\u0641\u0633 \u0627\u0644\u0632\u0631\u0627\u0631
+    \u0628\u064A\u0642\u0641\u0644\u0647\u0627."
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 3b2e62babc5249f42921c2cd027852cd, type: 3}
   Video: {fileID: 0}
-  CompletionType: 3
-  EventTypeName: 
+  CompletionType: 0
+  NextButton: 2
+  EventTypeName: GamePauseToggledEvent
   ZoneId: 
   DelaySeconds: 2
+  FallbackUnlockSeconds: 0
   PrimaryAnchorId: Player
   HighlightIds: []
   AnchorOffset: {x: 0, y: 0, z: 0}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
-  PersistenceConditionKey: 
-  RequiredState: 1
