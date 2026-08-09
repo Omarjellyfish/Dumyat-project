@@ -21,12 +21,17 @@ namespace DumyatRuntime
 
         private IGameSessionService _session;
         private IEventService _eventService;
+        private MenuCatalogSO _catalog;
+        private ISettingsService _settings;
 
         [Inject]
-        private void Inject(IGameSessionService session, IEventService eventService)
+        private void Inject(IGameSessionService session, IEventService eventService,
+                            MenuCatalogSO catalog, ISettingsService settings)
         {
             _session = session;
             _eventService = eventService;
+            _catalog = catalog;
+            _settings = settings;
         }
 
         private VisualElement _panelRoot;
@@ -153,9 +158,11 @@ namespace DumyatRuntime
 
             if (_continueSubLabel == null) return;
 
-            // Shared with the carpentry menu's Continue NAIL — see ResumeDescription.
+            // Shared with the carpentry menu's Continue NAIL — see ResumeDescription. The catalogue
+            // is what turns the saved scene identifier into the place name the player knows.
             _continueSubLabel.text = hasSave
-                ? ResumeDescription.For(_session.ResumeSceneName, _session.ResumeSavedAtUtc)
+                ? ResumeDescription.For(_session.ResumeSceneName, _session.ResumeSavedAtUtc,
+                                        _catalog, UiLanguage.IsArabic(_settings))
                 : "No saved game";
         }
 
