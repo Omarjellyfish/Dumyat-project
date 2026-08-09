@@ -376,7 +376,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1073741824
   _rayDistance: 0.11
-  _showDebugRayInGame: 1
+  _showDebugRayInGame: 0
   _debugRayWidth: 0.005
   _isTouchingWood: 0
   _hitPoint: {x: 0, y: 0, z: 0}
@@ -396,6 +396,7 @@ GameObject:
   - component: {fileID: 821444228109015969}
   - component: {fileID: 3786575737844547267}
   - component: {fileID: 5922658669105488127}
+  - component: {fileID: 7192517364156816249}
   m_Layer: 0
   m_Name: Saw 2
   m_TagString: Untagged
@@ -677,6 +678,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialAnchor
   AnchorId: Saw
+  OnHighlightChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  HighlightStyle: 0
+  FrameSizeOverride: {x: 0, y: 0}
+--- !u!114 &7192517364156816249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7274760496640076776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba92d544fe0fd8e46afca3c8f9abb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CollisionAudio
+  _impactSounds:
+  - {fileID: 8300000, guid: 2bad7275198e0db468a07b9288638c9b, type: 3}
+  _minImpactVelocity: 1
+  _maxImpactVelocity: 10
+  _baseVolume: 1
+  _cooldownTime: 0.1
 --- !u!1 &7944233382007621818
 GameObject:
   m_ObjectHideFlags: 0
@@ -725,7 +749,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1073741824
   _rayDistance: 0.11
-  _showDebugRayInGame: 1
+  _showDebugRayInGame: 0
   _debugRayWidth: 0.005
   _isTouchingWood: 0
   _hitPoint: {x: 0, y: 0, z: 0}
@@ -779,7 +803,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1073741824
   _rayDistance: 0.11
-  _showDebugRayInGame: 1
+  _showDebugRayInGame: 0
   _debugRayWidth: 0.005
   _isTouchingWood: 0
   _hitPoint: {x: 0, y: 0, z: 0}

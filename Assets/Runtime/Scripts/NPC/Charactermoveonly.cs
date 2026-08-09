@@ -166,6 +166,12 @@ namespace DumyatRuntime
 
         private IEnumerator MoveToPoint(Transform target)
         {
+            // Snap Y instantly to this waypoint's height the moment we start walking toward it,
+            // then walk flat at that height for the rest of the leg - no gradual Y lerp mid-walk.
+            Vector3 snappedPos = transform.position;
+            snappedPos.y = target.position.y;
+            transform.position = snappedPos;
+
             while (true)
             {
                 Vector3 currentPos = transform.position;
