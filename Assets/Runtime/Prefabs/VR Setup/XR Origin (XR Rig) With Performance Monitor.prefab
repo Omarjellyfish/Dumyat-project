@@ -18,15 +18,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5618196395909304303, guid: 313907489c58b834d8ec96ae73c2384f, type: 3}
       propertyPath: _maxDrawCallsLimit
-      value: 150
+      value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 5618196395909304303, guid: 313907489c58b834d8ec96ae73c2384f, type: 3}
       propertyPath: _maxTrianglesLimit
-      value: 500000
+      value: 800000
       objectReference: {fileID: 0}
     - target: {fileID: 5618196395909304303, guid: 313907489c58b834d8ec96ae73c2384f, type: 3}
       propertyPath: _maxGraphDrawCallsScale
-      value: 300
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 7885726778016472019, guid: 313907489c58b834d8ec96ae73c2384f, type: 3}
       propertyPath: m_LocalScale.x
@@ -142,9 +142,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2221773409512195125, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3309285002930837712, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
       propertyPath: m_Name
       value: XR Origin (XR Rig) With Performance Monitor
+      objectReference: {fileID: 0}
+    - target: {fileID: 5670064078035344229, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6686062218394880091, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9054948337562171684, guid: 6a4868493d45fc64f9cf58189fdf0ab6, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
