@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+
 public class PresentationManager : MonoBehaviour
 {
     [Header("Settings")]
@@ -80,7 +82,7 @@ public class PresentationManager : MonoBehaviour
 
         PresentationLocation currentLoc = _locations[_currentIndex];
         IPresentationCustomAction[] customActions = currentLoc.GetComponents<IPresentationCustomAction>();
-        
+
         foreach (var action in customActions)
         {
             action.TriggerAction(actionId);
