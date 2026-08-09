@@ -36,6 +36,18 @@ public class PresentationManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            PreviousLocation();
+        }
+        else if (Input.GetKeyDown(KeyCode.D))
+        {
+            NextLocation();
+        }
+    }
+
     [ContextMenu("Next Location")]
     public void NextLocation()
     {
