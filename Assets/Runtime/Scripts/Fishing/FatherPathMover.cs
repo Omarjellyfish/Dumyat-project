@@ -21,9 +21,9 @@ namespace DumyatRuntime
         [Header("Path")]
         [SerializeField] private PathPoint[] pathPoints;
 
-        [Header("Intro Dialogue (father talks here, no movement, until this finishes)")]
+        [Header("Intro Dialogue (father talks here, no movement, until this finishes — " +
+                 "triggered externally by the arrival NarrativeTriggerZone, NOT by this script)")]
         [SerializeField] private DialogueSequenceSO introDialogue;
-        [SerializeField] private DialoguePriority introDialoguePriority = DialoguePriority.Normal;
 
         [Header("First Point Dialogue (father stays at point 0 and talks until this finishes — " +
                  "triggered externally, e.g. by the player, NOT by this script)")]
@@ -95,7 +95,8 @@ namespace DumyatRuntime
 
             if (introDialogue == null)
             {
-                Debug.LogWarning($"{name}: introDialogue is not assigned. The father will not move until one is set.");
+                Debug.LogWarning($"{name}: introDialogue is not assigned. The father will skip the " +
+                                 "intro wait and set off the moment the scene loads.");
             }
 
             if (firstPointDialogue == null)
@@ -128,10 +129,16 @@ namespace DumyatRuntime
 
         private IEnumerator RunPath()
         {
-            // Intro: father talks, does not move.
+            // Intro: father talks, does not move. The zone the player lands in publishes this
+            // sequence — this script only waits for it, exactly as it does for firstPointDialogue.
+            //
+            // It used to publish the intro itself, which made two owners of one sequence: the
+            // arrival zone fired it as well, so a player who reached the zone late (teleporting off
+            // the boat is what does it) heard the father restart from his first line. A trigger-once
+            // zone cannot dedupe against a second publisher — so there is only one publisher now.
             SetWalking(false);
             SetTalking(true);
-            yield return PlayAndWaitForDialogue(introDialogue, introDialoguePriority);
+            yield return WaitForExternalDialogue(introDialogue);
             SetTalking(false);
 
             do
@@ -179,24 +186,6 @@ namespace DumyatRuntime
             while (loopPath);
 
             pathRoutine = null;
-        }
-
-        /// <summary>
-        /// Publishes the given dialogue and waits for it to end. Used for
-        /// dialogue this script itself is responsible for starting (intro).
-        /// </summary>
-        private IEnumerator PlayAndWaitForDialogue(DialogueSequenceSO sequence, DialoguePriority priority)
-        {
-            if (sequence == null)
-            {
-                yield break;
-            }
-
-            waitingForDialogue = true;
-
-            _eventService.Publish(new PlayDialogueEvent(sequence, priority));
-
-            yield return new WaitUntil(() => !waitingForDialogue);
         }
 
         /// <summary>

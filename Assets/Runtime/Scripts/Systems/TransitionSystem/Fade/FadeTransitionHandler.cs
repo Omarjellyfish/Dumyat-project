@@ -15,6 +15,8 @@ namespace DumyatRuntime
     /// </summary>
     public class FadeTransitionHandler : IFadeTransitionService
     {
+        private const string PlayerTag = "Player";
+
         private readonly IEventService _eventService;
         private readonly ISceneLoadService _sceneLoadService;
 
@@ -37,7 +39,7 @@ namespace DumyatRuntime
             _isTransitioning = true;
 
             // Find and persist the player
-            _playerObj = GameObject.FindWithTag("Player");
+            _playerObj = FindPlayerRig();
             if (_playerObj != null)
             {
                 if (_playerObj.transform.parent != null)
@@ -98,6 +100,40 @@ namespace DumyatRuntime
             }
 
             _isTransitioning = false;
+        }
+
+        /// <summary>
+        /// The rig that travels. Tag alone is not enough to identify it.
+        ///
+        /// <c>FindWithTag</c> returns an ARBITRARY one of the active matches, and a scene only has to
+        /// gain one stray object tagged Player for travel out of it to become a coin toss — Ezbet Al
+        /// Bourg carried a non-VR "Player (Test Stand-in)" capsule for exactly this long. Losing that
+        /// toss carries the stand-in and destroys the real rig with the old scene: the player arrives
+        /// with no interactors, <see cref="PlayerRigSpawner"/> sees no camera and spawns a second rig
+        /// on top of the stray, and every ray then hits the stray's collider instead of the world.
+        ///
+        /// So the camera decides. <c>Camera.main</c> is the one thing on the rig that cannot be
+        /// duplicated by a leftover marker without also breaking rendering, and its root is the rig —
+        /// the same identification <see cref="PlayerRigSpawner.SceneHasRig"/> already trusts. The tag
+        /// stays as the fallback for a scene whose rig has no enabled main camera yet.
+        /// </summary>
+        private static GameObject FindPlayerRig()
+        {
+            GameObject[] tagged = GameObject.FindGameObjectsWithTag(PlayerTag);
+
+            if (tagged.Length <= 1)
+                return tagged.Length == 1 ? tagged[0] : null;
+
+            GameObject cameraRoot = Camera.main != null ? Camera.main.transform.root.gameObject : null;
+            bool cameraRootIsTagged = cameraRoot != null && cameraRoot.CompareTag(PlayerTag);
+
+            Debug.LogWarning($"FadeTransitionHandler: {tagged.Length} active objects are tagged " +
+                             $"'{PlayerTag}' ({string.Join(", ", System.Array.ConvertAll(tagged, o => o.name))}). " +
+                             "Only the rig should be. Travelling with " +
+                             $"'{(cameraRootIsTagged ? cameraRoot.name : tagged[0].name)}' — untag or remove the rest, " +
+                             "or the wrong one will eventually be carried across a load.");
+
+            return cameraRootIsTagged ? cameraRoot : tagged[0];
         }
 
         private static void ReenableNearFarInteractors(GameObject playerObj)

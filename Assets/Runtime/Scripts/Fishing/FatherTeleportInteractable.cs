@@ -77,6 +77,12 @@ namespace DumyatRuntime
         {
             _interactable.selectEntered.AddListener(OnSelected);
 
+            // The rig's fade canvas ships with Blocks Raycasts ON and alpha 0 — an invisible,
+            // raycast-target Image 16 cm in front of the eyes, which every UI ray hits before it
+            // reaches anything else. Alpha alone does not stop that: a CanvasGroup keeps blocking
+            // while fully transparent. Whoever drives the fade has to drive this with it.
+            SetFadeBlocking(fadeCanvasGroup != null && fadeCanvasGroup.alpha > 0f);
+
             EnsurePlayerRoot();
             _atBoat = IsPlayerCloserTo(boat.playerPoint);
 
@@ -146,6 +152,11 @@ namespace DumyatRuntime
 
         private async Task FadeAsync(float from, float to, float duration)
         {
+            // Blocking goes ON for the whole fade-to-black and stays on until the fade-out has
+            // fully cleared — so nothing is clickable through a black screen mid-teleport, and the
+            // overlay stops intercepting rays the instant it is transparent again.
+            SetFadeBlocking(true);
+
             float timer = 0f;
             while (timer < duration)
             {
@@ -154,6 +165,16 @@ namespace DumyatRuntime
                 await Task.Yield();
             }
             fadeCanvasGroup.alpha = to;
+
+            SetFadeBlocking(to > 0f);
+        }
+
+        private void SetFadeBlocking(bool blocking)
+        {
+            if (fadeCanvasGroup == null) return;
+
+            fadeCanvasGroup.blocksRaycasts = blocking;
+            fadeCanvasGroup.interactable = blocking;
         }
 
         private void EnsurePlayerRoot()
