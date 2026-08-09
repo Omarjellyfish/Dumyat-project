@@ -44,11 +44,19 @@ namespace DumyatRuntime
 
         [Header("Target (leave empty for 'any')")]
         [Tooltip("Drag any ScriptableObjects that implement IQuestTarget (ItemData, CraftingRecipe). " +
-                 "The service reads TargetID from these to filter events. Leave empty to match any event of the trigger type.")]
+                 "The service reads TargetID from these to filter events. Leave empty to match any event of the trigger type.\n\n" +
+                 "NOTE: the ID must be the one the EVENT carries, which is not always the one you expect. " +
+                 "Fish quests are filtered by FishSpeciesSO.fishType (Bouri, Denis, Qaroos, Subaity, " +
+                 "Balamida, Wagar) — NOT by the Fish ItemData, whose TargetID is its numeric _itemID.")]
         public List<ScriptableObject> targetAssets = new List<ScriptableObject>();
 
-        [Tooltip("Fallback string filter for targets that aren't ScriptableObjects (e.g. fish names). " +
-                 "Ignored if targetAssets is set.")]
+        [Tooltip("Extra string filter for targets that aren't ScriptableObjects. Matches either the " +
+                 "event's specific name OR its category tag, so:\n\n" +
+                 "  \"Fish\"  — any fish (the Unity tag every catchable fish prefab carries)\n" +
+                 "  \"Denis\" — that one species (FishSpeciesSO.fishType)\n\n" +
+                 "This is OR'd with targetAssets, not overridden by it — a filter set here still has " +
+                 "to match, so setting BOTH means an event matching neither is rejected. Leave EMPTY " +
+                 "to match any event of the trigger type.")]
         public string targetNameFallback;
 
         [Header("Presentation")]

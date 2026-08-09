@@ -104,7 +104,7 @@ namespace DumyatRuntime
             _root = (RectTransform)go.transform;
             _root.SetParent(transform, false);
             _root.pivot = new Vector2(1f, 1f);          // top-right corner is the anchor point
-            _root.sizeDelta = new Vector2(480f, 340f);  // >= the largest card; spare space extends down-left
+            _root.sizeDelta = new Vector2(600f, 400f);  // >= the largest card; spare space extends down-left
             _root.localScale = Vector3.one * _canvasScale;
         }
 

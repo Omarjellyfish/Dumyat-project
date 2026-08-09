@@ -16,6 +16,13 @@ namespace DumyatRuntime
     /// </summary>
     public sealed class QuestService : IQuestService
     {
+        /// <summary>
+        /// The Unity tag every catchable fish prefab carries, and therefore the string a quest puts
+        /// in its target filter to mean "any fish". Kept here rather than read from a prefab because
+        /// a sale record has no GameObject left to ask.
+        /// </summary>
+        private const string FishCategoryTag = "Fish";
+
         private readonly ISaveService _saveService;
         private readonly IEventService _eventService;
         private readonly QuestDatabaseSO _questDatabase;
@@ -193,13 +200,23 @@ namespace DumyatRuntime
                 ? evt.Fish.Species.FishType
                 : null;
 
-            AdvanceMatchingQuests(QuestTriggerType.FishCaught, fishName);
+            // The prefab's Unity tag is the CATEGORY. It is read off the GameObject rather than
+            // assumed, so a fish whose species asset is missing — Dennis_Fish.prefab ships with none
+            // — still counts toward "catch any fish" instead of silently dropping out.
+            string tag = evt.Fish != null ? evt.Fish.tag : null;
+
+            AdvanceMatchingQuests(QuestTriggerType.FishCaught, fishName, tag);
         }
 
         private void OnFishSaleRecorded(FishSaleRecordedEvent evt)
         {
             string saleName = evt.Record?.fishType;
-            AdvanceMatchingQuests(QuestTriggerType.ItemSold, saleName);
+
+            // A sale record is a row of data with no GameObject left to read a tag from, so the
+            // category is supplied here. FishSaleRecordedEvent only ever describes a fish, which is
+            // what makes that safe — and it keeps "Fish" meaning the same thing on both sides of the
+            // catch/sell pair.
+            AdvanceMatchingQuests(QuestTriggerType.ItemSold, saleName, FishCategoryTag);
         }
 
         private void OnBlueprintUnlocked(BlueprintUnlockedEvent evt)
@@ -218,10 +235,19 @@ namespace DumyatRuntime
         // -------------------------------------------------------------------
 
         /// <summary>
-        /// Checks if the given eventName matches any of the quest's target filters.
-        /// Returns true if no filters are set, or if the eventName matches a target.
+        /// Whether this event satisfies the quest's target filters.
+        ///
+        /// A filter matches either the SPECIFIC name the event carries (a fish species, a recipe) or
+        /// the CATEGORY tag it belongs to. That second half is what lets one quest cover a whole
+        /// family without listing its members: every catchable fish prefab is tagged <c>Fish</c>, so
+        /// "Sell 5 Fish" filters on <c>Fish</c> and counts a Bouri, a Denis and a Qaroos alike, while
+        /// a quest that really wants one species still filters on <c>Denis</c> and gets only that.
+        ///
+        /// A filter that matches neither REJECTS the event. That asymmetry is the trap this method
+        /// used to spring: setting any filter flips "match anything" to "match only this", so a
+        /// filter naming something no event is ever called silently froze the quest at zero.
         /// </summary>
-        private static bool IsTargetMatch(QuestDefinitionSO def, string eventName)
+        private static bool IsTargetMatch(QuestDefinitionSO def, string eventName, string eventTag)
         {
             bool hasValidTarget = false;
 
@@ -232,10 +258,7 @@ namespace DumyatRuntime
                     if (def.targetAssets[i] is IQuestTarget questTarget)
                     {
                         hasValidTarget = true;
-                        if (string.Equals(questTarget.TargetID, eventName, System.StringComparison.OrdinalIgnoreCase))
-                        {
-                            return true;
-                        }
+                        if (Matches(questTarget.TargetID, eventName, eventTag)) return true;
                     }
                 }
             }
@@ -243,23 +266,27 @@ namespace DumyatRuntime
             if (!string.IsNullOrEmpty(def.targetNameFallback))
             {
                 hasValidTarget = true;
-                if (string.Equals(def.targetNameFallback, eventName, System.StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
+                if (Matches(def.targetNameFallback, eventName, eventTag)) return true;
             }
 
             // If no filters were set, matches anything
             return !hasValidTarget;
         }
 
+        private static bool Matches(string filter, string eventName, string eventTag) =>
+            string.Equals(filter, eventName, System.StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrEmpty(eventTag) &&
+             string.Equals(filter, eventTag, System.StringComparison.OrdinalIgnoreCase));
+
         /// <summary>
         /// Scans all active quests for the given <paramref name="triggerType"/>.
-        /// If a quest has a target set (SO or string), it must match <paramref name="eventName"/>.
+        /// If a quest has a target set (SO or string), it must match <paramref name="eventName"/> or
+        /// the category <paramref name="eventTag"/>.
         /// Increments progress by 1, publishes <see cref="QuestProgressedEvent"/>,
         /// and completes the quest when the target is reached.
         /// </summary>
-        private void AdvanceMatchingQuests(QuestTriggerType triggerType, string eventName)
+        private void AdvanceMatchingQuests(QuestTriggerType triggerType, string eventName,
+            string eventTag = null)
         {
             // Iterate a copy — completing a quest modifies the active list.
             var activeSnapshot = new List<string>(_questData.activeQuestIDs);
@@ -271,7 +298,7 @@ namespace DumyatRuntime
                 if (def == null) continue;
                 if (def.triggerType != triggerType) continue;
 
-                if (!IsTargetMatch(def, eventName))
+                if (!IsTargetMatch(def, eventName, eventTag))
                 {
                     continue;
                 }

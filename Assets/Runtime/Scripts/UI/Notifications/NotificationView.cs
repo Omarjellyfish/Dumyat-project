@@ -162,16 +162,38 @@ namespace DumyatRuntime
         }
 
         public static TextMeshProUGUI Label(Transform parent, string name, string text, float size,
-            Color color, TextAlignmentOptions align, bool bold, bool outline = false)
+            Color color, TextAlignmentOptions align, bool bold, bool outline = false,
+            float autoSizeMin = 0f)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
             go.transform.SetParent(parent, false);
             var t = go.GetComponent<TextMeshProUGUI>();
-            t.text = text;
+
+            // Arabic needs BOTH halves — see ArabicTextShaper. TMP has no shaper, so an unshaped
+            // string renders as disconnected isolated letters running the wrong way. Notifications
+            // carry quest names and objectives straight from the SO, so they hit this every time the
+            // player is in Arabic.
+            bool arabic = ArabicTextShaper.ContainsArabic(text);
+            t.text = ArabicTextShaper.Shape(text);
+            t.isRightToLeftText = arabic;
+
             t.fontSize = size;
             t.color = color;
-            t.alignment = align;
+
+            // A left-aligned card reads as ragged-right in Arabic unless the whole block flips.
+            t.alignment = arabic ? Rtl(align) : align;
             t.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
+
+            // Quest objectives are authored prose of no fixed length, so the card cannot assume a
+            // line count. Shrinking to a floor keeps a long line inside the card instead of spilling
+            // past it, and the floor is what stops it shrinking below what a headset can resolve.
+            if (autoSizeMin > 0f)
+            {
+                t.enableAutoSizing = true;
+                t.fontSizeMin = autoSizeMin;
+                t.fontSizeMax = size;
+                t.overflowMode = TextOverflowModes.Ellipsis;   // last resort, after auto-size bottoms out
+            }
             t.raycastTarget = false;
             t.richText = true;
             if (outline)
@@ -184,6 +206,18 @@ namespace DumyatRuntime
             }
             return t;
         }
+
+        /// <summary>
+        /// Mirrors a horizontal alignment for right-to-left text. Only the alignments the cards
+        /// actually use are mapped; anything centred is already correct and passes through.
+        /// </summary>
+        private static TextAlignmentOptions Rtl(TextAlignmentOptions align) => align switch
+        {
+            TextAlignmentOptions.TopLeft => TextAlignmentOptions.TopRight,
+            TextAlignmentOptions.Left => TextAlignmentOptions.Right,
+            TextAlignmentOptions.BottomLeft => TextAlignmentOptions.BottomRight,
+            _ => align
+        };
 
         // Stretches a RectTransform to fill its parent with optional per-side inset.
         public static void Fill(RectTransform rt, float l = 0, float t = 0, float r = 0, float b = 0)
