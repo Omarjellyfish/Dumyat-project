@@ -28,7 +28,14 @@ namespace DumyatRuntime
         /// action the game genuinely cannot detect. (Named <c>Manual</c> until the NEXT gate landed;
         /// the ordinal is unchanged, so no asset needed migrating.)
         /// </summary>
-        ReadAndContinue = 3
+        ReadAndContinue = 3,
+        /// <summary>
+        /// Satisfied when the step's <see cref="TutorialStepSO.Audio"/> (or <see cref="TutorialStepSO.VoiceLine"/>,
+        /// if that's what the runner actually plays for this step) finishes playing. Added after the
+        /// others were pinned, so it's appended as 4 rather than inserted in ordinal order — do not
+        /// renumber.
+        /// </summary>
+        AudioFinished = 4
     }
 
     /// <summary>

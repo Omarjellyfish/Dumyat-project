@@ -15,7 +15,7 @@ MonoBehaviour:
   SequenceId: 2
   Priority: 0
   CanBeInterrupted: 1
-  ResumeAfterInterruption: 1
+  ResumeAfterInterruption: 0
   Lines:
   - Character: {fileID: 11400000, guid: acf6de365a4e305448d218e19ab92d70, type: 2}
     VoiceLineKey: 2
@@ -44,12 +44,5 @@ MonoBehaviour:
     PersistenceConditionKey: 
     RequiredState: 0
     PersistenceKeyToSet: 
-    NextLineIndex: 4
-  - Character: {fileID: 11400000, guid: c5e97e5479374fb4385c7a648c1cba29, type: 2}
-    VoiceLineKey: 2
-    SubtitleText: Bos Yabny
-    PersistenceConditionKey: 
-    RequiredState: 0
-    PersistenceKeyToSet: 
-    NextLineIndex: 5
+    NextLineIndex: -1
   ChoicePoints: []
