@@ -10,24 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
-  m_Name: Crafting Tutorial Step 3
+  m_Name: Crafting Tutorial Step 7 - Cut the Wood
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: Now go fetch some wood. No plank, no furniture.
-  InstructionTextArabic: "\u062F\u0644\u0648\u0642\u062A\u064A \u0631\u0648\u062D
-    \u0647\u0627\u062A \u0634\u0648\u064A\u0629 \u062E\u0634\u0628. \u0645\u0646
-    \u063A\u064A\u0631 \u0644\u0648\u062D \u0645\u0641\u064A\u0634 \u0645\u0648\u0628\u064A\u0644\u064A\u0627."
-  Audio: {fileID: 8300000, guid: b82468e10dec18d4ebce962fe1f33f77, type: 3}
+  InstructionText: Take the saw. Hold it against the wood, pull the trigger, and
+    cut.
+  InstructionTextArabic: "\u062E\u062F \u0627\u0644\u0645\u0646\u0634\u0627\u0631.
+    \u062D\u0637\u0651\u0647 \u0639\u0644\u0649 \u0627\u0644\u062E\u0634\u0628\u060C
+    \u0627\u0636\u063A\u0637 \u0627\u0644\u0632\u0646\u0627\u062F\u060C \u0648\u0627\u0642\u0637\u0639."
+  Audio: {fileID: 8300000, guid: ab920d5a1e650d249a37ce5e504c68d7, type: 3}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
-  CompletionType: 3
-  NextButton: 1
+  CompletionType: 0
+  NextButton: 2
   EventTypeName: 
   ZoneId: 
-  DelaySeconds: 1.5
+  DelaySeconds: 5
   FallbackUnlockSeconds: 0
-  PrimaryAnchorId: Wood
+  PrimaryAnchorId: Saw
   HighlightIds:
+  - Saw
   - Wood
   AnchorOffset: {x: 0, y: 0.3, z: 0}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
