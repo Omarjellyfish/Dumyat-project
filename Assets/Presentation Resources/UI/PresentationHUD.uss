@@ -1,0 +1,54 @@
+.hud-container {
+    flex-grow: 1;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 50px;
+}
+
+.bottom-bar {
+    flex-direction: row;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px 30px;
+    border-radius: 20px;
+    align-items: center;
+}
+
+.nav-button {
+    font-size: 24px;
+    padding: 10px 30px;
+    background-color: rgb(50, 50, 50);
+    color: white;
+    border-radius: 10px;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.nav-button:hover {
+    background-color: rgb(80, 80, 80);
+}
+
+.nav-button:active {
+    background-color: rgb(120, 120, 120);
+}
+
+.action-button {
+    font-size: 20px;
+    padding: 10px 20px;
+    background-color: rgb(30, 100, 150);
+    color: white;
+    border-radius: 10px;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.action-button:hover {
+    background-color: rgb(50, 130, 180);
+}
+
+.action-button:active {
+    background-color: rgb(80, 160, 210);
+}
+
+.spacer {
+    width: 20px;
+}

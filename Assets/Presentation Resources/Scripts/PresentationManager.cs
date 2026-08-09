@@ -34,6 +34,7 @@ public class PresentationManager : MonoBehaviour
         }
     }
 
+    [ContextMenu("Next Location")]
     public void NextLocation()
     {
         if (_locations.Count == 0) return;
@@ -51,6 +52,7 @@ public class PresentationManager : MonoBehaviour
         _transitionCoroutine = StartCoroutine(TransitionRoutine(previousIndex, _currentIndex));
     }
 
+    [ContextMenu("Previous Location")]
     public void PreviousLocation()
     {
         if (_locations.Count == 0) return;

@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="PresentationHUD.uss" />
+    <ui:VisualElement class="hud-container">
+        <ui:VisualElement class="bottom-bar">
+            <ui:Button text="Previous" name="previous-button" class="nav-button" />
+            <ui:VisualElement class="spacer" />
+            <ui:Button text="Action" name="action-button" class="action-button" />
+            <ui:VisualElement class="spacer" />
+            <ui:Button text="Next" name="next-button" class="nav-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
