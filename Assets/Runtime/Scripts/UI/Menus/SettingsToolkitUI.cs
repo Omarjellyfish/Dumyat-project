@@ -19,6 +19,12 @@ namespace DumyatRuntime
         [Tooltip("Document containing the SettingsPage template. Auto-resolved from this GameObject if empty.")]
         [SerializeField] private UIDocument _uiDocument;
 
+        [Header("Back Button")]
+        [Tooltip("Shows the page's own BACK button. Turn it off where the menu already offers another " +
+                 "way out — the carpentry bench has a Back NAIL, so the button would be a second, " +
+                 "redundant exit sitting on the same surface.")]
+        [SerializeField] private bool _showBackButton = true;
+
         [Header("Subtitle Preview")]
         [Tooltip("Sample line shown on the Language page when the language is English.")]
         [SerializeField] private string _previewEnglish = "Fresh from the lake this morning — give me forty and it's yours.";
@@ -260,7 +266,17 @@ namespace DumyatRuntime
         private void BindElements()
         {
             _backButton = _root.Q<Button>("SettingsBackButton");
-            if (_backButton != null) _backButton.clicked += () => BackRequested?.Invoke();
+            if (_backButton != null)
+            {
+                // Hidden, not SetEnabled(false): a greyed-out button still reads as a control the
+                // player is meant to be able to hit, and in VR they will keep trying. display:None
+                // takes it out of the header's layout entirely, leaving the title alone up there.
+                _backButton.style.display = _showBackButton ? DisplayStyle.Flex : DisplayStyle.None;
+
+                // Nothing is subscribed while it is off, so a host that hides the button cannot be
+                // closed by one — BackRequested stays a promise the page only makes when it shows.
+                if (_showBackButton) _backButton.clicked += () => BackRequested?.Invoke();
+            }
 
             // The two arrays are index-paired, and VoicePageIndex names position 2 in both. Insert
             // anywhere else and the meter would start on the wrong tab.
