@@ -36,14 +36,8 @@ namespace DumyatRuntime
 
         private void Awake()
         {
-            if (_inventoryUI == null)
-            {
-                _inventoryUI = FindFirstObjectByType<InventoryToolkitUI>();
-                if (_inventoryUI == null)
-                {
-                    Debug.LogWarning("InventoryStashZone: Could not find InventoryToolkitUI in the scene automatically!");
-                }
-            }
+            // The panel is deliberately NOT resolved here — see ResolveInventoryUI. Awake is too
+            // early in every shipping scene.
 
             if (TryGetComponent<XRGrabInteractable>(out _interactable))
             {
@@ -70,17 +64,40 @@ namespace DumyatRuntime
 
         private void OnStashGrabbed(SelectEnterEventArgs args)
         {
-            Debug.Log("InventoryStashZone: Stash was grabbed!");
+            InventoryToolkitUI ui = ResolveInventoryUI();
 
-            if (_inventoryUI != null)
+            if (ui != null)
             {
-                _inventoryUI.ToggleUI();
-                Debug.Log("InventoryStashZone: Toggled UI successfully.");
+                ui.ToggleUI();
+                return;
             }
-            else
-            {
-                Debug.LogError("InventoryStashZone: Cannot toggle UI! _inventoryUI reference is missing in the Inspector.");
-            }
+
+            Debug.LogError("InventoryStashZone: no InventoryToolkitUI in the scene, so the bag cannot " +
+                           "open. It normally arrives on the player rig — has one been spawned?", this);
+        }
+
+        /// <summary>
+        /// The bag panel, found on first use and remembered.
+        ///
+        /// Resolved HERE rather than in Awake, which is where it used to be and could never work: no
+        /// shipping scene authors an active rig, so the panel arrives with the one
+        /// <see cref="PlayerRigSpawner"/> instantiates on <c>SceneLoadCompleteEvent</c> — published
+        /// after every Awake in the new scene has already run. Ezbet Al Bourg makes it worst, because
+        /// it DOES author a rig but leaves it disabled on purpose, and the parameterless
+        /// <c>FindFirstObjectByType</c> skips inactive objects, so the lookup found nothing there
+        /// either. Grabbing the stash then logged "reference is missing in the Inspector", which sent
+        /// people to the Inspector to fix a timing problem.
+        ///
+        /// A grab happens long after the rig exists, so by the time this is asked the answer is real.
+        /// Inactive objects stay excluded deliberately: the disabled authored rig carries a panel too,
+        /// and picking that one would toggle a bag nested under a switched-off rig — nothing visible.
+        /// </summary>
+        private InventoryToolkitUI ResolveInventoryUI()
+        {
+            if (_inventoryUI != null) return _inventoryUI;
+
+            _inventoryUI = FindFirstObjectByType<InventoryToolkitUI>();
+            return _inventoryUI;
         }
 
         private void OnStashReleased(SelectExitEventArgs args)

@@ -21,9 +21,16 @@ namespace DumyatRuntime
         [SerializeField] private string _noSaveText = "NOTHING TO GO BACK TO";
 
         private IGameSessionService _session;
+        private MenuCatalogSO _catalog;
+        private ISettingsService _settings;
 
         [Inject]
-        private void Inject(IGameSessionService session) => _session = session;
+        private void Inject(IGameSessionService session, MenuCatalogSO catalog, ISettingsService settings)
+        {
+            _session = session;
+            _catalog = catalog;
+            _settings = settings;
+        }
 
         // OnEnable rather than Start: NailGroupController hides and re-shows these nails whenever a
         // panel opens, and a save written in between should be reflected on the way back.
@@ -47,7 +54,8 @@ namespace DumyatRuntime
             }
 
             _caption.text = _session.HasSave
-                ? ResumeDescription.For(_session.ResumeSceneName, _session.ResumeSavedAtUtc).ToUpperInvariant()
+                ? ResumeDescription.For(_session.ResumeSceneName, _session.ResumeSavedAtUtc,
+                                        _catalog, UiLanguage.IsArabic(_settings)).ToUpperInvariant()
                 : _noSaveText;
         }
     }
