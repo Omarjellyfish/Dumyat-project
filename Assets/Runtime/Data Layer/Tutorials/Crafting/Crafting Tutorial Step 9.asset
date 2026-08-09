@@ -10,28 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
-  m_Name: Crafting Tutorial Step 7
+  m_Name: Crafting Tutorial Step 9
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: 'Take it to the board to check your work. If it fails, the board
-    tells you why.
-
-    (it could be that you have the object backwards).'
-  InstructionTextArabic: "\u0648\u062F\u064A\u0647\u0627 \u0644\u0644\u0648\u062D\u0629
-    \u0639\u0634\u0627\u0646 \u062A\u0631\u0627\u062C\u0639 \u0634\u063A\u0644\u0643.
-    \u0644\u0648 \u0631\u0633\u0628\u060C \u0627\u0644\u0644\u0648\u062D\u0629 \u0647\u062A\u0642\u0648\u0644
-    \u0644\u0643 \u0627\u0644\u0633\u0628\u0628."
+  InstructionText: Changed your mind? Bring this near a joint and it comes apart.
+  InstructionTextArabic: "\u063A\u064A\u0651\u0631\u062A \u0631\u0623\u064A\u0643\u061F
+    \u0642\u0631\u0651\u0628 \u062F\u064A \u0645\u0646 \u0627\u0644\u0648\u0635\u0644\u0629
+    \u0648\u0647\u064A \u0647\u062A\u0641\u0643\u0651\u0647\u0627."
   Audio: {fileID: 0}
-  VoiceLine: {fileID: 11400000, guid: 7d5fa0aa20cd7a944beb5df6a341e02b, type: 2}
+  VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
   CompletionType: 0
   NextButton: 2
-  EventTypeName: CraftingValidatedEvent
+  EventTypeName: AttachmentRemovedEvent
   ZoneId: 
-  DelaySeconds: 0
+  DelaySeconds: 3
   FallbackUnlockSeconds: 0
-  PrimaryAnchorId: ValidationBoard
+  PrimaryAnchorId: Deattach
   HighlightIds:
-  - ValidationBoard
+  - Deattach
   AnchorOffset: {x: 0, y: 0.3, z: 0}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}

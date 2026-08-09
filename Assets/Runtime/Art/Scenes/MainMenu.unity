@@ -3185,6 +3185,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1711003673}
     m_Modifications:
+    - target: {fileID: 2607946872232363749, guid: 04f5a7587a201b6489be4ddbbf941785, type: 3}
+      propertyPath: m_PokeCollider
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4261126029780035082, guid: 04f5a7587a201b6489be4ddbbf941785, type: 3}
+      propertyPath: m_WorldSpaceCollider
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 6217810534468322884, guid: 04f5a7587a201b6489be4ddbbf941785, type: 3}
       propertyPath: m_Name
       value: SettingsPanel
@@ -7810,8 +7818,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.056482315, y: 0.19507694, z: 0.06}
-  m_Center: {x: -0.00042819977, y: 0.16885507, z: 0}
+  m_Size: {x: 0.056482315, y: 0.24249737, z: 0.06}
+  m_Center: {x: -0.00042819977, y: 0.14514455, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
