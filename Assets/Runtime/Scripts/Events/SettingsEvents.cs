@@ -74,6 +74,33 @@ namespace DumyatRuntime
         }
     }
 
+    /// <summary>
+    /// Published by <see cref="SettingsService"/> whenever any microphone option moves.
+    ///
+    /// Carries the whole state rather than the one field that changed: the only subscriber
+    /// (<see cref="VoiceCaptureSettingsBinder"/>) pushes all four values onto the capture controller
+    /// together, so a per-field event would just make it re-read the other three anyway.
+    /// </summary>
+    public readonly struct VoiceSettingsChangedEvent : IGameEvent
+    {
+        public readonly MicCaptureMode CaptureMode;
+        public readonly bool AutoSensitivity;
+
+        /// <summary>Peak-amplitude gate, in the capture source's domain — not the 0-100 the UI shows.</summary>
+        public readonly float Threshold;
+
+        public readonly PushToTalkButton TalkButton;
+
+        public VoiceSettingsChangedEvent(MicCaptureMode captureMode, bool autoSensitivity,
+                                         float threshold, PushToTalkButton talkButton)
+        {
+            CaptureMode = captureMode;
+            AutoSensitivity = autoSensitivity;
+            Threshold = threshold;
+            TalkButton = talkButton;
+        }
+    }
+
     /// <summary>Published by <see cref="SettingsService"/> on every volume change. Linear 0..1.</summary>
     public readonly struct AudioVolumeChangedEvent : IGameEvent
     {

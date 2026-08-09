@@ -59,6 +59,33 @@ namespace DumyatRuntime
 
         private Label _previewLabel;
 
+        // --- Voice page ---------------------------------------------------------
+        private Button[] _micModeButtons;
+        private Button[] _sensitivityButtons;
+        private Button[] _talkButtons;
+        private Slider _thresholdSlider;
+        private Label _thresholdValue;
+        private VisualElement _sensitivityGroup;
+        private VisualElement _talkButtonGroup;
+        private VisualElement _meterFill;
+        private VisualElement _meterGate;
+        private VisualElement _meterDot;
+        private Label _meterDevice;
+        private Label _meterCaption;
+
+        /// <summary>
+        /// The microphone behind the level meter.
+        ///
+        /// Its own capture, deliberately NOT the negotiation's: reading the live level off a
+        /// <see cref="VoiceCaptureController"/> would mean opening an STT session — a network
+        /// connection, and on a metered provider a bill — just to draw a bar in a menu. This reuses
+        /// <see cref="MicrophoneStreamCapture"/>, the same class the STT clients drive, so the
+        /// envelope follower and the adaptive gate the meter draws are the exact ones the merchant
+        /// will hear through.
+        /// </summary>
+        private MicrophoneStreamCapture _micPreview;
+        private bool _meterRunning;
+
         // Index of each slider matches the AudioChannel enum, which is contiguous from 0.
         private static readonly AudioChannel[] Channels =
         {
@@ -89,10 +116,35 @@ namespace DumyatRuntime
             "SubtitlesOnButton", "SubtitlesOffButton"
         };
 
+        // Index matches the MicCaptureMode enum, which is contiguous from 0.
+        private static readonly string[] MicModeButtonNames =
+        {
+            "MicVoiceActivityButton", "MicPushToTalkButton"
+        };
+
+        // Index 0 = auto, 1 = manual.
+        private static readonly string[] SensitivityButtonNames =
+        {
+            "MicAutoButton", "MicManualButton"
+        };
+
+        // Index matches the PushToTalkButton enum, which is contiguous from 0.
+        private static readonly string[] TalkButtonNames =
+        {
+            "TalkPrimaryButton", "TalkSecondaryButton"
+        };
+
         private const string ActiveTabClass = "settings-tab--active";
         private const string ActivePageClass = "settings-page--active";
         private const string SelectedSegmentClass = "segment-btn--selected";
         private const string MutedPreviewClass = "subtitle-preview-line--muted";
+        private const string HiddenGroupClass = "voice-group--hidden";
+        private const string MeterFillOpenClass = "input-meter-fill--open";
+        private const string MeterDotOpenClass = "input-meter-dot--open";
+        private const string MeterGateAutoClass = "input-meter-gate--auto";
+
+        /// <summary>Page index of the Voice tab, which is the only page that owns a live microphone.</summary>
+        private const int VoicePageIndex = 2;
 
         private void OnEnable()
         {
@@ -130,6 +182,10 @@ namespace DumyatRuntime
 
         private void OnDisable()
         {
+            // Before the references go: the microphone is an OS resource, and dropping the element
+            // it draws into would otherwise leave it open for the rest of the session.
+            StopMeter();
+
             // UI Toolkit callbacks live on the elements, which are torn down with the document, so
             // there is nothing to unregister — but the cached references must go or a re-enable
             // would rebind on top of stale elements.
@@ -141,6 +197,18 @@ namespace DumyatRuntime
             _sliderValues = null;
             _languageButtons = null;
             _subtitleButtons = null;
+            _micModeButtons = null;
+            _sensitivityButtons = null;
+            _talkButtons = null;
+            _thresholdSlider = null;
+            _thresholdValue = null;
+            _sensitivityGroup = null;
+            _talkButtonGroup = null;
+            _meterFill = null;
+            _meterGate = null;
+            _meterDot = null;
+            _meterDevice = null;
+            _meterCaption = null;
         }
 
         /// <summary>
@@ -160,6 +228,11 @@ namespace DumyatRuntime
 
         public void Close()
         {
+            // Unconditionally, before the _root guard: Close() is called from OnEnable to hide the
+            // page at boot, and an early return there would be fine — but it is also the path taken
+            // when the player backs out of the menu, and the mic must not survive that.
+            StopMeter();
+
             if (_root == null) return;
             _visibilityTarget.style.display = DisplayStyle.None;
         }
@@ -171,10 +244,13 @@ namespace DumyatRuntime
             _backButton = _root.Q<Button>("SettingsBackButton");
             if (_backButton != null) _backButton.clicked += () => BackRequested?.Invoke();
 
+            // The two arrays are index-paired, and VoicePageIndex names position 2 in both. Insert
+            // anywhere else and the meter would start on the wrong tab.
             _tabs = new[]
             {
                 _root.Q<Button>("TabAudioButton"),
                 _root.Q<Button>("TabLanguageButton"),
+                _root.Q<Button>("TabVoiceButton"),
                 _root.Q<Button>("TabControlsButton")
             };
 
@@ -182,6 +258,7 @@ namespace DumyatRuntime
             {
                 _root.Q<VisualElement>("AudioPage"),
                 _root.Q<VisualElement>("LanguagePage"),
+                _root.Q<VisualElement>("VoicePage"),
                 _root.Q<VisualElement>("ControlsPage")
             };
 
@@ -195,6 +272,7 @@ namespace DumyatRuntime
             BindSliders();
             BindLanguageSegment();
             BindSubtitleSegment();
+            BindVoicePage();
 
             _previewLabel = _root.Q<Label>("SubtitlePreviewLabel");
 
@@ -268,6 +346,88 @@ namespace DumyatRuntime
             }
         }
 
+        private void BindVoicePage()
+        {
+            _sensitivityGroup = _root.Q<VisualElement>("SensitivityGroup");
+            _talkButtonGroup = _root.Q<VisualElement>("TalkButtonGroup");
+
+            _meterFill = _root.Q<VisualElement>("InputMeterFill");
+            _meterGate = _root.Q<VisualElement>("InputMeterGate");
+            _meterDot = _root.Q<VisualElement>("InputMeterDot");
+            _meterDevice = _root.Q<Label>("InputMeterDevice");
+            _meterCaption = _root.Q<Label>("InputMeterCaption");
+
+            _micModeButtons = BindSegment(MicModeButtonNames, i =>
+                _settings?.SetMicCaptureMode((MicCaptureMode)i));
+
+            _sensitivityButtons = BindSegment(SensitivityButtonNames, i =>
+                _settings?.SetMicAutoSensitivity(i == 0));
+
+            _talkButtons = BindSegment(TalkButtonNames, i =>
+                _settings?.SetPushToTalkButton((PushToTalkButton)i));
+
+            BindThresholdSlider();
+        }
+
+        /// <summary>
+        /// Wires one segment: each button reports its own index, then the whole page re-seeds so the
+        /// lit pill, the meter and the two mode-specific groups all agree with the service rather
+        /// than with whatever the click assumed.
+        /// </summary>
+        private Button[] BindSegment(string[] names, Action<int> onPicked)
+        {
+            var buttons = new Button[names.Length];
+
+            for (int i = 0; i < names.Length; i++)
+            {
+                buttons[i] = _root.Q<Button>(names[i]);
+                if (buttons[i] == null) continue;
+
+                int index = i;   // captured per iteration, not shared
+                buttons[i].clicked += () =>
+                {
+                    onPicked(index);
+                    SeedFromSettings();
+                };
+            }
+
+            return buttons;
+        }
+
+        private void BindThresholdSlider()
+        {
+            _thresholdSlider = _root.Q<Slider>("MicThresholdSlider");
+            _thresholdValue = _root.Q<Label>("MicThresholdValue");
+
+            if (_thresholdSlider == null) return;
+
+            // The slider runs 0..1 like the volume sliders; the service stores the gate in the
+            // capture source's peak-amplitude domain. Same disk-write contract as the volumes: apply
+            // on every change, persist only when the drag ends.
+            _thresholdSlider.RegisterValueChangedCallback(evt =>
+            {
+                float threshold = evt.newValue * SettingsKeys.MaxMicThreshold;
+
+                _settings?.SetMicThreshold(threshold, persistNow: false);
+                SetThresholdLabel(evt.newValue);
+
+                // Straight onto the preview mic as well, so the gate marker moves WITH the handle.
+                // Waiting for the next SeedFromSettings would leave the marker a drag behind — and
+                // watching the marker cross the level is the entire point of setting it by hand.
+                if (_micPreview != null) _micPreview.ManualThreshold = threshold;
+            });
+
+            _thresholdSlider.RegisterCallback<PointerCaptureOutEvent>(_ =>
+                _settings?.SetMicThreshold(_thresholdSlider.value * SettingsKeys.MaxMicThreshold,
+                                           persistNow: true));
+        }
+
+        private void SetThresholdLabel(float value01)
+        {
+            if (_thresholdValue == null) return;
+            _thresholdValue.text = Mathf.RoundToInt(Mathf.Clamp01(value01) * 100f).ToString();
+        }
+
         private void SeedFromSettings()
         {
             if (_settings == null) return;
@@ -283,6 +443,70 @@ namespace DumyatRuntime
             }
 
             ApplyLanguageAndSubtitles();
+            ApplyVoiceSettings();
+        }
+
+        /// <summary>
+        /// Lights the selected pill in each Voice segment and swaps the two mode-specific groups.
+        ///
+        /// Only one group is ever on screen: push-to-talk sets <c>AutoStopOnSilence = false</c>, so a
+        /// sensitivity gate has nothing to act on, and voice activity has no button to hold. Showing
+        /// both would put two dead controls on a page with no room for them.
+        /// </summary>
+        private void ApplyVoiceSettings()
+        {
+            if (_settings == null) return;
+
+            MicCaptureMode mode = _settings.MicCaptureMode;
+            bool auto = _settings.MicAutoSensitivity;
+            bool pushToTalk = mode == MicCaptureMode.PushToTalk;
+
+            if (_micModeButtons != null)
+            {
+                for (int i = 0; i < _micModeButtons.Length; i++)
+                    _micModeButtons[i]?.EnableInClassList(SelectedSegmentClass, i == (int)mode);
+            }
+
+            if (_sensitivityButtons != null)
+            {
+                _sensitivityButtons[0]?.EnableInClassList(SelectedSegmentClass, auto);
+                if (_sensitivityButtons.Length > 1)
+                    _sensitivityButtons[1]?.EnableInClassList(SelectedSegmentClass, !auto);
+            }
+
+            if (_talkButtons != null)
+            {
+                PushToTalkButton talk = _settings.PushToTalkButton;
+                for (int i = 0; i < _talkButtons.Length; i++)
+                    _talkButtons[i]?.EnableInClassList(SelectedSegmentClass, i == (int)talk);
+            }
+
+            _sensitivityGroup?.EnableInClassList(HiddenGroupClass, pushToTalk);
+            _talkButtonGroup?.EnableInClassList(HiddenGroupClass, !pushToTalk);
+
+            // The threshold row is only meaningful while the gate is manual.
+            _thresholdSlider?.parent?.EnableInClassList(HiddenGroupClass, auto);
+
+            float normalized = Mathf.Clamp01(_settings.MicThreshold / SettingsKeys.MaxMicThreshold);
+            _thresholdSlider?.SetValueWithoutNotify(normalized);
+            SetThresholdLabel(normalized);
+
+            // The preview mic mirrors the settings so the gate it reports — and therefore the marker
+            // the meter draws — is the one the merchant will actually be heard through.
+            if (_micPreview != null)
+            {
+                _micPreview.AutoAdjustSensitivity = auto;
+                _micPreview.ManualThreshold = _settings.MicThreshold;
+            }
+
+            // No gate exists in push-to-talk, so there is nothing to mark.
+            if (_meterGate != null)
+            {
+                _meterGate.style.display = pushToTalk ? DisplayStyle.None : DisplayStyle.Flex;
+                _meterGate.EnableInClassList(MeterGateAutoClass, auto);
+            }
+
+            UpdateMeterCaption();
         }
 
         private void SetSliderValueLabel(int index, float value01)
@@ -349,6 +573,146 @@ namespace DumyatRuntime
                 _tabs[i]?.EnableInClassList(ActiveTabClass, active);
                 _pages[i]?.EnableInClassList(ActivePageClass, active);
             }
+
+            // The mic is open only while its page is, never for the whole time the menu is up.
+            if (index == VoicePageIndex) StartMeter();
+            else StopMeter();
+        }
+
+        // ------------------------------------------------------------------ Meter --
+
+        /// <summary>
+        /// Opens the preview microphone, unless something has a better claim on it.
+        ///
+        /// Two refusals, both deliberate. Without OS permission there is nothing to show and asking
+        /// for it from a settings menu would be a prompt out of nowhere — that consent belongs to
+        /// <see cref="ConsentManager"/>, at the point the game first wants to listen. And if any
+        /// device is already recording, a negotiation is very likely mid-utterance: a second
+        /// <c>Microphone.Start</c> on the same device ends the first, so opening the pause menu
+        /// during a haggle would silently cut the player off. Better a meter that explains itself.
+        /// </summary>
+        private void StartMeter()
+        {
+            if (_meterRunning || _meterFill == null) return;
+
+            if (!MicrophonePermission.IsGranted)
+            {
+                SetMeterUnavailable("Microphone access is off, so there is nothing to show here.");
+                return;
+            }
+
+            if (IsAnyMicrophoneRecording())
+            {
+                SetMeterUnavailable("The microphone is busy. Close this to get it back.");
+                return;
+            }
+
+            _micPreview = new MicrophoneStreamCapture { LogPrefix = "[Settings mic]" };
+
+            if (_settings != null)
+            {
+                _micPreview.AutoAdjustSensitivity = _settings.MicAutoSensitivity;
+                _micPreview.ManualThreshold = _settings.MicThreshold;
+            }
+
+            if (!_micPreview.Start(out string error))
+            {
+                _micPreview = null;
+                SetMeterUnavailable(error ?? "No microphone found.");
+                return;
+            }
+
+            _meterRunning = true;
+            if (_meterDevice != null) _meterDevice.text = _micPreview.ResolvedDevice;
+            UpdateMeterCaption();
+        }
+
+        private void StopMeter()
+        {
+            if (_micPreview != null)
+            {
+                _micPreview.Stop();
+                _micPreview = null;
+            }
+
+            _meterRunning = false;
+            DrawMeter(0f, 0f, open: false);
+        }
+
+        private static bool IsAnyMicrophoneRecording()
+        {
+            string[] devices = Microphone.devices;
+            if (devices == null) return false;
+
+            for (int i = 0; i < devices.Length; i++)
+            {
+                if (Microphone.IsRecording(devices[i])) return true;
+            }
+
+            return false;
+        }
+
+        private void SetMeterUnavailable(string reason)
+        {
+            if (_meterDevice != null) _meterDevice.text = "—";
+            if (_meterCaption != null) _meterCaption.text = reason;
+            DrawMeter(0f, 0f, open: false);
+        }
+
+        /// <summary>
+        /// Polls the preview mic and redraws the bar.
+        ///
+        /// Runs on <see cref="Update"/> rather than a coroutine because the pause menu opens with
+        /// <c>Time.timeScale</c> at 0, which stops every <c>WaitForSeconds</c> in the game. Nothing
+        /// here reads scaled time.
+        /// </summary>
+        private void Update()
+        {
+            if (!_meterRunning || _micPreview == null) return;
+
+            _micPreview.Poll(out _, out _);
+
+            float level = _micPreview.CurrentInputLevel;
+            float gate = _micPreview.CurrentGateThreshold;
+
+            DrawMeter(level, gate, level > gate && gate > 0f);
+        }
+
+        /// <summary>
+        /// Draws the bar. Both values are peak amplitudes scaled against
+        /// <see cref="SettingsKeys.MaxMicThreshold"/>, not 1.0 — see the note on
+        /// <c>.input-meter</c> in MenuStyles.uss for why full scale is 0.5.
+        /// </summary>
+        private void DrawMeter(float level, float gate, bool open)
+        {
+            if (_meterFill == null) return;
+
+            float levelPercent = Mathf.Clamp01(level / SettingsKeys.MaxMicThreshold) * 100f;
+            _meterFill.style.width = Length.Percent(levelPercent);
+            _meterFill.EnableInClassList(MeterFillOpenClass, open);
+
+            if (_meterGate != null)
+            {
+                float gatePercent = Mathf.Clamp01(gate / SettingsKeys.MaxMicThreshold) * 100f;
+                _meterGate.style.left = Length.Percent(gatePercent);
+            }
+
+            _meterDot?.EnableInClassList(MeterDotOpenClass, open);
+        }
+
+        private void UpdateMeterCaption()
+        {
+            if (_meterCaption == null || !_meterRunning || _settings == null) return;
+
+            if (_settings.MicCaptureMode == MicCaptureMode.PushToTalk)
+            {
+                _meterCaption.text = "Hold the talk button and speak to test it.";
+                return;
+            }
+
+            _meterCaption.text = _settings.MicAutoSensitivity
+                ? "Speak to test it. The gate follows the noise in your room."
+                : "Set the gate just above the bar when the room is quiet.";
         }
     }
 }

@@ -441,6 +441,118 @@
     margin-top: 22px;
 }
 
+/* ---------------------------------------------------------------- Voice -- */
+/* Hides one of the Voice page's two mode-specific groups. Layout only, no
+   colour, which is why the bench needs no counterpart for it. */
+.voice-group--hidden {
+    display: none;
+}
+
+/* The live input meter. The ONE new primitive on the Voice page — everything
+   else there reuses the slider and segment classes above.
+
+   Full scale is SettingsKeys.MaxMicThreshold (0.5 peak amplitude), NOT 1.0.
+   At full-amplitude scale a normal speaking peak sits in the left fifth and the
+   default 0.02 gate is a sliver you cannot aim a controller at; against 0.5,
+   speech lands across the middle of the bar and the gate is somewhere a player
+   can actually put it. */
+.input-meter-block {
+    margin-top: auto;
+    padding-top: 18px;
+}
+
+.input-meter-head {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.input-meter-title {
+    font-size: 19px;
+    letter-spacing: 4px;
+    color: rgba(214, 246, 250, 0.55);
+    margin: 0;
+}
+
+.input-meter-device {
+    flex-direction: row;
+    align-items: center;
+}
+
+/* Jade the moment the gate opens — the same "good" this project uses for money.
+   At arm's length in a headset a colour change reads instantly and a number
+   does not, which is the whole reason this dot exists next to the level. */
+.input-meter-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    background-color: rgba(120, 228, 236, 0.28);
+    margin-right: 12px;
+}
+
+.input-meter-dot--open {
+    background-color: #8DEBAF;
+}
+
+.input-meter-device-name {
+    font-size: 22px;
+    color: #EAF8FB;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.input-meter {
+    height: 26px;
+    border-radius: 4px;
+    background-color: rgba(120, 228, 236, 0.12);
+    overflow: hidden;
+}
+
+.input-meter-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    border-radius: 4px;
+    background-color: #67DDE8;
+}
+
+.input-meter-fill--open {
+    background-color: #8DEBAF;
+}
+
+/* Where the gate currently sits. Pale rather than accent-coloured so it stays
+   legible against BOTH fill colours as the bar passes under it. */
+/* Half its own width of negative margin, so the marker is CENTRED on the value
+   the code sets as `left` rather than starting at it — otherwise it reads 2px
+   high at every setting, which is exactly the error that matters when the
+   player is lining it up against the bar. */
+.input-meter-gate {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    margin-left: -2px;
+    background-color: #EAF8FB;
+    border-radius: 2px;
+}
+
+/* Auto mode: the gate is tracking the room, not something the player set, so it
+   is drawn as a reading rather than a handle. */
+.input-meter-gate--auto {
+    background-color: rgba(234, 248, 251, 0.55);
+}
+
+.input-meter-caption {
+    font-size: 19px;
+    color: rgba(214, 246, 250, 0.38);
+    letter-spacing: 1px;
+    white-space: normal;
+    margin-top: 10px;
+}
+
 /* ------------------------------------------------------------- Controls -- */
 /* A drawn schematic, not an image and not a list. See the note in
    SettingsPage.uxml for why the image went and why this box is a FIXED 500 x 230

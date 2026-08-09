@@ -26,6 +26,7 @@
             <ui:VisualElement name="SettingsRail" class="settings-rail">
                 <ui:Button name="TabAudioButton" text="AUDIO" class="settings-tab settings-tab--active" />
                 <ui:Button name="TabLanguageButton" text="LANGUAGE" class="settings-tab" />
+                <ui:Button name="TabVoiceButton" text="VOICE" class="settings-tab" />
                 <ui:Button name="TabControlsButton" text="CONTROLS" class="settings-tab" />
             </ui:VisualElement>
 
@@ -102,6 +103,83 @@
 
                     <ui:Label text="Language changes every panel in the game. Subtitles can be off in either language."
                               class="settings-note" />
+                </ui:VisualElement>
+
+                <!-- ============================================================ VOICE -->
+                <!-- The merchant negotiation listens to a real microphone, so this page is where a
+                     player fixes "it hears me when I am not talking" and "it never hears me".
+
+                     Everything here already existed on VoiceCaptureController as an Inspector
+                     field; the page only exposes it. The one thing that did NOT exist is an XR
+                     binding for the PushToTalk action — it was Space only, so push-to-talk was
+                     unreachable in a headset. See VoiceSettings.cs.
+
+                     Built from the same .segment-row / .slider-row / .settings-note classes as the
+                     pages above, so the carpentry bench re-skins it through WorkshopMenuStyles.uss
+                     without a rule of its own. The input meter is the only new primitive. -->
+                <ui:VisualElement name="VoicePage" class="settings-page">
+
+                    <ui:Label text="MICROPHONE" class="settings-field-label" />
+
+                    <ui:VisualElement name="MicModeSegment" class="segment-row">
+                        <ui:Button name="MicVoiceActivityButton" text="VOICE ACTIVITY" class="segment-btn segment-btn--selected" />
+                        <ui:Button name="MicPushToTalkButton" text="PUSH TO TALK" class="segment-btn" />
+                    </ui:VisualElement>
+
+                    <!-- Voice-activity only. Push-to-talk sets AutoStopOnSilence = false, so there
+                         is no gate for these controls to tune. -->
+                    <ui:VisualElement name="SensitivityGroup">
+                        <ui:Label text="SENSITIVITY" class="settings-field-label settings-field-label--stacked" />
+
+                        <ui:VisualElement name="SensitivitySegment" class="segment-row">
+                            <ui:Button name="MicAutoButton" text="AUTO" class="segment-btn segment-btn--selected" />
+                            <ui:Button name="MicManualButton" text="MANUAL" class="segment-btn" />
+                        </ui:VisualElement>
+
+                        <!-- 0..1 like the volume sliders; SettingsToolkitUI scales it onto the
+                             0..SettingsKeys.MaxMicThreshold the capture source actually compares
+                             against, and shows it as 0-100. -->
+                        <ui:VisualElement name="ThresholdRow" class="slider-row">
+                            <ui:Label text="THRESHOLD" class="slider-label" />
+                            <ui:Slider name="MicThresholdSlider" low-value="0" high-value="1" value="0.04" class="slider-control" />
+                            <ui:Label name="MicThresholdValue" text="4" class="slider-value" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Push-to-talk only. A PICKER of the two free face buttons, not an open
+                         rebind — see PushToTalkButton in VoiceSettings.cs for why. -->
+                    <ui:VisualElement name="TalkButtonGroup">
+                        <ui:Label text="TALK BUTTON" class="settings-field-label settings-field-label--stacked" />
+
+                        <ui:VisualElement name="TalkButtonSegment" class="segment-row">
+                            <ui:Button name="TalkPrimaryButton" text="A / X" class="segment-btn segment-btn--selected" />
+                            <ui:Button name="TalkSecondaryButton" text="B / Y" class="segment-btn" />
+                        </ui:VisualElement>
+
+                        <ui:Label text="Hold it while you speak. Space does the same on a keyboard."
+                                  class="settings-note" />
+                    </ui:VisualElement>
+
+                    <!-- Page furniture, not a mode control: it stays put in both modes so "is my
+                         mic working at all" is answerable without first guessing the right mode.
+                         The gate marker is hidden in push-to-talk, where there is no gate. -->
+                    <ui:VisualElement name="InputMeterBlock" class="input-meter-block">
+
+                        <ui:VisualElement class="input-meter-head">
+                            <ui:Label text="INPUT" class="input-meter-title" />
+                            <ui:VisualElement class="input-meter-device">
+                                <ui:VisualElement name="InputMeterDot" class="input-meter-dot" />
+                                <ui:Label name="InputMeterDevice" text="" class="input-meter-device-name" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <ui:VisualElement name="InputMeterTrack" class="input-meter">
+                            <ui:VisualElement name="InputMeterFill" class="input-meter-fill" />
+                            <ui:VisualElement name="InputMeterGate" class="input-meter-gate" />
+                        </ui:VisualElement>
+
+                        <ui:Label name="InputMeterCaption" text="" class="input-meter-caption" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
 
                 <!-- ========================================================= CONTROLS -->

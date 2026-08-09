@@ -29,6 +29,24 @@ namespace DumyatRuntime
         /// </summary>
         GameLanguage SubtitleLanguage { get; }
 
+        /// <summary>When the microphone listens. See <see cref="DumyatRuntime.MicCaptureMode"/>.</summary>
+        MicCaptureMode MicCaptureMode { get; }
+
+        /// <summary>
+        /// Whether the voice gate rides the room's noise floor automatically. When on,
+        /// <see cref="MicThreshold"/> is stored but ignored.
+        /// </summary>
+        bool MicAutoSensitivity { get; }
+
+        /// <summary>
+        /// The manual voice gate, in the capture source's peak-amplitude domain (0 ..
+        /// <see cref="SettingsKeys.MaxMicThreshold"/>) — NOT the 0-100 the slider shows.
+        /// </summary>
+        float MicThreshold { get; }
+
+        /// <summary>Which controller button holds the mic open in push-to-talk.</summary>
+        PushToTalkButton PushToTalkButton { get; }
+
         /// <summary>Linear 0..1, as the sliders show it — not decibels.</summary>
         float GetVolume(AudioChannel channel);
 
@@ -52,6 +70,19 @@ namespace DumyatRuntime
         /// runs every frame.
         /// </summary>
         void SetVolume(AudioChannel channel, float value01, bool persistNow = true);
+
+        void SetMicCaptureMode(MicCaptureMode mode);
+
+        void SetMicAutoSensitivity(bool auto);
+
+        /// <summary>
+        /// Sets the manual voice gate in the capture source's domain. Same
+        /// <paramref name="persistNow"/> contract as <see cref="SetVolume"/> — pass false while the
+        /// slider is being dragged so the disk write does not hitch the headset every frame.
+        /// </summary>
+        void SetMicThreshold(float threshold, bool persistNow = true);
+
+        void SetPushToTalkButton(PushToTalkButton button);
 
         /// <summary>Pushes every current value to the mixer and republishes the settings events.</summary>
         void ApplyAll();
