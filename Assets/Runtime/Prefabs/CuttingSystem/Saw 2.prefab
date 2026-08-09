@@ -89,13 +89,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3718116794253428042}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0189584, y: 0.010408757, z: -0.0029537173, w: 0.99976176}
-  m_LocalPosition: {x: -0.001039505, y: -0.16487849, z: -0.0062446594}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0.06544962, y: -0.6966013, z: -0.09371325, w: 0.70829433}
+  m_LocalPosition: {x: -0.654, y: -0.044, z: -0.005}
+  m_LocalScale: {x: 1.6666662, y: 1.6666662, z: 1.6666663}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8986942479874244489}
-  m_LocalEulerAnglesHint: {x: 2.176, y: 1.187, z: -0.316}
+  m_Father: {fileID: 6400670931527211821}
+  m_LocalEulerAnglesHint: {x: -12.902, y: -88.77, z: -2.444}
 --- !u!114 &3758625072070007756
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,19 +114,19 @@ MonoBehaviour:
   maxVelocity: 100
   maxSpawnRate: 200
   spawnSensitivity: 1.71
-  baseParticleSize: 0.07
-  maxParticleSizeMultiplier: 3.04
-  sizeSensitivity: 0.75
+  baseParticleSize: 0.03
+  maxParticleSizeMultiplier: 0.61
+  sizeSensitivity: 0.38
   baseOverallSpeed: 0.81
   maxOverallSpeedMultiplier: 5
   speedSensitivity: 2.1
   baseStreamFocus: 0.68
-  maxStreamFocus: 1
+  maxStreamFocus: 2.11
   focusSensitivity: 10
   baseDrag: 0.1
   maxDrag: 0.5
   dragSensitivity: 1.5
-  backwardIntensityMultiplier: 0.548
+  backwardIntensityMultiplier: 0.724
   propertyLerpSpeed: 30
 --- !u!2083052967 &8885769875920508766
 VisualEffect:
@@ -195,7 +195,7 @@ VisualEffect:
         m_Overridden: 1
     m_Vector3f:
       m_Array:
-      - m_Value: {x: 1, y: 1, z: 10.76}
+      - m_Value: {x: 1, y: 1, z: 5}
         m_Name: Emitter Scale
         m_Overridden: 1
       - m_Value: {x: 0, y: 0, z: 1}
@@ -244,8 +244,8 @@ VisualEffect:
       m_Array:
       - m_Value:
           serializedVersion: 2
-          key0: {r: 0.19645993, g: 0.2116192, b: 0.026951503, a: 1}
-          key1: {r: 0.16138902, g: 0.17159055, b: 0.050991528, a: 0.12156863}
+          key0: {r: 0.6830188, g: 0.47907877, b: 0.024485484, a: 1}
+          key1: {r: 1, g: 0.8272578, b: 0, a: 1}
           key2: {r: 0, g: 0, b: 0, a: 0}
           key3: {r: 0, g: 0, b: 0, a: 0}
           key4: {r: 0, g: 0, b: 0, a: 0}
@@ -418,7 +418,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6400670931527211821}
-  - {fileID: 114363665292245721}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &6691308587042251821
@@ -831,15 +830,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.4526
+      value: 0.341
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.02
+      value: -0.005
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 0.001
       objectReference: {fileID: 0}
     - target: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       propertyPath: m_LocalRotation.w
@@ -883,6 +882,9 @@ PrefabInstance:
     - {fileID: 5149186512590018278, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 114363665292245721}
     - targetCorrespondingSourceObject: {fileID: 1639863223545182336, guid: 12a3bbf42728df8469a2ced3c32f5054, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5152622570585533927}
