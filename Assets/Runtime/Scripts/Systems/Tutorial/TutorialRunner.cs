@@ -66,6 +66,10 @@ namespace DumyatRuntime
         private List<GameObject> _spawnedHighlights = new List<GameObject>();
         private List<TutorialAnchor> _currentlyHighlightedAnchors = new List<TutorialAnchor>();
 
+        // Reused across steps rather than allocated per step — ApplyHighlights runs on every step
+        // change, and the list is fully rewritten by Collect each time.
+        private readonly List<TutorialAnchor> _highlightTargets = new List<TutorialAnchor>();
+
         private TutorialZoneSensor _activeZoneSensor;
 
         public bool IsRunning => _isRunning;
@@ -641,6 +645,11 @@ namespace DumyatRuntime
         //  3. TutorialHighlighter — the built-in procedural beacon (places, objects) and frame (UI
         //     windows). Used only when there is no prefab, so assigning one is a real override
         //     rather than something that draws two highlights on top of each other.
+        //
+        // A step that asks the player to GO somewhere shows the way by naming WAYPOINT anchors in its
+        // HighlightIds alongside the destination — 'Cross the Street' lists WorkshopApproach then
+        // WorkshopEntrance, and its text reads "follow the markers". That is the project's route
+        // pattern: a chain of ordinary beacons, authored in the scene. No separate path system.
         // ─────────────────────────────────────────────────────────────
 
         private void ApplyHighlights(TutorialStepSO step)
@@ -650,35 +659,13 @@ namespace DumyatRuntime
             // Layer 3. Skipped when custom art is assigned — the prefab loop below covers it.
             if (_highlightPrefab == null) _highlighter?.Apply(step);
 
-            // HighlightIds is the ONLY source of highlight targets. PrimaryAnchorId deliberately is
-            // not one: it positions the instruction CARD, and it is routinely set to 'Hands' or
-            // 'Player' for steps that are pure narration ("Thumb the X button to open the menu").
-            // Treating it as a highlight target planted a 2.6 m beacon through the player's own
-            // controller on twelve steps — the "highlight in a meaningless place". A step that names
-            // no object in HighlightIds now correctly shows no highlight at all.
-            List<TutorialAnchor> anchorsToHighlight = new List<TutorialAnchor>();
+            // Which anchors a step highlights — and the warning when it names one that is not here —
+            // is TutorialHighlightTargets' single answer, shared with TutorialHighlighter so the two
+            // layers cannot disagree about what is being pointed at. See that class for why
+            // PrimaryAnchorId is deliberately NOT among them.
+            TutorialHighlightTargets.Collect(step, _highlightTargets, this);
 
-            if (step.HighlightIds != null)
-            {
-                foreach (var id in step.HighlightIds)
-                {
-                    if (string.IsNullOrEmpty(id)) continue;
-
-                    var anchors = TutorialAnchorRegistry.GetAllAnchors(id);
-                    if (anchors == null || anchors.Count == 0)
-                    {
-                        // Named but absent is an authoring mistake, not a design choice — say which
-                        // step, and pass the asset as context so the console entry selects it.
-                        Debug.LogWarning($"[TutorialRunner] Step '{step.name}' asks to highlight '{id}', but " +
-                                         "no TutorialAnchor with that id is active in scene " +
-                                         $"'{UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}'.", step);
-                        continue;
-                    }
-                    anchorsToHighlight.AddRange(anchors);
-                }
-            }
-
-            foreach (var anchor in anchorsToHighlight)
+            foreach (var anchor in _highlightTargets)
             {
                 if (anchor == null || _currentlyHighlightedAnchors.Contains(anchor)) continue;
                 

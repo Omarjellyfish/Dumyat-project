@@ -138,6 +138,15 @@ namespace DumyatRuntime
                  "narration) — empty means no highlight, which is the correct look for those steps.")]
         public string[] HighlightIds;
 
+        [Tooltip("Highlight only the ONE anchor nearest the player, rather than every anchor sharing " +
+                 "the id.\n\n" +
+                 "Leave OFF when any of them will do — 'walk up to a merchant' should light all four " +
+                 "stalls. Turn it ON for a tip about the one the player is already at: 'lay the fish " +
+                 "on HIS scale' lit all four scales at once in the El Borg market, which points the " +
+                 "player at three stalls they are not standing at.\n\n" +
+                 "No effect where an id is unique, which is every other scene.")]
+        public bool HighlightNearestOnly;
+
         [Tooltip("World-space offset from the primary anchor where the hover UI is positioned")]
         public Vector3 AnchorOffset = new Vector3(0f, 0.3f, 0f);
 

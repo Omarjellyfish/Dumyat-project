@@ -17,7 +17,7 @@ namespace DumyatRuntime
         [SerializeField] private string _mainMenuSceneName = "MainMenu";
 
         [Tooltip("Scene a fresh game starts in. Must be in Build Settings.")]
-        [SerializeField] private string _newGameSceneName = "First_room";
+        [SerializeField] private string _newGameSceneName = "Home";
 
         [Tooltip("Scenes that must never become the Continue target — the main menu itself, test " +
                  "scenes, anything a player should not be dropped back into. The main menu scene is " +
@@ -38,9 +38,18 @@ namespace DumyatRuntime
         [Tooltip("Seconds each tip stays up before the next one.")]
         [SerializeField] private float _tipRotationSeconds = 4f;
 
-        [Tooltip("Player-facing names for the scenes the loading screen announces. Without an entry " +
-                 "the overlay falls back to the raw Build Settings scene name, which is an English " +
-                 "identifier like 'ToBuild_EzbetAlBourg' and never translates.")]
+        [Tooltip("The travel destinations whose names the menus may reuse. Every place the bus goes " +
+                 "already carries a bilingual player-facing name, and this is what lets the Continue " +
+                 "button and the loading screen read it instead of keeping a second copy.\n\n" +
+                 "List one destination per SCENE — several assets can name the same scene (the " +
+                 "legacy CraftingScene and ToBuild_CraftingScene both point at the carpentry " +
+                 "quarter) and the first match wins.")]
+        [SerializeField] private TravelDestination[] _sceneDestinations;
+
+        [Tooltip("Player-facing names for scenes NO destination covers — the main menu, the starting " +
+                 "room before the bus is unlocked, test scenes. Checked after the destinations " +
+                 "above. Without either the overlay falls back to the raw Build Settings scene name, " +
+                 "which is an English identifier and never translates.")]
         [SerializeField] private SceneLabel[] _sceneLabels;
 
         [Header("Controls Page")]
@@ -66,13 +75,37 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// The player-facing name for <paramref name="sceneName"/>, or the raw scene name when no
-        /// label was authored for it. Never returns null, so the loading screen always has something
-        /// to announce.
+        /// The player-facing name for <paramref name="sceneName"/> — what the Continue button and the
+        /// loading screen announce — or the raw scene name when nothing names it. Never returns null.
+        ///
+        /// Destinations are consulted FIRST so a place is named in exactly one asset. Ras El Bar was
+        /// spelled out in its TravelDestination, in this catalogue's label list, and (as
+        /// 'El_manara') in the scene file itself; the two copies could disagree, and after the scenes
+        /// were renamed the label list was the thing left pointing at a name that no longer existed.
+        /// The bus already has to name every place it goes, so that asset is the one source worth
+        /// keeping.
+        ///
+        /// The label list stays for the scenes no destination covers — the main menu is not a bus
+        /// stop and never will be.
         /// </summary>
         public string SceneLabelFor(string sceneName, bool arabic)
         {
             if (string.IsNullOrEmpty(sceneName)) return string.Empty;
+
+            if (_sceneDestinations != null)
+            {
+                for (int i = 0; i < _sceneDestinations.Length; i++)
+                {
+                    TravelDestination destination = _sceneDestinations[i];
+                    if (destination == null || destination.SceneName != sceneName) continue;
+
+                    string named = UiLanguage.Pick(arabic, destination.DisplayName,
+                                                   destination.DisplayNameArabic);
+                    if (!string.IsNullOrWhiteSpace(named)) return named;
+                    break;   // named the scene but left the name blank — fall through to the labels
+                }
+            }
+
             if (_sceneLabels == null) return sceneName;
 
             for (int i = 0; i < _sceneLabels.Length; i++)
@@ -88,10 +121,13 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// One scene's player-facing name. Lives here rather than on <see cref="TravelDestination"/>
-        /// because the loading screen announces scenes the bus never goes to (the starting room, the
-        /// main menu), and it has no way to reach the destination assets — those sit on the bus
-        /// station components inside the scenes being left.
+        /// One scene's player-facing name, for a scene the bus does not serve.
+        ///
+        /// This used to be the ONLY source, on the reasoning that the loading screen announces scenes
+        /// the bus never goes to and had no way to reach the destination assets — those sit on the
+        /// bus station components inside the scenes being left. That second half is what changed:
+        /// <see cref="_sceneDestinations"/> holds them directly, so the catalogue can now read the
+        /// name the bus already publishes instead of keeping a duplicate that drifts.
         /// </summary>
         [System.Serializable]
         public class SceneLabel

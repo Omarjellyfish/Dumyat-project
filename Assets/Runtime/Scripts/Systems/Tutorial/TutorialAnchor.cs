@@ -88,17 +88,62 @@ namespace DumyatRuntime
             }
         }
 
-        /// <summary>Returns the transform of the first anchor matching the ID.</summary>
+        /// <summary>
+        /// The transform of the anchor matching the ID that is NEAREST the player.
+        ///
+        /// It used to be list[0] — whichever anchor happened to register first. That is the same
+        /// answer whenever an id is unique, which every scene assumed it would be, and it is wrong the
+        /// moment an id is shared: Ezbet Al Bourg's market has FOUR merchants, each carrying a
+        /// 'Merchant' and a 'SellScale' anchor, so the market tutorial's card was placed at whichever
+        /// stall woke up first and pointed there while the player stood at a different one.
+        ///
+        /// Nearest is the answer that degrades correctly — with a single anchor it IS list[0], so no
+        /// existing scene changes behaviour.
+        /// </summary>
         public static Transform GetPrimaryAnchor(string anchorId)
         {
-            if (string.IsNullOrEmpty(anchorId)) return null;
-            
-            if (_anchors.TryGetValue(anchorId, out var list) && list.Count > 0)
-            {
-                return list[0].transform;
-            }
-            return null;
+            TutorialAnchor anchor = GetNearestAnchor(anchorId);
+            return anchor != null ? anchor.transform : null;
         }
+
+        /// <summary>
+        /// The anchor with this ID closest to the player's head, or null if none is registered.
+        /// Falls back to the first registered anchor while there is no camera to measure from — during
+        /// a scene load there is a frame or two with no <c>Camera.main</c>, and "no card at all" is a
+        /// worse answer than "the wrong one for one frame".
+        /// </summary>
+        public static TutorialAnchor GetNearestAnchor(string anchorId)
+        {
+            if (string.IsNullOrEmpty(anchorId)) return null;
+            if (!_anchors.TryGetValue(anchorId, out var list) || list.Count == 0) return null;
+
+            if (list.Count == 1) return list[0];
+
+            if (!_cameraSource.TryResolveCamera(out Camera camera)) return list[0];
+
+            Vector3 eye = camera.transform.position;
+            TutorialAnchor nearest = null;
+            float best = float.PositiveInfinity;
+
+            foreach (TutorialAnchor candidate in list)
+            {
+                if (candidate == null) continue;
+
+                float distance = (candidate.transform.position - eye).sqrMagnitude;
+                if (distance >= best) continue;
+
+                best = distance;
+                nearest = candidate;
+            }
+
+            return nearest;
+        }
+
+        // Borrowed rather than re-derived: CameraBillboard already owns the "re-resolve Camera.main
+        // when the cached one has been destroyed" rule, and the reason it must be re-resolved is
+        // written out there. A static here outlives scene loads, which is exactly the case that rule
+        // exists for.
+        private static readonly CameraBillboard _cameraSource = new CameraBillboard();
 
         /// <summary>Returns all anchors matching the ID (useful for highlighting multiple objects).</summary>
         public static List<TutorialAnchor> GetAllAnchors(string anchorId)

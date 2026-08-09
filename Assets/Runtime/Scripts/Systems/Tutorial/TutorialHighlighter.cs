@@ -75,47 +75,27 @@ namespace DumyatRuntime
 
         private readonly List<TutorialHighlight> _active = new List<TutorialHighlight>();
 
+        // Reused across steps; Collect rewrites it in full each time.
+        private readonly List<TutorialAnchor> _targets = new List<TutorialAnchor>();
+
         /// <summary>Clears any previous highlights and raises the ones this step asks for.</summary>
         public void Apply(TutorialStepSO step)
         {
             Clear();
             if (step == null) return;
 
-            // A HashSet because PrimaryAnchorId is commonly repeated inside HighlightIds, and two
-            // highlights stacked on one object read as one brighter highlight — a bug that would only
-            // show up as "why is that one glowing harder".
-            var ids = new HashSet<string>();
+            // Which anchors to draw on is TutorialHighlightTargets' answer, shared with TutorialRunner
+            // so the beacon and the anchor's own OnHighlightChanged hook can never point at different
+            // objects. It also owns the de-duplication. Quiet, because TutorialRunner resolves the
+            // same step immediately after this and is the one that reports a missing anchor.
+            TutorialHighlightTargets.Collect(step, _targets, this, warnOnMissing: false);
 
-            // PrimaryAnchorId is NOT a highlight target — it positions the instruction card, and is
-            // commonly 'Hands' or 'Player' on steps that describe a button rather than an object.
-            // Only what the author explicitly listed in HighlightIds gets a highlight, so a step that
-            // names nothing highlights nothing. See TutorialRunner.ApplyHighlights for the full note.
-            if (step.HighlightIds != null)
+            foreach (TutorialAnchor anchor in _targets)
             {
-                foreach (string id in step.HighlightIds)
-                    if (!string.IsNullOrEmpty(id)) ids.Add(id);
-            }
+                if (anchor == null) continue;
 
-            foreach (string id in ids)
-            {
-                List<TutorialAnchor> anchors = TutorialAnchorRegistry.GetAllAnchors(id);
-                if (anchors == null || anchors.Count == 0)
-                {
-                    Debug.LogWarning($"[{nameof(TutorialHighlighter)}] No TutorialAnchor with id '{id}' in " +
-                                     "this scene — nothing to highlight for this step.", this);
-                    continue;
-                }
-
-                // Iterate backwards: the registry hands back its live list, and a destroyed anchor
-                // that has not yet been unregistered would otherwise take the loop with it.
-                for (int i = anchors.Count - 1; i >= 0; i--)
-                {
-                    TutorialAnchor anchor = anchors[i];
-                    if (anchor == null) continue;
-
-                    TutorialHighlight highlight = Build(anchor);
-                    if (highlight != null) _active.Add(highlight);
-                }
+                TutorialHighlight highlight = Build(anchor);
+                if (highlight != null) _active.Add(highlight);
             }
         }
 

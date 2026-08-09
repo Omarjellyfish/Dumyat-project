@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MenuCatalog
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MenuCatalogSO
   _mainMenuSceneName: MainMenu
-  _newGameSceneName: First_room
+  _newGameSceneName: Home
   _nonResumableScenes: []
   _loadingTips:
   - Merchants remember how you dealt with them. Push too hard and the next price
@@ -155,22 +155,16 @@ MonoBehaviour:
     \u0645\u0634 \u0645\u064A\u0643\u0627\u0646\u064A\u0643\u0629 \u0641\u064A \u0627\u0644\u0644\u0639\u0628\u0629.
     \u0642\u0648\u0645 \u0627\u0642\u0639\u062F \u0634\u0648\u064A\u0629."
   _tipRotationSeconds: 7
+  _sceneDestinations:
+  - {fileID: 11400000, guid: 1be1bef139c5f784e99e1990636e57ae, type: 2}
+  - {fileID: 11400000, guid: 2aa3e1d0ac0cc8a45b693c80e9e6a2e2, type: 2}
+  - {fileID: 11400000, guid: e396014813a2929409163e7beedac876, type: 2}
+  - {fileID: 11400000, guid: 253cda07b3063d943981b705d54f0bb0, type: 2}
+  - {fileID: 11400000, guid: 048a8c381a242ed45aaea063326ba068, type: 2}
   _sceneLabels:
-  - SceneName: First_room
-    DisplayName: Home
-    DisplayNameArabic: "\u0627\u0644\u0628\u064A\u062A"
-  - SceneName: carpentar_room
-    DisplayName: Carpentry Quarter
-    DisplayNameArabic: "\u062D\u064A \u0627\u0644\u0646\u062C\u0627\u0631\u064A\u0646"
-  - SceneName: El_manara
-    DisplayName: Ras El Bar
-    DisplayNameArabic: "\u0631\u0623\u0633 \u0627\u0644\u0628\u0631"
-  - SceneName: Shipyard
-    DisplayName: The Shipyard
-    DisplayNameArabic: "\u0627\u0644\u062A\u0631\u0633\u0627\u0646\u0629"
-  - SceneName: ToBuild_EzbetAlBourg
-    DisplayName: Ezbet El Borg
-    DisplayNameArabic: "\u0639\u0632\u0628\u0629 \u0627\u0644\u0628\u0631\u062C"
+  - SceneName: MainMenu
+    DisplayName: Main Menu
+    DisplayNameArabic: "\u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629"
   - SceneName: MainMenu_UI
     DisplayName: Main Menu
     DisplayNameArabic: "\u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629"
