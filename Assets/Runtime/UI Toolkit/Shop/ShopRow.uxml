@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+
+    <!-- One product in the right-hand price list. Cloned per catalogue entry by ShopToolkitUI.
+         The whole row is the ray target, so every child is picking-mode="Ignore" — otherwise the
+         icon or the price label swallows the click and the row never selects.
+
+         Currency sits AFTER the number and in its own fixed-width column so "EGP" stacks into a
+         straight right edge down the list regardless of how many digits the price has. -->
+    <ui:VisualElement name="Row" class="pick">
+        <ui:VisualElement name="RowIcon" class="icon-well icon-well--row" picking-mode="Ignore">
+            <ui:Label name="RowIconPlaceholder" text="&#9633;" class="icon-well-mark icon-well-mark--row" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <ui:Label name="RowName" text="Item" class="pick-name" picking-mode="Ignore" />
+
+        <ui:VisualElement name="RowPrice" class="pick-price" picking-mode="Ignore">
+            <ui:Label name="RowPriceValue" text="0" class="pick-price-num" picking-mode="Ignore" />
+            <ui:Label name="RowPriceCurrency" text="EGP" class="pick-price-cur" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

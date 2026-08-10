@@ -1,0 +1,60 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/ShopStyles.uss" />
+
+    <!-- Counter layout: the selected product held large on the left, the rest of the shelf as a price
+         list on the right. Authored against a 900 x 620 world-space panel; see ShopStyles.uss. -->
+    <ui:VisualElement name="MainCanvas" class="shop-panel">
+
+        <ui:VisualElement name="HeaderBar" class="shop-header">
+            <ui:VisualElement name="TitleBlock" class="shop-titleblock">
+                <!-- Serialised on the Shop component; hidden by the controller when blank. -->
+                <ui:Label name="ShopKicker" text="EL DUKKAN" class="shop-kicker" />
+                <ui:Label name="ShopTitle" text="SHOP" class="shop-title" />
+            </ui:VisualElement>
+
+            <!-- Same wallet readout as the inventory panel: currency above the number, right-aligned.
+                 WalletBalance is the only part bound from code. -->
+            <ui:VisualElement name="WalletChip" class="wallet-chip">
+                <ui:Label name="WalletCurrency" text="EGP" class="wallet-currency" />
+                <ui:Label name="WalletBalance" text="0" class="wallet-balance" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="Split" class="shop-split">
+
+            <ui:VisualElement name="Focus" class="shop-focus">
+                <ui:VisualElement name="FocusTop" class="focus-top">
+                    <!-- Square image well. The controller sets backgroundImage from ItemData.Icon and
+                         hides the placeholder mark; UI Toolkit has no dashed borders, so an empty well
+                         is a solid hairline plus this centred glyph. -->
+                    <ui:VisualElement name="FocusIcon" class="icon-well icon-well--hero">
+                        <ui:VisualElement name="FocusIconEmpty" class="icon-well-empty">
+                            <ui:Label name="FocusIconMark" text="&#9633;" class="icon-well-mark" />
+                            <ui:Label name="FocusIconLabel" text="ITEM ICON" class="icon-well-label" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement name="FocusHeading" class="focus-heading">
+                        <ui:Label name="FocusName" text="—" class="focus-name" />
+                        <ui:Label name="FocusStock" text="" class="focus-stock" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:Label name="FocusDescription" text="" class="focus-desc" />
+
+                <ui:VisualElement name="FocusFoot" class="focus-foot">
+                    <ui:VisualElement name="FocusPrice" class="price-lg">
+                        <ui:Label name="FocusPriceCurrency" text="EGP" class="price-lg-label" />
+                        <ui:Label name="FocusPriceValue" text="0" class="price-lg-value" />
+                    </ui:VisualElement>
+                    <ui:Button name="BuyButton" text="BUY" class="buy-btn" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:ScrollView name="PickerList" class="shop-picker" mode="Vertical" />
+
+        </ui:VisualElement>
+
+        <ui:Label name="EmptyHint" text="The shelves are bare." class="shop-empty-hint" />
+    </ui:VisualElement>
+</ui:UXML>
