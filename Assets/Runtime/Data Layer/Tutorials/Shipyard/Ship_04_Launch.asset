@@ -16,7 +16,7 @@ MonoBehaviour:
   InstructionTextArabic: "\u0643\u062F\u0647 \u0647\u064A \u0627\u062A\u062C\u0645\u0651\u0639\u062A.
     \u0627\u0631\u062C\u0639 \u0644\u0648\u0631\u0627 \u0634\u0648\u064A\u0629 \u0648\u0628\u0635\u0651
     \u0639\u0644\u0649 \u0627\u0644\u0644\u064A \u0639\u0645\u0644\u062A\u0647."
-  Audio: {fileID: 0}
+  Audio: {fileID: 8300000, guid: 155bb16d8ba81024cb7c731355b5d471, type: 3}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 0}
   Video: {fileID: 0}
@@ -29,5 +29,6 @@ MonoBehaviour:
   PrimaryAnchorId: ShipFrame
   HighlightIds:
   - ShipFrame
+  HighlightNearestOnly: 0
   AnchorOffset: {x: 0, y: 0.3, z: 0}
   HapticOnActivate: {fileID: 0}
