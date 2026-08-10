@@ -19,7 +19,7 @@ MonoBehaviour:
     \u0648\u062D\u0637\u0651 \u0646\u0642\u0637\u0629\u060C \u0648\u0628\u0639\u062F\u064A\u0646
     \u0642\u0631\u0651\u0628 \u0627\u0644\u0642\u0637\u0639\u0629 \u0627\u0644\u062A\u0627\u0646\u064A\u0629."
   Audio: {fileID: 8300000, guid: 773085ac9a591664cbebcdc2f5950ed9, type: 3}
-  VoiceLine: {fileID: 11400000, guid: 8017978b6a7f4074cb68c63bef5adce4, type: 2}
+  VoiceLine: {fileID: 0}
   Icon: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   Video: {fileID: 0}
   CompletionType: 0
@@ -31,5 +31,6 @@ MonoBehaviour:
   PrimaryAnchorId: Glue
   HighlightIds:
   - Glue
+  HighlightNearestOnly: 0
   AnchorOffset: {x: 0, y: 0.8, z: 0}
   HapticOnActivate: {fileID: 11400000, guid: f57aa62ff057b4c4092f64537c0e32b1, type: 2}
