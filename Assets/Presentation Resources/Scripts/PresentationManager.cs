@@ -38,13 +38,21 @@ public class PresentationManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.A))
+        if (Input.GetKeyDown(KeyCode.A) || Input.GetMouseButtonDown(1))
         {
             PreviousLocation();
         }
-        else if (Input.GetKeyDown(KeyCode.D))
+        else if (Input.GetKeyDown(KeyCode.D) || Input.GetMouseButtonDown(0))
         {
             NextLocation();
+        }
+        else if (Input.GetKeyDown(KeyCode.Escape))
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
     }
 
@@ -59,8 +67,14 @@ public class PresentationManager : MonoBehaviour
         if (_transitionCoroutine != null)
         {
             StopCoroutine(_transitionCoroutine);
-            // Instantly deactivate previous if a transition was interrupted
-            _locations[previousIndex].Deactivate();
+            // Clean up any other locations that might be stuck active due to interruption
+            for (int i = 0; i < _locations.Count; i++)
+            {
+                if (i != previousIndex && i != _currentIndex)
+                {
+                    _locations[i].Deactivate();
+                }
+            }
         }
 
         _transitionCoroutine = StartCoroutine(TransitionRoutine(previousIndex, _currentIndex));
@@ -81,8 +95,14 @@ public class PresentationManager : MonoBehaviour
         if (_transitionCoroutine != null)
         {
             StopCoroutine(_transitionCoroutine);
-            // Instantly deactivate previous if a transition was interrupted
-            _locations[previousIndex].Deactivate();
+            // Clean up any other locations that might be stuck active due to interruption
+            for (int i = 0; i < _locations.Count; i++)
+            {
+                if (i != previousIndex && i != _currentIndex)
+                {
+                    _locations[i].Deactivate();
+                }
+            }
         }
 
         _transitionCoroutine = StartCoroutine(TransitionRoutine(previousIndex, _currentIndex));
