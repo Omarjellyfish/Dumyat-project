@@ -35,6 +35,13 @@ namespace DumyatRuntime
                  "sale still runs using built-in fallback lines.")]
         [SerializeField] private ScriptedMerchantLinesSO _scriptedLines;
 
+        [Header("Opening idiom")]
+        [Tooltip("Market-wide bank of opening proverbs. Shared by BOTH sale paths — the AI voice flow " +
+                 "speaks them, the scripted (offline) sale shows them as subtitles — so it lives here " +
+                 "rather than on either controller, and the two can never drift apart. The asset itself " +
+                 "decides which merchants are mild enough and how often one is actually said.")]
+        [SerializeField] private MerchantIdiomsSO _idioms;
+
         /// <summary>Every merchant archetype available in the market.</summary>
         public IReadOnlyList<MerchantConfig> MerchantConfigs => _merchantConfigs;
 
@@ -52,5 +59,11 @@ namespace DumyatRuntime
         /// <see cref="MerchantConfig.ScriptedLines"/> override takes precedence for that merchant.
         /// </summary>
         public ScriptedMerchantLinesSO ScriptedLines => _scriptedLines;
+
+        /// <summary>
+        /// Market-wide opening-idiom bank, or null if none is assigned (idioms simply never fire then).
+        /// Both the AI and the scripted sale read it from here.
+        /// </summary>
+        public MerchantIdiomsSO Idioms => _idioms;
     }
 }

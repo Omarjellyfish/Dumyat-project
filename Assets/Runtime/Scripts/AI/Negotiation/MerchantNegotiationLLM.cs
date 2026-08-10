@@ -389,6 +389,10 @@ namespace DumyatRuntime
             "Use the Egyptian word every time.\n" +
             "   • Build the future with a ه / ح prefix (هقولك ، هديك ، حاجيبلك), never سوف or سـ, and " +
             "negate with مش or ما...ش (مش هينفع ، مبيعش), never لن / لم / ليس.\n" +
+            "   • SPELL the everyday courtesies exactly: نورت / نورتنا (NOT 'نوريت' / 'نوريتنا' — there is " +
+            "no ي in it) ، تسلم ايدك ، اتفضل ، الله يكرمك ، ربنا يبارك لك. An inserted or missing letter " +
+            "here is not a dialect variant, it is a misspelling, and the voice reads the wrong syllables " +
+            "out loud.\n" +
             "   Check every sentence before you answer: if it could be read on the news, or spoken in a " +
             "Syrian or Gulf drama, rewrite it the way a Damietta fish seller would actually say it out loud.\n" +
             "PRIORITY: merchantSpeech must be FLAWLESS Egyptian Arabic script (it is spoken aloud). The " +

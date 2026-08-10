@@ -69,6 +69,11 @@ namespace DumyatRuntime
         private static readonly string[,] EgyptianForms =
         {
             { "بني الحلال", "ابن الحلال" },   // Levantine/MSA contraction of ابن — the one that started this
+            // The model keeps inserting a ي into نورت ("you lit the place up" — the standard Egyptian
+            // welcome). It is not a dialect variant, it is a misspelling, and the voice reads the extra
+            // syllable out loud. Longest form first so نوريتنا wins over نوريت.
+            { "نوريتنا", "نورتنا" },
+            { "نوريت", "نورت" },
             { "هلق", "دلوقتي" },
             { "الان", "دلوقتي" },
             { "حالا", "دلوقتي" },

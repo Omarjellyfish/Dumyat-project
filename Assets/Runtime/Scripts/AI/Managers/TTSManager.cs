@@ -108,11 +108,29 @@ namespace DumyatRuntime
                 });
         }
 
+        // Longest we will wait for a clip to finish decoding before giving up on it and letting the caller
+        // continue. Only ever reached by a clip that never becomes playable.
+        private const float DecodeTimeoutSeconds = 5f;
+
         private IEnumerator WaitForPlaybackEnd(AudioSource source, AudioClip clip, Action onComplete)
         {
-            yield return null; // let Play() register this frame
+            // Wait for the clip to become PLAYABLE before trusting isPlaying. DownloadHandlerAudioClip
+            // hands back an MP3 that is still decoding, and Play() on a still-loading clip is deferred
+            // until the decode lands — so isPlaying reads false for the first frames of a line. With only
+            // one frame of grace here, that false read looked like "playback already ended" and fired
+            // onComplete immediately; a caller that awaits this and then speaks again cut its own previous
+            // line off mid-word. Longer lines decode for longer, so the longer the line the worse it got.
+            float deadline = Time.realtimeSinceStartup + DecodeTimeoutSeconds;
+            while (source != null && source.clip == clip && !source.isPlaying
+                   && clip.loadState == AudioDataLoadState.Loading
+                   && Time.realtimeSinceStartup < deadline)
+                yield return null;
+
+            yield return null;   // let a deferred Play() register
+
             while (source != null && source.isPlaying && source.clip == clip)
                 yield return null;
+
             onComplete?.Invoke();
         }
     }

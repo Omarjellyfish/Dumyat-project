@@ -35,6 +35,27 @@ namespace DumyatRuntime
                  "calculator. Auto-found in the scene if left empty.")]
         [SerializeField] private MerchantSystemConfig _systemConfig;
 
+        [Header("Opening idiom")]
+        [Tooltip("Optional bank of opening proverbs. Leave empty to use the market-wide bank on " +
+                 "MerchantSystemConfig — the same asset the AI voice sale speaks, so both paths share one " +
+                 "set of lines. Here they are subtitles only: the scripted sale has no TTS.")]
+        [SerializeField] private MerchantIdiomsSO _idioms;
+
+        [Tooltip("Shortest the idiom subtitle is held before the merchant gets to 'put the fish on the " +
+                 "scale'. The AI sale gets this pause for free (the voice takes that long to say it); " +
+                 "here nothing does, so without a hold both lines would flash by in one frame. Long " +
+                 "idioms extend it — see Idiom Reading Speed.")]
+        [SerializeField, Min(0.5f)] private float _idiomHoldSeconds = 4.5f;
+
+        [Tooltip("Characters per second used to stretch the hold for a long idiom. The bank runs from " +
+                 "roughly 90 to 190 characters, so a single fixed hold either rushes the long proverbs " +
+                 "or stalls on the short ones. 12/sec is an unhurried subtitle read.")]
+        [SerializeField, Min(1f)] private float _idiomReadingSpeed = 12f;
+
+        [Tooltip("Ceiling on the stretched hold, so a mis-authored wall of text cannot leave the player " +
+                 "staring at a proverb with no button.")]
+        [SerializeField, Min(1f)] private float _idiomHoldMaxSeconds = 11f;
+
         [Header("Placement")]
         [Tooltip("Seconds of no activity before the merchant nudges the player to place fish on the scale.")]
         [SerializeField, Min(1f)] private float _placementIdleSeconds = 15f;
@@ -126,11 +147,63 @@ namespace DumyatRuntime
             _stage = Stage.AwaitingPlacement;
 
             Debug.Log($"{LogPrefix} Begin scripted sale with '{NameOf(merchant)}'.");
+
+            // A good-natured merchant sometimes opens with a proverb instead of a plain welcome, exactly as
+            // he does on the AI path and from the same asset. When he does, the opening becomes two beats —
+            // the idiom, then its own "put the fish on the scale" follow-up — so the second beat, the
+            // buttons and the idle timer are all deferred until the idiom has had time to be read.
+            MerchantIdiomsSO idioms = ResolveIdioms();
+            if (idioms != null && idioms.TryPick(merchant.Config, out MerchantIdiomsSO.Line idiom))
+            {
+                Speak(idiom.english, idiom.arabic, instant: false);
+                Invoke(nameof(OpenAfterIdiom), IdiomHoldFor(idiom.english));
+                return true;
+            }
+
             ScriptedMerchantLinesSO.Line welcome = _lines.RandomWelcome();
-            Speak(welcome);
+            OpenPlacement(welcome.english, welcome.arabic);
+            return true;
+        }
+
+        // Second beat of an idiom opening: the merchant lands back on business. Deferred by _idiomHoldSeconds
+        // so the proverb is readable first — there is no voice here to pace the two lines apart.
+        private void OpenAfterIdiom()
+        {
+            if (_stage != Stage.AwaitingPlacement || _merchant == null) return;
+
+            MerchantIdiomsSO idioms = ResolveIdioms();
+            if (idioms != null)
+            {
+                MerchantIdiomsSO.Line ask = idioms.RandomPlacementRequest();
+                OpenPlacement(ask.english, ask.arabic);
+                return;
+            }
+
+            // The bank went away between the two beats (asset unloaded / merchant swapped) — the plain
+            // welcome says the same thing, so the opening still completes rather than stalling with a
+            // proverb on screen and no button.
+            ScriptedMerchantLinesSO.Line welcome = _lines.RandomWelcome();
+            OpenPlacement(welcome.english, welcome.arabic);
+        }
+
+        // How long to leave an idiom on screen: never less than _idiomHoldSeconds, longer for a longer
+        // proverb, never more than the ceiling. The subtitle is the ONLY channel here, so the hold has to
+        // stand in for the reading the AI path's voice would otherwise pace.
+        private float IdiomHoldFor(string english)
+        {
+            if (string.IsNullOrWhiteSpace(english)) return _idiomHoldSeconds;
+
+            float read = english.Length / _idiomReadingSpeed;
+            return Mathf.Clamp(read, _idiomHoldSeconds, Mathf.Max(_idiomHoldSeconds, _idiomHoldMaxSeconds));
+        }
+
+        // Shows the "put the fish on the scale" line and opens the placement stage properly: button up,
+        // idle nudge armed. Shared by both openings so they can only ever leave the same state behind.
+        private void OpenPlacement(string english, string arabic)
+        {
+            Speak(english, arabic, instant: false);
             RequestChoices(ScriptedChoice.ConfirmPlacement);
             ArmPlacementIdle();
-            return true;
         }
 
         /// <inheritdoc/>
@@ -361,6 +434,7 @@ namespace DumyatRuntime
 
             CancelInvoke(nameof(PlacementIdleNudge));
             CancelInvoke(nameof(FinishAfterHold));
+            CancelInvoke(nameof(OpenAfterIdiom));   // player left mid-proverb
 
             MerchantNPC merchant = _merchant;
             Action<NegotiationPhase> onEnded = _onEnded;
@@ -463,6 +537,11 @@ namespace DumyatRuntime
             }
             return lines;
         }
+
+        // The bank wired on this controller, else the market-wide one — the SAME asset the AI voice sale
+        // reads, so a merchant quotes the same proverbs whichever path the sale takes.
+        private MerchantIdiomsSO ResolveIdioms() =>
+            _idioms != null ? _idioms : (_systemConfig != null ? _systemConfig.Idioms : null);
 
         private Dictionary<FishData, float> BuildPriceMap(float total)
         {

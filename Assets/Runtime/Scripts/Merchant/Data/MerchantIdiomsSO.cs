@@ -28,14 +28,25 @@ namespace DumyatRuntime
             [Tooltip("Subtitle text.")]
             [TextArea] public string english;
 
-            [Tooltip("Egyptian Arabic — this is what is actually spoken, so keep it colloquial and " +
-                     "without diacritics.")]
+            [Tooltip("Egyptian Arabic — this is what the voice actually speaks. Unlike the LLM's output " +
+                     "this text is authored by hand and goes STRAIGHT to TTS: it never passes through " +
+                     "MerchantNegotiationLLM's dialect prompt or ArabicText.ToEgyptianForms, so nothing " +
+                     "will catch a Modern Standard word for you. Write it exactly as a Damietta seller " +
+                     "says it out loud — مش / ده / اللي / كتير / عشان / دلوقتي, ه-prefix futures (هقولك), " +
+                     "ما...ش negation (ميلاقيش) — never MSA (ليس / هذا / الذي / سوف / لن) and never " +
+                     "Levantine (شو / بدي / هلق). Numbers as WORDS, no digits; no diacritics. Punctuate " +
+                     "for delivery: ، for a short pause, . to end, ... for a trailing/thinking beat.")]
             [TextArea] public string arabic;
         }
 
         [Header("Lines")]
         [Tooltip("Picked at random. Leave empty to switch idioms off without unassigning the asset.")]
         [SerializeField] private Line[] _idioms = Array.Empty<Line>();
+
+        [Tooltip("The follow-up that lands the merchant back on business after an idiom — a greeting-ish " +
+                 "'put the fish on the scale'. Only ever used together with an idiom, which is why these " +
+                 "open by acknowledging the digression (المهم / على العموم / نرجع لموضوعنا).")]
+        [SerializeField] private Line[] _placementRequests = Array.Empty<Line>();
 
         [Header("When")]
         [Tooltip("How often a qualifying merchant actually says one. A line every approach turns a " +
@@ -75,6 +86,22 @@ namespace DumyatRuntime
 
             line = _idioms[UnityEngine.Random.Range(0, _idioms.Length)];
             return !string.IsNullOrWhiteSpace(line.english) || !string.IsNullOrWhiteSpace(line.arabic);
+        }
+
+        /// <summary>
+        /// The "…anyway, put the fish on the scale" line that follows an idiom, so the proverb lands as an
+        /// opening rather than as a non-sequitur the player has to guess a response to.
+        ///
+        /// It exists here rather than being taken from <see cref="ScriptedMerchantLinesSO.RandomWelcome"/>
+        /// — which says the same thing — because those lines are English-only by design (that bank is never
+        /// spoken), and on the AI path this one IS spoken. It needs Arabic.
+        /// </summary>
+        public Line RandomPlacementRequest()
+        {
+            if (_placementRequests == null || _placementRequests.Length == 0)
+                return new Line { english = "Anyway — put the fish on the scale and let me look.", arabic = string.Empty };
+
+            return _placementRequests[UnityEngine.Random.Range(0, _placementRequests.Length)];
         }
     }
 }

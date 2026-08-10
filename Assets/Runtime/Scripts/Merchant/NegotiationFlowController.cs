@@ -132,7 +132,8 @@ namespace DumyatRuntime
         [Header("Opening idiom")]
         [Tooltip("Optional bank of proverbs a good-natured merchant may open with. The asset decides " +
                  "which merchants are mild enough and how often any of them actually says one. Leave " +
-                 "empty and nobody does.")]
+                 "empty to fall back to the market-wide bank on MerchantSystemConfig (which the scripted " +
+                 "sale also uses); with neither assigned, nobody says one.")]
         [SerializeField] private MerchantIdiomsSO _idioms;
 
         [Header("Scripted (offline) fallback")]
@@ -1325,13 +1326,20 @@ namespace DumyatRuntime
                 if (_state == null || _negotiation == null || scale == null) return false;
 
                 // A bit of folk wisdom before business, from the good-natured traders only and only
-                // sometimes. Ahead of the greeting because that is where it belongs in the rhythm of the
-                // exchange — a proverb after "put the fish on the scale" is an interruption.
-                if (!await SpeakIdiomAsync()) return false;
-
-                // Welcome line (greets on the first conversation / sometimes after).
+                // sometimes. When it fires it IS the opening — idiom, then its own "…anyway, put the fish
+                // on the scale" follow-up — and the LLM welcome is skipped rather than stacked on top of
+                // it. Three opening speeches in a row is a monologue, and the pair already says everything
+                // the welcome would. RegisterConversation still runs either way, so first-meeting state
+                // advances whichever opening the player got.
                 bool greet = DecideOpeningGreeting(_activeMerchant);
-                if (!await SpeakLineAsync(await _negotiation.GenerateWelcomeLine(_state, greet))) return false;
+
+                IdiomOpening opening = await SpeakIdiomOpeningAsync();
+                if (opening == IdiomOpening.Aborted) return false;
+                if (opening == IdiomOpening.NotSpoken)
+                {
+                    // Welcome line (greets on the first conversation / sometimes after).
+                    if (!await SpeakLineAsync(await _negotiation.GenerateWelcomeLine(_state, greet))) return false;
+                }
 
                 int prompts = 0;
                 bool askAllPlaced = true;   // false for the one round after a "no" (a keep-placing line already asked)
@@ -1753,9 +1761,18 @@ namespace DumyatRuntime
         // Continuations run asynchronously so completing this from Cleanup can't re-enter mid-teardown.
         private Task SpeakAsync(string arabic)
         {
-            _speakTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            PlayMerchantLine(arabic, () => { var t = _speakTcs; _speakTcs = null; t?.TrySetResult(true); });
-            return _speakTcs.Task;
+            // Held in a LOCAL as well as the field: PlayMerchantLine completes synchronously when there is
+            // no TTS service or no voice id, and the old code read the field back inside the callback and
+            // nulled it — so on that path `return _speakTcs.Task` dereferenced a field the callback had
+            // already cleared. The field stays only so Cleanup can unblock a line mid-flight.
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _speakTcs = tcs;
+            PlayMerchantLine(arabic, () =>
+            {
+                if (ReferenceEquals(_speakTcs, tcs)) _speakTcs = null;
+                tcs.TrySetResult(true);
+            });
+            return tcs.Task;
         }
 
         // Bridges one turn-based capture to an await, returning the transcript (or null on failure /
@@ -2002,26 +2019,60 @@ namespace DumyatRuntime
         // Decides whether the merchant's opening line should include a greeting, and records that a
         // conversation has started. First conversation with this merchant: always greet (Egyptian
         // style). Afterwards: greet only GreetingChanceAfterFirst of the time.
-        /// <summary>
-        /// Speaks this merchant's opening idiom, if he is the sort who has one and the roll goes his
-        /// way. Returns false only if the negotiation ended while he was talking, so the caller can
-        /// unwind exactly as it does for any other line.
-        ///
-        /// Most approaches say nothing here and return true immediately — that is the point of it.
-        /// </summary>
-        private async Task<bool> SpeakIdiomAsync()
+        /// <summary>What <see cref="SpeakIdiomOpeningAsync"/> did, since an async method cannot use `out`.</summary>
+        private enum IdiomOpening
         {
-            if (_idioms == null || _activeMerchant == null) return true;
-            if (!_idioms.TryPick(_activeMerchant.Config, out MerchantIdiomsSO.Line idiom)) return true;
+            /// <summary>No idiom this time — the caller should speak the normal LLM welcome.</summary>
+            NotSpoken,
+            /// <summary>Idiom + placement request both said; the opening is complete.</summary>
+            Spoken,
+            /// <summary>The negotiation ended mid-line; unwind exactly as for any other line.</summary>
+            Aborted
+        }
 
-            ShowSubtitle(idiom.english, idiom.arabic);
+        /// <summary>
+        /// Speaks this merchant's whole opening as an idiom, if he is the sort who has one and the roll
+        /// goes his way: the proverb, then the "…anyway, put the fish on the scale" line that follows it.
+        ///
+        /// Both halves are needed. A proverb on its own leaves the player with nothing to act on and no
+        /// idea the merchant is waiting, so the follow-up carries the instruction the LLM welcome would
+        /// otherwise have carried — which is exactly why the caller then SKIPS that welcome. Nothing
+        /// delays the next line afterwards: the placement loop's normal idle wait already holds for
+        /// <see cref="_placementIdleSeconds"/> before nudging, so the pair paces itself the same as any
+        /// LLM opening would.
+        ///
+        /// Most approaches say nothing here and return <see cref="IdiomOpening.NotSpoken"/> immediately —
+        /// that is the point of it.
+        /// </summary>
+        private async Task<IdiomOpening> SpeakIdiomOpeningAsync()
+        {
+            MerchantIdiomsSO idioms = ResolveIdioms();
+            if (idioms == null || _activeMerchant == null) return IdiomOpening.NotSpoken;
+            if (!idioms.TryPick(_activeMerchant.Config, out MerchantIdiomsSO.Line idiom)) return IdiomOpening.NotSpoken;
 
-            // The subtitle is shown either way; only the Arabic is voiced, and a bank entry with no
-            // Arabic yet should still read rather than stall waiting for TTS that will never speak.
-            if (!string.IsNullOrWhiteSpace(idiom.arabic)) await SpeakAsync(idiom.arabic);
+            if (!await SpeakIdiomLineAsync(idiom.english, idiom.arabic)) return IdiomOpening.Aborted;
 
+            MerchantIdiomsSO.Line ask = idioms.RandomPlacementRequest();
+            if (!await SpeakIdiomLineAsync(ask.english, ask.arabic)) return IdiomOpening.Aborted;
+
+            return IdiomOpening.Spoken;
+        }
+
+        // Shows a hand-authored line and voices its Arabic. The subtitle is shown either way; a bank entry
+        // with no Arabic yet should still read rather than stall waiting for TTS that will never speak.
+        private async Task<bool> SpeakIdiomLineAsync(string english, string arabic)
+        {
+            if (string.IsNullOrWhiteSpace(english) && string.IsNullOrWhiteSpace(arabic)) return _busy;
+
+            ShowSubtitle(english, arabic);
+            if (!string.IsNullOrWhiteSpace(arabic)) await SpeakAsync(arabic);
             return _busy;
         }
+
+        // The bank wired on this controller, else the market-wide one. Both paths read the same asset off
+        // MerchantSystemConfig so the AI and scripted sales can never drift onto different proverbs.
+        private MerchantIdiomsSO ResolveIdioms() =>
+            _idioms != null ? _idioms : (_systemConfig != null ? _systemConfig.Idioms : null);
 
         private bool DecideOpeningGreeting(MerchantNPC merchant)
         {
