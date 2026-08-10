@@ -12,19 +12,29 @@ namespace DumyatRuntime
     /// <see cref="ConsentManager.SubmitConsentResult"/>, which persists it and completes any
     /// pending request callback.
     ///
-    /// Expects the ConsentPrompt.uxml layout on the attached <see cref="UIDocument"/>:
-    /// a "consent-panel" root, "mic-toggle"/"internet-toggle" toggles and
-    /// "confirm-button"/"decline-button" buttons.
+    /// Expects the ConsentPrompt.uxml layout on the attached <see cref="UIDocument"/>: a
+    /// "consent-panel" root, an ALLOW/BLOCK button pair per permission, and
+    /// "confirm-button"/"decline-button".
+    ///
+    /// ALLOW/BLOCK rather than checkboxes, matching Settings ▸ Permissions. A checkbox has no
+    /// visible "no": declining meant leaving something unticked and hoping, and Confirm had to be
+    /// disabled until both were ticked to make the all-or-nothing rule legible. Two labelled buttons
+    /// state both answers, so refusing is an action rather than an omission — and Confirm can simply
+    /// submit whatever was chosen.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class ConsentPromptUI : MonoBehaviour
     {
         // Element names in ConsentPrompt.uxml.
         private const string PanelName = "consent-panel";
-        private const string MicToggleName = "mic-toggle";
-        private const string InternetToggleName = "internet-toggle";
+        private const string MicAllowName = "mic-allow-button";
+        private const string MicBlockName = "mic-block-button";
+        private const string AiAllowName = "ai-allow-button";
+        private const string AiBlockName = "ai-block-button";
         private const string ConfirmButtonName = "confirm-button";
         private const string DeclineButtonName = "decline-button";
+
+        private const string SelectedSegmentClass = "consent-seg-btn--selected";
 
         [Tooltip("Show the prompt automatically on startup when the player has never been asked " +
                  "(either consent still NotAsked). Leave on so consent is settled before the first " +
@@ -42,10 +52,18 @@ namespace DumyatRuntime
 
         private UIDocument _document;
         private VisualElement _panel;
-        private Toggle _micToggle;
-        private Toggle _internetToggle;
+        private Button _micAllow;
+        private Button _micBlock;
+        private Button _aiAllow;
+        private Button _aiBlock;
         private Button _confirmButton;
         private Button _declineButton;
+
+        // What the player has picked on the panel, before they press CONFIRM. Not read back off the
+        // buttons: a class is a rendering detail, and the answer to "may we use your microphone"
+        // should not be inferred from what a stylesheet happens to have applied.
+        private bool _micAllowed = true;
+        private bool _aiAllowed = true;
 
         private void Awake()
         {
@@ -64,18 +82,20 @@ namespace DumyatRuntime
                 return;
             }
 
-            _micToggle = root.Q<Toggle>(MicToggleName);
-            _internetToggle = root.Q<Toggle>(InternetToggleName);
+            _micAllow = root.Q<Button>(MicAllowName);
+            _micBlock = root.Q<Button>(MicBlockName);
+            _aiAllow = root.Q<Button>(AiAllowName);
+            _aiBlock = root.Q<Button>(AiBlockName);
             _confirmButton = root.Q<Button>(ConfirmButtonName);
             _declineButton = root.Q<Button>(DeclineButtonName);
 
             if (_confirmButton != null) _confirmButton.clicked += HandleConfirm;
             if (_declineButton != null) _declineButton.clicked += HandleDeclineAll;
 
-            // Consent is all-or-nothing (voice mode needs BOTH mic and internet): Confirm is
-            // only clickable when both toggles are on; the only other choice is Decline All.
-            if (_micToggle != null) _micToggle.RegisterValueChangedCallback(HandleToggleChanged);
-            if (_internetToggle != null) _internetToggle.RegisterValueChangedCallback(HandleToggleChanged);
+            if (_micAllow != null) _micAllow.clicked += HandleMicAllow;
+            if (_micBlock != null) _micBlock.clicked += HandleMicBlock;
+            if (_aiAllow != null) _aiAllow.clicked += HandleAiAllow;
+            if (_aiBlock != null) _aiBlock.clicked += HandleAiBlock;
 
             Hide();
 
@@ -92,8 +112,10 @@ namespace DumyatRuntime
             if (_confirmButton != null) _confirmButton.clicked -= HandleConfirm;
             if (_declineButton != null) _declineButton.clicked -= HandleDeclineAll;
 
-            if (_micToggle != null) _micToggle.UnregisterValueChangedCallback(HandleToggleChanged);
-            if (_internetToggle != null) _internetToggle.UnregisterValueChangedCallback(HandleToggleChanged);
+            if (_micAllow != null) _micAllow.clicked -= HandleMicAllow;
+            if (_micBlock != null) _micBlock.clicked -= HandleMicBlock;
+            if (_aiAllow != null) _aiAllow.clicked -= HandleAiAllow;
+            if (_aiBlock != null) _aiBlock.clicked -= HandleAiBlock;
         }
 
         private void Start()
@@ -101,7 +123,9 @@ namespace DumyatRuntime
             TrySubscribe();
             if (_consent == null)
             {
-                Debug.LogWarning("ConsentPromptUI: no ConsentManager in scene; prompt will never show.");
+                Debug.LogWarning("ConsentPromptUI: no IConsentService injected, so the prompt will never " +
+                                 "show. It is a ROOT binding (GameInstaller), not a scene object — so " +
+                                 "the thing to check is whether this scene has a ContainerScope.", this);
                 return;
             }
 
@@ -131,16 +155,16 @@ namespace DumyatRuntime
             // wherever the previous scene's camera happened to be looking.
             if (_followAnchor != null) _followAnchor.Reanchor();
 
-            // Previously-declined players see their choice reflected; first-timers default to on.
+            // Previously-declined players see their choice reflected; first-timers default to ALLOW.
             if (_consent != null)
             {
                 ConsentState state = _consent.GetConsentStatus();
-                if (_micToggle != null) _micToggle.value = state.MicConsent != ConsentStatus.Declined;
-                if (_internetToggle != null) _internetToggle.value = state.InternetConsent != ConsentStatus.Declined;
+                _micAllowed = state.MicConsent != ConsentStatus.Declined;
+                _aiAllowed = state.InternetConsent != ConsentStatus.Declined;
             }
 
             _panel.style.display = DisplayStyle.Flex;
-            RefreshConfirmEnabled();
+            PaintSegments();
         }
 
         private void Hide()
@@ -148,17 +172,32 @@ namespace DumyatRuntime
             if (_panel != null) _panel.style.display = DisplayStyle.None;
         }
 
-        private bool BothToggledOn() =>
-            _micToggle != null && _micToggle.value && _internetToggle != null && _internetToggle.value;
+        private void HandleMicAllow() { _micAllowed = true; PaintSegments(); }
+        private void HandleMicBlock() { _micAllowed = false; PaintSegments(); }
+        private void HandleAiAllow() { _aiAllowed = true; PaintSegments(); }
+        private void HandleAiBlock() { _aiAllowed = false; PaintSegments(); }
 
-        private void HandleToggleChanged(ChangeEvent<bool> _) => RefreshConfirmEnabled();
+        /// <summary>Lights the chosen half of each row. Both halves are always live.</summary>
+        private void PaintSegments()
+        {
+            _micAllow?.EnableInClassList(SelectedSegmentClass, _micAllowed);
+            _micBlock?.EnableInClassList(SelectedSegmentClass, !_micAllowed);
+            _aiAllow?.EnableInClassList(SelectedSegmentClass, _aiAllowed);
+            _aiBlock?.EnableInClassList(SelectedSegmentClass, !_aiAllowed);
+        }
 
-        private void RefreshConfirmEnabled() => _confirmButton?.SetEnabled(BothToggledOn());
-
+        /// <summary>
+        /// Submits whatever is on screen. CONFIRM is never disabled now: with an explicit BLOCK the
+        /// panel always shows a complete answer, and a greyed-out Confirm on a consent screen reads
+        /// as the game refusing to accept "no".
+        ///
+        /// Voice still needs BOTH — <see cref="IConsentService.IsVoiceModeAvailable"/> decides that,
+        /// and blocking either simply means the merchants use the button sale.
+        /// </summary>
         private void HandleConfirm()
         {
-            if (!BothToggledOn()) return; // button is disabled in this state; belt-and-suspenders
-            Submit(ConsentStatus.Granted, ConsentStatus.Granted);
+            Submit(_micAllowed ? ConsentStatus.Granted : ConsentStatus.Declined,
+                   _aiAllowed ? ConsentStatus.Granted : ConsentStatus.Declined);
         }
 
         private void HandleDeclineAll()
@@ -172,7 +211,8 @@ namespace DumyatRuntime
 
             if (_consent == null)
             {
-                Debug.LogWarning("ConsentPromptUI: consent chosen but no ConsentManager to receive it.");
+                Debug.LogWarning("ConsentPromptUI: consent chosen but no IConsentService to receive it — " +
+                                 "the player's answer has been dropped.", this);
                 return;
             }
 

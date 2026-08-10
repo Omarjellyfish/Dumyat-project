@@ -371,7 +371,7 @@ namespace DumyatRuntime
                                  "shape's name to Extra Mouth Shapes. " +
                                  $"Available: {DescribeAvailableBlendShapes()}", this);
             else
-                Debug.Log($"SimpleLipSync: driving mouth blendshape '{chosen}' on " +
+                VerboseLog.Trace($"SimpleLipSync: driving mouth blendshape '{chosen}' on " +
                           $"{_mouthTargets.Count} renderer(s) under '{name}'" +
                           (chosenAmplitude >= 0f
                               ? $" (amplitude {chosenAmplitude:0.####} m)."
@@ -435,7 +435,7 @@ namespace DumyatRuntime
 
                 _blinkTargets.AddRange(left);
                 _blinkTargets.AddRange(right);
-                Debug.Log($"SimpleLipSync: blinking via '{pair.Left}'/'{pair.Right}' on " +
+                VerboseLog.Trace($"SimpleLipSync: blinking via '{pair.Left}'/'{pair.Right}' on " +
                           $"{_blinkTargets.Count} renderer(s) under '{name}'.", this);
                 return;
             }
@@ -446,7 +446,7 @@ namespace DumyatRuntime
                 CollectShape(candidate, _blinkTargets);
                 if (_blinkTargets.Count == 0) continue;
 
-                Debug.Log($"SimpleLipSync: blinking via combined '{candidate}' under '{name}'.", this);
+                VerboseLog.Trace($"SimpleLipSync: blinking via combined '{candidate}' under '{name}'.", this);
                 return;
             }
 
@@ -457,7 +457,7 @@ namespace DumyatRuntime
                 CollectShape(pair.Right, _blinkTargets);
                 if (_blinkTargets.Count == 0) continue;
 
-                Debug.Log($"SimpleLipSync: blinking via a single eyelid shape under '{name}'.", this);
+                VerboseLog.Trace($"SimpleLipSync: blinking via a single eyelid shape under '{name}'.", this);
                 return;
             }
 

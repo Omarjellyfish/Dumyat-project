@@ -37,11 +37,15 @@ namespace DumyatRuntime
         [SerializeField] private string _previewOff = "Subtitles are off. Merchants still speak.";
 
         private ISettingsService _settings;
+        private IConsentService _consent;
+        private IEventService _events;
 
         [Inject]
-        private void Inject(ISettingsService settings)
+        private void Inject(ISettingsService settings, IConsentService consent, IEventService events)
         {
             _settings = settings;
+            _consent = consent;
+            _events = events;
         }
 
         /// <summary>Raised by the Back button. The owning menu decides what to show next.</summary>
@@ -82,6 +86,12 @@ namespace DumyatRuntime
         private VisualElement _meterDot;
         private Label _meterDevice;
         private Label _meterCaption;
+
+        // --- Permissions page ---------------------------------------------------
+        private Button[] _micConsentButtons;
+        private Button[] _aiConsentButtons;
+        private Label _consentStatus;
+        private VisualElement _permissionsGroup;
 
         /// <summary>
         /// The microphone behind the level meter.
@@ -154,6 +164,18 @@ namespace DumyatRuntime
             "TalkPrimaryButton", "TalkSecondaryButton"
         };
 
+        // Index 0 = allow, 1 = block. NOT indexed by ConsentStatus, whose 0 is NotAsked — a state
+        // the player cannot click their way back into, so it has no button.
+        private static readonly string[] MicConsentButtonNames =
+        {
+            "MicConsentAllowButton", "MicConsentBlockButton"
+        };
+
+        private static readonly string[] AiConsentButtonNames =
+        {
+            "AiConsentAllowButton", "AiConsentBlockButton"
+        };
+
         private const string ActiveTabClass = "settings-tab--active";
         private const string ActivePageClass = "settings-page--active";
         private const string SelectedSegmentClass = "segment-btn--selected";
@@ -162,6 +184,9 @@ namespace DumyatRuntime
         private const string MeterFillOpenClass = "input-meter-fill--open";
         private const string MeterDotOpenClass = "input-meter-dot--open";
         private const string MeterGateAutoClass = "input-meter-gate--auto";
+        private const string ConsentOkClass = "consent-status--ok";
+        private const string ConsentBlockedClass = "consent-status--blocked";
+        private const string ConsentOfflineClass = "consent-status--offline";
 
         /// <summary>Page index of the Voice tab, which is the only page that owns a live microphone.</summary>
         private const int VoicePageIndex = 2;
@@ -217,9 +242,15 @@ namespace DumyatRuntime
             _sliderValues = null;
             _languageButtons = null;
             _subtitleButtons = null;
+            _events?.Unsubscribe<ConsentChangedEvent>(HandleConsentChanged);
+
             _micModeButtons = null;
             _sensitivityButtons = null;
             _talkButtons = null;
+            _micConsentButtons = null;
+            _aiConsentButtons = null;
+            _consentStatus = null;
+            _permissionsGroup = null;
             _thresholdSlider = null;
             _thresholdValue = null;
             _sensitivityGroup = null;
@@ -285,6 +316,7 @@ namespace DumyatRuntime
                 _root.Q<Button>("TabAudioButton"),
                 _root.Q<Button>("TabLanguageButton"),
                 _root.Q<Button>("TabVoiceButton"),
+                _root.Q<Button>("TabPermissionsButton"),
                 _root.Q<Button>("TabControlsButton")
             };
 
@@ -293,6 +325,7 @@ namespace DumyatRuntime
                 _root.Q<VisualElement>("AudioPage"),
                 _root.Q<VisualElement>("LanguagePage"),
                 _root.Q<VisualElement>("VoicePage"),
+                _root.Q<VisualElement>("PermissionsPage"),
                 _root.Q<VisualElement>("ControlsPage")
             };
 
@@ -408,7 +441,130 @@ namespace DumyatRuntime
             _talkButtons = BindSegment(TalkButtonNames, i =>
                 _settings?.SetPushToTalkButton((PushToTalkButton)i));
 
+            BindConsent();
             BindThresholdSlider();
+        }
+
+        /// <summary>
+        /// Wires the two permission rows. Each writes BOTH flags because
+        /// <see cref="IConsentService.SetConsent"/> takes both — the untouched one is passed through
+        /// unchanged rather than re-derived, so clicking one row can never quietly reset the other.
+        /// </summary>
+        private void BindConsent()
+        {
+            _permissionsGroup = _root.Q<VisualElement>("PermissionsPage");
+            _consentStatus = _root.Q<Label>("ConsentStatusLabel");
+
+            _micConsentButtons = BindSegment(MicConsentButtonNames, i =>
+                SetConsent(mic: Answer(i), ai: null));
+
+            _aiConsentButtons = BindSegment(AiConsentButtonNames, i =>
+                SetConsent(mic: null, ai: Answer(i)));
+
+            // Granting mic consent can put an OS permission dialog on screen, and the answer lands
+            // asynchronously — so the re-seed BindSegment does on click runs while the decision is
+            // still pending. ConsentChangedEvent fires once it has actually settled.
+            _events?.Subscribe<ConsentChangedEvent>(HandleConsentChanged);
+        }
+
+        private static ConsentStatus Answer(int segmentIndex) =>
+            segmentIndex == 0 ? ConsentStatus.Granted : ConsentStatus.Declined;
+
+        private void SetConsent(ConsentStatus? mic, ConsentStatus? ai)
+        {
+            if (_consent == null) return;
+
+            ConsentState current = _consent.GetConsentStatus();
+            _consent.SetConsent(mic ?? current.MicConsent, ai ?? current.InternetConsent);
+        }
+
+        private void HandleConsentChanged(ConsentChangedEvent evt) => ApplyConsent();
+
+        /// <summary>
+        /// Draws both rows and the status line from the service.
+        ///
+        /// The status line is deliberately NOT derived from the two segments: both can read ALLOW
+        /// and voice still be unavailable, because <see cref="IConsentService.IsVoiceModeAvailable"/>
+        /// also wants a reachable network and the OS microphone grant. Those are three different
+        /// sentences, and telling a player their setting is wrong when it is right sends them to
+        /// change the one thing they had already got right.
+        /// </summary>
+        private void ApplyConsent()
+        {
+            if (_consent == null)
+            {
+                // No service should be impossible now that it is a root binding, but a panel that
+                // silently offers dead switches is worse than one that hides them.
+                _permissionsGroup?.SetEnabled(false);
+                return;
+            }
+
+            ConsentState state = _consent.GetConsentStatus();
+
+            PaintConsentSegment(_micConsentButtons, state.MicConsent);
+            PaintConsentSegment(_aiConsentButtons, state.InternetConsent);
+
+            bool refused = state.MicConsent == ConsentStatus.Declined
+                           || state.InternetConsent == ConsentStatus.Declined;
+            bool undecided = !refused
+                             && (state.MicConsent == ConsentStatus.NotAsked
+                                 || state.InternetConsent == ConsentStatus.NotAsked);
+
+            string message;
+            string tone = null;
+
+            if (undecided)
+            {
+                message = "Not set up yet — choose for each.";
+            }
+            else if (refused)
+            {
+                message = "Merchants will use the buttons instead. You can still sell everything.";
+                tone = ConsentBlockedClass;
+            }
+            else if (!MicrophonePermission.IsGranted)
+            {
+                message = "Your device is still blocking the microphone. Allow it in the system settings.";
+                tone = ConsentBlockedClass;
+            }
+            else if (!_consent.IsVoiceModeAvailable())
+            {
+                // Both allowed and the OS is happy, so the only thing left is the network.
+                message = "No connection — the buttons will stand in until it is back.";
+                tone = ConsentOfflineClass;
+            }
+            else
+            {
+                message = "Voice haggling is on.";
+                tone = ConsentOkClass;
+            }
+
+            if (_consentStatus != null)
+            {
+                _consentStatus.text = message;
+                _consentStatus.EnableInClassList(ConsentOkClass, tone == ConsentOkClass);
+                _consentStatus.EnableInClassList(ConsentBlockedClass, tone == ConsentBlockedClass);
+                _consentStatus.EnableInClassList(ConsentOfflineClass, tone == ConsentOfflineClass);
+            }
+        }
+
+        private static void PaintConsentSegment(Button[] buttons, ConsentStatus status)
+        {
+            if (buttons == null) return;
+
+            bool allowed = status == ConsentStatus.Granted;
+            bool blocked = status == ConsentStatus.Declined;
+
+            // Both buttons use the page's one selection class, exactly as the subtitle, mic-mode and
+            // talk-button segments do. A chosen BLOCK is still a chosen option, and giving it its own
+            // colour made it the only control here whose "selected" look came from a class added
+            // alongside the feature — so when that rule was not in the loaded stylesheet, ALLOW lit
+            // up and BLOCK appeared to do nothing.
+            //
+            // NotAsked lights neither, which is the honest picture: the player has not chosen, and
+            // pre-selecting one would put words in their mouth on a privacy control.
+            buttons[0]?.EnableInClassList(SelectedSegmentClass, allowed);
+            buttons[1]?.EnableInClassList(SelectedSegmentClass, blocked);
         }
 
         /// <summary>
@@ -472,6 +628,10 @@ namespace DumyatRuntime
 
         private void SeedFromSettings()
         {
+            // Before the ISettingsService guard: consent comes from a different service, and a page
+            // opened without settings should still show the permissions truthfully.
+            ApplyConsent();
+
             if (_settings == null) return;
 
             for (int i = 0; i < Channels.Length; i++)

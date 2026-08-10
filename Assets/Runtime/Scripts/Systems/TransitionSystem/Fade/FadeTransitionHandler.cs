@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace DumyatRuntime
 {
@@ -88,13 +86,11 @@ namespace DumyatRuntime
                 // Move player into the newly loaded active scene so they don't stay in DontDestroyOnLoad
                 UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(_playerObj, UnityEngine.SceneManagement.SceneManager.GetActiveScene());
 
-                // The rig is carried across, never destroyed/recreated, so its Near-Far Interactors
-                // never get a fresh OnEnable during this transition. They stay registered with the
-                // OLD scene's XRInteractionManager, which is now gone — leaving the ray stuck as if
-                // permanently grabbing, with a "Missing" Interaction Manager reference in the
-                // Inspector. Toggling the component forces it to re-register against whatever
-                // XRInteractionManager is in the new scene.
-                ReenableNearFarInteractors(_playerObj);
+                // The rig is carried across, never destroyed and recreated, so nothing under it gets a
+                // fresh OnEnable and every XRI registration it holds still points at the old scene's
+                // manager — which has just been destroyed. See CarriedRigInteraction; the tok-tok
+                // carries the rig the same way and calls the same thing.
+                CarriedRigInteraction.Rebind(_playerObj);
 
                 _playerObj = null;
             }
@@ -136,26 +132,5 @@ namespace DumyatRuntime
             return cameraRootIsTagged ? cameraRoot : tagged[0];
         }
 
-        private static void ReenableNearFarInteractors(GameObject playerObj)
-        {
-            // The Near-Far Interactor's parent controller carries an XRInteractionGroup, and the
-            // interactor is only allowed to register with the XRInteractionManager AFTER its
-            // containing group has registered itself. Toggling only the interactor was not enough
-            // — the group's own OnEnable never got a fresh trigger, so it still wasn't registered
-            // when the interactor tried, producing the same "before its containing Interaction
-            // Group is registered" warning as the original bug. Toggle the group first, then the
-            // interactor, so each one's OnEnable runs in the order XRI actually requires.
-            foreach (var group in playerObj.GetComponentsInChildren<XRInteractionGroup>(true))
-            {
-                group.enabled = false;
-                group.enabled = true;
-            }
-
-            foreach (var nearFar in playerObj.GetComponentsInChildren<NearFarInteractor>(true))
-            {
-                nearFar.enabled = false;
-                nearFar.enabled = true;
-            }
-        }
     }
 }

@@ -134,6 +134,13 @@ namespace DumyatRuntime
 
                 // Move player into the active scene so they behave normally
                 SceneManager.MoveGameObjectToScene(_playerRoot.gameObject, SceneManager.GetActiveScene());
+
+                // Carried, not respawned — so nothing under the rig gets a fresh OnEnable and its XRI
+                // registrations still point at the manager that just died with the old scene. Without
+                // this the player arrives able to walk but unable to grab anything, the bag included.
+                // The bus handler carries the rig the same way and calls the same thing.
+                CarriedRigInteraction.Rebind(_playerRoot.gameObject);
+
                 _playerRoot = null;
             }
 

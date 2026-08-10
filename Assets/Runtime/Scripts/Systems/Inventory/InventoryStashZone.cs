@@ -66,14 +66,19 @@ namespace DumyatRuntime
         {
             InventoryToolkitUI ui = ResolveInventoryUI();
 
-            if (ui != null)
+            if (ui == null)
             {
-                ui.ToggleUI();
+                Debug.LogError("InventoryStashZone: grabbed, but there is no ACTIVE InventoryToolkitUI " +
+                               "to open. It rides on the player rig, so the question is whether this " +
+                               "scene has a live one.", this);
                 return;
             }
 
-            Debug.LogError("InventoryStashZone: no InventoryToolkitUI in the scene, so the bag cannot " +
-                           "open. It normally arrives on the player rig — has one been spawned?", this);
+            // Logged on the way through, not just on failure. "I grabbed it and nothing happened" has
+            // two very different causes — the grab never registered, or it did and the panel refused
+            // to draw — and without a line here the console looks identical either way.
+            ui.ToggleUI();
+            VerboseLog.Trace($"InventoryStashZone: stash grabbed — toggled '{ui.name}'.", this);
         }
 
         /// <summary>
@@ -102,7 +107,7 @@ namespace DumyatRuntime
 
         private void OnStashReleased(SelectExitEventArgs args)
         {
-            Debug.Log("InventoryStashZone: Stash was released.");
+            VerboseLog.Trace("InventoryStashZone: Stash was released.");
         }
 
         private void OnTriggerEnter(Collider other)
@@ -158,7 +163,7 @@ namespace DumyatRuntime
 
             _haptics?.TriggerVibration(0.6f, 0.15f, 0.8f, HapticHand.Both);
 
-            //Debug.Log($"InventoryStashZone: Physical item '{pickup.ItemID}' stashed.");
+            //VerboseLog.Trace($"InventoryStashZone: Physical item '{pickup.ItemID}' stashed.");
 
             pickup.Collect();
         }

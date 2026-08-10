@@ -400,6 +400,65 @@
     letter-spacing: 0;
 }
 
+
+/* ---------------------------------------------------------- Permissions -- */
+/* Row shape follows .slider-row above — hairline underneath, no card — so the two
+   consent rows and the audio rows read as the same kind of list. */
+.consent-row {
+    flex-direction: row;
+    align-items: center;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.14);
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.consent-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.consent-name {
+    font-size: 26px;
+    color: #EAF8FB;
+}
+
+.consent-sub {
+    font-size: 19px;
+    color: rgba(214, 246, 250, 0.55);
+    white-space: normal;
+    margin-top: 2px;
+}
+
+/* Fixed width so both rows' buttons line up in a column regardless of how long the
+   label beside them runs. Two 76px-tall targets plus the inter-button margin. */
+.consent-segment {
+    width: 320px;
+    flex-shrink: 0;
+}
+
+/* Sized as a note, coloured by state from SettingsToolkitUI. */
+.consent-status {
+    font-size: 22px;
+    white-space: normal;
+    margin-top: 16px;
+    color: rgba(214, 246, 250, 0.55);
+}
+
+.consent-status--ok {
+    color: #8DEBAF;
+}
+
+.consent-status--blocked {
+    color: #FF9B8A;
+}
+
+/* Both allowed, but nothing to talk to. Not a refusal, so not coral. */
+.consent-status--offline {
+    color: #E8C069;
+}
+
+
 /* --------------------------------------------- Subtitle preview + notes -- */
 .subtitle-preview {
     margin-top: 30px;

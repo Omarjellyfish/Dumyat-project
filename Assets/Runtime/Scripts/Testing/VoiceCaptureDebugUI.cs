@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Reflex.Attributes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -66,7 +67,12 @@ namespace DumyatRuntime
         [Tooltip("Open the STT session automatically on Start so the meter is live without pressing Open.")]
         [SerializeField] private bool _openSessionOnStart;
 
+        // Injected rather than found: ConsentManager is a root POCO now, so there is no scene object
+        // to search for. See the note on ConsentManager for why it moved.
         private IConsentService _consent;
+
+        [Inject]
+        private void Inject(IConsentService consent) => _consent = consent;
         private readonly List<string> _events = new List<string>();
         private const int MaxEvents = 8;
         private Vector2 _scroll;
@@ -107,7 +113,6 @@ namespace DumyatRuntime
             // its Show Debug UI checkbox is on); fall back to a scene search for manual placement.
             if (_controller == null) _controller = GetComponent<VoiceCaptureController>();
             if (_controller == null) _controller = FindFirstObjectByType<VoiceCaptureController>();
-            _consent = FindFirstObjectByType<ConsentManager>();
             _camera = Camera.main;
         }
 

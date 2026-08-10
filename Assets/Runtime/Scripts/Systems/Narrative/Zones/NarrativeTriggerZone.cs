@@ -23,17 +23,17 @@ namespace DumyatRuntime
 
         private void OnTriggerEnter(Collider other)
         {
-            Debug.Log($"[NarrativeTriggerZone] OnTriggerEnter entered by {other.name} (Tag: {other.tag})");
+            VerboseLog.Trace($"[NarrativeTriggerZone] OnTriggerEnter entered by {other.name} (Tag: {other.tag})");
             
             if (!other.CompareTag("Player")) return;
             
-            Debug.Log($"[NarrativeTriggerZone] Player detected. _hasFired: {_hasFired}");
+            VerboseLog.Trace($"[NarrativeTriggerZone] Player detected. _hasFired: {_hasFired}");
             if (_triggerOnce && _hasFired) return;
 
             if (!string.IsNullOrEmpty(_persistenceKey))
             {
                 bool hasKey = _playerPresistenceService.HasKey(_persistenceKey);
-                Debug.Log($"[NarrativeTriggerZone] Checking persistence key: {_persistenceKey}. HasKey: {hasKey}. Required: {_requireKeyToTrigger}");
+                VerboseLog.Trace($"[NarrativeTriggerZone] Checking persistence key: {_persistenceKey}. HasKey: {hasKey}. Required: {_requireKeyToTrigger}");
                 if (hasKey != _requireKeyToTrigger) return;
             }
 
@@ -44,7 +44,7 @@ namespace DumyatRuntime
             }
 
             _hasFired = true;
-            Debug.Log($"[NarrativeTriggerZone] Publishing PlayDialogueEvent for sequence: {_dialogueSequence.name}");
+            VerboseLog.Trace($"[NarrativeTriggerZone] Publishing PlayDialogueEvent for sequence: {_dialogueSequence.name}");
             
             if (_eventService == null)
             {

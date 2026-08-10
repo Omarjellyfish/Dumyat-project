@@ -1,5 +1,6 @@
 using Reflex.Attributes;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace DumyatRuntime
 {
@@ -93,11 +94,37 @@ namespace DumyatRuntime
                 return;
             }
             _active = this;
+
+            // EnsureRig drops the safe spot when the RIG changes, which covers every scene the player
+            // arrives in with a freshly spawned one. It does not cover a bus journey: FadeTransitionHandler
+            // carries this very rig across the load, so the rig never changes, this component is never
+            // re-enabled, and the guard walks into the new town still believing in the old town's floor.
+            //
+            // Observed doing real damage — arriving in Ezbet El Borg and being yanked to (-1.08, 0.08,
+            // -2.09), which is where the player had been standing in Home. Listening for the load itself
+            // is what makes the carried case behave like the spawned one.
+            //
+            // sceneLoaded rather than SceneLoadCompleteEvent, for the same reason GameSessionService
+            // uses it: pressing Play directly in a gameplay scene never publishes the event, and a guard
+            // that only resets on travel would be wrong in exactly the sessions used for testing.
+            SceneManager.sceneLoaded += HandleSceneLoaded;
         }
 
         private void OnDisable()
         {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
             if (_active == this) _active = null;
+        }
+
+        /// <summary>
+        /// A new scene means the recorded safe spot describes a floor that no longer exists — and worse,
+        /// a COORDINATE that now points somewhere arbitrary. Forgetting it makes the guard fall back to
+        /// this scene's ArrivalPoint until the player has actually stood somewhere here.
+        /// </summary>
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            _hasSafePosition = false;
+            _safePointTimer = 0f;
         }
 
         private void Update()

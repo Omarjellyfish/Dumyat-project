@@ -110,7 +110,12 @@ namespace DumyatRuntime
             }
 
             _gameState?.SetState(GameState.FreeRoaming);
-            EnterScene(ResumeSceneName);
+
+            // The catalogue gets the final say on WHERE, so a fixed-scene setup can send every
+            // Continue to one place without touching the save. HasSave above still gates on the
+            // recorded scene being resumable, so an unfinished town cannot be resumed into by
+            // accident either way.
+            EnterScene(_catalog.ContinueSceneFor(ResumeSceneName));
         }
 
         /// <summary>

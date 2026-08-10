@@ -48,16 +48,7 @@ namespace DumyatRuntime
 
             if (_uiDocument == null) return;
 
-            _root = _uiDocument.rootVisualElement;
-
-            // The main container in your UI Builder document where slots will be added
-            _slotContainer = _root.Q<VisualElement>("SlotContainer");
-            _walletChip = _root.Q<VisualElement>("WalletChip");
-            _walletLabel = _root.Q<Label>("WalletBalance");
-            _emptyHint = _root.Q<Label>("EmptyHint");
-
-            // Seed from the service so the number is right before the first MoneyChangedEvent arrives.
-            SetBalanceText(_wallet?.Balance ?? 0);
+            BindDocument();
 
             if (_eventService == null) return;
 
@@ -81,9 +72,61 @@ namespace DumyatRuntime
             _eventService.Unsubscribe<MoneyChangedEvent>(HandleMoneyChanged);
         }
 
+        /// <summary>
+        /// Caches the elements this panel drives. Split out of <see cref="OnEnable"/> so it can be run
+        /// again later — see <see cref="EnsureBound"/>.
+        /// </summary>
+        private void BindDocument()
+        {
+            _root = _uiDocument.rootVisualElement;
+            if (_root == null) return;
+
+            // The main container in the UI Builder document where slots are added.
+            _slotContainer = _root.Q<VisualElement>("SlotContainer");
+            _walletChip = _root.Q<VisualElement>("WalletChip");
+            _walletLabel = _root.Q<Label>("WalletBalance");
+            _emptyHint = _root.Q<Label>("EmptyHint");
+
+            // Slots belong to the tree that just went away; keeping them would leave RefreshFullUI
+            // updating orphans and skipping the rebuild it thinks it has already done.
+            _activeSlots.Clear();
+
+            // A fresh tree opens with default styles, so the panel would silently re-open on a rebuild.
+            _root.style.display = _isOpen ? DisplayStyle.Flex : DisplayStyle.None;
+
+            // The new label starts blank; the balance is read from the service rather than carried
+            // over, so it is right even if a MoneyChangedEvent landed while the tree was detached.
+            SetBalanceText(_wallet?.Balance ?? 0);
+        }
+
+        /// <summary>
+        /// Re-resolves the visual tree when the cached one has gone stale, and reports whether there
+        /// is something to draw into.
+        ///
+        /// WHY THIS IS NOT JUST A NULL CHECK. The bag rides on the player rig, and a bus journey
+        /// carries that rig across the scene load rather than respawning it
+        /// (<see cref="FadeTransitionHandler"/> — DontDestroyOnLoad, then MoveGameObjectToScene). The
+        /// GameObject is therefore never disabled, so OnEnable never runs again — while the UIDocument
+        /// underneath it rebuilds its tree. Everything cached above then refers to elements detached
+        /// from any panel: setting display on them changes nothing anyone can see, which is exactly the
+        /// "inventory works until you take the bus, in every scene" report.
+        ///
+        /// <c>panel == null</c> is the test because that is precisely what "no longer attached to
+        /// anything being drawn" means. Same reasoning as CameraBillboard re-resolving Camera.main
+        /// rather than trusting a reference taken in a previous scene.
+        /// </summary>
+        private bool EnsureBound()
+        {
+            if (_uiDocument == null) return false;
+            if (_root != null && _root.panel != null) return true;
+
+            BindDocument();
+            return _root != null && _root.panel != null;
+        }
+
         public void ToggleUI()
         {
-            if (_root == null) return;
+            if (!EnsureBound()) return;
 
             if (_isOpen) CloseUI();
             else OpenUI();
@@ -91,7 +134,7 @@ namespace DumyatRuntime
 
         public void OpenUI()
         {
-            if (_root == null || _isOpen) return;
+            if (!EnsureBound() || _isOpen) return;
 
             _isOpen = true;
             _root.style.display = DisplayStyle.Flex;
@@ -112,7 +155,9 @@ namespace DumyatRuntime
         {
             InventoryItem updatedItem = evt.Item;
 
-            if (_root == null || _root.style.display == DisplayStyle.None) return;
+            // Tracked state rather than the inline style: a rebuilt tree reports its default display,
+            // which would make a closed bag look open and an open one look closed.
+            if (!_isOpen || !EnsureBound()) return;
 
             if (updatedItem.Quantity <= 0)
             {
@@ -131,7 +176,7 @@ namespace DumyatRuntime
             SetBalanceText(evt.NewBalance);
 
             // Only animate when the panel is actually on screen.
-            if (_walletChip == null || _root == null || _root.style.display == DisplayStyle.None) return;
+            if (!_isOpen || _walletChip == null || _root == null) return;
 
             FlashWalletChip(evt.IsIncome);
         }

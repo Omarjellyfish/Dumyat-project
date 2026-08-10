@@ -22,7 +22,9 @@ namespace DumyatRuntime
         [SerializeField] private STTManager _stt;
 
         [Header("Merchant / Player Services (optional — auto-found if left empty)")]
-        [SerializeField] private ConsentManager _consent;
+        // _consent is gone: ConsentManager is a root binding now (GameInstaller). It was registered
+        // here while the merchant prompt was the only caller, which meant consent existed in this
+        // one scene — and the settings page that switches it opens from the main menu too.
         [SerializeField] private PlayerStats _playerStats;
         [SerializeField] private MerchantNegotiationLLM _negotiationLLM;
         [SerializeField] private NegotiationFlowController _flow;
@@ -35,7 +37,6 @@ namespace DumyatRuntime
             Register<LLMManager, ILLMService>(containerBuilder, _llm);
             Register<TTSManager, ITTSService>(containerBuilder, _tts);
             Register<STTManager, ISTTService>(containerBuilder, _stt);
-            Register<ConsentManager, IConsentService>(containerBuilder, _consent);
             Register<PlayerStats, IPlayerStatsService>(containerBuilder, _playerStats);
             Register<MerchantNegotiationLLM, IMerchantNegotiationService>(containerBuilder, _negotiationLLM);
             Register<NegotiationFlowController, INegotiationService>(containerBuilder, _flow);

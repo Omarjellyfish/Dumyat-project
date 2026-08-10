@@ -3,6 +3,19 @@ using UnityEngine;
 
 namespace DumyatRuntime
 {
+    /// <summary>Where the Continue button takes the player.</summary>
+    public enum ContinueTarget
+    {
+        /// <summary>Back to wherever they stopped — the scene recorded in the save.</summary>
+        LastVisitedScene = 0,
+
+        /// <summary>
+        /// Always the same scene, whatever the save says. The save itself is untouched: money,
+        /// inventory and quests still resume, only the PLACE is overridden.
+        /// </summary>
+        FixedScene = 1
+    }
+
     /// <summary>
     /// Everything the menus need to know that is content rather than behaviour: which scenes they
     /// load, which scenes are worth resuming, what the loading screen says, and what the controls
@@ -23,6 +36,15 @@ namespace DumyatRuntime
                  "scenes, anything a player should not be dropped back into. The main menu scene is " +
                  "excluded automatically and does not need listing here.")]
         [SerializeField] private string[] _nonResumableScenes;
+
+        [Tooltip("Where Continue goes.\n\n" +
+                 "Last Visited Scene — puts the player back where they stopped.\n" +
+                 "Fixed Scene — always loads the scene below, whatever the save says. Useful while a " +
+                 "town is being rebuilt and returning to it would strand the player.")]
+        [SerializeField] private ContinueTarget _continueTarget = ContinueTarget.LastVisitedScene;
+
+        [Tooltip("Only used when Continue Target is Fixed Scene. Must be in Build Settings.")]
+        [SerializeField] private string _continueFixedScene = "Home";
 
         [Header("Loading Screen")]
         [Tooltip("Shown one at a time while loading, in order, looping. Leave empty for no tips.")]
@@ -58,6 +80,30 @@ namespace DumyatRuntime
 
         public string MainMenuSceneName => _mainMenuSceneName;
         public string NewGameSceneName => _newGameSceneName;
+
+        /// <summary>
+        /// The scene Continue should load, given the scene the save recorded.
+        ///
+        /// Returns <paramref name="lastVisitedScene"/> unchanged in the normal case. Under
+        /// <see cref="ContinueTarget.FixedScene"/> it returns the configured scene instead — the save
+        /// is not rewritten, so the player keeps their money, bag and quests and only the PLACE is
+        /// overridden. A Fixed Scene left blank falls back to the recorded one rather than sending
+        /// Continue to a scene called "".
+        /// </summary>
+        public string ContinueSceneFor(string lastVisitedScene)
+        {
+            if (_continueTarget != ContinueTarget.FixedScene) return lastVisitedScene;
+
+            if (string.IsNullOrWhiteSpace(_continueFixedScene))
+            {
+                Debug.LogWarning($"{name}: Continue Target is Fixed Scene but no scene is named, so " +
+                                 "Continue is falling back to the last visited one. Set Continue " +
+                                 "Fixed Scene, or switch the target back to Last Visited Scene.", this);
+                return lastVisitedScene;
+            }
+
+            return _continueFixedScene;
+        }
         public IReadOnlyList<string> LoadingTips => _loadingTips ?? System.Array.Empty<string>();
         public float TipRotationSeconds => Mathf.Max(0.5f, _tipRotationSeconds);
         public Sprite ControlsImage => _controlsImage;

@@ -192,7 +192,7 @@ namespace DumyatRuntime
 
             string url = string.Format(EndpointFormat, voiceId);
             byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
-            Debug.Log($"ElevenLabsClient: POST {url} — {version}, model={modelId} ({body.Length} bytes)");
+            VerboseLog.Trace($"ElevenLabsClient: POST {url} — {version}, model={modelId} ({body.Length} bytes)");
 
             using (UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
             {
@@ -205,7 +205,7 @@ namespace DumyatRuntime
 
                 yield return request.SendWebRequest();
 
-                Debug.Log($"ElevenLabsClient: Response — result={request.result}, HTTP {request.responseCode}");
+                VerboseLog.Trace($"ElevenLabsClient: Response — result={request.result}, HTTP {request.responseCode}");
 
                 if (request.result == UnityWebRequest.Result.Success)
                 {

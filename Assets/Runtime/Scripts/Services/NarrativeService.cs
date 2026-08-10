@@ -129,13 +129,13 @@ namespace DumyatRuntime
 
         private void OnPlayDialogueEvent(PlayDialogueEvent evt)
         {
-            Debug.Log($"[NarrativeService] Received PlayDialogueEvent for sequence: {(evt.Sequence != null ? evt.Sequence.name : "NULL")}");
+            VerboseLog.Trace($"[NarrativeService] Received PlayDialogueEvent for sequence: {(evt.Sequence != null ? evt.Sequence.name : "NULL")}");
             PlayDialogue(evt.Sequence, evt.Priority);
         }
 
         private void StartNewSequence(DialogueSequenceSO sequence)
         {
-            Debug.Log($"[NarrativeService] Starting new sequence: {sequence.name}");
+            VerboseLog.Trace($"[NarrativeService] Starting new sequence: {sequence.name}");
             _current = new DialogueState
             {
                 Sequence = sequence,
@@ -200,7 +200,7 @@ namespace DumyatRuntime
             }
 
             var currentLine = _current.Sequence.Lines[_current.CurrentLineIndex];
-            Debug.Log($"[NarrativeService] Playing line index {_current.CurrentLineIndex}");
+            VerboseLog.Trace($"[NarrativeService] Playing line index {_current.CurrentLineIndex}");
 
             // Set keys if required
             if (!string.IsNullOrEmpty(currentLine.PersistenceKeyToSet))
@@ -214,7 +214,7 @@ namespace DumyatRuntime
             AudioClip clip = currentLine.Character != null ? currentLine.Character.GetClip(currentLine.VoiceLineKey) : null;
             string subtitleText = currentLine.SubtitleText ?? string.Empty;
 
-            Debug.Log($"[NarrativeService] Publishing DialogueLineStartedEvent. CharacterId: {characterId}, Subtitle: {subtitleText}, HasClip: {clip != null}");
+            VerboseLog.Trace($"[NarrativeService] Publishing DialogueLineStartedEvent. CharacterId: {characterId}, Subtitle: {subtitleText}, HasClip: {clip != null}");
 
             float duration = clip != null
                 ? clip.length

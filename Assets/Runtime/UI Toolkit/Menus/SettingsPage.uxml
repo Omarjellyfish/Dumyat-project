@@ -27,6 +27,11 @@
                 <ui:Button name="TabAudioButton" text="AUDIO" class="settings-tab settings-tab--active" />
                 <ui:Button name="TabLanguageButton" text="LANGUAGE" class="settings-tab" />
                 <ui:Button name="TabVoiceButton" text="VOICE" class="settings-tab" />
+                <!-- Next to VOICE because both are about the microphone, and BEFORE controls so the
+                     rail runs from what the game does with sound to what it is allowed to do with
+                     it. Keeping it here also leaves VOICE at index 2, which SettingsToolkitUI names
+                     as the only page owning a live microphone. -->
+                <ui:Button name="TabPermissionsButton" text="PERMISSIONS" class="settings-tab" />
                 <ui:Button name="TabControlsButton" text="CONTROLS" class="settings-tab" />
             </ui:VisualElement>
 
@@ -195,6 +200,55 @@
 
                         <ui:Label name="InputMeterCaption" text="" class="input-meter-caption" />
                     </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- ====================================================== PERMISSIONS -->
+                <!-- Microphone and online-AI consent, on a page of its own rather than folded into
+                     VOICE. They are a different KIND of setting: everything else on this screen
+                     tunes how the game behaves, and these two decide what it is allowed to do with
+                     the player — which is the thing someone comes looking for on purpose, and
+                     should not have to find underneath a sensitivity slider.
+
+                     Two rows rather than one master switch, because they are two different asks —
+                     "may the game listen" and "may what you said leave the headset" — and a player
+                     can reasonably allow the first and refuse the second. IsVoiceModeAvailable()
+                     already requires both.
+
+                     Reuses segment-row / segment-btn from the VOICE pickers rather than introducing
+                     a toggle: same shape, same 76px ray target, nothing new for the bench re-skin
+                     to keep in step with. -->
+                <ui:VisualElement name="PermissionsPage" class="settings-page">
+
+                    <ui:VisualElement name="MicConsentRow" class="consent-row">
+                        <ui:VisualElement class="consent-text">
+                            <ui:Label text="Microphone" class="consent-name" />
+                            <ui:Label text="So merchants can hear you haggle" class="consent-sub" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="segment-row consent-segment">
+                            <ui:Button name="MicConsentAllowButton" text="ALLOW" class="segment-btn" />
+                            <ui:Button name="MicConsentBlockButton" text="BLOCK" class="segment-btn" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement name="AiConsentRow" class="consent-row">
+                        <ui:VisualElement class="consent-text">
+                            <ui:Label text="Online AI" class="consent-name" />
+                            <ui:Label text="Sends what you say to be understood" class="consent-sub" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="segment-row consent-segment">
+                            <ui:Button name="AiConsentAllowButton" text="ALLOW" class="segment-btn" />
+                            <ui:Button name="AiConsentBlockButton" text="BLOCK" class="segment-btn" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Deliberately separate from the switches: both can read ALLOW and voice still
+                         be unavailable, because the network is down or the OS is holding the
+                         microphone. Blaming a setting the player already got right sends them to
+                         change back the one thing that was correct. -->
+                    <ui:Label name="ConsentStatusLabel" text="" class="consent-status" />
+
+                    <ui:Label text="Turning either off costs you nothing but the talking — merchants fall back to buttons, and every fish still sells."
+                              class="settings-note" />
                 </ui:VisualElement>
 
                 <!-- ========================================================= CONTROLS -->

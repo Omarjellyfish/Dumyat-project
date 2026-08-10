@@ -2162,7 +2162,7 @@ namespace DumyatRuntime
         // on audio, so the subtitle and the speech start together.
         private void ShowSubtitle(string english, string arabic)
         {
-            Debug.Log($"{LogPrefix} [Subtitle] {english}  |  (AR) {arabic}");
+            VerboseLog.Trace($"{LogPrefix} [Subtitle] {english}  |  (AR) {arabic}");
             // Also record the merchant's Arabic line to the shared UTF-8 log so the whole conversation
             // (merchant + player transcripts) is reviewable outside the Unity Console.
             _voiceCapture?.AppendLog("MERCHANT", $"{arabic}  |  (EN) {english}");

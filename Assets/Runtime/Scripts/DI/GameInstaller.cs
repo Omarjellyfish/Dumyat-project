@@ -168,6 +168,13 @@ namespace DumyatRuntime
             // Player options (audio levels, subtitle mode), persisted to PlayerPrefs.
             // EAGER: saved volumes must reach the mixer and the subtitle mode must be published
             // before the main menu or any caption presenter exists.
+            // Microphone / online-AI consent. ROOT rather than the AI scene, because the settings
+            // page that now switches it opens from the main menu and the carpentry bench as well as
+            // from inside the market — see the note on ConsentManager. Eager so the stored answer is
+            // read once at boot instead of on whichever panel asks first.
+            containerBuilder.RegisterType(typeof(ConsentManager), new[] { typeof(IConsentService) },
+                Lifetime.Singleton, Resolution.Eager);
+
             containerBuilder.RegisterType(typeof(SettingsService), new[] { typeof(ISettingsService) },
                 Lifetime.Singleton, Resolution.Eager);
 

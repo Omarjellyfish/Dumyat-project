@@ -38,7 +38,7 @@ namespace DumyatRuntime
 
         private void OnLineStarted(DialogueLineStartedEvent evt)
         {
-            Debug.Log($"[DialoguePresentationManager] OnLineStarted received for CharacterId: '{evt.CharacterId}'");
+            VerboseLog.Trace($"[DialoguePresentationManager] OnLineStarted received for CharacterId: '{evt.CharacterId}'");
 
             if (evt.VoiceClip == null)
             {
@@ -52,14 +52,14 @@ namespace DumyatRuntime
             var actor = _npcRegistry.GetActor(evt.CharacterId);
             if (actor != null)
             {
-                Debug.Log($"[DialoguePresentationManager] Found actor for {evt.CharacterId}. Playing 3D voice line.");
+                VerboseLog.Trace($"[DialoguePresentationManager] Found actor for {evt.CharacterId}. Playing 3D voice line.");
                 // 3D spatial audio on the NPC's own AudioSource (lipsync-ready)
                 actor.PlayVoiceLine(evt.VoiceClip, DEFAULT_VOICE_VOLUME);
                 _activeSpeakerActor = actor;
             }
             else
             {
-                Debug.Log($"[DialoguePresentationManager] Actor for {evt.CharacterId} NOT found in registry. Falling back to 2D audio.");
+                VerboseLog.Trace($"[DialoguePresentationManager] Actor for {evt.CharacterId} NOT found in registry. Falling back to 2D audio.");
                 // 2D fallback — narrator, radio, off-screen character
                 _soundService.PlayVoiceLine(evt.VoiceClip, null, DEFAULT_VOICE_VOLUME);
                 _activeSpeakerActor = null;
@@ -80,7 +80,7 @@ namespace DumyatRuntime
 
                 if (!token.IsCancellationRequested && _narrativeService.IsPlaying)
                 {
-                    Debug.Log("[DialoguePresentationManager] Auto-advancing to next line.");
+                    VerboseLog.Trace("[DialoguePresentationManager] Auto-advancing to next line.");
                     _narrativeService.AdvanceLine();
                 }
             }

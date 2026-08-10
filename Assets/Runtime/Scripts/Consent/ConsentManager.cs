@@ -1,5 +1,4 @@
 using System;
-using Reflex.Attributes;
 using UnityEngine;
 
 namespace DumyatRuntime
@@ -47,21 +46,30 @@ namespace DumyatRuntime
     /// microphone or network code runs. Consent is persisted across sessions in
     /// PlayerPrefs — deliberately separate from the gameplay save so it survives a
     /// save wipe and isn't tied to a playthrough. Other systems should subscribe to
-    /// <see cref="OnConsentChanged"/> so they can fall back to scripted dialogue the
+    /// <see cref="ConsentChangedEvent"/> so they can fall back to scripted dialogue the
     /// instant consent is revoked mid-game (e.g. from a settings menu).
+    ///
+    /// ROOT-SCOPED, AND A PLAIN CLASS. It used to be a MonoBehaviour registered by
+    /// <see cref="AISceneInstaller"/>, which put it in exactly one scene — Ezbet El Borg, the only
+    /// place the merchant pipeline runs. That was fine while the consent PROMPT was the only thing
+    /// that touched it, and wrong the moment the settings page did: those settings open from the
+    /// main menu, the pause menu and the carpentry bench, and in three of those there was no service
+    /// to answer. The notification HUD moved for the same reason (see NotificationHudPresenter).
+    ///
+    /// Nothing here needs a GameObject: the state is two PlayerPrefs keys, and
+    /// <see cref="MicrophonePermission"/> is static. The scene-bound half is the prompt UI, which is
+    /// unchanged — it still finds this through <see cref="IConsentService"/> and answers on
+    /// <see cref="SubmitConsentResult"/>.
     /// </summary>
-    public class ConsentManager : MonoBehaviour, IConsentService
+    public class ConsentManager : IConsentService
     {
         private const string MIC_CONSENT_KEY = "Dumyat.Consent.Mic";
         private const string INTERNET_CONSENT_KEY = "Dumyat.Consent.Internet";
 
-        // Injected event bus. Consent changes are broadcast as ConsentChangedEvent (replaces the
-        // former OnConsentChanged C# event); listeners re-evaluate IsVoiceModeAvailable and switch
-        // to fallback mode immediately if voice is no longer available.
-        private IEventService _events;
-
-        [Inject]
-        private void Inject(IEventService events) => _events = events;
+        // Consent changes are broadcast as ConsentChangedEvent; listeners re-evaluate
+        // IsVoiceModeAvailable and switch to fallback mode immediately if voice is no longer
+        // available.
+        private readonly IEventService _events;
 
         private ConsentStatus micConsentGranted = ConsentStatus.NotAsked;
         private ConsentStatus internetConsentGranted = ConsentStatus.NotAsked;
@@ -70,8 +78,13 @@ namespace DumyatRuntime
         // reports the player's choice via SubmitConsentResult.
         private Action<ConsentStatus, ConsentStatus> _pendingRequestCallback;
 
-        private void Awake()
+        public ConsentManager(IEventService events)
         {
+            _events = events;
+
+            // Read at construction rather than in an Awake: the settings page can be opened on the
+            // main menu before any gameplay scene exists, and it must show what the player already
+            // chose rather than "not asked".
             LoadConsent();
         }
 
@@ -216,8 +229,8 @@ namespace DumyatRuntime
 
         private void LoadConsent()
         {
-            //micConsentGranted = (ConsentStatus)PlayerPrefs.GetInt(MIC_CONSENT_KEY, (int)ConsentStatus.NotAsked);
-            //internetConsentGranted = (ConsentStatus)PlayerPrefs.GetInt(INTERNET_CONSENT_KEY, (int)ConsentStatus.NotAsked);
+            micConsentGranted = (ConsentStatus)PlayerPrefs.GetInt(MIC_CONSENT_KEY, (int)ConsentStatus.NotAsked);
+            internetConsentGranted = (ConsentStatus)PlayerPrefs.GetInt(INTERNET_CONSENT_KEY, (int)ConsentStatus.NotAsked);
         }
 
         private void SaveConsent()

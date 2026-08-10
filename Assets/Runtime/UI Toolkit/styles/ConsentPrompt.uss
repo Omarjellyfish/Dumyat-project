@@ -1,5 +1,19 @@
-/* Consent prompt — full-screen dim overlay with a centered card.
-   The panel root ("consent-panel") is shown/hidden by ConsentPromptUI via display. */
+/* Consent prompt — Delta.
+   Full-screen dim with a centred card. The panel root ("consent-panel") is shown/hidden by
+   ConsentPromptUI via display.
+
+   Values are Delta's, per CLAUDE.md: ground rgba(8,26,34,0.84) at 22px radius, hairline
+   rgba(120,228,236,0.42), ink #EAF8FB, muted rgba(214,246,250,0.55), accent #67DDE8.
+
+   Sizes are the VR floor: body >= 26px, headers >= 32px, every ray target >= 64px. The card this
+   replaced used 15px body and a ~20px checkbox, which is unreadable in a headset and — worse on
+   this particular screen — too small to aim at reliably.
+
+   The segment rules below are deliberately a COPY of MenuStyles.uss rather than a shared sheet:
+   this document is loaded on its own by the consent UIDocument, and pulling in the whole menu
+   stylesheet for two rules would drag the entire settings/menu cascade into a panel that has no
+   menu in it. They are the same six declarations either way; if they ever diverge, this comment is
+   the place that says they should not. */
 
 .consent-overlay {
     position: absolute;
@@ -13,75 +27,147 @@
 }
 
 .consent-card {
-    width: 560px;
-    max-width: 90%;
-    padding: 28px 32px;
-    border-radius: 14px;
-    background-color: rgb(32, 34, 40);
+    width: 900px;
+    max-width: 96%;
+    padding: 40px 44px;
+    border-radius: 22px;
+    background-color: rgba(8, 26, 34, 0.84);
     border-width: 1px;
-    border-color: rgb(70, 74, 84);
+    border-color: rgba(120, 228, 236, 0.42);
+}
+
+/* Weight from size and spacing, not from bolding — Delta's "restraint in the type". */
+.consent-eyebrow {
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: rgba(214, 246, 250, 0.55);
+    margin-bottom: 10px;
 }
 
 .consent-title {
-    font-size: 26px;
-    -unity-font-style: bold;
-    color: rgb(240, 240, 245);
-    margin-bottom: 12px;
+    font-size: 38px;
+    letter-spacing: 1px;
+    color: #EAF8FB;
+    margin-bottom: 18px;
 }
 
 .consent-body {
-    font-size: 15px;
-    color: rgb(200, 203, 210);
+    font-size: 26px;
+    color: #EAF8FB;
     white-space: normal;
-    margin-bottom: 18px;
+    margin-bottom: 0;
 }
 
-.consent-toggle {
-    font-size: 16px;
-    color: rgb(230, 232, 238);
-    margin-bottom: 8px;
+.consent-divider {
+    height: 1px;
+    background-color: rgba(120, 228, 236, 0.2);
+    margin-top: 26px;
+    margin-bottom: 26px;
 }
 
-.consent-toggle .unity-toggle__label {
-    color: rgb(230, 232, 238);
-    font-size: 16px;
+/* Hairline rows, no cards — the same list idiom as the inventory and the audio sliders. */
+.consent-row {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.consent-row + .consent-row {
+    border-top-width: 1px;
+    border-top-color: rgba(120, 228, 236, 0.14);
+}
+
+.consent-row-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.consent-row-name {
+    font-size: 26px;
+    color: #EAF8FB;
+}
+
+.consent-row-sub {
+    font-size: 19px;
+    color: rgba(214, 246, 250, 0.55);
+    white-space: normal;
+    margin-top: 2px;
+}
+
+/* Fixed so both rows' buttons line up regardless of label length. */
+.consent-segment {
+    flex-direction: row;
+    width: 320px;
+    flex-shrink: 0;
+}
+
+.consent-seg-btn {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-height: 76px;
+    margin-right: 14px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.45);
+    border-radius: 8px;
+    color: rgba(214, 246, 250, 0.55);
+    font-size: 24px;
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.18s;
+}
+
+.consent-seg-btn:hover {
+    background-color: rgba(103, 221, 232, 0.14);
+    color: #EAF8FB;
+}
+
+.consent-seg-btn--selected {
+    background-color: rgba(103, 221, 232, 0.2);
+    border-color: #67DDE8;
+    color: #EAF8FB;
 }
 
 .consent-note {
-    font-size: 13px;
-    color: rgb(150, 154, 164);
+    font-size: 22px;
+    color: rgba(214, 246, 250, 0.55);
     white-space: normal;
-    margin-top: 6px;
-    margin-bottom: 18px;
+    margin-top: 22px;
 }
 
 .consent-buttons {
     flex-direction: row;
     justify-content: flex-end;
+    margin-top: 30px;
 }
 
+/* Ghost buttons: transparent fill with a coloured outline, filling in on hover. Rectangular at
+   8px radius, not pills. */
 .consent-button {
-    font-size: 16px;
-    padding: 10px 22px;
+    min-width: 240px;
+    min-height: 76px;
+    margin-left: 18px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(120, 228, 236, 0.45);
     border-radius: 8px;
-    margin-left: 10px;
-    border-width: 0;
+    color: rgba(214, 246, 250, 0.72);
+    font-size: 24px;
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.18s;
+}
+
+.consent-button:hover {
+    background-color: rgba(103, 221, 232, 0.14);
+    color: #EAF8FB;
 }
 
 .consent-button--primary {
-    background-color: rgb(58, 134, 92);
-    color: rgb(255, 255, 255);
-}
-
-.consent-button--primary:hover {
-    background-color: rgb(70, 156, 109);
-}
-
-.consent-button--secondary {
-    background-color: rgb(62, 66, 76);
-    color: rgb(215, 218, 225);
-}
-
-.consent-button--secondary:hover {
-    background-color: rgb(78, 83, 95);
+    background-color: rgba(103, 221, 232, 0.2);
+    border-color: #67DDE8;
+    color: #EAF8FB;
 }

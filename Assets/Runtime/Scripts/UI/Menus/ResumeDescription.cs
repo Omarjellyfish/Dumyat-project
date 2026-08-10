@@ -33,8 +33,13 @@ namespace DumyatRuntime
         {
             if (string.IsNullOrEmpty(sceneName)) return string.Empty;
 
-            string placeName = catalog != null ? catalog.SceneLabelFor(sceneName, arabic) : sceneName;
-            if (string.IsNullOrWhiteSpace(placeName)) placeName = sceneName;
+            // Where Continue will ACTUALLY go, which is not always where the save says. Under a fixed
+            // Continue target the button lands somewhere else entirely, and naming the recorded scene
+            // here would promise a destination the button does not honour.
+            string destination = catalog != null ? catalog.ContinueSceneFor(sceneName) : sceneName;
+
+            string placeName = catalog != null ? catalog.SceneLabelFor(destination, arabic) : destination;
+            if (string.IsNullOrWhiteSpace(placeName)) placeName = destination;
 
             if (string.IsNullOrEmpty(savedAtUtc)) return placeName;
 
