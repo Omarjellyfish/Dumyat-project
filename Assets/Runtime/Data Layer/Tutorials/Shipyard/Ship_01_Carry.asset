@@ -12,22 +12,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
   m_Name: Ship_01_Carry
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
-  InstructionText: Take a finished piece from the yard and carry it over to the frame.
-  InstructionTextArabic: "\u062E\u064F\u062F \u0642\u0637\u0639\u0629 \u0645\u0646
-    \u0627\u0644\u0644\u064A \u062E\u0644\u0635\u062A \u0648\u0634\u064A\u0644\u0647\u0627
-    \u0639\u0646\u062F \u0627\u0644\u0647\u064A\u0643\u0644."
+  InstructionText: "Pick up this piece and bring it to the ship frame. Let go once
+    it's near the marked spot \u2014 it'll snap into place on its own."
+  InstructionTextArabic: "\u0627\u0645\u0633\u0643 \u0627\u0644\u0642\u0637\u0639\u0629
+    \u062F\u064A \u0648\u0647\u0627\u062A\u0647\u0627 \u0644\u0647\u064A\u0643\u0644
+    \u0627\u0644\u0645\u0631\u0643\u0628. \u0633\u064A\u0628\u0647\u0627 \u0644\u0645\u0627
+    \u062A\u0642\u0631\u0628 \u0645\u0646 \u0627\u0644\u0645\u0643\u0627\u0646 \u0627\u0644\u0645\u062D\u062F\u062F\u060C
+    \u0647\u062A\u0631\u0643\u0628 \u0644\u0648\u062D\u062F\u0647\u0627"
   Audio: {fileID: 0}
   VoiceLine: {fileID: 0}
   Icon: {fileID: 0}
   Video: {fileID: 0}
-  CompletionType: 3
-  NextButton: 1
-  EventTypeName: 
+  CompletionType: 0
+  NextButton: 2
+  EventTypeName: ShipPartSocketedEvent
   ZoneId: 
   DelaySeconds: 0
   FallbackUnlockSeconds: 0
-  PrimaryAnchorId: ShipParts
+  PrimaryAnchorId: ST_Base_2
   HighlightIds:
-  - ShipParts
+  - ST_Base_2
+  HighlightNearestOnly: 0
   AnchorOffset: {x: 0, y: 0.3, z: 0}
   HapticOnActivate: {fileID: 0}
