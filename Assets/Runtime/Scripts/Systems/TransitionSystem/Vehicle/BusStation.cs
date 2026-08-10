@@ -112,23 +112,26 @@ namespace DumyatRuntime
                 return;
             }
 
-            if (_narrativeService != null)
-            {
-                _narrativeService.CancelCurrent();
+            // Travel is started BEFORE the driver speaks, and the order is load-bearing.
+            //
+            // StartTransition publishes SceneLoadBeginEvent synchronously, and SceneAudioSilencer
+            // answers it by stopping everything the departed scene was saying — which is the whole
+            // point: a fisherman's line must not finish over the market. The driver's line is the one
+            // exception, because it belongs to the journey rather than to the town being left, so it
+            // has to start on the far side of that cut. Spoken first, it would be silenced a
+            // microsecond later and the bus would pull away in silence.
+            _fadeTransition.StartTransition(destination.SceneName);
 
-                if (_transitionVoiceLines != null && _transitionVoiceLines.Count > 0)
+            if (_narrativeService != null && _transitionVoiceLines != null && _transitionVoiceLines.Count > 0)
+            {
+                // Qualified: `using System` above puts System.Random in scope alongside this one.
+                int randomIndex = UnityEngine.Random.Range(0, _transitionVoiceLines.Count);
+                var selectedLine = _transitionVoiceLines[randomIndex];
+                if (selectedLine != null)
                 {
-                    // Qualified: `using System` above puts System.Random in scope alongside this one.
-                    int randomIndex = UnityEngine.Random.Range(0, _transitionVoiceLines.Count);
-                    var selectedLine = _transitionVoiceLines[randomIndex];
-                    if (selectedLine != null)
-                    {
-                        _narrativeService.PlayDialogue(selectedLine, DialoguePriority.High);
-                    }
+                    _narrativeService.PlayDialogue(selectedLine, DialoguePriority.High);
                 }
             }
-
-            _fadeTransition.StartTransition(destination.SceneName);
         }
 
         /// <summary>

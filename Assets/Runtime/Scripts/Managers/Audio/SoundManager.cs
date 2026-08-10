@@ -221,6 +221,37 @@ namespace DumyatRuntime
             StartCoroutine(ReturnToPoolAfterClip(source, clip.length));
         }
 
+        /// <summary>
+        /// Stops every source this pool has handed out. See <see cref="ISoundService.StopAll"/> for why.
+        ///
+        /// The pooled sources are children of this object, so they are found by walking the hierarchy
+        /// rather than by keeping a parallel list of "active" ones that could drift out of step with the
+        /// pool itself. Inactive ones are included and simply have nothing to stop.
+        /// </summary>
+        public void StopAll()
+        {
+            int stopped = 0;
+            foreach (AudioSource source in GetComponentsInChildren<AudioSource>(true))
+            {
+                if (source == null || !source.isPlaying) continue;
+
+                source.Stop();
+
+                // Looping sources are never returned by a timer — PlayLoopingSoundFxAtPosition has no
+                // completion to wait for — so clearing the flag is what stops them restarting.
+                source.loop = false;
+                stopped++;
+            }
+
+            // Deliberately NOT StopAllCoroutines, and deliberately not releasing anything here. Each
+            // playing source has a ReturnToPoolAfterClip coroutine that will Stop and Release it on
+            // schedule; cancelling those would strand the sources checked out of the pool for good, and
+            // releasing them here as well would return the same source twice. Silence is immediate
+            // either way — the bookkeeping just finishes a moment later, as it always would.
+            if (stopped > 0)
+                VerboseLog.Trace($"[SoundManager] StopAll silenced {stopped} source(s).");
+        }
+
         public float PlaySceneTransitionSound()
         {
             if (_sceneTransitionClips == null || _sceneTransitionClips.Length == 0) return 0f;

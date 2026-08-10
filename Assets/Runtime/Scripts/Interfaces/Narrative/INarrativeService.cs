@@ -20,5 +20,17 @@ namespace DumyatRuntime
 
         /// <summary>Cancel and discard the currently playing dialogue.</summary>
         void CancelCurrent();
+
+        /// <summary>
+        /// Throw away EVERYTHING — the line playing, the interrupted stack beneath it and the waiting
+        /// queue — without advancing to any of it.
+        ///
+        /// <see cref="CancelCurrent"/> is not this: it finishes the current line, which pulls the next
+        /// one off the queue and starts it. That is right for "stop talking about this", and wrong for
+        /// leaving the scene, where the whole conversation has to end at once. The engine is a root
+        /// singleton and outlives the scene, so without this it keeps feeding the next town's speakers
+        /// lines belonging to the one the player just left.
+        /// </summary>
+        void StopAll();
     }
 }

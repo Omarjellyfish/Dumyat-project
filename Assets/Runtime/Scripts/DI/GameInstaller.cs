@@ -252,6 +252,13 @@ namespace DumyatRuntime
             else
                 Debug.LogWarning("GameInstaller: WorldAudioManager prefab is not assigned.");
 
+            // Cuts every voice and sound off when a scene is left — see SceneAudioSilencer for why that
+            // cannot be left to the callers. EAGER and never resolved by hand: it only has to exist and
+            // listen, so a lazy binding would simply never be constructed. Registered here, after the
+            // audio services it depends on, so it cannot be built before they are available.
+            containerBuilder.RegisterType(typeof(SceneAudioSilencer), new[] { typeof(SceneAudioSilencer) },
+                Lifetime.Singleton, Resolution.Eager);
+
             if (_hapticFeedbackPrefab != null)
             {
                 var instance = Instantiate(_hapticFeedbackPrefab);

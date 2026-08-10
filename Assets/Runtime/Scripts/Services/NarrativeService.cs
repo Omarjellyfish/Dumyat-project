@@ -127,6 +127,28 @@ namespace DumyatRuntime
             FinishCurrentDialogue();
         }
 
+        /// <inheritdoc/>
+        public void StopAll()
+        {
+            bool wasSaying = _current != null || _stack.Count > 0 || _overflowQueue.Count > 0;
+
+            _current = null;
+            _stack.Clear();
+            _overflowQueue.Clear();
+            _lastFinishedSequence = null;
+
+            if (!wasSaying) return;
+
+            // Dismiss any choice UI, and tell listeners the conversation is over — but with a null
+            // sequence, because nothing FINISHED here. Anything matching on a specific sequence (the
+            // father waiting for his own opening speech) correctly ignores it, while the presentation
+            // layer still hears "stop" and drops the voice.
+            _eventService.Publish(new DialogueChoiceDismissedEvent());
+            _eventService.Publish(new DialogueEndedEvent(null));
+
+            VerboseLog.Trace("[NarrativeService] StopAll — current line, stack and queue discarded.");
+        }
+
         // -------------------------------------------------------------------------
         // Internal flow
         // -------------------------------------------------------------------------
