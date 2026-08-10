@@ -52,7 +52,11 @@ namespace DumyatRuntime
 
         private RectTransform _root;      // the world canvas we reposition every frame
         private Camera _camera;
-        private readonly Queue<NotificationData> _queue = new Queue<NotificationData>();
+
+        // A List, not a Queue: coalescing has to REPLACE an entry where it stands (so a superseded
+        // card keeps its place in line rather than jumping to the back). Order is still strict FIFO —
+        // taken from index 0, appended at the end.
+        private readonly List<NotificationData> _queue = new List<NotificationData>();
         private Coroutine _runner;
 
         /// <summary>
@@ -61,6 +65,20 @@ namespace DumyatRuntime
         /// forward draws as a toast while its completion draws as a medal.
         /// </summary>
         private NotificationView _active;
+
+        // What the card on screen is showing, and whether it can still be superseded in place. Goes
+        // false for the fade-out: past that point the card is leaving, so a late update is a fresh
+        // card rather than a rewrite of one the player is no longer reading.
+        private NotificationData _activeData;
+        private bool _activeReplaceable;
+
+        // Written by the playback loop, re-applied when a card is rebuilt under it: Build() makes a
+        // new CanvasGroup at full alpha, which would flash if it replaced a card mid-fade.
+        private float _cardAlpha;
+
+        // Hold-phase timer. A field rather than a local so coalescing can restart it — a card whose
+        // text changes with one second left would show the new number for one second.
+        private float _holdElapsed;
 
         // Shared comfort-cone follow, identical to the one driving the inventory panel.
         private readonly LazyFollowYaw _follow = new LazyFollowYaw();
@@ -112,11 +130,52 @@ namespace DumyatRuntime
 
         public void Enqueue(NotificationData data)
         {
-            _queue.Enqueue(data);
+            if (TryReplace(data)) return;
+
+            _queue.Add(data);
             if (_runner == null) _runner = StartCoroutine(Run());
         }
 
         public void Clear() => _queue.Clear();
+
+        /// <summary>
+        /// Supersedes an earlier card carrying the same <see cref="NotificationData.CoalesceKey"/> —
+        /// the one on screen if it is still holding, otherwise the queued one — and reports whether it
+        /// did. See <see cref="NotificationData.CoalesceKey"/> for why this exists.
+        ///
+        /// Styles must match: a progress toast and a completion medal are different cards drawn by
+        /// different views, so one cannot be rewritten into the other. Mismatched styles fall through
+        /// and queue normally, which is the correct reading anyway — those are two distinct beats.
+        /// </summary>
+        private bool TryReplace(NotificationData data)
+        {
+            if (string.IsNullOrEmpty(data.CoalesceKey)) return false;
+
+            if (_activeReplaceable && _active != null
+                && _activeData.Style == data.Style
+                && _activeData.CoalesceKey == data.CoalesceKey)
+            {
+                _activeData = data;
+                _active.Build(data);
+
+                // Rebuilt card starts fully opaque and with a full countdown bar; put it back where
+                // the animation actually is, then give the new content its own full hold.
+                CanvasGroup g = _active.GroupHandle;
+                if (g != null) g.alpha = _cardAlpha;
+                _holdElapsed = 0f;
+                _active.SetProgress(1f);
+                return true;
+            }
+
+            for (int i = 0; i < _queue.Count; i++)
+            {
+                if (_queue[i].Style != data.Style || _queue[i].CoalesceKey != data.CoalesceKey) continue;
+                _queue[i] = data;
+                return true;
+            }
+
+            return false;
+        }
 
         // --- Placement (world-anchored top-right, lazy-follow past the cone) ---------
 
@@ -158,17 +217,23 @@ namespace DumyatRuntime
         {
             while (_queue.Count > 0)
             {
-                NotificationData data = _queue.Dequeue();
+                NotificationData data = _queue[0];
+                _queue.RemoveAt(0);
 
                 // Resolved per notification, not once at Awake: the style travels with the card.
                 _active = ViewFor(data.Style);
                 if (_active == null) { _runner = null; yield break; }
 
                 _follow.Reanchor();      // snap the fresh card into the current view, then world-anchor
+                _activeData = data;
+                _activeReplaceable = true;
+                _cardAlpha = 0f;
                 _active.Build(data);
-                CanvasGroup g = _active.GroupHandle;
-                RectTransform c = _active.ContentHandle;
-                if (g == null) { yield return null; continue; }
+                if (_active.GroupHandle == null) { _activeReplaceable = false; yield return null; continue; }
+
+                // Handles are re-read every frame rather than cached across the loop: a coalesced
+                // update rebuilds the card underneath us, which destroys the old CanvasGroup/Card and
+                // would leave a cached reference animating a dead object.
 
                 // Fade + slide + scale in (unscaled, so a paused game still animates it).
                 float t = 0f;
@@ -177,7 +242,9 @@ namespace DumyatRuntime
                     t += Time.unscaledDeltaTime;
                     float k = Mathf.Clamp01(t / FadeIn);
                     float e = 1f - (1f - k) * (1f - k);   // ease-out
-                    g.alpha = k;
+                    _cardAlpha = k;
+                    ApplyAlpha(k);
+                    RectTransform c = _active.ContentHandle;
                     if (c != null)
                     {
                         c.localScale = Vector3.one * Mathf.Lerp(0.96f, 1f, e);
@@ -185,35 +252,50 @@ namespace DumyatRuntime
                     }
                     yield return null;
                 }
-                g.alpha = 1f;
-                if (c != null) { c.localScale = Vector3.one; c.anchoredPosition = Vector2.zero; }
-
-                // Hold + countdown bar.
-                t = 0f;
-                while (t < _holdSeconds)
+                _cardAlpha = 1f;
+                ApplyAlpha(1f);
+                if (_active.ContentHandle != null)
                 {
-                    t += Time.unscaledDeltaTime;
-                    _active.SetProgress(1f - t / _holdSeconds);
+                    _active.ContentHandle.localScale = Vector3.one;
+                    _active.ContentHandle.anchoredPosition = Vector2.zero;
+                }
+
+                // Hold + countdown bar. _holdElapsed is a field so a coalesced update can restart it.
+                _holdElapsed = 0f;
+                while (_holdElapsed < _holdSeconds)
+                {
+                    _holdElapsed += Time.unscaledDeltaTime;
+                    _active.SetProgress(1f - _holdElapsed / _holdSeconds);
                     yield return null;
                 }
                 _active.SetProgress(0f);
 
-                // Fade out.
+                // Fade out. The card is leaving, so it stops accepting in-place updates here.
+                _activeReplaceable = false;
                 t = 0f;
                 while (t < FadeOut)
                 {
                     t += Time.unscaledDeltaTime;
                     float k = Mathf.Clamp01(t / FadeOut);
-                    g.alpha = 1f - k;
+                    _cardAlpha = 1f - k;
+                    ApplyAlpha(_cardAlpha);
+                    RectTransform c = _active.ContentHandle;
                     if (c != null) c.localScale = Vector3.one * Mathf.Lerp(1f, 0.98f, k);
                     yield return null;
                 }
-                g.alpha = 0f;
+                ApplyAlpha(0f);
                 _active.HideCard();
                 _active = null;
             }
 
+            _activeReplaceable = false;
             _runner = null;
+        }
+
+        private void ApplyAlpha(float alpha)
+        {
+            CanvasGroup g = _active != null ? _active.GroupHandle : null;
+            if (g != null) g.alpha = alpha;
         }
     }
 }

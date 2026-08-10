@@ -83,16 +83,21 @@ namespace DumyatRuntime
             QuestDefinitionSO def = Resolve(evt.QuestID);
             if (def == null) return;
 
-            string counter = $"{evt.CurrentProgress} / {evt.TargetCount}";
-
-            Enqueue(new NotificationData(
+            // The count goes as NUMBERS, not as the words "Progress 4 / 5" — the card draws it as its
+            // headline figure and as a row of segments, which the old prose line could not be. That
+            // frees the description to say what the player still has to DO.
+            //
+            // Keyed per quest so a burst of ticks reads as one card at the latest count. Selling four
+            // fish in one hand-over advances the quest four times; the player did one thing and wants
+            // one answer. Two DIFFERENT quests ticking together still get a card each.
+            Enqueue(NotificationData.Progress(
                 def.DisplayNameFor(Arabic),
-                Arabic ? $"التقدم {counter}" : $"Progress {counter}",
+                def.DescriptionFor(Arabic),
                 def.icon,
                 ProgressAccent,
-                -1,
-                NotificationStyle.Toast,
-                null));
+                evt.CurrentProgress,
+                evt.TargetCount,
+                $"quest-progress:{evt.QuestID}"));
         }
 
         private void HandleCompleted(QuestCompletedEvent evt)
