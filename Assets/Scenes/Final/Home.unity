@@ -3385,12 +3385,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7e7bd5c26c32e547be49957a9a47622, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.Shop
-  _catalogue:
-  - {fileID: 11400000, guid: 0094029d5e04a464489b402f39262600, type: 2}
-  - {fileID: 11400000, guid: 09b98c8f5f2558549bcb886f658f8003, type: 2}
-  - {fileID: 11400000, guid: e8ae66680d761e54f98e842f5906a347, type: 2}
-  - {fileID: 11400000, guid: c1fc19d6bb93bac4b945f84c2faeaf0b, type: 2}
-  - {fileID: 11400000, guid: 5ec05798e6bdaff46935d1a9c361f804, type: 2}
+  _database: {fileID: 11400000, guid: d1a0b322d33affb4a87ac351888d3604, type: 2}
   _shopName: EL DUKKAN
 --- !u!4 &815470916
 Transform:
@@ -6689,9 +6684,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8585213064526799703, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
       insertIndex: -1
       addedObject: {fileID: 270277360}
-    - targetCorrespondingSourceObject: {fileID: 8585213064526799703, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: d23c3f8c66b0dea4d84464134f226fb1, type: 3}
 --- !u!1 &1944364290
 GameObject:
@@ -7765,10 +7757,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8395746391384792019, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4e1df923fc1f2584190eda7fc90439c6, type: 3}
 --- !u!1001 &6725416869679776488
 PrefabInstance:

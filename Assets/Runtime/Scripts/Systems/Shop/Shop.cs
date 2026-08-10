@@ -16,8 +16,9 @@ namespace DumyatRuntime
     /// </summary>
     public class Shop : MonoBehaviour
     {
-        [Tooltip("Everything this shop sells, in the order it should be listed.")]
-        [SerializeField] private ShopItemSO[] _catalogue;
+        [Tooltip("The shelf this shop sells from. Swap the asset to restock the shop without touching " +
+                 "the scene.")]
+        [SerializeField] private ShopDatabase _database;
 
         [Tooltip("Shown as the small label above the SHOP title. Leave empty to hide it.")]
         [SerializeField] private string _shopName = "EL DUKKAN";
@@ -26,11 +27,15 @@ namespace DumyatRuntime
         private IInventoryService _inventory;
         private IEventService _events;
 
-        // Parallel to _catalogue: units left, or ShopItemSO.UnlimitedStock for a product that never runs out.
+        // Parallel to the database list: units left, or ShopItemSO.UnlimitedStock for an endless product.
         private int[] _remaining;
 
+        /// <summary>The shelf asset this shop sells from. May be null if the scene is unfinished.</summary>
+        public ShopDatabase Database => _database;
+
         /// <summary>Products on the shelf, in display order. Never null.</summary>
-        public IReadOnlyList<ShopItemSO> Catalogue => _catalogue ?? System.Array.Empty<ShopItemSO>();
+        public IReadOnlyList<ShopItemSO> Catalogue =>
+            _database != null ? _database.AllProducts : System.Array.Empty<ShopItemSO>();
 
         /// <summary>Name shown above the panel title. May be empty.</summary>
         public string ShopName => _shopName;
@@ -43,15 +48,21 @@ namespace DumyatRuntime
             _events = events;
         }
 
-        private void Awake() => ResetStock();
+        private void Awake()
+        {
+            if (_database == null)
+                Debug.LogWarning($"{nameof(Shop)} on '{name}': no ShopDatabase assigned — this shop has " +
+                                 "nothing to sell. Assign a shelf asset in the Inspector.", this);
+            ResetStock();
+        }
 
         /// <summary>Restores every shelf to its starting count. Called on Awake, so stock is per-session.</summary>
         public void ResetStock()
         {
-            int count = _catalogue != null ? _catalogue.Length : 0;
-            _remaining = new int[count];
-            for (int i = 0; i < count; i++)
-                _remaining[i] = _catalogue[i] != null ? _catalogue[i].StartingStock : 0;
+            IReadOnlyList<ShopItemSO> products = Catalogue;
+            _remaining = new int[products.Count];
+            for (int i = 0; i < products.Count; i++)
+                _remaining[i] = products[i] != null ? products[i].StartingStock : 0;
         }
 
         /// <summary>Units left for <paramref name="index"/>, or -1 when unlimited. -1 also for a bad index.</summary>
@@ -88,11 +99,8 @@ namespace DumyatRuntime
         }
 
         /// <summary>The product at <paramref name="index"/>, or null when the index or asset is bad.</summary>
-        public ShopItemSO ProductAt(int index)
-        {
-            if (_catalogue == null || index < 0 || index >= _catalogue.Length) return null;
-            return _catalogue[index];
-        }
+        public ShopItemSO ProductAt(int index) =>
+            _database != null ? _database.ProductAt(index) : null;
 
         /// <summary>
         /// Buys one unit of <paramref name="index"/>. Returns true only when money was taken AND the item
