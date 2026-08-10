@@ -296,6 +296,21 @@ namespace DumyatRuntime
         // queried (manager missing / nothing available). Kept generic but truthful.
         private const string FallbackTtsDescription = "a native Egyptian-Arabic ElevenLabs text-to-speech voice";
 
+        /// <summary>
+        /// The number/script rule restated in EVERY prompt variant's HARD RULES block, right before the
+        /// model answers. <see cref="BuildDialectInstruction"/> teaches the Egyptian forms in full up in
+        /// the system framing; this is the short reminder at the point of use, which is where a long
+        /// prompt actually holds. One const because all three call sites must say the SAME thing —
+        /// when they drifted apart, the merchant priced a catch in Modern Standard Arabic
+        /// ("ثلاثمائة واثنا عشر جنيه") and the TTS read it out like a newsreader.
+        /// </summary>
+        private const string NumbersAndScriptHardRule =
+            "- CRITICAL: in merchantSpeech, spell every number out as EGYPTIAN COLLOQUIAL words — never " +
+            "digits (90, ٩٠) and never the Modern Standard forms: say 'تلتمية واتناشر', NOT " +
+            "'ثلاثمائة واثنا عشر'; 'تلتمية وتمنية وتمانين', NOT 'ثلاثمائة وثمانية وثمانين'; " +
+            "'مية' and 'ميتين', NOT 'مائة' and 'مائتان'. Write plain Arabic with NO diacritics / " +
+            "tashkeel / vocalization (harakat). The English translation may keep normal digits.";
+
         // The Egyptian-Arabic constraint from docs/MERCHANT_CONTEXT.md. It MUST appear in EVERY
         // prompt (LLMs drift toward MSA by default), so it lives here and is injected each turn.
         // Built per call (not a const) so the prompt names the EXACT TTS engine that will speak
@@ -318,9 +333,24 @@ namespace DumyatRuntime
             "NEVER use Latin/English letters or romanized transliteration: write 'يا ريس' NOT 'ya riis', " +
             "'كيلو' NOT 'kilo', 'اوكي' NOT 'ok'. Greetings, names and loan-words ALL go in Arabic letters. " +
             "A single Latin letter makes the TTS mispronounce or skip the word.\n" +
-            "2) Write ALL numbers (prices, weights) as spelled-out Egyptian Arabic WORDS, never digits or " +
-            "numerals — e.g. 'تسعين جنيه', not '90 جنيه' and not '٩٠' — so the voice pronounces them " +
-            "naturally in Arabic, not in English.\n" +
+            "2) Write ALL numbers (prices, weights) as spelled-out WORDS, never digits or numerals — " +
+            "e.g. 'تسعين جنيه', not '90 جنيه' and not '٩٠' — so the voice pronounces them naturally in " +
+            "Arabic, not in English. They MUST be the EGYPTIAN COLLOQUIAL number words, NOT the Modern " +
+            "Standard Arabic ones. This is the single most common way a reply stops sounding Egyptian: " +
+            "the voice says exactly the form you typed, so one MSA number makes the whole sentence read " +
+            "like a news bulletin instead of a fish market. Use these forms:\n" +
+            "   • Hundreds: مية ، ميتين ، تلتمية ، ربعمية ، خمسمية ، ستمية ، سبعمية ، تمنمية ، تسعمية ، ألف " +
+            "— NEVER مائة ، مئة ، مائتان ، ثلاثمائة ، أربعمائة ، خمسمائة ، ثمانمائة.\n" +
+            "   • Units: واحد ، اتنين ، تلاتة ، أربعة ، خمسة ، ستة ، سبعة ، تمانية ، تسعة ، عشرة " +
+            "— NEVER اثنان ، اثنين الفصحى ، ثلاثة ، ثمانية.\n" +
+            "   • Teens: حداشر ، اتناشر ، تلتاشر ، أربعتاشر ، خمستاشر ، ستاشر ، سبعتاشر ، تمنتاشر ، تسعتاشر " +
+            "— NEVER أحد عشر ، اثنا عشر ، ثلاثة عشر ، ثمانية عشر.\n" +
+            "   • Tens: عشرين ، تلاتين ، أربعين ، خمسين ، ستين ، سبعين ، تمانين ، تسعين " +
+            "— NEVER ثلاثين ، ثمانين.\n" +
+            "   Build an amount hundreds-then-units-then-tens, joined with و: " +
+            "312 = 'تلتمية واتناشر جنيه' (NOT 'ثلاثمائة واثنا عشر جنيه'), " +
+            "388 = 'تلتمية وتمنية وتمانين جنيه' (NOT 'ثلاثمائة وثمانية وثمانين جنيه'), " +
+            "90 = 'تسعين جنيه'.\n" +
             "3) Write COMPLETELY UNVOWELIZED, bare Arabic. Absolutely NO diacritics / tashkeel / harakat of " +
             "ANY kind — no fatha (  َ  ), damma (  ُ  ), kasra (  ِ  ), shadda (  ّ  ), sukun (  ْ  ), tanwin " +
             "(  ً   ٌ   ٍ  ) or superscript marks. Vowelization marks make the TTS mispronounce the words. " +
@@ -781,9 +811,7 @@ namespace DumyatRuntime
             sb.AppendLine("- Output ONLY the JSON object. No markdown, no code fences, no text before or after it.");
             sb.AppendLine("- NEVER break character. NEVER mention being an AI, a model, or a game.");
             sb.AppendLine("- Keep merchantSpeech to one or two short, natural market-style sentences.");
-            sb.AppendLine("- CRITICAL: in merchantSpeech, spell every number out as Egyptian WORDS (never digits like 90 " +
-                          "or ٩٠), and write plain Arabic with NO diacritics / tashkeel / vocalization (harakat). The " +
-                          "English translation may keep normal digits.");
+            sb.AppendLine(NumbersAndScriptHardRule);
         }
 
         // Renders the fish on the scale with their agreed per-fish prices for the summary prompt.
@@ -1093,9 +1121,7 @@ namespace DumyatRuntime
             sb.AppendLine("- Every price is in Egyptian Pounds (بالجنيه المصري) and MUST be a WHOLE number — " +
                           "never decimals, fractions or piastres (say 'تسعين جنيه', never 'تسعين جنيه ونص'). " +
                           "\"newOfferAmount\" must be a whole integer.");
-            sb.AppendLine("- CRITICAL: in merchantSpeech, spell every number out as Egyptian WORDS " +
-                          "(never digits like 90 or ٩٠), and write plain Arabic with NO diacritics / tashkeel / " +
-                          "vocalization (harakat). The English translation may keep normal digits.");
+            sb.AppendLine(NumbersAndScriptHardRule);
 
             return sb.ToString();
         }
@@ -1275,9 +1301,7 @@ namespace DumyatRuntime
             sb.AppendLine("- Output ONLY the JSON object. No markdown, no code fences, no text before or after it.");
             sb.AppendLine("- NEVER break character. NEVER mention being an AI, a model, or a game.");
             sb.AppendLine("- Keep merchantSpeech to one or two short, natural market-style sentences.");
-            sb.AppendLine("- CRITICAL: in merchantSpeech, spell every number out as Egyptian WORDS " +
-                          "(never digits like 90 or ٩٠), and write plain Arabic with NO diacritics / tashkeel / " +
-                          "vocalization (harakat). The English translation may keep normal digits.");
+            sb.AppendLine(NumbersAndScriptHardRule);
 
             return sb.ToString();
         }
