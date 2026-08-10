@@ -4,6 +4,30 @@ using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
+    /// <summary>What holds the father at a point before he walks on.</summary>
+    public enum PathGate
+    {
+        /// <summary>Nothing — walk straight on to the next point.</summary>
+        None = 0,
+
+        /// <summary>Wait until a dialogue finishes. Someone else has to start it; this only listens.</summary>
+        DialogueEnds = 1,
+
+        /// <summary>Wait until the player has the fishing rod in hand.</summary>
+        RodPickedUp = 2,
+
+        /// <summary>Wait a fixed number of seconds.</summary>
+        Seconds = 3
+    }
+
+    /// <summary>
+    /// Walks the father along a hand-placed path, pausing at each point until that point's gate opens.
+    ///
+    /// Every gate carries a maximum wait, and that is not belt-and-braces — it is the only thing that
+    /// makes a second visit work. The narrative sequences here are once-per-save, so a returning player
+    /// hears nothing, and a gate waiting on <see cref="PathGate.DialogueEnds"/> would sit forever
+    /// waiting for a line that has already been spoken. The father would never leave the beach.
+    /// </summary>
     public class FatherPathMover : MonoBehaviour
     {
         [System.Serializable]
@@ -14,20 +38,34 @@ namespace DumyatRuntime
             [Tooltip("Movement speed used while traveling TO this point.")]
             public float moveSpeed;
 
-            [Tooltip("How long to wait once this point is reached. Not used for point 0 — that wait is driven entirely by First Point Dialogue.")]
+            [Tooltip("What holds him here once he arrives, before he walks on.")]
+            public PathGate waitFor;
+
+            [Tooltip("Which sequence opens a Dialogue Ends gate. Leave empty to accept ANY dialogue " +
+                     "ending — only do that where nothing else can possibly be talking.")]
+            public DialogueSequenceSO waitForDialogue;
+
+            [Tooltip("Seconds to wait when Wait For is Seconds.")]
             public float waitTimeAtPoint;
+
+            [Tooltip("Safety valve: give up on Wait For after this many seconds and walk on anyway. " +
+                     "0 uses the mover's default. Set it on any gate whose trigger can legitimately " +
+                     "never fire — a dialogue that has already been heard, a rod the player ignores.")]
+            public float maxWaitSeconds;
         }
 
         [Header("Path")]
         [SerializeField] private PathPoint[] pathPoints;
 
-        [Header("Intro Dialogue (father talks here, no movement, until this finishes — " +
-                 "triggered externally by the arrival NarrativeTriggerZone, NOT by this script)")]
+        [Header("Before Setting Off")]
+        [Tooltip("What holds him in place at the start, while he greets the player. The intro sequence " +
+                 "is published by the arrival zone, NOT by this script — this only waits for it.")]
+        [SerializeField] private PathGate introGate = PathGate.DialogueEnds;
+
+        [Tooltip("Which sequence opens the intro gate. Leave empty to accept any dialogue ending.")]
         [SerializeField] private DialogueSequenceSO introDialogue;
 
-        [Header("First Point Dialogue (father stays at point 0 and talks until this finishes — " +
-                 "triggered externally, e.g. by the player, NOT by this script)")]
-        [SerializeField] private DialogueSequenceSO firstPointDialogue;
+        [SerializeField] private float introMaxWaitSeconds = 45f;
 
         [Header("Animation")]
         [SerializeField] private Animator animator;
@@ -45,13 +83,13 @@ namespace DumyatRuntime
         [SerializeField] private bool loopPath = false;
         [SerializeField] private bool playOnStart = true;
 
-
-
+        [Tooltip("Default safety valve for any gate that does not set its own.")]
+        [SerializeField] private float defaultMaxWaitSeconds = 120f;
 
         private IEventService _eventService;
         private Coroutine pathRoutine;
-        private bool waitingForDialogue;
-        public FatherTeleportInteractable fatherTeleportInteractable;
+        private bool _gateOpen;
+        private DialogueSequenceSO _expectedDialogue;
 
         [Inject]
         private void Inject(IEventService eventService) => _eventService = eventService;
@@ -67,16 +105,6 @@ namespace DumyatRuntime
             }
         }
 
-        private void OnEnable()
-        {
-            _eventService?.Subscribe<DialogueEndedEvent>(OnDialogueEnded);
-        }
-
-        private void OnDisable()
-        {
-            _eventService?.Unsubscribe<DialogueEndedEvent>(OnDialogueEnded);
-        }
-
         private void Start()
         {
             if (playOnStart)
@@ -89,19 +117,8 @@ namespace DumyatRuntime
         {
             if (pathPoints == null || pathPoints.Length == 0)
             {
-                Debug.LogWarning($"{name}: FatherPathMover has no path points assigned.");
+                Debug.LogWarning($"{name}: FatherPathMover has no path points assigned.", this);
                 return;
-            }
-
-            if (introDialogue == null)
-            {
-                Debug.LogWarning($"{name}: introDialogue is not assigned. The father will skip the " +
-                                 "intro wait and set off the moment the scene loads.");
-            }
-
-            if (firstPointDialogue == null)
-            {
-                Debug.LogWarning($"{name}: firstPointDialogue is not assigned. The father will not leave point 0 until one is set.");
             }
 
             if (pathRoutine != null)
@@ -122,23 +139,25 @@ namespace DumyatRuntime
                 pathRoutine = null;
             }
 
-            waitingForDialogue = false;
+            UnsubscribeGates();
             SetWalking(false);
             SetTalking(false);
         }
 
+        private void OnDisable() => UnsubscribeGates();
+
         private IEnumerator RunPath()
         {
-            // Intro: father talks, does not move. The zone the player lands in publishes this
-            // sequence — this script only waits for it, exactly as it does for firstPointDialogue.
+            // Intro: father talks, does not move. The zone the player lands in publishes the sequence —
+            // this script only waits for it.
             //
-            // It used to publish the intro itself, which made two owners of one sequence: the
-            // arrival zone fired it as well, so a player who reached the zone late (teleporting off
-            // the boat is what does it) heard the father restart from his first line. A trigger-once
-            // zone cannot dedupe against a second publisher — so there is only one publisher now.
+            // It used to publish the intro itself, which made two owners of one sequence: the arrival
+            // zone fired it as well, so a player who reached the zone late (teleporting off the boat is
+            // what does it) heard the father restart from his first line. A trigger-once zone cannot
+            // dedupe against a second publisher — so there is only one publisher now.
             SetWalking(false);
             SetTalking(true);
-            yield return WaitForExternalDialogue(introDialogue);
+            yield return WaitForGate(introGate, introDialogue, 0f, introMaxWaitSeconds);
             SetTalking(false);
 
             do
@@ -149,38 +168,29 @@ namespace DumyatRuntime
 
                     if (current.point == null)
                     {
-                        Debug.LogWarning($"{name}: Path point at index {i} is null, skipping.");
+                        Debug.LogWarning($"{name}: Path point at index {i} is null, skipping.", this);
                         continue;
                     }
 
                     SetWalking(true);
                     yield return MoveToPoint(current);
                     SetWalking(false);
+                    SetTalking(false);
 
-                    if (i == 0)
-                    {
-                        // Point 0: father stays put and idles while waiting
-                        // (e.g. for the player to select the rod / trigger firstPointDialogue).
-                        // This script does NOT publish firstPointDialogue itself; it just
-                        // waits for whoever triggers it to finish.
-                        SetTalking(false);
-                        yield return WaitForExternalDialogue(firstPointDialogue);
-                        SetTalking(false);
-                    }
-                    else if (current.waitTimeAtPoint > 0f)
-                    {
-                        // Idle while waiting at this point.
-                        SetTalking(false);
-                        yield return new WaitForSeconds(current.waitTimeAtPoint);
-                    }
+                    yield return WaitForGate(current.waitFor, current.waitForDialogue,
+                                             current.waitTimeAtPoint, current.maxWaitSeconds);
                 }
+
                 if (!loopPath)
                 {
                     SetWalking(false);
                     SetTalking(false);
 
-                    if (fatherTeleportInteractable != null)
-                        fatherTeleportInteractable.enabled = true;
+                    // Whoever needs to know he has arrived — the jetty board, above all — subscribes.
+                    // He does not hold a reference to it: he used to hold the teleport interactable
+                    // directly and switch it on, which meant the father knew how the player boards a
+                    // boat.
+                    _eventService?.Publish(new FatherPathCompletedEvent());
                 }
             }
             while (loopPath);
@@ -189,26 +199,100 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Waits for the given dialogue to end WITHOUT starting it — used
-        /// when some other system (e.g. the player) is responsible for
-        /// triggering it, and this script only needs to know when it's done.
+        /// Holds until the gate opens or its safety valve expires. Never blocks forever.
         /// </summary>
-        private IEnumerator WaitForExternalDialogue(DialogueSequenceSO sequence)
+        private IEnumerator WaitForGate(PathGate gate, DialogueSequenceSO expected, float seconds, float maxWaitSeconds)
         {
-            if (sequence == null)
+            switch (gate)
             {
+                case PathGate.None:
+                    yield break;
+
+                case PathGate.Seconds:
+                    if (seconds > 0f) yield return new WaitForSeconds(seconds);
+                    yield break;
+            }
+
+            float limit = maxWaitSeconds > 0f ? maxWaitSeconds : defaultMaxWaitSeconds;
+
+            if (_eventService == null)
+            {
+                Debug.LogWarning($"{name}: no IEventService injected, so the '{gate}' gate can never " +
+                                 $"open. Waiting {limit}s and walking on. Does this scene have a " +
+                                 "ContainerScope?", this);
+                yield return new WaitForSeconds(limit);
                 yield break;
             }
 
-            waitingForDialogue = true;
+            _gateOpen = false;
+            _expectedDialogue = expected;
+            Subscribe(gate);
 
-            yield return new WaitUntil(() => !waitingForDialogue);
+            float elapsed = 0f;
+            while (!_gateOpen && elapsed < limit)
+            {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            Unsubscribe(gate);
+
+            if (!_gateOpen)
+            {
+                // Expected on a repeat visit, where the line that would have opened this gate is
+                // suppressed as already-heard. Logged rather than silent so a gate that never opens on
+                // a FIRST visit is still findable.
+                Debug.Log($"{name}: '{gate}' gate timed out after {limit}s — walking on.", this);
+            }
         }
 
+        // Subscriptions are held only for the duration of one gate — he is not listening for a rod
+        // pickup while walking, and he is not listening for dialogue once he has set off.
+        private void Subscribe(PathGate gate)
+        {
+            switch (gate)
+            {
+                case PathGate.DialogueEnds:
+                    _eventService.Subscribe<DialogueEndedEvent>(OnDialogueEnded);
+                    break;
+                case PathGate.RodPickedUp:
+                    _eventService.Subscribe<FishingRodPickedUpEvent>(OnRodPickedUp);
+                    break;
+            }
+        }
+
+        private void Unsubscribe(PathGate gate)
+        {
+            switch (gate)
+            {
+                case PathGate.DialogueEnds:
+                    _eventService.Unsubscribe<DialogueEndedEvent>(OnDialogueEnded);
+                    break;
+                case PathGate.RodPickedUp:
+                    _eventService.Unsubscribe<FishingRodPickedUpEvent>(OnRodPickedUp);
+                    break;
+            }
+        }
+
+        // Blanket cleanup for teardown, where the currently-open gate is not tracked. Unsubscribing an
+        // absent handler is a no-op, so calling both is safe.
+        private void UnsubscribeGates()
+        {
+            if (_eventService == null) return;
+            _eventService.Unsubscribe<DialogueEndedEvent>(OnDialogueEnded);
+            _eventService.Unsubscribe<FishingRodPickedUpEvent>(OnRodPickedUp);
+        }
+
+        // Only HIS line releases him. Before DialogueEndedEvent carried a sequence, any line ending
+        // anywhere opened this gate — a fish remark on the far side of the beach set him walking
+        // mid-speech. An unset expectation still accepts anything, for a scene where nothing else talks.
         private void OnDialogueEnded(DialogueEndedEvent evt)
         {
-            waitingForDialogue = false;
+            if (_expectedDialogue != null && evt.Sequence != _expectedDialogue) return;
+            _gateOpen = true;
         }
+
+        private void OnRodPickedUp(FishingRodPickedUpEvent evt) => _gateOpen = true;
 
         private void SetWalking(bool isWalking)
         {

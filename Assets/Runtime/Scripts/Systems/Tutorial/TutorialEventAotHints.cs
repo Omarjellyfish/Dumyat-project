@@ -40,6 +40,12 @@ namespace DumyatRuntime
             s.Subscribe<ReelTurnedEvent>(null);            s.Unsubscribe<ReelTurnedEvent>(null);
             s.Subscribe<FishCaughtEvent>(null);            s.Unsubscribe<FishCaughtEvent>(null);
             s.Subscribe<FishGrabbedEvent>(null);           s.Unsubscribe<FishGrabbedEvent>(null);
+            s.Subscribe<FatherPathCompletedEvent>(null);   s.Unsubscribe<FatherPathCompletedEvent>(null);
+            s.Subscribe<BoatBoardedEvent>(null);           s.Unsubscribe<BoatBoardedEvent>(null);
+            s.Subscribe<BoatLeftEvent>(null);              s.Unsubscribe<BoatLeftEvent>(null);
+
+            // Narrative — the Ras El Bar opening step waits on the father's speech finishing.
+            s.Subscribe<DialogueEndedEvent>(null);         s.Unsubscribe<DialogueEndedEvent>(null);
 
             // Market (Ezbet Al Bourg)
             s.Subscribe<MerchantSpokeEvent>(null);         s.Unsubscribe<MerchantSpokeEvent>(null);

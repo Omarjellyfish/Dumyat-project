@@ -45,9 +45,26 @@ namespace DumyatRuntime
 
             if (IsActive)
             {
-                Debug.LogWarning($"[TutorialService] Tutorial '{_activeSequence?.SequenceId}' is already running. " +
-                                 "Stop it first or wait for completion.");
-                return;
+                if (!force)
+                {
+                    Debug.LogWarning($"[TutorialService] Tutorial '{_activeSequence?.SequenceId}' is already running. " +
+                                     "Stop it first, wait for completion, or pass force: true to replace it.");
+                    return;
+                }
+
+                // force means "start this one, whatever is going on" — it used to mean only "ignore the
+                // completed flag", which made it useless for the case it is most needed in. Boarding the
+                // boat starts the on-the-water lesson while the walk-to-the-jetty cards may still be on
+                // screen; refusing there left the player looking at instructions for a beach they had
+                // already left, and skipping out of them just ended the tutorial with nothing to follow.
+                //
+                // Stop(), not SkipTutorial(): this sequence is being SUPERSEDED, not abandoned. Marking
+                // it complete or publishing a skipped event would both be lies about what the player did.
+                Debug.Log($"[TutorialService] '{sequence.SequenceId}' replaces the running " +
+                          $"'{_activeSequence?.SequenceId}'.");
+                _activeRunner.Stop();
+                _activeSequence = null;
+                _activeRunner = null;
             }
 
             _activeRunner = Object.FindFirstObjectByType<TutorialRunner>();

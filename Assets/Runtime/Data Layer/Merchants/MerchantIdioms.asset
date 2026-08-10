@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 995d9182768bbb54c911709be24600e0, type: 3}
+  m_Name: MerchantIdioms
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MerchantIdiomsSO
+  _idioms:
+  - english: "The sea gives to the patient, sir \u2014 never to the hurried."
+    arabic: "\u0627\u0644\u0628\u062D\u0631 \u0628\u064A\u062F\u064A \u0644\u0644\u0635\u0628\u0648\u0631
+      \u064A\u0627 \u0631\u064A\u0633\u060C \u0645\u0634 \u0644\u0644\u0645\u0633\u062A\u0639\u062C\u0644."
+  - english: A man's hands tell you more about him than his tongue does.
+    arabic: "\u0627\u064A\u062F \u0627\u0644\u0631\u0627\u062C\u0644 \u0628\u062A\u062D\u0643\u064A
+      \u0639\u0646\u0647 \u0627\u0643\u062A\u0631 \u0645\u0646 \u0644\u0633\u0627\u0646\u0647."
+  - english: Bless your hands. Whoever wakes before the sun eats before the rest.
+    arabic: "\u062A\u0633\u0644\u0645 \u0627\u064A\u062F\u0643. \u0627\u0644\u0644\u064A
+      \u064A\u0635\u062D\u0649 \u0642\u0628\u0644 \u0627\u0644\u0634\u0645\u0633
+      \u064A\u0627\u0643\u0644 \u0642\u0628\u0644 \u0627\u0644\u0646\u0627\u0633."
+  - english: A fair scale feeds a family longer than a clever one does.
+    arabic: "\u0627\u0644\u0645\u064A\u0632\u0627\u0646 \u0627\u0644\u0639\u062F\u0644
+      \u0628\u064A\u0639\u064A\u0634 \u0627\u0644\u0628\u064A\u062A \u0627\u0643\u062A\u0631
+      \u0645\u0646 \u0627\u0644\u0645\u064A\u0632\u0627\u0646 \u0627\u0644\u0634\u0627\u0637\u0631."
+  - english: "Fish and guests, sir \u2014 both go off if you keep them too long."
+    arabic: "\u0627\u0644\u0633\u0645\u0643 \u0648\u0627\u0644\u0636\u064A\u0641
+      \u064A\u0627 \u0631\u064A\u0633\u060C \u0627\u0644\u0627\u062A\u0646\u064A\u0646
+      \u0628\u064A\u0628\u0648\u0638\u0648\u0627 \u0644\u0648 \u0637\u0648\u0644\u062A
+      \u0639\u0644\u064A\u0647\u0645."
+  - english: The Nile does not argue with the sea. It just arrives.
+    arabic: "\u0627\u0644\u0646\u064A\u0644 \u0645\u0628\u064A\u062E\u0627\u0646\u0642\u0634
+      \u0627\u0644\u0628\u062D\u0631\u060C \u0647\u0648 \u0628\u0633 \u0628\u064A\u0648\u0635\u0644."
+  - english: Patience is bitter, sir, but nobody ever complained about its fruit.
+    arabic: "\u0627\u0644\u0635\u0628\u0631 \u0645\u0631 \u064A\u0627 \u0631\u064A\u0633\u060C
+      \u0628\u0633 \u0645\u062D\u062F\u0634 \u0627\u0634\u062A\u0643\u0649 \u0645\u0646
+      \u062A\u0645\u0631\u062A\u0647."
+  - english: "Take it easy \u2014 the day is long and the sea is not going anywhere."
+    arabic: "\u0639\u0644\u0649 \u0645\u0647\u0644\u0643\u060C \u0627\u0644\u0646\u0647\u0627\u0631
+      \u0637\u0648\u064A\u0644 \u0648\u0627\u0644\u0628\u062D\u0631 \u0645\u0634
+      \u0647\u064A\u0633\u064A\u0628\u0646\u0627."
+  _chance: 0.35
+  _maxDeceptionRate: 0.55
+  _minPatienceLevel: 4

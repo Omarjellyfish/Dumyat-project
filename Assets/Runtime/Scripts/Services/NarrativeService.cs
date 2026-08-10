@@ -38,6 +38,10 @@ namespace DumyatRuntime
 
         private DialogueState _current;
 
+        // The last sequence that actually played, reported on DialogueEndedEvent so subscribers can
+        // tell whose line just finished. See FinishCurrentDialogue for why it is a field.
+        private DialogueSequenceSO _lastFinishedSequence;
+
         public NarrativeService(IEventService eventService, IPlayerPersistenceService persistenceService)
         {
             _eventService = eventService;
@@ -267,6 +271,11 @@ namespace DumyatRuntime
 
         private void FinishCurrentDialogue()
         {
+            // Captured before _current is cleared, and only when there was something to capture: this
+            // method recurses while draining the stack, and the inner calls must not overwrite the
+            // identity of the sequence the player actually just heard with null.
+            if (_current != null) _lastFinishedSequence = _current.Sequence;
+
             _current = null;
 
             // Check queue for higher priority first
@@ -327,7 +336,7 @@ namespace DumyatRuntime
             }
             else
             {
-                _eventService.Publish(new DialogueEndedEvent());
+                _eventService.Publish(new DialogueEndedEvent(_lastFinishedSequence));
             }
         }
 

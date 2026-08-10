@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8359f8334d3981d419499c601122daa9, type: 3}
+  m_Name: RasElBar_03_ToTheJetty
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialStepSO
+  InstructionText: He's making for the water. Follow him down to the boat.
+  InstructionTextArabic: "\u0647\u0648 \u0646\u0627\u0632\u0644 \u0646\u0627\u062D\u064A\u0629
+    \u0627\u0644\u0645\u064A\u0629. \u0627\u0645\u0634\u064A \u0648\u0631\u0627\u0647
+    \u0644\u062D\u062F \u0627\u0644\u0645\u0631\u0643\u0628."
+  Audio: {fileID: 0}
+  VoiceLine: {fileID: 0}
+  Icon: {fileID: 0}
+  Video: {fileID: 0}
+  CompletionType: 1
+  NextButton: 0
+  EventTypeName: 
+  ZoneId: JettyZone
+  DelaySeconds: 0
+  FallbackUnlockSeconds: 0
+  PrimaryAnchorId: JettyZone
+  HighlightIds:
+  - JettyApproach
+  - BoatBoard
+  HighlightNearestOnly: 0
+  AnchorOffset: {x: 0, y: 0.3, z: 0}
+  HapticOnActivate: {fileID: 0}

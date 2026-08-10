@@ -264,7 +264,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c54b98167d2104e4d8a6d088c74e2bb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  _hookVoice: {fileID: 0}
+  _hookedCue: {fileID: 360483788045571268}
 --- !u!135 &9172186218120347746
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -1237,10 +1237,9 @@ GameObject:
   - component: {fileID: 2779499451226317864}
   - component: {fileID: 6652565646149860051}
   - component: {fileID: 7473994981737354157}
-  - component: {fileID: 830305937762628054}
   - component: {fileID: 3037436898992222196}
-  - component: {fileID: 6495387887345177355}
   - component: {fileID: 2934707627530765260}
+  - component: {fileID: 360483788045571268}
   m_Layer: 0
   m_Name: Rod
   m_TagString: Untagged
@@ -1442,21 +1441,6 @@ MonoBehaviour:
   m_LimitAngularVelocity: 0
   m_MaxLinearVelocityDelta: 10
   m_MaxAngularVelocityDelta: 20
---- !u!114 &830305937762628054
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7801197442702505875}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed759791d012eb340880d7524f060a53, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TutorialFire
-  _dialogueSequence: {fileID: 11400000, guid: f560812060382ab43a75358a83a3c937, type: 2}
-  _priority: 1
-  _triggerOnce: 1
 --- !u!114 &3037436898992222196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1475,26 +1459,6 @@ MonoBehaviour:
       m_Calls: []
   HighlightStyle: 0
   FrameSizeOverride: {x: 0, y: 0}
---- !u!114 &6495387887345177355
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7801197442702505875}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 43f45df24a3ebc4438ccc42db642503c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.OneShotVoiceCue
-  _clip: {fileID: 8300000, guid: f3b6d3f21c6e6b64cb12cda9b27e503b, type: 3}
-  _cueId: HookSoundPlayed
-  _volume: 1
-  _playAt: {fileID: 0}
-  _scope: 0
-  _allowedScenes:
-  - RasElBar
-  - ToBuild_El_manara
 --- !u!114 &2934707627530765260
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1507,6 +1471,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49dc70b8c0bda5545b7185982625e3fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.FishingRodGrabPublisher
+--- !u!114 &360483788045571268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7801197442702505875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eeb5b06898e47a04b8c40d7d6f06269f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.OneShotDialogueCue
+  _sequence: {fileID: 11400000, guid: f55807f7a20dee14b81830d412809692, type: 2}
+  _priority: 1
+  _gate:
+    _cueId: rasalbar_hook_line
+    _scope: 3
+    _allowedScenes:
+    - RasElBar
 --- !u!1 &7855720446633524620
 GameObject:
   m_ObjectHideFlags: 0

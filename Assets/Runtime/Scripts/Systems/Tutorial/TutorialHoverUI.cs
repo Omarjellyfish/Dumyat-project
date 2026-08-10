@@ -267,6 +267,19 @@ namespace DumyatRuntime
         public void Show()
         {
             _isVisible = true;
+
+            // Cancel any hide still in flight. Hide() defers SetActive(false) by the length of the close
+            // animation, and that timer belongs to the card that WAS on screen — it has no business
+            // switching off the one replacing it. Without this, a sequence started while another is
+            // closing draws its first card and then loses it a fraction of a second later, which reads
+            // as the new tutorial simply never appearing. Stopped before the object is re-activated,
+            // because StopCoroutine does nothing once the GameObject is off.
+            if (_animationCoroutine != null)
+            {
+                StopCoroutine(_animationCoroutine);
+                _animationCoroutine = null;
+            }
+
             gameObject.SetActive(true);
 
             if (_panel != null)

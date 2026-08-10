@@ -215,36 +215,12 @@ namespace DumyatRuntime
             Vector3 target = _hasSafePosition ? _lastSafePosition : FindArrivalPoint();
 
             _fade?.FadeToBlack(_fadeOutSeconds);
-            Teleport(target);
+            PlayerRigTeleport.MoveTo(_rig, target);
             _fade?.FadeFromBlack(_fadeInSeconds);
 
             Debug.Log($"{nameof(PlayerFallGuard)}: player fell out of the world — returned to " +
                       $"{target}. If this happens in the same place repeatedly, that edge needs a collider.",
                       this);
-        }
-
-        /// <summary>
-        /// Moves the rig, defeating anything that would fight the move: a CharacterController writes the
-        /// transform back from its own internal position unless it is switched off across the change,
-        /// and a Rigidbody keeps the downward velocity the fall built up, so the player would resume
-        /// plummeting the moment they arrived.
-        /// </summary>
-        private void Teleport(Vector3 position)
-        {
-            var controller = _rig.GetComponentInChildren<CharacterController>();
-            bool hadController = controller != null && controller.enabled;
-            if (hadController) controller.enabled = false;
-
-            _rig.position = position;
-
-            var body = _rig.GetComponentInChildren<Rigidbody>();
-            if (body != null && !body.isKinematic)
-            {
-                body.linearVelocity = Vector3.zero;
-                body.angularVelocity = Vector3.zero;
-            }
-
-            if (hadController) controller.enabled = true;
         }
 
         // Last resort when the player fell before ever touching ground: the scene's authored spawn.
@@ -263,10 +239,7 @@ namespace DumyatRuntime
         {
             if (_rig != null) return true;
 
-            GameObject tagged = GameObject.FindGameObjectWithTag("Player");
-            if (tagged != null) _rig = tagged.transform;
-            else if (Camera.main != null) _rig = Camera.main.transform.root;
-
+            _rig = PlayerRigTeleport.FindRig();
             if (_rig == null) return false;
 
             // A new rig means a new scene: the old scene's safe spot is meaningless here.

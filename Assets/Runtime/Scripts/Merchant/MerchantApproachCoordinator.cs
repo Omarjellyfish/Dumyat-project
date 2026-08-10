@@ -69,7 +69,7 @@ namespace DumyatRuntime
         private int _sequentialIndex;
         private MerchantNPC _lastApproached;
         private Coroutine _cooldownRoutine;
-        private IFishInventory _fishInventory;
+        private readonly FishInventoryResolver _fishInventory = new FishInventoryResolver();
 
         // Cached approach-movers for the roster (null entries allowed for merchants without one), so
         // IsAnyMerchantEngaging can cheaply check whether ANY merchant is currently in motion.
@@ -450,30 +450,7 @@ namespace DumyatRuntime
             return inventory != null ? inventory.HasFish : _debugPlayerHasFish;
         }
 
-        // Resolves an IFishInventory: the serialized reference, else any component in the scene that
-        // implements it. Cached after the first successful resolve.
-        // NOTE: NegotiationFlowController.ResolveFishInventory does the same thing — if a third caller
-        // ever needs this, lift it into a shared helper rather than copying it again.
-        private IFishInventory ResolveFishInventory()
-        {
-            if (_fishInventory != null) return _fishInventory;
-
-            if (_fishInventorySource is IFishInventory fromField)
-            {
-                _fishInventory = fromField;
-                return _fishInventory;
-            }
-
-            foreach (MonoBehaviour mb in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
-            {
-                if (mb is IFishInventory inv)
-                {
-                    _fishInventory = inv;
-                    return _fishInventory;
-                }
-            }
-            return null;
-        }
+        private IFishInventory ResolveFishInventory() => _fishInventory.Resolve(_fishInventorySource);
 
         private static string NameOf(MerchantNPC merchant)
         {

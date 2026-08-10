@@ -53,8 +53,24 @@ namespace DumyatRuntime
     /// <summary>Published when the player selects a choice (for UI to dismiss).</summary>
     public readonly struct DialogueChoiceDismissedEvent : IGameEvent { }
 
-    /// <summary>Published when a dialogue sequence finishes or when all queued dialogues are done.</summary>
-    public readonly struct DialogueEndedEvent : IGameEvent { }
+    /// <summary>
+    /// Published when a dialogue sequence finishes and nothing is left queued or stacked.
+    ///
+    /// <see cref="Sequence"/> names the last sequence actually played. It exists because "some dialogue
+    /// ended" is not enough to act on: the father waits for his own opening speech before he sets off,
+    /// and without an identity here a fish remark ending on the other side of the beach released him
+    /// mid-sentence. Subscribers that care WHICH line ended should compare against it; the rest can
+    /// keep ignoring it. May be null if nothing had played.
+    /// </summary>
+    public readonly struct DialogueEndedEvent : IGameEvent
+    {
+        public readonly DialogueSequenceSO Sequence;
+
+        public DialogueEndedEvent(DialogueSequenceSO sequence)
+        {
+            Sequence = sequence;
+        }
+    }
 
     /// <summary>Published when active dialogue is interrupted by a higher-priority one.</summary>
     public readonly struct DialogueInterruptedEvent : IGameEvent { }

@@ -19,7 +19,8 @@ GameObject:
   - component: {fileID: 8786348690805371838}
   - component: {fileID: 5577796713247612423}
   - component: {fileID: 3294152845940321919}
-  - component: {fileID: 3167619861265871000}
+  - component: {fileID: 7891288839390905344}
+  - component: {fileID: 4767823308425827125}
   m_Layer: 0
   m_Name: Layla Olwy Fish
   m_TagString: Fish
@@ -84,9 +85,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.Fish
   _species: {fileID: 11400000, guid: b4e3e75d6d2554848b4cb369b8a06b61, type: 2}
   _mouthPoint: {fileID: 8011505662694824252}
-  _dialogueSequence: {fileID: 11400000, guid: 740e1da83b58b9c4a9dd036b9a3eed88, type: 2}
-  _priority: 1
-  _triggerOnce: 1
 --- !u!114 &5727939896480547018
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -230,7 +228,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8a04e0a377145c4ea86831b883148ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DehookingFish
-  CatchFishVoice: {fileID: 0}
 --- !u!114 &6937025437335772083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -334,7 +331,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.HandsOnlyGrabFilter
   _blockFarHover: 1
---- !u!114 &3167619861265871000
+--- !u!114 &7891288839390905344
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -343,17 +340,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 7090295438093893417}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 43f45df24a3ebc4438ccc42db642503c, type: 3}
+  m_Script: {fileID: 11500000, guid: eeb5b06898e47a04b8c40d7d6f06269f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.OneShotVoiceCue
-  _clip: {fileID: 8300000, guid: b1aff45bef6abb048a63b5d3e9f70c39, type: 3}
-  _cueId: catch_fish_voice_played
-  _volume: 1
-  _playAt: {fileID: 0}
-  _scope: 0
-  _allowedScenes:
-  - RasElBar
-  - ToBuild_El_manara
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.OneShotDialogueCue
+  _sequence: {fileID: 11400000, guid: 740e1da83b58b9c4a9dd036b9a3eed88, type: 2}
+  _priority: 1
+  _gate:
+    _cueId: rasalbar_fish_grab_line
+    _scope: 3
+    _allowedScenes:
+    - RasElBar
+--- !u!114 &4767823308425827125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7090295438093893417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 103923ee10161d04a89db36dd5e8ed41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DialogueCueOnGrab
+  _cue: {fileID: 7891288839390905344}
 --- !u!1001 &7510130351133318377
 PrefabInstance:
   m_ObjectHideFlags: 0
