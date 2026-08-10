@@ -311,6 +311,20 @@ namespace DumyatRuntime
             "'مية' and 'ميتين', NOT 'مائة' and 'مائتان'. Write plain Arabic with NO diacritics / " +
             "tashkeel / vocalization (harakat). The English translation may keep normal digits.";
 
+        /// <summary>
+        /// The WORDING half of the same reminder: every word must be Egyptian, not just every number.
+        /// Restated in EVERY prompt variant's HARD RULES block for the same reason as
+        /// <see cref="NumbersAndScriptHardRule"/> — a rule stated only in the system framing stops holding
+        /// by the time a long prompt reaches the answer. The voice is Egyptian-only, so one Modern Standard
+        /// or Levantine word is mispronounced out loud: the merchant said "يا بني الحلال" (a Levantine/MSA
+        /// contraction) where an Egyptian says "يا ابن الحلال", and it came out broken.
+        /// </summary>
+        private const string EgyptianWordingHardRule =
+            "- CRITICAL: every WORD of merchantSpeech must be EGYPTIAN colloquial — never Modern Standard " +
+            "Arabic and never Levantine/Gulf. Say 'يا ابن الحلال' NOT 'يا بني الحلال'; 'مش فاهم' NOT " +
+            "'لا أفهم'; 'دلوقتي' NOT 'الآن'; 'عايز' NOT 'أريد'; 'ايه / ليه / ازاي / فين' NOT " +
+            "'ماذا / لماذا / كيف / أين'. The voice can only pronounce Egyptian — one foreign word breaks it.";
+
         // The Egyptian-Arabic constraint from docs/MERCHANT_CONTEXT.md. It MUST appear in EVERY
         // prompt (LLMs drift toward MSA by default), so it lives here and is injected each turn.
         // Built per call (not a const) so the prompt names the EXACT TTS engine that will speak
@@ -360,6 +374,23 @@ namespace DumyatRuntime
             "briefly, a full stop (.) to end a sentence with a longer pause, an ellipsis (...) for a " +
             "trailing / thinking pause or hesitation, and a question mark (؟) when you ask something. " +
             "Separate multiple sentences with these marks so the delivery sounds natural, not robotic.\n" +
+            "5) Use EGYPTIAN WORDS and EGYPTIAN ways of addressing people — this matters as much as the " +
+            "numbers, and for the same reason: the voice is trained on Egyptian ONLY, so a Modern Standard " +
+            "or Levantine/Gulf word is mispronounced and the line comes out broken. Rules:\n" +
+            "   • Address the fisherman the Egyptian way: يا ريس ، يا معلم ، يا حاج ، يا كابتن ، يا باشا ، " +
+            "يا ابن الحلال. NEVER 'يا بني الحلال' — that is not Egyptian; an Egyptian says 'يا ابن الحلال'. " +
+            "Never يا بني ، يا رجل ، يا أخي ، يا زلمة.\n" +
+            "   • Egyptian, never the Modern Standard equivalent: مش (not ليس / لا) ، ده / دي / دول (not " +
+            "هذا / هذه / هؤلاء) ، ايه (not ماذا) ، ليه (not لماذا) ، ازاي (not كيف) ، امتى (not متى) ، " +
+            "فين (not أين) ، دلوقتي (not الآن) ، عايز (not أريد / تريد) ، كده (not هكذا) ، اللي (not " +
+            "الذي / التي) ، كتير (not كثير) ، شوية (not قليل) ، كمان (not أيضا) ، بس (not فقط) ، فلوس " +
+            "(not نقود / مال) ، حاجة (not شيء) ، كويس (not جيد) ، عشان (not لأن / كي) ، دلوقتي (not حالا).\n" +
+            "   • NEVER Levantine or Gulf: شو ، بدي ، هلق ، هيك ، منيح ، وين ، ليش ، كيفك ، زلمة ، وياك. " +
+            "Use the Egyptian word every time.\n" +
+            "   • Build the future with a ه / ح prefix (هقولك ، هديك ، حاجيبلك), never سوف or سـ, and " +
+            "negate with مش or ما...ش (مش هينفع ، مبيعش), never لن / لم / ليس.\n" +
+            "   Check every sentence before you answer: if it could be read on the news, or spoken in a " +
+            "Syrian or Gulf drama, rewrite it the way a Damietta fish seller would actually say it out loud.\n" +
             "PRIORITY: merchantSpeech must be FLAWLESS Egyptian Arabic script (it is spoken aloud). The " +
             "\"speechTranslationEnglish\" field is ONLY subtitles — minor English mistakes there are " +
             "tolerated, so put your effort into getting the Arabic 100% right first.";
@@ -667,7 +698,7 @@ namespace DumyatRuntime
 
             result = new MerchantTurnResult
             {
-                MerchantSpeech = StripArabicDiacritics(dto.merchantSpeech),
+                MerchantSpeech = ToSpokenEgyptian(dto.merchantSpeech),
                 SpeechTranslationEnglish = dto.speechTranslationEnglish,
                 Action = MerchantAction.HoldFirm
             };
@@ -812,6 +843,7 @@ namespace DumyatRuntime
             sb.AppendLine("- NEVER break character. NEVER mention being an AI, a model, or a game.");
             sb.AppendLine("- Keep merchantSpeech to one or two short, natural market-style sentences.");
             sb.AppendLine(NumbersAndScriptHardRule);
+            sb.AppendLine(EgyptianWordingHardRule);
         }
 
         // Renders the fish on the scale with their agreed per-fish prices for the summary prompt.
@@ -1122,6 +1154,7 @@ namespace DumyatRuntime
                           "never decimals, fractions or piastres (say 'تسعين جنيه', never 'تسعين جنيه ونص'). " +
                           "\"newOfferAmount\" must be a whole integer.");
             sb.AppendLine(NumbersAndScriptHardRule);
+            sb.AppendLine(EgyptianWordingHardRule);
 
             return sb.ToString();
         }
@@ -1302,6 +1335,7 @@ namespace DumyatRuntime
             sb.AppendLine("- NEVER break character. NEVER mention being an AI, a model, or a game.");
             sb.AppendLine("- Keep merchantSpeech to one or two short, natural market-style sentences.");
             sb.AppendLine(NumbersAndScriptHardRule);
+            sb.AppendLine(EgyptianWordingHardRule);
 
             return sb.ToString();
         }
@@ -1441,9 +1475,12 @@ namespace DumyatRuntime
             return false;
         }
 
-        // Removes Arabic vowelization (tashkeel/harakat) so the ElevenLabs TTS voice pronounces plain
-        // colloquial text — LLMs regularly ignore "do not add diacritics".
-        private static string StripArabicDiacritics(string s) => ArabicText.StripDiacritics(s);
+        // Everything the spoken line must survive before it reaches the Egyptian TTS voice, in one place so
+        // both parse paths get the same treatment: strip vowelization (tashkeel/harakat), then swap the
+        // handful of words that are never Egyptian for their Egyptian forms. Both are belt-and-suspenders
+        // over the prompt — LLMs regularly ignore "no diacritics" and drift out of dialect ("يا بني الحلال"
+        // for "يا ابن الحلال"), and the voice mispronounces both.
+        private static string ToSpokenEgyptian(string s) => ArabicText.ToEgyptianForms(ArabicText.StripDiacritics(s));
 
         // --- Strict parsing + validation -------------------------------------------
 
@@ -1509,10 +1546,9 @@ namespace DumyatRuntime
 
             var parsed = new MerchantTurnResult
             {
-                // Guarantee the TTS never receives vowelization: strip any tashkeel/harakat the model
-                // added despite the prompt (LLMs regularly ignore "do not add diacritics"). Belt-and-
-                // suspenders with the DialectInstruction above.
-                MerchantSpeech = StripArabicDiacritics(dto.merchantSpeech),
+                // Guarantee the TTS never receives vowelization or an out-of-dialect word, whatever the
+                // model did despite the prompt. Belt-and-suspenders with the DialectInstruction above.
+                MerchantSpeech = ToSpokenEgyptian(dto.merchantSpeech),
                 SpeechTranslationEnglish = dto.speechTranslationEnglish,
                 Action = action,
                 NewOfferAmount = 0f,
