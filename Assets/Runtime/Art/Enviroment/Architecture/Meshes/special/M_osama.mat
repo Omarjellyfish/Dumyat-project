@@ -29,6 +29,18 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _BlendColorMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BlendMaskMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BlendNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -77,6 +89,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Packed_Decal_Texture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -105,8 +121,11 @@ Material:
     - _Alpha_Clip_Threshold: 0.5
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
+    - _BlendNormalStrength: 0
+    - _BlendRougnessAmount: 0
     - _BumpScale: 1
     - _CastShadows: 1
+    - _Channel_Number: 0
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
@@ -115,24 +134,35 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
+    - _ENABLE_DECALS: 0
     - _ENABLE_EMISSION: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _Height: 1
+    - _Horizontal_Offset: 0
+    - _Invert_Mask: 0
     - _Metallic: 0
     - _Normal_Strength: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Radius: 0.04
     - _ReceiveShadows: 1
     - _Smoothness: 0.5
+    - _SmoothnessDown: 0.03
+    - _SmoothnessLeft: 0.03
+    - _SmoothnessRight: 0.03
     - _SmoothnessTextureChannel: 0
+    - _SmoothnessUp: 0.03
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
+    - _Vertical_Offset: 0
+    - _Width: 1
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZTest: 4
@@ -141,6 +171,9 @@ Material:
     - _roughness_l7d_matofrg: 0.4
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BlendColorTint: {r: 1, g: 1, b: 1, a: 0}
+    - _BlendOffset: {r: 0, g: 0, b: 0, a: 0}
+    - _BlendTiling: {r: 1, g: 1, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Color_Tint: {r: 1, g: 1, b: 1, a: 1}
     - _Emision_Color: {r: 1, g: 1, b: 1, a: 1}
