@@ -24,10 +24,6 @@ namespace DumyatRuntime
         [SerializeField, FormerlySerializedAs("mouthPoint")] private Transform _mouthPoint;
 
         private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable _interactable;
-        [SerializeField] private DialogueSequenceSO _dialogueSequence;
-        [SerializeField] private DialoguePriority _priority = DialoguePriority.Normal;
-        private bool hasTriggered = false;
-        [SerializeField] private bool _triggerOnce = true;
 
         // Rolled once at Awake and never again: this fish's honest caught weight (kg) and the market
         // rate its species fetches today. Together they give the fair market value the merchant
@@ -78,16 +74,12 @@ namespace DumyatRuntime
                 return;
             }
 
-            // Announced ahead of the dialogue guards below: grabbing the fish is a fact about the
-            // player regardless of whether this particular fish has a line to say, or has already
-            // said it.
+            // Just the fact, nothing else. The father's remark on the first catch used to be published
+            // from here, gated by a bool on THIS fish — which meant it played again for every other
+            // fish in the water and again after every scene load. It now lives on a
+            // DialogueCueOnGrab + OneShotDialogueCue pair on the prefab, which shares one save key
+            // across every fish.
             _eventService.Publish(new FishGrabbedEvent(this));
-
-            if (_triggerOnce && hasTriggered) return;
-            if (_dialogueSequence == null) return;
-
-            hasTriggered = true;
-            _eventService.Publish(new PlayDialogueEvent(_dialogueSequence, _priority));
         }
 
         private void Awake()

@@ -43,7 +43,7 @@ namespace DumyatRuntime
         private void OnSelectEntered(SelectEnterEventArgs args)
         {
             // The rod sits in a socket at scene start, and the socket re-takes it whenever the player
-            // puts it back. Neither is the player picking it up. (Same guard TutorialFire uses.)
+            // puts it back. Neither is the player picking it up. (Same guard DialogueCueOnGrab uses.)
             if (args.interactorObject is XRSocketInteractor) return;
 
             if (_eventService == null)

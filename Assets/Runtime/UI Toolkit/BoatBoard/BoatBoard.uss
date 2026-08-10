@@ -1,0 +1,175 @@
+/* Delta — the project's standard world-space panel treatment (CLAUDE.md).
+   Reference implementation: styles/InventoryStyles.uss.
+
+   Authored for a 900 x 620 world panel. Everything here clears the VR floor: body text >= 26px,
+   headers >= 32px, ray-clickable controls >= 64px tall. Below that it is unreadable in a headset,
+   and this panel is the only way off the boat.
+
+   UI Toolkit cannot do box-shadow, gradients, backdrop-filter or text-transform — the frosted look
+   is opacity alone, and the uppercase strings are authored uppercase by the controller. */
+
+/* 900 x 620 is the AUTHORING reference, not a hard size — the root fills whatever the UIDocument
+   gives it, exactly as DestinationBoard.uss does. Pinning width/height to 900x620 px made the root
+   overflow the panel's own coordinate space by two orders of magnitude, which is what produced a
+   board the size of a building.
+
+   Cairo and the advanced text generator are set here rather than per-label: font properties inherit,
+   so one declaration gives the whole panel the face that has Arabic glyphs and the generator that
+   shapes and joins them. */
+.board {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding-top: 40px;
+    padding-bottom: 30px;
+    padding-left: 48px;
+    padding-right: 48px;
+    -unity-text-generator: advanced;
+    -unity-font-definition: url("project://database/Assets/Runtime/UI%20Toolkit/Fonts/Cairo-VariableFont_slnt,wght.ttf?fileID=12800000&guid=7d8050dfeb2d6c64ab82de5bd3f91742&type=3#Cairo-VariableFont_slnt,wght");
+    background-color: rgba(8, 26, 34, 0.84);
+    border-left-color: rgba(120, 228, 236, 0.42);
+    border-right-color: rgba(120, 228, 236, 0.42);
+    border-top-color: rgba(120, 228, 236, 0.42);
+    border-bottom-color: rgba(120, 228, 236, 0.42);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-radius: 22px;
+    flex-direction: column;
+}
+
+/* Weight comes from size and spacing, not from bolding everything. */
+/* NOTHING in this panel may shrink.
+   Flex shrinks a container to fit but cannot shrink the text inside it, so a squashed row does not
+   get smaller — its content hangs out of the bottom. That is what put the catch figures on top of the
+   RETURN TO SHORE button: the readouts box was cut to 55px while its label and value still needed
+   100px, and the overflow landed 29px into the button. The gunwale board is the tall one because it
+   is the only one that shows readouts, which is why the jetty board looked fine.
+   Margins below are trimmed so the natural content (~598px) fits 620px without flex ever intervening. */
+.board__eyebrow,
+.board__title,
+.board__body,
+.board__rule,
+.board__readouts,
+.board__row,
+.board__action {
+    flex-shrink: 0;
+}
+
+.board__eyebrow {
+    font-size: 22px;
+    letter-spacing: 5px;
+    color: rgba(214, 246, 250, 0.55);
+    margin-bottom: 10px;
+}
+
+/* 40, not 46. Cairo's line box runs about twice the font size — a 46px title occupied 95px — and the
+   gunwale board has to fit a title, prose, a divider, two readouts and a 82px button in 620px.
+   Still well clear of the 32px header floor. */
+.board__title {
+    font-size: 40px;
+    color: #EAF8FB;
+    white-space: normal;
+}
+
+.board__body {
+    font-size: 27px;
+    color: rgba(214, 246, 250, 0.82);
+    margin-top: 20px;
+    max-width: 700px;
+    white-space: normal;
+}
+
+/* A hairline, not a card edge. Rows read as one continuous list.
+   min-height as well as height: a 1px box is the first thing flex rounds away to nothing, and this
+   divider was resolving to 0 — the panel had no visible rule at all. */
+.board__rule {
+    height: 1px;
+    min-height: 1px;
+    background-color: rgba(120, 228, 236, 0.18);
+    margin-top: 22px;
+}
+
+.board__readouts {
+    flex-direction: row;
+    margin-top: 18px;
+}
+
+.board__row {
+    flex-direction: column;
+    margin-right: 64px;
+}
+
+/* Data, not badges: a small uppercase label above the number, never a pill around it. */
+.board__row-label {
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: rgba(214, 246, 250, 0.55);
+    margin-bottom: 6px;
+}
+
+.board__row-value {
+    font-size: 32px;
+    color: #EAF8FB;
+}
+
+.board__row-value--jade {
+    color: #8DEBAF;
+}
+
+/* Pure slack. It takes whatever is left over and gives it all up when there is none, so the button
+   stays pinned to the bottom without ever competing with the content above it. */
+.board__grow {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+/* Ghost button: transparent with a coloured outline, filling in on hover. Rectangular with a slight
+   radius — not a pill. 82px clears the 64px ray-target floor with room for a mis-aimed controller. */
+.board__action {
+    height: 82px;
+    background-color: rgba(0, 0, 0, 0);
+    border-left-color: #67DDE8;
+    border-right-color: #67DDE8;
+    border-top-color: #67DDE8;
+    border-bottom-color: #67DDE8;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-radius: 8px;
+    color: #67DDE8;
+    font-size: 27px;
+    letter-spacing: 4px;
+}
+
+.board__action:hover {
+    background-color: rgba(103, 221, 232, 0.16);
+    color: #EAF8FB;
+}
+
+.board__action:focus {
+    border-left-color: #EAF8FB;
+    border-right-color: #EAF8FB;
+    border-top-color: #EAF8FB;
+    border-bottom-color: #EAF8FB;
+}
+
+/* Arabic — switches on UI Toolkit's Advanced text generator, which shapes and orders the script
+   natively. UiLanguage.ApplyScript adds this class; the rule has to exist here or it does nothing. */
+.ui-arabic {
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+/* UI Toolkit has no `direction` property, so right-alignment is as close to an RTL layout as prose
+   gets. The readouts are deliberately NOT flipped — a count and a weight are figures, and they stay
+   where the eye already expects to find them. */
+.ui-arabic.board__eyebrow,
+.ui-arabic.board__title,
+.ui-arabic.board__body,
+.ui-arabic.board__row-label {
+    -unity-text-align: upper-right;
+}

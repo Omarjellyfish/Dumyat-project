@@ -1,52 +1,43 @@
-using Reflex.Attributes;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace DumyatRuntime
 {
+    /// <summary>
+    /// Takes the fish off the hook when the player gets a hand on it, by destroying the
+    /// <see cref="FixedJoint"/> that <see cref="HookingFish"/> added.
+    ///
+    /// One job. It used to also play the father's "respectable fish" line, with its own copy of a
+    /// play-once check against a save key — while the clip field was null on every fish prefab, so it
+    /// played silence and burned the key regardless. Worse, it read its injected services without a
+    /// null guard, so a fish that was never injected threw here and never got dehooked at all. The
+    /// line is a <see cref="DialogueCueOnGrab"/> on the prefab now; this is what is left.
+    /// </summary>
+    [RequireComponent(typeof(XRGrabInteractable))]
     public class DehookingFish : MonoBehaviour
     {
-        private XRGrabInteractable grabInteractable;
-        [SerializeField] private AudioClip CatchFishVoice;
-        private ISoundService _soundService;
-        private IPlayerPersistenceService _playerPersistence;
-
-        private const string CatchVoicePlayedKey = "catch_fish_voice_played";
-
-        [Inject]
-        private void Inject(ISoundService soundService, IPlayerPersistenceService playerPersistence) =>
-            (_soundService, _playerPersistence) = (soundService, playerPersistence);
+        private XRGrabInteractable _grabInteractable;
 
         private void Awake()
         {
-            grabInteractable = GetComponent<XRGrabInteractable>();
+            _grabInteractable = GetComponent<XRGrabInteractable>();
         }
 
         private void OnEnable()
         {
-            grabInteractable.selectEntered.AddListener(OnGrabbed);
+            _grabInteractable.selectEntered.AddListener(OnGrabbed);
         }
 
         private void OnDisable()
         {
-            grabInteractable.selectEntered.RemoveListener(OnGrabbed);
+            _grabInteractable.selectEntered.RemoveListener(OnGrabbed);
         }
 
         private void OnGrabbed(SelectEnterEventArgs args)
         {
             FixedJoint joint = GetComponent<FixedJoint>();
-
-            if (!_playerPersistence.HasKey(CatchVoicePlayedKey))
-            {
-                _soundService.PlaySoundFxAtPosition(CatchFishVoice, transform, 1f);
-                _playerPersistence.AddKey(CatchVoicePlayedKey);
-            }
-
-            if (joint != null)
-            {
-                Destroy(joint);
-            }
+            if (joint != null) Destroy(joint);
         }
     }
 }

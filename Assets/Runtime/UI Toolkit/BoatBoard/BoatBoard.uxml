@@ -1,0 +1,38 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/BoatBoard/BoatBoard.uss" />
+
+    <!-- Delta, per CLAUDE.md, authored for a 900 x 620 world panel.
+
+         One layout serves both boards: the jetty one going out and the gunwale one coming back.
+         BoatBoardUI fills in the strings and shows or hides the readout row, because the two boards
+         differ only in what they say — making them two panels would mean two places to fix the day
+         the treatment changes.
+
+         Every string here is a placeholder. The controller writes all of them so the English and the
+         Arabic can live together in one authored pair rather than in two UXML files. -->
+    <ui:VisualElement name="boat-board" class="board">
+
+        <ui:Label name="board-eyebrow" text="THE JETTY" class="board__eyebrow" />
+        <ui:Label name="board-title" text="Out to the water" class="board__title" />
+        <ui:Label name="board-body" text="" class="board__body" />
+
+        <ui:VisualElement name="board-rule" class="board__rule" />
+
+        <!-- Hidden on the jetty: nothing has been caught yet, and a row of zeroes is decoration. -->
+        <ui:VisualElement name="board-readouts" class="board__readouts">
+            <ui:VisualElement class="board__row">
+                <ui:Label name="board-catch-label" text="TODAY'S CATCH" class="board__row-label" />
+                <ui:Label name="board-catch-value" text="0" class="board__row-value board__row-value--jade" />
+            </ui:VisualElement>
+            <ui:VisualElement class="board__row">
+                <ui:Label name="board-weight-label" text="WEIGHT" class="board__row-label" />
+                <ui:Label name="board-weight-value" text="0.00 kg" class="board__row-value" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="board__grow" />
+
+        <ui:Button name="board-action" text="BOARD THE BOAT" class="board__action" />
+
+    </ui:VisualElement>
+</ui:UXML>

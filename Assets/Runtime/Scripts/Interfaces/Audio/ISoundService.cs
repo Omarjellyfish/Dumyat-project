@@ -16,6 +16,19 @@ namespace DumyatRuntime
         void PlayUISoundFx(AudioClip clip, float volume = 1f);
 
         /// <summary>
+        /// Silences every pooled source and returns them all.
+        ///
+        /// The pool lives on a DontDestroyOnLoad object, so a clip started in one scene plays straight
+        /// through the load and into the next — a fisherman's line finishing over the market. Leaving a
+        /// scene is the one moment that must never happen, and no caller can be relied on to stop its
+        /// own clip on the way out.
+        ///
+        /// Safe to call on <c>SceneLoadBeginEvent</c>: <see cref="SceneLoadService"/> publishes that
+        /// BEFORE it starts the transition sting, so the sting is unaffected.
+        /// </summary>
+        void StopAll();
+
+        /// <summary>
         /// Plays the loading/transition sting and returns how long it will last, in seconds — 0 when
         /// nothing was played.
         ///

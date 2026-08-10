@@ -18,6 +18,15 @@ namespace DumyatRuntime
     }
 
     /// <summary>
+    /// The father has finished his scripted walk and is standing at the jetty. What the player may do
+    /// next — board the boat — becomes available here. Published rather than wired directly so the
+    /// father does not need to know a boarding board exists.
+    /// </summary>
+    public readonly struct FatherPathCompletedEvent : IGameEvent
+    {
+    }
+
+    /// <summary>
     /// The player has pressed and is holding the cast button — the rod is winding up. Published on the
     /// press, not the throw, so a tutorial can teach the two halves of a cast separately.
     /// </summary>

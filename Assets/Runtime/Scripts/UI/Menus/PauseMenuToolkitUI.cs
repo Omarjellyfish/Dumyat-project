@@ -39,15 +39,18 @@ namespace DumyatRuntime
         private IGameStateService _gameState;
         private IGameSessionService _session;
         private ISceneLoadService _sceneLoad;
+        private ISettingsService _settings;
 
         [Inject]
         private void Inject(IEventService eventService, IGameStateService gameState,
-                            IGameSessionService session, ISceneLoadService sceneLoad)
+                            IGameSessionService session, ISceneLoadService sceneLoad,
+                            ISettingsService settings)
         {
             _eventService = eventService;
             _gameState = gameState;
             _session = session;
             _sceneLoad = sceneLoad;
+            _settings = settings;
         }
 
         private VisualElement _panelRoot;
@@ -129,14 +132,26 @@ namespace DumyatRuntime
             }
         }
 
+        /// <summary>
+        /// Names the place the player is standing in.
+        ///
+        /// The scene name is the last resort, not the first: "RasElBar" and "EzbetElBorg" are build
+        /// artefacts, and the towns already have proper names — in both languages — on the destination
+        /// assets the bus board reads from. Pausing should call the place what the departures board
+        /// called it half a minute ago.
+        /// </summary>
         private void SetLocationLabel()
         {
             Label label = _panelRoot.Q<Label>("PauseSubLabel");
             if (label == null) return;
 
-            label.text = string.IsNullOrWhiteSpace(_locationDisplayName)
-                ? UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToUpperInvariant()
-                : _locationDisplayName.ToUpperInvariant();
+            string name = !string.IsNullOrWhiteSpace(_locationDisplayName)
+                ? _locationDisplayName
+                : SceneDisplayName.ForActiveScene(UiLanguage.IsArabic(_settings));
+
+            // Arabic has no case, and ToUpperInvariant on it is a no-op that would only risk mangling
+            // a shaped string — so the shout is applied to Latin text only.
+            label.text = UiLanguage.IsArabic(_settings) ? name : name.ToUpperInvariant();
         }
 
         private void HandleToggleRequested(PauseToggleRequestedEvent _)

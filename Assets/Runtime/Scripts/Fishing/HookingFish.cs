@@ -10,16 +10,16 @@ namespace DumyatRuntime
         private IHapticService _haptics;
 
         [Header("Audio Feedback")]
-        [Tooltip("Voice line for the moment a fish takes the hook. Auto-resolved from this GameObject " +
-                 "or its parents if empty. Owns its own 'play once' and per-scene rules.")]
-        [SerializeField] private OneShotVoiceCue _hookVoice;
+        [Tooltip("The father's line for the moment a fish takes the hook. Auto-resolved from this " +
+                 "GameObject or its parents if empty. Owns its own 'play once' and per-scene rules.")]
+        [SerializeField] private OneShotDialogueCue _hookedCue;
 
         [Inject]
         private void Inject(IHapticService haptics) => _haptics = haptics;
 
         private void Awake()
         {
-            if (_hookVoice == null) _hookVoice = GetComponentInParent<OneShotVoiceCue>();
+            if (_hookedCue == null) _hookedCue = GetComponentInParent<OneShotDialogueCue>();
         }
 
         private void OnTriggerEnter(Collider collision)
@@ -56,7 +56,7 @@ namespace DumyatRuntime
             currentJoint = joint;
             isFishHooked = true;
 
-            _hookVoice?.TryPlay();
+            _hookedCue?.TryPlay();
 
             _haptics?.TriggerVibration(1f, 2f, 0.5f, HapticHand.Right);
 

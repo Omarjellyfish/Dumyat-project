@@ -129,6 +129,12 @@ namespace DumyatRuntime
                  "If empty, one is searched for in the scene; otherwise the debug fish below is used.")]
         [SerializeField] private MonoBehaviour _fishInventorySource;
 
+        [Header("Opening idiom")]
+        [Tooltip("Optional bank of proverbs a good-natured merchant may open with. The asset decides " +
+                 "which merchants are mild enough and how often any of them actually says one. Leave " +
+                 "empty and nobody does.")]
+        [SerializeField] private MerchantIdiomsSO _idioms;
+
         [Header("Scripted (offline) fallback")]
         [Tooltip("ON: skip the AI voice flow entirely and always run the SCRIPTED (button-based, no-AI) sale. " +
                  "Use for offline builds or to test the scripted path with consent/network available.")]
@@ -152,7 +158,7 @@ namespace DumyatRuntime
         private NegotiationState _state;
         private MerchantNPC _activeMerchant;
         private AudioSource _activeAudioSource;
-        private IFishInventory _fishInventory;
+        private readonly FishInventoryResolver _fishInventory = new FishInventoryResolver();
         private bool _busy;
         private bool _subscribed;
         private int _consecutiveRecoveries;
@@ -1318,6 +1324,11 @@ namespace DumyatRuntime
                 ISellScale scale = _activeMerchant != null ? _activeMerchant.SellScale : null;
                 if (_state == null || _negotiation == null || scale == null) return false;
 
+                // A bit of folk wisdom before business, from the good-natured traders only and only
+                // sometimes. Ahead of the greeting because that is where it belongs in the rhythm of the
+                // exchange — a proverb after "put the fish on the scale" is an interruption.
+                if (!await SpeakIdiomAsync()) return false;
+
                 // Welcome line (greets on the first conversation / sometimes after).
                 bool greet = DecideOpeningGreeting(_activeMerchant);
                 if (!await SpeakLineAsync(await _negotiation.GenerateWelcomeLine(_state, greet))) return false;
@@ -1991,6 +2002,27 @@ namespace DumyatRuntime
         // Decides whether the merchant's opening line should include a greeting, and records that a
         // conversation has started. First conversation with this merchant: always greet (Egyptian
         // style). Afterwards: greet only GreetingChanceAfterFirst of the time.
+        /// <summary>
+        /// Speaks this merchant's opening idiom, if he is the sort who has one and the roll goes his
+        /// way. Returns false only if the negotiation ended while he was talking, so the caller can
+        /// unwind exactly as it does for any other line.
+        ///
+        /// Most approaches say nothing here and return true immediately — that is the point of it.
+        /// </summary>
+        private async Task<bool> SpeakIdiomAsync()
+        {
+            if (_idioms == null || _activeMerchant == null) return true;
+            if (!_idioms.TryPick(_activeMerchant.Config, out MerchantIdiomsSO.Line idiom)) return true;
+
+            ShowSubtitle(idiom.english, idiom.arabic);
+
+            // The subtitle is shown either way; only the Arabic is voiced, and a bank entry with no
+            // Arabic yet should still read rather than stall waiting for TTS that will never speak.
+            if (!string.IsNullOrWhiteSpace(idiom.arabic)) await SpeakAsync(idiom.arabic);
+
+            return _busy;
+        }
+
         private bool DecideOpeningGreeting(MerchantNPC merchant)
         {
             if (merchant == null) return true;
@@ -2023,28 +2055,7 @@ namespace DumyatRuntime
             return catalog != null && catalog.Count > 0 ? new List<FishCatalogEntry>(catalog) : null;
         }
 
-        // Resolves an IFishInventory: the serialized reference, else any component in the scene that
-        // implements it. Cached after the first successful resolve.
-        private IFishInventory ResolveFishInventory()
-        {
-            if (_fishInventory != null) return _fishInventory;
-
-            if (_fishInventorySource is IFishInventory fromField)
-            {
-                _fishInventory = fromField;
-                return _fishInventory;
-            }
-
-            foreach (MonoBehaviour mb in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
-            {
-                if (mb is IFishInventory inv)
-                {
-                    _fishInventory = inv;
-                    return _fishInventory;
-                }
-            }
-            return null;
-        }
+        private IFishInventory ResolveFishInventory() => _fishInventory.Resolve(_fishInventorySource);
 
         // Resolves (or creates) the shared voice-capture controller and puts it in turn-based mode.
         private void EnsureVoiceCapture()
