@@ -73,6 +73,15 @@ namespace DumyatRuntime
             if (Count > 0) GoTo(0, true);
         }
 
+        /// <summary>
+        /// Jump to the last slide. Marked as travelling BACKWARDS deliberately: it is a jump, not an
+        /// advance, and the backwards flag is what the transition and the HUD read to decide direction.
+        /// </summary>
+        public void GoToEnd()
+        {
+            if (Count > 0 && Index != Count - 1) GoTo(Count - 1, true);
+        }
+
         public void JumpToSection(int sectionNumber)
         {
             if (_deck == null) return;

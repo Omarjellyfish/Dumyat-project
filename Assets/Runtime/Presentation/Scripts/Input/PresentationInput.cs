@@ -52,7 +52,15 @@ namespace DumyatRuntime
             if (Pressed(KeyKind.Previous)) director.Previous();
             if (Pressed(KeyKind.Restart))  director.Restart();
 
-            for (int section = 1; section <= 9; section++)
+            // The two ends of the talk. 0 and 9 rather than Home and End because they sit next to the
+            // section digits, so the whole jump map is one row of keys.
+            if (Pressed(KeyKind.First)) director.Restart();
+            if (Pressed(KeyKind.Last))  director.GoToEnd();
+
+            // SECTION JUMPS STOP AT 8, NOT 9. The 9 key is the end of the deck now, which costs section 9
+            // (Future Plans) its direct key — and costs it nothing in practice, because the end of the deck
+            // is the Thank You slide and Future Plans is the one immediately before it: press 9 then A.
+            for (int section = 1; section <= 8; section++)
             {
                 if (Pressed(KeyKind.Digit1 + (section - 1))) director.JumpToSection(section);
             }
@@ -86,7 +94,9 @@ namespace DumyatRuntime
         // backends are the only place either enum is named.
         private enum KeyKind
         {
-            Digit1 = 0, Digit2, Digit3, Digit4, Digit5, Digit6, Digit7, Digit8, Digit9,
+            // Digit1..Digit8 must stay contiguous and first — the section loop does arithmetic on them.
+            Digit1 = 0, Digit2, Digit3, Digit4, Digit5, Digit6, Digit7, Digit8,
+            First, Last,
             Next, Previous, Restart, Notes, Counter, PauseMedia, Quit,
         }
 
@@ -105,12 +115,19 @@ namespace DumyatRuntime
                         return kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame ||
                                kb.pageUpKey.wasPressedThisFrame;
                     case KeyKind.Restart: return kb.homeKey.wasPressedThisFrame;
+                    // Both the digit row and the numpad, because a presenter clicker and a laptop keyboard
+                    // do not agree on which one a "0" is.
+                    case KeyKind.First:
+                        return kb.digit0Key.wasPressedThisFrame || kb.numpad0Key.wasPressedThisFrame;
+                    case KeyKind.Last:
+                        return kb.digit9Key.wasPressedThisFrame || kb.numpad9Key.wasPressedThisFrame ||
+                               kb.endKey.wasPressedThisFrame;
                     case KeyKind.Notes:      return kb.nKey.wasPressedThisFrame;
                     case KeyKind.Counter:    return kb.cKey.wasPressedThisFrame;
                     case KeyKind.PauseMedia: return kb.pKey.wasPressedThisFrame;
                     default:
                         int digit = (int)kind - (int)KeyKind.Digit1;
-                        if (digit < 0 || digit > 8) return false;
+                        if (digit < 0 || digit > 7) return false;
                         return kb[Key.Digit1 + digit].wasPressedThisFrame;
                 }
             }
@@ -125,12 +142,17 @@ namespace DumyatRuntime
                     return Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow) ||
                            Input.GetKeyDown(KeyCode.PageUp);
                 case KeyKind.Restart:    return Input.GetKeyDown(KeyCode.Home);
+                case KeyKind.First:
+                    return Input.GetKeyDown(KeyCode.Alpha0) || Input.GetKeyDown(KeyCode.Keypad0);
+                case KeyKind.Last:
+                    return Input.GetKeyDown(KeyCode.Alpha9) || Input.GetKeyDown(KeyCode.Keypad9) ||
+                           Input.GetKeyDown(KeyCode.End);
                 case KeyKind.Notes:      return Input.GetKeyDown(KeyCode.N);
                 case KeyKind.Counter:    return Input.GetKeyDown(KeyCode.C);
                 case KeyKind.PauseMedia: return Input.GetKeyDown(KeyCode.P);
                 default:
                     int digit = (int)kind - (int)KeyKind.Digit1;
-                    if (digit < 0 || digit > 8) return false;
+                    if (digit < 0 || digit > 7) return false;
                     return Input.GetKeyDown(KeyCode.Alpha1 + digit);
             }
 #else

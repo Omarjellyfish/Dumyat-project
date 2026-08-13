@@ -36,5 +36,14 @@ namespace DumyatRuntime
 
         /// <summary>Return to the first slide.</summary>
         void Restart();
+
+        /// <summary>
+        /// Jump to the last slide of the deck.
+        ///
+        /// Paired with <see cref="Restart"/> for the 0 and 9 keys: the two ends of the talk, reachable
+        /// without stepping. Useful for skipping to the closing slide when time runs short, and for
+        /// getting back to the poster before an audience walks in.
+        /// </summary>
+        void GoToEnd();
     }
 }
