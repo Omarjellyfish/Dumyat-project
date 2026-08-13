@@ -31,8 +31,21 @@ namespace DumyatRuntime
         public VisualElement Ground { get; private set; }
 
         public VisualElement Backdrop { get; private set; }
+
+        /// <summary>Still of the outgoing stage, for the freeze-based transitions. Below Content.</summary>
+        public VisualElement Freeze { get; private set; }
+
+        /// <summary>The overflow-hidden parent of <see cref="Freeze"/> — shrunk to produce a hard wipe.</summary>
+        public VisualElement FreezeClip { get; private set; }
+
         public VisualElement Content { get; private set; }
         public VisualElement Cover { get; private set; }
+
+        // The location slate, riding on the cover.
+        public VisualElement Slate { get; private set; }
+        public VisualElement SlateRule { get; private set; }
+        public Label SlateTitle { get; private set; }
+        public Label SlateArabic { get; private set; }
 
         public VisualElement TextSlide { get; private set; }
         public Label DividerNumeral { get; private set; }
@@ -87,10 +100,17 @@ namespace DumyatRuntime
             Root = _document.rootVisualElement;
             int missing = 0;
 
-            Ground   = Need<VisualElement>("presentation-root", ref missing);
-            Backdrop = Need<VisualElement>("backdrop", ref missing);
-            Content  = Need<VisualElement>("content", ref missing);
-            Cover    = Need<VisualElement>("cover", ref missing);
+            Ground     = Need<VisualElement>("presentation-root", ref missing);
+            Backdrop   = Need<VisualElement>("backdrop", ref missing);
+            FreezeClip = Need<VisualElement>("freeze-clip", ref missing);
+            Freeze     = Need<VisualElement>("freeze", ref missing);
+            Content    = Need<VisualElement>("content", ref missing);
+            Cover      = Need<VisualElement>("cover", ref missing);
+
+            Slate       = Need<VisualElement>("slate", ref missing);
+            SlateRule   = Need<VisualElement>("slate-rule", ref missing);
+            SlateTitle  = Need<Label>("slate-title", ref missing);
+            SlateArabic = Need<Label>("slate-arabic", ref missing);
 
             TextSlide      = Need<VisualElement>("text-slide", ref missing);
             DividerNumeral = Need<Label>("divider-numeral", ref missing);

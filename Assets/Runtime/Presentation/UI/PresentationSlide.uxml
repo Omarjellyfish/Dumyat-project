@@ -3,10 +3,21 @@
 
     <!-- One tree for the whole deck. Renderers show and hide parts of it rather than each slide
          type owning its own template, which is what lets five layouts share one asset type.
-         Layer order matters: backdrop, then content, then HUD, then the transition cover on top. -->
+         Layer order matters: backdrop, freeze, content, HUD, then the transition cover on top. -->
     <ui:VisualElement name="presentation-root" class="presentation-root">
 
         <ui:VisualElement name="backdrop" class="backdrop" picking-mode="Ignore" />
+
+        <!-- The still of the outgoing stage, used by every freeze-based transition. It sits ABOVE the
+             backdrop and the 3D but BELOW content on purpose: the incoming place's name should appear
+             at once, over the old image while it clears, rather than waiting for it.
+
+             The clipper is what makes a hard wipe possible. UI Toolkit has no clip-path, so a wipe is
+             done by shrinking a parent with overflow:hidden while the still inside it holds a fixed
+             pixel size — shrinking the still itself would squash the image instead of revealing past it. -->
+        <ui:VisualElement name="freeze-clip" class="freeze-clip hidden" picking-mode="Ignore">
+            <ui:VisualElement name="freeze" class="freeze" picking-mode="Ignore" />
+        </ui:VisualElement>
 
         <ui:VisualElement name="content" class="content" picking-mode="Ignore">
             <ui:VisualElement name="text-slide" class="slide">
@@ -70,6 +81,15 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <ui:VisualElement name="cover" class="cover" picking-mode="Ignore" />
+        <!-- The cover, and the location slate that rides on it. The slate is a CHILD so it inherits the
+             cover's opacity: it appears as the screen darkens and leaves as it lifts, with no second
+             clock to keep in step. LocationSlate is the only transition that uses it. -->
+        <ui:VisualElement name="cover" class="cover" picking-mode="Ignore">
+            <ui:VisualElement name="slate" class="slate hidden" picking-mode="Ignore">
+                <ui:VisualElement name="slate-rule" class="slate-rule" />
+                <ui:Label name="slate-title" class="slate-title" text="Place" />
+                <ui:Label name="slate-arabic" class="slate-ar" text="" />
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

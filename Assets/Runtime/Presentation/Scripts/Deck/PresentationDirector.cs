@@ -96,13 +96,15 @@ namespace DumyatRuntime
         private IEnumerator MoveRoutine(int index, bool backwards)
         {
             SlideSO slide = _deck.SlideAt(index);
-            SlideTransitionSO transition = _deck.ResolveTransition(slide);
+            // Resolved from the MOVE, not just the destination: the deck returns a cut when both ends are
+            // angles of the same place, so the Cinemachine blend is not hidden behind a dissolve.
+            SlideTransitionSO transition = _deck.ResolveTransition(Current, slide);
 
             // First show of the deck: no out-half, there is nothing on screen to cover.
             bool isFirstShow = Index < 0;
 
             if (!isFirstShow && _transitions != null)
-                yield return _transitions.PlayOut(transition);
+                yield return _transitions.PlayOut(transition, slide);
 
             // --- everything below happens while the screen is covered ---
             Index = index;

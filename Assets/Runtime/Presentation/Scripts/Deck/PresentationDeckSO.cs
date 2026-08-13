@@ -51,6 +51,26 @@ namespace DumyatRuntime
             slide != null && slide.TransitionIn != null ? slide.TransitionIn : _defaultTransition;
 
         /// <summary>
+        /// The transition for a specific move, which is not always a property of the destination alone.
+        ///
+        /// Two angles of ONE place are a camera move, not a scene change: Cinemachine is already easing
+        /// between them and any covering transition would hide exactly the move worth showing. Returning
+        /// null here means "cut", which the transition player already treats as an instant no-op — so the
+        /// scene slides can all carry the dissolve for arriving in a new place, and moving within a place
+        /// silently opts out. Deciding it here rather than per asset is what makes it correct in BOTH
+        /// directions: walking backwards out of a place is just as much a place change as walking in.
+        /// </summary>
+        public SlideTransitionSO ResolveTransition(SlideSO from, SlideSO to)
+        {
+            if (from is SceneShowcaseSlideSO a && to is SceneShowcaseSlideSO b &&
+                !string.IsNullOrEmpty(a.StageId) &&
+                string.Equals(a.StageId, b.StageId, System.StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            return ResolveTransition(to);
+        }
+
+        /// <summary>
         /// Declared name of a section, straight from the deck's table and independent of whether any
         /// slide claims that number. The contents page needs this to list sections, and the deck
         /// validator needs it to spot a section that is named but has no slides.

@@ -19,11 +19,15 @@ namespace DumyatEditor
     ///
     /// Angles land under one clearly-named root per scene so <see cref="DemoSceneStripper"/> leaves
     /// them alone and Phase 3's stage component can collect them without a search.
+    ///
+    /// The pose reading and Scene view flying live in <see cref="AngleAuthoring"/>, shared with the
+    /// angle library inspector — see the note there for why they must not be duplicated. This class is
+    /// now just the keyboard-driven front-end: record a brand new angle without opening an asset.
     /// </summary>
     public static class AnglePlacementTool
     {
-        private const string AngleRootName = "--- PRESENTATION ANGLES ---";
-        private const string AnglePrefix = "Angle_";
+        private const string AngleRootName = AngleAuthoring.AngleRootName;
+        private const string AnglePrefix = AngleAuthoring.AnglePrefix;
 
         [MenuItem("Dumyat/Presentation/Angles/Create Angle From Scene View %#a", priority = 60)]
         private static void CreateAngle()
@@ -43,7 +47,7 @@ namespace DumyatEditor
                 return;
             }
 
-            Transform root = EnsureAngleRoot(scene);
+            Transform root = AngleAuthoring.EnsureAngleRoot(scene);
             int next = CountAngles(root) + 1;
 
             var go = new GameObject(AnglePrefix + next.ToString("00"));
@@ -51,7 +55,7 @@ namespace DumyatEditor
             go.transform.SetParent(root, true);
 
             var cam = Undo.AddComponent<CinemachineCamera>(go);
-            ApplyPose(cam, view);
+            AngleAuthoring.WritePose(cam, view);
 
             Selection.activeGameObject = go;
             EditorGUIUtility.PingObject(go);
@@ -65,12 +69,11 @@ namespace DumyatEditor
         private static void UpdateSelectedAngle()
         {
             CinemachineCamera cam = SelectedAngle();
-            SceneView view = SceneView.lastActiveSceneView;
-            if (cam == null || view == null) return;
+            if (cam == null) return;
 
-            Undo.RecordObjects(new Object[] { cam, cam.transform }, "Update presentation angle");
-            ApplyPose(cam, view);
-            Debug.Log($"[AnglePlacementTool] {cam.name} re-recorded from the Scene view.", cam);
+            if (AngleAuthoring.CaptureFromSceneView(cam))
+                Debug.Log($"[AnglePlacementTool] {cam.name} re-recorded from the Scene view. If it is " +
+                          "listed in a CameraAngleLibrary, press Pull there to match.", cam);
         }
 
         [MenuItem("Dumyat/Presentation/Angles/Update Selected Angle From Scene View", true)]
@@ -80,16 +83,10 @@ namespace DumyatEditor
         private static void AlignSceneViewToAngle()
         {
             CinemachineCamera cam = SelectedAngle();
-            SceneView view = SceneView.lastActiveSceneView;
-            if (cam == null || view == null) return;
+            if (cam == null) return;
 
-            // LookAt with a pivot a little ahead of the camera, because the Scene view orbits a pivot
-            // rather than holding a position — dropping the pivot on the camera itself makes the view
-            // unusable to nudge afterwards.
-            Transform t = cam.transform;
-            view.LookAt(t.position + t.forward * 10f, t.rotation, 10f);
-            view.camera.fieldOfView = cam.Lens.FieldOfView;
-            Debug.Log($"[AnglePlacementTool] Scene view aligned to {cam.name}.", cam);
+            if (AngleAuthoring.AlignSceneViewTo(cam))
+                Debug.Log($"[AnglePlacementTool] Scene view aligned to {cam.name}.", cam);
         }
 
         [MenuItem("Dumyat/Presentation/Angles/Align Scene View To Selected Angle", true)]
@@ -115,33 +112,6 @@ namespace DumyatEditor
 
             sb.AppendLine($"  {n} angle(s).");
             Debug.Log(sb.ToString());
-        }
-
-        private static void ApplyPose(CinemachineCamera cam, SceneView view)
-        {
-            Camera src = view.camera;
-            cam.transform.SetPositionAndRotation(src.transform.position, src.transform.rotation);
-
-            // Read-modify-write so this works whether Lens is exposed as a field or a property.
-            LensSettings lens = cam.Lens;
-            if (!view.orthographic) lens.FieldOfView = src.fieldOfView;
-            lens.NearClipPlane = Mathf.Max(0.05f, src.nearClipPlane);
-            lens.FarClipPlane = Mathf.Max(lens.NearClipPlane + 1f, src.farClipPlane);
-            cam.Lens = lens;
-
-            EditorUtility.SetDirty(cam);
-            EditorSceneManager.MarkSceneDirty(cam.gameObject.scene);
-        }
-
-        private static Transform EnsureAngleRoot(Scene scene)
-        {
-            foreach (GameObject go in scene.GetRootGameObjects())
-                if (go.name == AngleRootName) return go.transform;
-
-            var root = new GameObject(AngleRootName);
-            Undo.RegisterCreatedObjectUndo(root, "Create angle root");
-            SceneManager.MoveGameObjectToScene(root, scene);
-            return root.transform;
         }
 
         private static int CountAngles(Transform root)

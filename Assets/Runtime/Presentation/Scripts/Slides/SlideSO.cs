@@ -57,5 +57,18 @@ namespace DumyatRuntime
         /// unassigned background field means the deck default cannot accidentally reintroduce it.
         /// </summary>
         public virtual bool WantsBackdrop => true;
+
+        /// <summary>
+        /// What the LocationSlate transition writes on the covered screen while arriving at this slide.
+        ///
+        /// It lives on the slide rather than being dug out by the transition player because only the
+        /// slide knows what it is: a scene slide wants its place name, a text slide its title. That keeps
+        /// the director and the player free of any knowledge of slide types, which is the whole reason
+        /// adding a slide kind has never meant editing either of them.
+        /// </summary>
+        public virtual string SlateTitle => _title;
+
+        /// <summary>Second slate line, under the title. Null or empty hides it.</summary>
+        public virtual string SlateSubtitle => null;
     }
 }

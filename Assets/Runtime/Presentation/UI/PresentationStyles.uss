@@ -61,6 +61,67 @@
     opacity: 0;
 }
 
+/* The frozen outgoing stage for a StageDissolve. Its background image is a RenderTexture assigned at
+ * runtime; scale and opacity are animated in C# rather than by a USS transition because the transition
+ * player already owns the timing for every other kind and one clock is easier to trust than two.
+ *
+ * ScaleAndCrop, not ScaleToFit: the still must cover the frame exactly like the live render did, and
+ * letterbox bars appearing for half a second in the middle of a dissolve would read as a glitch. */
+.freeze-clip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Width and height are set in PIXELS by the player at capture time, not left at 100%. A wipe shrinks the
+ * clipper, and a percentage-sized still would shrink with it — squashing the image instead of revealing
+ * the live scene past a straight edge. */
+.freeze {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* The location slate: the deck's only transition that says something. Centred, wide-tracked, and using
+ * the same accent rule as the scene lockup so arriving somewhere reads as the same visual family. */
+.slate {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.slate-rule {
+    width: 64px;
+    height: 2px;
+    background-color: rgb(103, 221, 232);
+    margin-bottom: 22px;
+}
+
+.slate-title {
+    font-size: 66px;
+    color: rgb(234, 248, 251);
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+}
+
+.slate-ar {
+    font-size: 30px;
+    color: rgba(214, 246, 250, 0.62);
+    margin-top: 10px;
+    -unity-text-align: middle-center;
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
 /* ---------- the slide safe box: 120 side, 84 top, 96 bottom ---------- */
 
 .slide {

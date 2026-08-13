@@ -45,5 +45,10 @@ namespace DumyatRuntime
 
         /// <summary>Never — the backdrop would cover the stage render.</summary>
         public override bool WantsBackdrop => false;
+
+        // A slate arriving at a place should name the PLACE, in both scripts — the same pair the lockup
+        // shows, so the slate reads as the lockup announcing itself before settling into the corner.
+        public override string SlateTitle => PlaceName;
+        public override string SlateSubtitle => _placeNameArabic;
     }
 }
