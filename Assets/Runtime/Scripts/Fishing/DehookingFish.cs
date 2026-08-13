@@ -36,8 +36,34 @@ namespace DumyatRuntime
 
         private void OnGrabbed(SelectEnterEventArgs args)
         {
-            FixedJoint joint = GetComponent<FixedJoint>();
-            if (joint != null) Destroy(joint);
+            // Destroy any joints attached directly to this fish
+            FixedJoint[] localJoints = GetComponentsInChildren<FixedJoint>();
+            foreach (FixedJoint joint in localJoints)
+            {
+                Destroy(joint);
+            }
+
+            // The joint might be attached to the hook instead of the fish.
+            // Since we avoid FindObjectOfType at runtime, we check nearby rigidbodies.
+            Rigidbody myRb = GetComponent<Rigidbody>();
+            if (myRb != null)
+            {
+                Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, 3f);
+                foreach (Collider col in nearbyColliders)
+                {
+                    if (col.attachedRigidbody != null && col.attachedRigidbody != myRb)
+                    {
+                        FixedJoint[] externalJoints = col.attachedRigidbody.GetComponents<FixedJoint>();
+                        foreach (FixedJoint joint in externalJoints)
+                        {
+                            if (joint.connectedBody == myRb)
+                            {
+                                Destroy(joint);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

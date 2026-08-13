@@ -4,6 +4,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Filtering;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -40,6 +41,13 @@ namespace DumyatRuntime
         private XRSocketInteractor _socketInteractor;
         private XRGrabInteractable _socketedGrabInteractable;
         private InteractionLayerMask _originalInteractionLayers;
+        private IHapticService _haptics;
+
+        [Inject]
+        private void Inject(IHapticService haptics)
+        {
+            _haptics = haptics;
+        }
 
         // Parts currently hovering this socket that we're watching for release, so a
         // rejected one (wrong order) can be snapped back to its ShipPartSpawnPoint.
@@ -143,6 +151,8 @@ namespace DumyatRuntime
             {
                 Debug.LogWarning($"ShipPartSocket '{_socketID}': socketed object has no XRGrabInteractable to lock.");
             }
+            
+            _haptics?.TriggerVibration(0.4f, 0.15f, 0.5f, HapticHand.Both);
 
             ShipAssemblyManager.Instance?.NotifySocketFilled(this);
         }

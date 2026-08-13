@@ -280,8 +280,8 @@ namespace DumyatRuntime
 
             float deltaRotation = Mathf.DeltaAngle(previousZRotation, currentZRotation);
 
-            // Reel turned forward
-            if (deltaRotation > 0f && ropeLength < maxRopeLength)
+            // Reel turned forward (require a small threshold to ignore hand jitter)
+            if (deltaRotation > 0.5f && ropeLength < maxRopeLength)
             {
                 UnlockHookPosition();
 
@@ -292,7 +292,7 @@ namespace DumyatRuntime
                 PlayReelSound();
             }
             // Reel turned backward
-            else if (deltaRotation < 0f && ropeLength > minRopeLength)
+            else if (deltaRotation < -0.5f && ropeLength > minRopeLength)
             {
                 UnlockHookPosition();
 

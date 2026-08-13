@@ -35,6 +35,7 @@ namespace DumyatRuntime
         private IFloatingTextService _floatingTextService;
         private ISoundService _soundService;
         private IHapticService _hapticService;
+        private bool _wasTouching;
 
         [Inject]
         private void Inject(
@@ -74,6 +75,16 @@ namespace DumyatRuntime
                 _bladeTip._isTouchingWood ||
                 _bladeMid._isTouchingWood ||
                 _bladeBase._isTouchingWood;
+
+            if (touchingNow && !_wasTouching)
+            {
+                _hapticService?.StartContinuousVibration(0.1f, 0.4f, XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
+            }
+            else if (!touchingNow && _wasTouching)
+            {
+                _hapticService?.StopContinuousVibration(XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
+            }
+            _wasTouching = touchingNow;
 
             if (!touchingNow)
             {
@@ -157,6 +168,15 @@ namespace DumyatRuntime
                 _hitPoints.Clear();
                 _hitNormals.Clear();
                 _surfaceConstraint.ResetCutProgress();
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_wasTouching)
+            {
+                _hapticService?.StopContinuousVibration(XRInteractionUtils.GetGrabbingHand(GetComponentInParent<XRGrabInteractable>()));
+                _wasTouching = false;
             }
         }
 

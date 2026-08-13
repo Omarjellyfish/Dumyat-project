@@ -29,6 +29,7 @@ namespace DumyatRuntime
         private readonly QuestSaveData _questData;
         private readonly QuestRewardContext _rewardContext;
         private readonly IPlayerPersistenceService _persistenceService;
+        private readonly IHapticService _hapticService;
 
         public QuestService(
             ISaveService saveService,
@@ -37,13 +38,15 @@ namespace DumyatRuntime
             ICraftingService craftingService,
             IInventoryService inventoryService,
             IPlayerPersistenceService persistenceService,
-            IWalletService walletService)
+            IWalletService walletService,
+            IHapticService hapticService)
         {
             _saveService = saveService;
             _eventService = eventService;
             _questDatabase = questDatabase;
             _questData = _saveService.CurrentSaveData.questData;
             _persistenceService = persistenceService;
+            _hapticService = hapticService;
 
             _rewardContext = new QuestRewardContext
             {
@@ -330,6 +333,8 @@ namespace DumyatRuntime
 
             _eventService.Publish(new QuestCompletedEvent(questID));
             Debug.Log($"[QuestService] Quest COMPLETED: '{def.displayName}' ({questID})");
+            
+            _hapticService?.TriggerVibration(0.7f, 0.5f, 0.5f, HapticHand.Both);
 
             if (def.persistenceKeysOnComplete != null)
             {

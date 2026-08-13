@@ -53,9 +53,15 @@ namespace DumyatRuntime
 
         private WoodPaintSurface _currentWood;
         private IEventService _eventService;
+        private IHapticService _haptics;
+        private bool _wasOnWood;
 
         [Inject]
-        private void Inject(IEventService eventService) => _eventService = eventService;
+        private void Inject(IEventService eventService, IHapticService haptics)
+        {
+            _eventService = eventService;
+            _haptics = haptics;
+        }
 
         private void Awake()
         {
@@ -67,6 +73,17 @@ namespace DumyatRuntime
         private void Update()
         {
             bool onWood = TryDetectWood(out RaycastHit hit, out WoodPaintSurface wood, out Vector2 uv);
+
+            if (onWood && !_wasOnWood)
+            {
+                _haptics?.StartContinuousVibration(0.15f, 0.5f, HapticHand.Both);
+            }
+            else if (!onWood && _wasOnWood)
+            {
+                _haptics?.StopContinuousVibration(HapticHand.Both);
+            }
+            
+            _wasOnWood = onWood;
 
             switch (_currentMode)
             {
@@ -105,6 +122,15 @@ namespace DumyatRuntime
                     if (_lineDraw != null)
                         _lineDraw.UpdateLinePositions(_pointAWorld, hit.point);
                     break;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_wasOnWood)
+            {
+                _haptics?.StopContinuousVibration(HapticHand.Both);
+                _wasOnWood = false;
             }
         }
 

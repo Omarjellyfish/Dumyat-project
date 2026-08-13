@@ -1,58 +1,36 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/ConsentPrompt.uss" />
-
-    <!-- Delta, per CLAUDE.md. This screen decides whether the game may listen to the player, so the
-         VR sizing floor is not a nicety here: the old card asked with 15px body text and a ~20px
-         checkbox, well under the 26px / 64px minimums, on the one panel where a mis-aimed ray means
-         agreeing to something you did not mean to.
-
-         The rows are the same segment control as Settings > Permissions, deliberately — a player
-         should meet one shape for this question, not a checkbox here and a segment there. -->
-    <ui:VisualElement name="consent-panel" class="consent-overlay">
+    <Style src="project://database/Assets/Runtime/UI%20Toolkit/styles/ConsentPrompt.uss?fileID=7433441132597879392&amp;guid=63e9e4eeda10e4740beafc8e256d0256&amp;type=3#ConsentPrompt"/>
+    <ui:VisualElement name="consent-panel" style="visibility: visible; display: flex;">
         <ui:VisualElement class="consent-card">
-
-            <ui:Label text="BEFORE YOU START" class="consent-eyebrow" />
-            <ui:Label text="Haggling out loud" class="consent-title" />
-
-            <ui:Label text="Merchants can hear you and answer back. That needs your microphone, and what you say is sent away to be understood — nothing is kept once the conversation ends."
-                      class="consent-body" />
-
-            <ui:VisualElement class="consent-divider" />
-
+            <ui:Label text="BEFORE YOU START" class="consent-eyebrow"/>
+            <ui:Label text="Haggling out loud" class="consent-title"/>
+            <ui:Label text="Merchants can hear you and answer back. That needs your microphone, and what you say is sent away to be understood — nothing is kept once the conversation ends." class="consent-body"/>
+            <ui:VisualElement class="consent-divider"/>
             <ui:VisualElement name="mic-row" class="consent-row">
                 <ui:VisualElement class="consent-row-text">
-                    <ui:Label text="Microphone" class="consent-row-name" />
-                    <ui:Label text="So merchants can hear you haggle" class="consent-row-sub" />
+                    <ui:Label text="Microphone" class="consent-row-name"/>
+                    <ui:Label text="So merchants can hear you haggle" class="consent-row-sub"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="consent-segment">
-                    <ui:Button name="mic-allow-button" text="ALLOW" class="consent-seg-btn" />
-                    <ui:Button name="mic-block-button" text="BLOCK" class="consent-seg-btn" />
+                    <ui:Button name="mic-allow-button" text="ALLOW" class="consent-seg-btn"/>
+                    <ui:Button name="mic-block-button" text="BLOCK" class="consent-seg-btn"/>
                 </ui:VisualElement>
             </ui:VisualElement>
-
             <ui:VisualElement name="ai-row" class="consent-row">
                 <ui:VisualElement class="consent-row-text">
-                    <ui:Label text="Online AI" class="consent-row-name" />
-                    <ui:Label text="Sends what you say to be understood" class="consent-row-sub" />
+                    <ui:Label text="Online AI" class="consent-row-name"/>
+                    <ui:Label text="Sends what you say to be understood" class="consent-row-sub"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="consent-segment">
-                    <ui:Button name="ai-allow-button" text="ALLOW" class="consent-seg-btn" />
-                    <ui:Button name="ai-block-button" text="BLOCK" class="consent-seg-btn" />
+                    <ui:Button name="ai-allow-button" text="ALLOW" class="consent-seg-btn"/>
+                    <ui:Button name="ai-block-button" text="BLOCK" class="consent-seg-btn"/>
                 </ui:VisualElement>
             </ui:VisualElement>
-
-            <!-- Restored. This line was authored and then commented out with "Disabled until the
-                 scripted-dialogue fallback ships" — it has shipped (ScriptedSaleController runs the
-                 button sale). Without it the prompt reads as "allow this or the game does not work",
-                 which is untrue and is how people end up clicking through permission dialogs. -->
-            <ui:Label text="Say no to either and merchants haggle with buttons instead — every fish still sells. You can change this any time in Settings ▸ Permissions."
-                      class="consent-note" />
-
+            <ui:Label text="Say no to either and merchants haggle with buttons instead — every fish still sells. You can change this any time in Settings ▸ Permissions." class="consent-note"/>
             <ui:VisualElement class="consent-buttons">
-                <ui:Button name="decline-button" text="BLOCK BOTH" class="consent-button" />
-                <ui:Button name="confirm-button" text="CONFIRM" class="consent-button consent-button--primary" />
+                <ui:Button name="decline-button" text="BLOCK BOTH" class="consent-button"/>
+                <ui:Button name="confirm-button" text="CONFIRM" class="consent-button consent-button--primary"/>
             </ui:VisualElement>
-
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

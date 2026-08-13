@@ -57,6 +57,7 @@ namespace DumyatRuntime
 
         private IEventService _events;
         private ISoundService _sounds;
+        private IHapticService _haptics;
 
         // Ball -> centre position at the previous physics step. Only balls currently inside the trigger
         // are tracked, so the per-step cost is proportional to balls in the hoop, not balls in the scene.
@@ -82,10 +83,11 @@ namespace DumyatRuntime
         public Vector3 LastScoreCrossing { get; private set; }
 
         [Inject]
-        private void Inject(IEventService events, ISoundService sounds)
+        private void Inject(IEventService events, ISoundService sounds, IHapticService haptics)
         {
             _events = events;
             _sounds = sounds;
+            _haptics = haptics;
         }
 
         private void Awake()
@@ -174,6 +176,8 @@ namespace DumyatRuntime
 
             if (_netSounds != null && _netSounds.Length > 0)
                 _sounds?.PlayRandomSoundFxAtPosition(_netSounds, transform, _netVolume);
+                
+            _haptics?.TriggerVibration(0.8f, 0.2f, 0.7f, HapticHand.Both);
 
             if (_events == null)
             {

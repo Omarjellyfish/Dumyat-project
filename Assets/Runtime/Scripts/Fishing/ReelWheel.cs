@@ -3,6 +3,7 @@ using System.Security.Claims;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using Reflex.Attributes;
 
 namespace DumyatRuntime
 {
@@ -31,6 +32,16 @@ namespace DumyatRuntime
         public static ReelWheel instance;
         private Transform _handOnReel;
         private Vector3 _previousHandDirection;
+
+        private IHapticService _haptics;
+        private float _accumulatedHapticRotation;
+        private const float DegreesPerHapticClick = 15f;
+
+        [Inject]
+        private void Inject(IHapticService haptics)
+        {
+            _haptics = haptics;
+        }
 
         private void OnEnable()
         {
@@ -92,6 +103,18 @@ namespace DumyatRuntime
                     if (_visualTransform != null)
                     {
                         _visualTransform.localRotation = Quaternion.AngleAxis(CurrentRotation, _localRotationAxis);
+                    }
+                    
+                    // Mechanical haptic click
+                    _accumulatedHapticRotation += Mathf.Abs(addedRotation);
+                    if (_accumulatedHapticRotation >= DegreesPerHapticClick)
+                    {
+                        _accumulatedHapticRotation -= DegreesPerHapticClick;
+                        if (_handleInteractable != null && _handOnReel != null)
+                        {
+                            HapticHand hand = _handOnReel.name.ToLower().Contains("left") ? HapticHand.Left : HapticHand.Right;
+                            _haptics?.TriggerVibration(0.3f, 0.05f, 0.5f, hand);
+                        }
                     }
                 }
             }

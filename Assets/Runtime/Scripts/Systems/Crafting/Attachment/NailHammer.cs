@@ -16,8 +16,13 @@ namespace DumyatRuntime
         private IHapticService _hapticsService;
         private IEventService _eventService;
 
-
-
+        [Inject]
+        private void Inject(ISoundService soundService, IHapticService hapticsService, IEventService eventService)
+        {
+            _soundService = soundService;
+            _hapticsService = hapticsService;
+            _eventService = eventService;
+        }
 
         private XRGrabInteractable _grabInteractable;
         private Rigidbody _rb;

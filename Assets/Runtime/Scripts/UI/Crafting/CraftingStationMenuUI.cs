@@ -69,6 +69,7 @@ namespace DumyatRuntime
         private ICraftingService _crafting;
         private ISettingsService _settings;
         private IEventService _eventService;
+        private IHapticService _haptics;
 
         private readonly List<CraftingRecipe> _recipes = new List<CraftingRecipe>();
         private readonly List<VisualElement> _indexChips = new List<VisualElement>();
@@ -78,11 +79,12 @@ namespace DumyatRuntime
         private bool Arabic => UiLanguage.IsArabic(_settings);
 
         [Inject]
-        private void Inject(ICraftingService crafting, ISettingsService settings, IEventService eventService)
+        private void Inject(ICraftingService crafting, ISettingsService settings, IEventService eventService, IHapticService haptics)
         {
             _crafting = crafting;
             _settings = settings;
             _eventService = eventService;
+            _haptics = haptics;
         }
 
         private void OnEnable()
@@ -438,6 +440,8 @@ namespace DumyatRuntime
             SelectSheet(_selectedIndex);
             UpdateUnlockedCount();
 
+            _haptics?.TriggerVibration(0.5f, 0.2f, 0.5f, HapticHand.Both);
+
             Debug.Log($"[CraftingStationMenu] Bought blueprint: {recipe.RecipeName}");
         }
 
@@ -446,6 +450,7 @@ namespace DumyatRuntime
             if (_station != null)
             {
                 _station.SelectRecipe(recipe);
+                _haptics?.TriggerVibration(0.3f, 0.15f, 0.5f, HapticHand.Both);
                 Debug.Log($"[CraftingStationMenu] Selected blueprint: {recipe.RecipeName}");
             }
         }
