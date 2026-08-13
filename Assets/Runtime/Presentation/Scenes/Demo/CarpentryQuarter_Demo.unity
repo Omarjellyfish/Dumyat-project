@@ -13169,7 +13169,7 @@ MonoBehaviour:
     m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -26608,7 +26608,7 @@ MonoBehaviour:
     m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -27734,8 +27734,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 876832141}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.009041579, y: 0.8432715, z: 0.014192406, w: 0.53722435}
-  m_LocalPosition: {x: 2495.0967, y: 3.0119283, z: -4.816078}
+  m_LocalRotation: {x: 0.0537627, y: 0.314219, z: -0.017826313, w: 0.9476594}
+  m_LocalPosition: {x: 2496.2063, y: 1.425827, z: 2.4264355}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27758,17 +27758,17 @@ MonoBehaviour:
     m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 52
+    FieldOfView: 60.000004
     OrthographicSize: 10
-    NearClipPlane: 0.05
-    FarClipPlane: 3000
+    NearClipPlane: 0.099999994
+    FarClipPlane: 20000
     Dutch: 0
     ModeOverride: 0
     PhysicalProperties:
@@ -46255,7 +46255,7 @@ MonoBehaviour:
     m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -53209,6 +53209,7 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 256
   _livePriority: 100
+  _restingPriority: 0
 --- !u!114 &1736424809
 MonoBehaviour:
   m_ObjectHideFlags: 0
