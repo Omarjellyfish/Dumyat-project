@@ -16,14 +16,16 @@ MonoBehaviour:
   _sectionName: Art Showcase
   _title: "Shaders \xB7 water"
   _kicker: 
-  _speakerNotes: "RasElBar, angle 'waterclose' \u2014 framed on the effect, not the
-    room."
+  _speakerNotes: "RasElBar, angle 'waterline'. The material's depth and shallow colours
+    are alpha 0 and its normal detail fades past 6.5 units, so it only reads against
+    geometry \u2014 a bare surface close-up renders as a flat dark rectangle. Angle
+    'waterclose' is left for hand-framing."
   _background: {fileID: 0}
   _transitionIn: {fileID: 11400000, guid: 0a6125f12b98d164c993dd941f557ef5, type: 2}
   _stageId: RasElBar
-  _angleId: waterclose
+  _angleId: waterline
   _placeName: "Shaders \xB7 water"
   _placeNameArabic: "\u0627\u0644\u0645\u064A\u0647"
-  _caption: "Barzakh water \u2014 vertex displacement, grazing the surface into the
-    sun."
+  _caption: "Barzakh water against the breakwater \u2014 where the surface, its foam
+    and the contact line read."
   _showAnglePips: 0
