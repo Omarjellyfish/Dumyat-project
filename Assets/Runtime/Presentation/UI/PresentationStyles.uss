@@ -1,0 +1,895 @@
+/* Dumyat presentation deck — Delta treatment, authored against a 1920 x 1080 reference.
+ *
+ * The PanelSettings asset uses ScaleWithScreenSize at 1920 x 1080, so one px here is one slide
+ * pixel and every size below is the shipping size. The measured spec lives in the slide-anatomy
+ * design doc; this file is that spec.
+ *
+ * Delta rules honoured throughout: hairline dividers rather than cards, no per-row backgrounds,
+ * non-bold titles carrying wide letter-spacing, and numeric readouts as label-plus-figure rather
+ * than pills. Uppercase strings are authored uppercase because USS has no text-transform, and
+ * letter-spacing is in px because USS has no em unit.
+ *
+ * Colours here are the fallback. PresentationThemeSO overrides ink / accent / hairline inline at
+ * runtime so a second theme asset re-skins the deck without a second stylesheet.
+ */
+
+.presentation-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    /* Delta panel ground #081A22 — visible only if no background asset is assigned. */
+    background-color: rgb(8, 26, 34);
+}
+
+/* ---------- layers ---------- */
+
+.backdrop {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    /* Generated ramp is assigned as background-image at runtime; scale-mode stretches it. */
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.hud {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.cover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(0, 0, 0);
+    opacity: 0;
+}
+
+/* The frozen outgoing stage for a StageDissolve. Its background image is a RenderTexture assigned at
+ * runtime; scale and opacity are animated in C# rather than by a USS transition because the transition
+ * player already owns the timing for every other kind and one clock is easier to trust than two.
+ *
+ * ScaleAndCrop, not ScaleToFit: the still must cover the frame exactly like the live render did, and
+ * letterbox bars appearing for half a second in the middle of a dissolve would read as a glitch. */
+.freeze-clip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Width and height are set in PIXELS by the player at capture time, not left at 100%. A wipe shrinks the
+ * clipper, and a percentage-sized still would shrink with it — squashing the image instead of revealing
+ * the live scene past a straight edge. */
+.freeze {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* The location slate: the deck's only transition that says something. Centred, wide-tracked, and using
+ * the same accent rule as the scene lockup so arriving somewhere reads as the same visual family. */
+.slate {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.slate-rule {
+    width: 64px;
+    height: 2px;
+    background-color: rgb(103, 221, 232);
+    margin-bottom: 22px;
+}
+
+.slate-title {
+    font-size: 66px;
+    color: rgb(234, 248, 251);
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+}
+
+.slate-ar {
+    font-size: 30px;
+    color: rgba(214, 246, 250, 0.62);
+    margin-top: 10px;
+    -unity-text-align: middle-center;
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+/* ---------- the slide safe box: 120 side, 84 top, 96 bottom ---------- */
+
+.slide {
+    position: absolute;
+    left: 120px;
+    top: 84px;
+    right: 120px;
+    bottom: 96px;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* SectionDivider centres its block vertically; other layouts sit at the top. */
+.slide.centred {
+    justify-content: center;
+}
+
+/* ---------- type ---------- */
+
+.s-numeral {
+    font-size: 180px;
+    color: rgba(120, 228, 236, 0.20);
+    -unity-font-style: normal;
+    margin-bottom: 4px;
+}
+
+.s-eyebrow {
+    flex-direction: row;
+    align-items: center;
+}
+
+.s-eyebrow-dot {
+    width: 5px;
+    height: 5px;
+    background-color: rgb(103, 221, 232);
+    border-radius: 3px;
+    margin-right: 18px;
+}
+
+.s-eyebrow-label {
+    font-size: 22px;
+    letter-spacing: 4.8px;
+    color: rgb(103, 221, 232);
+    -unity-font-style: bold;
+}
+
+.s-rule {
+    height: 1px;
+    background-color: rgba(120, 228, 236, 0.42);
+    margin-top: 20px;
+    margin-bottom: 46px;
+    width: 100%;
+}
+
+.s-title {
+    font-size: 96px;
+    color: rgb(234, 248, 251);
+    /* Weight comes from size and air, never from bolding — a Delta rule. */
+    -unity-font-style: normal;
+    white-space: normal;
+    max-width: 1400px;
+}
+
+.s-title.dense {
+    font-size: 68px;
+}
+
+.s-title.huge {
+    font-size: 128px;
+}
+
+.s-kicker {
+    font-size: 34px;
+    color: rgba(214, 246, 250, 0.55);
+    white-space: normal;
+    max-width: 1200px;
+    margin-top: 22px;
+}
+
+.s-body {
+    font-size: 30px;
+    color: rgb(234, 248, 251);
+    white-space: normal;
+    max-width: 1180px;
+    margin-top: 34px;
+}
+
+/* ---------- bullets: hairline rows, no card per row ---------- */
+
+.s-bullets {
+    flex-direction: column;
+    margin-top: 34px;
+    width: 100%;
+}
+
+.s-two {
+    flex-direction: row;
+    margin-top: 34px;
+    width: 100%;
+}
+
+.s-two-col {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-top: 0;
+    margin-right: 88px;
+}
+
+.bullet-row {
+    flex-direction: row;
+    align-items: flex-start;
+    padding-top: 18px;
+    padding-bottom: 18px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(120, 228, 236, 0.16);
+}
+
+.bullet-row.last {
+    border-bottom-width: 0;
+}
+
+.bullet-index {
+    font-size: 24px;
+    color: rgb(103, 221, 232);
+    margin-right: 24px;
+    padding-top: 6px;
+    min-width: 44px;
+}
+
+.bullet-text {
+    font-size: 32px;
+    color: rgb(234, 248, 251);
+    white-space: normal;
+    flex-grow: 1;
+}
+
+/* ---------- readouts: data, not badges ---------- */
+
+.s-readouts {
+    flex-direction: row;
+    margin-top: 40px;
+}
+
+.readout {
+    flex-direction: column;
+    margin-right: 64px;
+}
+
+.readout-label {
+    font-size: 18px;
+    letter-spacing: 3.4px;
+    color: rgba(214, 246, 250, 0.55);
+    -unity-font-style: bold;
+}
+
+.readout-value {
+    font-size: 40px;
+    color: rgb(234, 248, 251);
+    margin-top: 2px;
+}
+
+/* ---------- HUD ---------- */
+
+.s-foot {
+    position: absolute;
+    left: 120px;
+    right: 120px;
+    bottom: 40px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.s-foot-text {
+    font-size: 22px;
+    color: rgba(214, 246, 250, 0.55);
+}
+
+.s-progress-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+}
+
+.s-progress-fill {
+    height: 3px;
+    width: 0;
+    background-color: rgb(103, 221, 232);
+}
+
+/* Speaker notes — presenter aid, toggled with N, never part of the composition. */
+.notes {
+    position: absolute;
+    right: 120px;
+    bottom: 120px;
+    width: 720px;
+    padding: 28px 32px;
+    background-color: rgba(4, 14, 19, 0.92);
+    border-left-width: 2px;
+    border-left-color: rgb(103, 221, 232);
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    display: none;
+}
+
+.notes.visible {
+    display: flex;
+}
+
+.notes-heading {
+    font-size: 18px;
+    letter-spacing: 3.4px;
+    color: rgb(103, 221, 232);
+    -unity-font-style: bold;
+    margin-bottom: 12px;
+}
+
+.notes-text {
+    font-size: 26px;
+    color: rgba(214, 246, 250, 0.82);
+    white-space: normal;
+}
+
+/* ---------- scene slides: no panel ground over live 3D ----------
+ *
+ * The scrim is the whole trick. Delta's frosted card would hide the scene the slide exists to show,
+ * so instead the frame gets a dark band top and bottom and stays clear through the middle third.
+ * UI Toolkit has no gradients, so this is three stacked bands rather than a ramp — at these opacities
+ * the steps are not visible against sky or water.
+ */
+
+.scrim {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.scrim-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+/* The lockup: a short accent rule, the place, and one caption line.
+ *
+ * Sits TIGHT to the bottom-left corner — 56/48 rather than the text slides' 120/96 safe box. The image
+ * is the content on these slides, so the chrome gives up its margins to it. Type is smaller here for the
+ * same reason, and leans harder on its shadow to stay legible over sky or water without a panel behind
+ * it. Caption width is capped so it never runs across the middle of the frame.
+ */
+/* THE BOTTOM HUD BAND — 96px IS A FLOOR, NOT A TASTE CHOICE.
+ *
+ * `.s-foot` is absolute at `bottom: 40px` and measures 41px tall, so the footer — the standing
+ * "Dumyat · Damietta" signature on the left and the slide counter on the right — owns everything from
+ * 40px to 81px above the bottom edge. It is part of the HUD layer, so it is drawn on EVERY slide and
+ * cannot be assumed away.
+ *
+ * Anything else anchored to the bottom must therefore start at 96px or higher. Tightening the lockup
+ * to 48px to give the image more room looked right in isolation and ran the caption straight through
+ * the game title. Nothing is gained by going lower anyway: the stage render is full-bleed behind the
+ * whole panel, so moving the chrome down does not reveal one extra pixel of scene — it only eats the
+ * footer. Keep `.lockup` and `.video-bar` at 96px unless the footer itself moves.
+ */
+
+.lockup {
+    position: absolute;
+    left: 56px;
+    bottom: 96px;
+    max-width: 760px;
+}
+
+.lk-rule {
+    width: 56px;
+    height: 2px;
+    background-color: rgb(103, 221, 232);
+    margin-bottom: 14px;
+}
+
+.lk-place {
+    font-size: 44px;
+    color: rgb(234, 248, 251);
+    white-space: normal;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+}
+
+.lk-ar {
+    font-size: 26px;
+    color: rgba(214, 246, 250, 0.62);
+    margin-top: 4px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+}
+
+/* ============================================================================
+   Arabic
+   ----------------------------------------------------------------------------
+   The same class the rest of the project's panels use (UiLanguage.ArabicClass),
+   with the same rule behind it — see the Arabic block in MenuStyles.uss and
+   LoadingStyles.uss. Added by the renderer to any label carrying Arabic.
+
+   `-unity-text-generator: advanced` is the whole fix. The Standard generator
+   draws code points in order with no shaping, so Arabic comes out as
+   disconnected letters running the wrong way; the Advanced generator does the
+   contextual joining and the bidi reordering natively. It costs more, so it
+   goes on the Arabic labels rather than on the panel.
+
+   Nothing rewrites the string. Do NOT run it through ArabicTextShaper first —
+   that helper exists for TMP, which cannot shape, and pre-shaping here means
+   the text gets shaped twice.
+
+   The font must also cover the glyphs: PresentationPanelSettings points at
+   `Cairo Panel Text Settings`. On the default runtime theme every Arabic glyph
+   is an empty box no matter which generator is running.
+
+   letter-spacing goes to 0 because the deck tracks its Latin type wide, and
+   tracking pulls joined Arabic letterforms apart — it breaks the cursive
+   connections outright rather than merely looking loose.
+   ============================================================================ */
+
+.ui-arabic {
+    -unity-text-generator: advanced;
+    letter-spacing: 0;
+}
+
+.lk-cap {
+    font-size: 23px;
+    color: rgba(214, 246, 250, 0.62);
+    margin-top: 10px;
+    white-space: normal;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+}
+
+/* Angle pips — bottom-right, pulled in to match the lockup's tighter margins. */
+.pips {
+    position: absolute;
+    right: 56px;
+    bottom: 52px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.pips-label {
+    font-size: 18px;
+    letter-spacing: 3.4px;
+    color: rgba(214, 246, 250, 0.55);
+    -unity-font-style: bold;
+    margin-right: 14px;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+.pips-row {
+    flex-direction: row;
+}
+
+.pip {
+    width: 26px;
+    height: 3px;
+    background-color: rgba(120, 228, 236, 0.16);
+    margin-left: 10px;
+}
+
+.pip.on {
+    background-color: rgb(103, 221, 232);
+}
+
+/* ---------- UI showcase ----------
+ *
+ * Built in code rather than authored here, because twelve panels is a number that will change and a
+ * hand-laid grid would need re-measuring every time. These rules are the look; the structure is data.
+ * Sizes are slide pixels against the 1920 x 1080 reference, same as everything else.
+ */
+
+.ui-showcase-host {
+    position: absolute;
+    left: 120px;
+    top: 84px;
+    right: 120px;
+    bottom: 96px;
+    flex-direction: column;
+}
+
+.ui-showcase-title {
+    font-size: 68px;
+    color: rgb(234, 248, 251);
+    margin-top: 46px;
+    white-space: normal;
+}
+
+.ui-showcase-kicker {
+    font-size: 30px;
+    color: rgba(214, 246, 250, 0.55);
+    margin-top: 10px;
+    white-space: normal;
+}
+
+.ui-grid {
+    flex-direction: column;
+    flex-grow: 1;
+    margin-top: 30px;
+}
+
+.ui-grid-row {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.ui-grid-cell {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: column;
+    margin: 8px;
+}
+
+/* Hairline top edge only — a full border on twelve tiles reads as a spreadsheet. */
+.ui-tile {
+    flex-grow: 1;
+    border-top-width: 1px;
+    border-top-color: rgba(120, 228, 236, 0.42);
+    background-color: rgba(103, 221, 232, 0.05);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.ui-tile-caption {
+    font-size: 20px;
+    letter-spacing: 2.6px;
+    color: rgba(214, 246, 250, 0.55);
+    margin-top: 8px;
+    -unity-text-align: upper-left;
+}
+
+.ui-tile-missing {
+    font-size: 22px;
+    color: rgb(255, 155, 138);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    flex-grow: 1;
+}
+
+/* Focus: the panel large on the left, its caption on a hairline to the right. */
+.ui-focus-wrap {
+    flex-direction: row;
+    flex-grow: 1;
+    margin-top: 30px;
+}
+
+.ui-focus-frame {
+    flex-grow: 1;
+    flex-basis: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* The panel arrives by pushing in and scaling up — it reads as stepping toward the thing rather than
+ * a slide cutting to it, which is the whole point of a focus slide following the overview grid.
+ * Scale settles slightly slower than the move so it feels like it has weight.
+ */
+.ui-zoom {
+    scale: 0.86 0.86;
+    translate: 90px 0;
+    opacity: 0;
+    transition-property: scale, translate, opacity;
+    transition-duration: 620ms, 520ms, 380ms;
+    transition-timing-function: ease-out-back, ease-out, ease-out;
+}
+
+.ui-zoom.ui-zoom-in {
+    scale: 1 1;
+    translate: 0 0;
+    opacity: 1;
+}
+
+/* The caption follows the panel rather than arriving with it. */
+.ui-zoom--delayed {
+    transition-delay: 160ms, 160ms, 160ms;
+}
+
+.ui-focus-side {
+    width: 460px;
+    margin-left: 64px;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.ui-focus-rule {
+    width: 72px;
+    height: 2px;
+    background-color: rgb(103, 221, 232);
+    margin-bottom: 22px;
+}
+
+.ui-focus-caption {
+    font-size: 28px;
+    color: rgba(214, 246, 250, 0.55);
+    white-space: normal;
+}
+
+/* ---------- media slides ----------
+ *
+ * Video lifts the lockup clear of the progress bar; that is the only place in the whole deck where a
+ * layout moves because of content type, and it is worth the exception because the two would collide.
+ */
+
+.media-host {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.media-fullbleed {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.lockup--lifted {
+    bottom: 180px;
+}
+
+/* SideBySide */
+.media-split {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: row;
+}
+
+.media-split-text {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding-left: 120px;
+    padding-right: 80px;
+    padding-top: 84px;
+    padding-bottom: 96px;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.media-split-pic {
+    flex-grow: 1;
+    flex-basis: 0;
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+/* Inset */
+.media-title {
+    font-size: 68px;
+    color: rgb(234, 248, 251);
+    white-space: normal;
+    max-width: 1400px;
+}
+
+.media-title--inset {
+    position: absolute;
+    left: 120px;
+    top: 150px;
+}
+
+.media-kicker {
+    font-size: 30px;
+    color: rgba(214, 246, 250, 0.55);
+    margin-top: 18px;
+    white-space: normal;
+    max-width: 1200px;
+}
+
+.media-body {
+    font-size: 30px;
+    color: rgba(214, 246, 250, 0.55);
+    margin-top: 28px;
+    white-space: normal;
+}
+
+.media-inset-row {
+    position: absolute;
+    left: 120px;
+    right: 120px;
+    top: 300px;
+    height: 560px;
+    flex-direction: row;
+}
+
+.media-inset-cell {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-right: 24px;
+    border-top-width: 1px;
+    border-top-color: rgba(120, 228, 236, 0.42);
+    background-color: rgba(103, 221, 232, 0.05);
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.media-eyebrow {
+    position: absolute;
+    left: 120px;
+    top: 84px;
+    font-size: 22px;
+    letter-spacing: 4.8px;
+    -unity-font-style: bold;
+}
+
+/* Video chrome — tight to the frame like the lockup, so the footage keeps the margins. */
+/* 96px for the same reason as `.lockup` — see the bottom-HUD-band note there. The bar is a 3px track
+ * plus a ~30px time label, so at 26px its readout sat directly on top of the footer signature and the
+ * slide counter. */
+
+.video-bar {
+    position: absolute;
+    left: 56px;
+    right: 56px;
+    bottom: 96px;
+}
+
+.video-track {
+    height: 3px;
+    background-color: rgba(120, 228, 236, 0.16);
+}
+
+.video-fill {
+    height: 3px;
+    width: 0;
+    background-color: rgb(103, 221, 232);
+}
+
+.video-meta {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 14px;
+}
+
+.video-state {
+    flex-direction: row;
+    align-items: center;
+}
+
+/* A small cyan block standing in for a play triangle — USS has no clip-path, so a rotated
+   triangle is not available. Coral when paused. */
+.video-state-icon {
+    width: 14px;
+    height: 14px;
+    background-color: rgb(103, 221, 232);
+    margin-right: 14px;
+}
+
+.video-state-icon--paused {
+    background-color: rgb(255, 155, 138);
+}
+
+.video-state-label {
+    font-size: 18px;
+    letter-spacing: 3.4px;
+    color: rgba(214, 246, 250, 0.55);
+    -unity-font-style: bold;
+}
+
+.video-time {
+    font-size: 20px;
+    color: rgba(214, 246, 250, 0.55);
+}
+
+/* Capture card — the honest placeholder while footage does not exist */
+.capture-card {
+    position: absolute;
+    left: 120px;
+    top: 190px;
+    right: 120px;
+    flex-direction: column;
+}
+
+.capture-rule {
+    width: 100%;
+    height: 1px;
+    background-color: rgba(120, 228, 236, 0.42);
+    margin-top: 44px;
+    margin-bottom: 32px;
+}
+
+.capture-badge {
+    font-size: 22px;
+    letter-spacing: 4.4px;
+    color: rgb(245, 199, 126);
+    -unity-font-style: bold;
+    margin-bottom: 24px;
+}
+
+.capture-brief {
+    font-size: 30px;
+    color: rgb(234, 248, 251);
+    white-space: normal;
+    max-width: 1240px;
+}
+
+.capture-length {
+    font-size: 20px;
+    letter-spacing: 3.4px;
+    color: rgba(214, 246, 250, 0.55);
+    -unity-font-style: bold;
+    margin-top: 34px;
+}
+
+/* ---------- poster ----------
+ *
+ * The one slide that gets a flourish. Everything else in this deck is deliberately still, which is
+ * exactly what makes a single slow reveal here land — a deck that animates constantly reads as a
+ * template. The title rises and fades in; nothing loops, so there is no motion competing with the
+ * presenter once it settles.
+ *
+ * USS transitions animate on class change, which is why the renderer adds .poster-in one frame after
+ * showing the slide rather than styling it directly.
+ */
+
+.slide.poster .s-title {
+    font-size: 190px;
+    letter-spacing: -4px;
+    color: rgb(234, 248, 251);
+}
+
+.slide.poster .s-kicker {
+    font-size: 38px;
+    margin-top: 34px;
+    letter-spacing: 1.4px;
+}
+
+/* Resting state: dropped and transparent. */
+.poster-reveal {
+    opacity: 0;
+    translate: 0 46px;
+    transition-property: opacity, translate;
+    transition-duration: 900ms, 1100ms;
+    transition-timing-function: ease-out, ease-out;
+}
+
+.poster-reveal.poster-in {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* The kicker follows the title rather than arriving with it. */
+.poster-reveal--delayed {
+    transition-delay: 260ms, 260ms;
+}
+
+/* A hairline that draws itself across under the title. */
+.poster-rule {
+    height: 1px;
+    width: 0;
+    background-color: rgba(120, 228, 236, 0.42);
+    margin-top: 52px;
+    transition-property: width;
+    transition-duration: 1400ms;
+    transition-timing-function: ease-out;
+    transition-delay: 420ms;
+}
+
+.poster-rule.poster-in {
+    width: 720px;
+}
+
+/* ---------- visibility helper ---------- */
+
+.hidden {
+    display: none;
+}

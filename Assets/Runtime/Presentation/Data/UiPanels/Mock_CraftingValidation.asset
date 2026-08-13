@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01ea6a8e3c19df147b7fe6523f079109, type: 3}
+  m_Name: Mock_CraftingValidation
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PanelMockDataSO
+  _labels:
+  - ElementName: verdict-eyebrow
+    Text: ASSEMBLY CHECK
+  - ElementName: status-title
+    Text: Holds together
+  - ElementName: stamp-sub
+    Text: graded on joints, not looks
+  - ElementName: quality-label
+    Text: QUALITY
+  - ElementName: quality-score
+    Text: 82
+  - ElementName: faults-label
+    Text: FAULTS
+  - ElementName: issue-count
+    Text: 2
+  - ElementName: validate-button
+    Text: VALIDATE
+  - ElementName: reset-button
+    Text: RESET
+  - ElementName: fault-heading
+    Text: FAULTS FOUND
+  - ElementName: detail-heading
+    Text: DETAIL
+  _rowGroups: []
+  _hideElements: []
+  _classChanges: []

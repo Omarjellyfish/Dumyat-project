@@ -1,0 +1,95 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Runtime/Presentation/UI/PresentationStyles.uss" />
+
+    <!-- One tree for the whole deck. Renderers show and hide parts of it rather than each slide
+         type owning its own template, which is what lets five layouts share one asset type.
+         Layer order matters: backdrop, freeze, content, HUD, then the transition cover on top. -->
+    <ui:VisualElement name="presentation-root" class="presentation-root">
+
+        <ui:VisualElement name="backdrop" class="backdrop" picking-mode="Ignore" />
+
+        <!-- The still of the outgoing stage, used by every freeze-based transition. It sits ABOVE the
+             backdrop and the 3D but BELOW content on purpose: the incoming place's name should appear
+             at once, over the old image while it clears, rather than waiting for it.
+
+             The clipper is what makes a hard wipe possible. UI Toolkit has no clip-path, so a wipe is
+             done by shrinking a parent with overflow:hidden while the still inside it holds a fixed
+             pixel size — shrinking the still itself would squash the image instead of revealing past it. -->
+        <ui:VisualElement name="freeze-clip" class="freeze-clip hidden" picking-mode="Ignore">
+            <ui:VisualElement name="freeze" class="freeze" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="content" class="content" picking-mode="Ignore">
+            <ui:VisualElement name="text-slide" class="slide">
+
+                <!-- SectionDivider only: an outlined numeral reading as a watermark -->
+                <ui:Label name="divider-numeral" class="s-numeral" text="04" />
+
+                <ui:VisualElement name="eyebrow-row" class="s-eyebrow">
+                    <ui:VisualElement name="eyebrow-dot" class="s-eyebrow-dot" />
+                    <ui:Label name="eyebrow-label" class="s-eyebrow-label" text="SECTION" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="rule" class="s-rule" />
+
+                <ui:Label name="title" class="s-title" text="Title" />
+                <ui:Label name="kicker" class="s-kicker" text="Kicker" />
+                <ui:Label name="body" class="s-body" text="Body" />
+
+                <!-- Bullets layout: rows are built in code so the count is data-driven -->
+                <ui:VisualElement name="bullets" class="s-bullets" />
+
+                <!-- TwoColumn layout -->
+                <ui:VisualElement name="bullets-two" class="s-two">
+                    <ui:VisualElement name="bullets-left" class="s-bullets s-two-col" />
+                    <ui:VisualElement name="bullets-right" class="s-bullets s-two-col" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="readouts" class="s-readouts" />
+            </ui:VisualElement>
+
+            <!-- Scene slides: a scrim ramp instead of a panel ground, so type stays legible without
+                 dimming the subject. Sits under the lockup, over the 3D render. -->
+            <ui:VisualElement name="scrim" class="scrim hidden" picking-mode="Ignore" />
+
+            <ui:VisualElement name="lockup" class="lockup hidden" picking-mode="Ignore">
+                <ui:VisualElement name="lockup-rule" class="lk-rule" />
+                <ui:Label name="lockup-place" class="lk-place" text="Place" />
+                <ui:Label name="lockup-arabic" class="lk-ar" text="" />
+                <ui:Label name="lockup-caption" class="lk-cap" text="" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="pips" class="pips hidden" picking-mode="Ignore">
+                <ui:Label name="pips-label" class="pips-label" text="ANGLE" />
+                <ui:VisualElement name="pips-row" class="pips-row" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
+            <ui:VisualElement name="footer" class="s-foot">
+                <ui:Label name="footer-left" class="s-foot-text" text="Damietta" />
+                <ui:Label name="footer-counter" class="s-foot-text" text="1 / 10" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="progress-track" class="s-progress-track">
+                <ui:VisualElement name="progress-fill" class="s-progress-fill" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="notes-panel" class="notes">
+                <ui:Label name="notes-heading" class="notes-heading" text="SPEAKER NOTES" />
+                <ui:Label name="notes-text" class="notes-text" text="" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- The cover, and the location slate that rides on it. The slate is a CHILD so it inherits the
+             cover's opacity: it appears as the screen darkens and leaves as it lifts, with no second
+             clock to keep in step. LocationSlate is the only transition that uses it. -->
+        <ui:VisualElement name="cover" class="cover" picking-mode="Ignore">
+            <ui:VisualElement name="slate" class="slate hidden" picking-mode="Ignore">
+                <ui:VisualElement name="slate-rule" class="slate-rule" />
+                <ui:Label name="slate-title" class="slate-title" text="Place" />
+                <ui:Label name="slate-arabic" class="slate-ar" text="" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
