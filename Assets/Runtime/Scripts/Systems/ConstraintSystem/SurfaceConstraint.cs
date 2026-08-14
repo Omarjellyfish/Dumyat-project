@@ -46,27 +46,36 @@ namespace DumyatRuntime
             }
         }
 
-        private void OnEnable()
-        {
-            if (_xrGrab == null)
-            {
-                Debug.LogWarning($"{nameof(SurfaceConstraint)} on {name} needs an XRGrabInteractable.");
-                return;
-            }
+private void OnEnable()
+{
+    if (_xrGrab == null)
+    {
+        Debug.LogWarning($"{nameof(SurfaceConstraint)} on {name} needs an XRGrabInteractable.");
+        return;
+    }
 
-            _xrGrab.activated.AddListener(OnActivate);
-            _xrGrab.deactivated.AddListener(OnDeactivate);
-        }
+    _xrGrab.activated.AddListener(OnActivate);
+    _xrGrab.deactivated.AddListener(OnDeactivate);
+    _xrGrab.selectExited.AddListener(OnSelectExited); // NEW: catches full release, not just trigger-up
+}
 
-        private void OnDisable()
-        {
-            if (_xrGrab == null)
-                return;
+private void OnDisable()
+{
+    if (_xrGrab == null)
+        return;
 
-            _xrGrab.activated.RemoveListener(OnActivate);
-            _xrGrab.deactivated.RemoveListener(OnDeactivate);
-        }
+    _xrGrab.activated.RemoveListener(OnActivate);
+    _xrGrab.deactivated.RemoveListener(OnDeactivate);
+    _xrGrab.selectExited.RemoveListener(OnSelectExited); // NEW
+}
+private void OnSelectExited(SelectExitEventArgs args)
+{
+    if (!_isConstrained)
+        return;
 
+    _isConstrained = false;
+    _eventService?.Publish(new SurfaceConstraintChangedEvent(this, false, _hitPosition, _hitNormal));
+}
         private void LateUpdate()
         {
             if (_isConstrained)
