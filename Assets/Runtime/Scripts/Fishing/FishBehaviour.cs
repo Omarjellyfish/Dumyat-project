@@ -167,12 +167,7 @@ namespace DumyatRuntime
 
         private void PickNewPatrolTarget()
         {
-            Bounds bounds = fishArea.GetBounds();
-
-            patrolTarget = new Vector3(
-                Random.Range(bounds.min.x, bounds.max.x),
-                Random.Range(bounds.min.y, bounds.max.y),
-                Random.Range(bounds.min.z, bounds.max.z));
+            patrolTarget = fishArea.GetRandomPointInsideArea();
         }
 
         public void InvestigateHook(Transform hook)

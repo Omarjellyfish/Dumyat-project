@@ -134,5 +134,17 @@ namespace DumyatRuntime
                 fish.SetInsideFishArea(false);
             }
         }
+        public Vector3 GetRandomPointInsideArea()
+        {
+            Vector3 halfSize = areaCollider.size * 0.5f;
+
+            Vector3 localPoint = areaCollider.center + new Vector3(
+                Random.Range(-halfSize.x, halfSize.x),
+                Random.Range(-halfSize.y, halfSize.y),
+                Random.Range(-halfSize.z, halfSize.z)
+            );
+
+            return areaCollider.transform.TransformPoint(localPoint);
+        }
     }
 }
