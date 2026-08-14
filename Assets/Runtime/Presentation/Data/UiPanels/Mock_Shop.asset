@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01ea6a8e3c19df147b7fe6523f079109, type: 3}
+  m_Name: Mock_Shop
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PanelMockDataSO
+  _labels:
+  - ElementName: ShopKicker
+    Text: EL BORG
+  - ElementName: ShopTitle
+    Text: Chandler
+  - ElementName: WalletCurrency
+    Text: EGP
+  - ElementName: WalletBalance
+    Text: 1,240
+  - ElementName: FocusName
+    Text: Hand saw
+  - ElementName: FocusStock
+    Text: 3 in stock
+  - ElementName: FocusDescription
+    Text: A crosscut saw for planking. Cuts along the grain cleanly if you keep the
+      stroke long.
+  - ElementName: FocusPriceCurrency
+    Text: EGP
+  - ElementName: FocusPriceValue
+    Text: 180
+  - ElementName: BuyButton
+    Text: BUY
+  _rowGroups:
+  - ContainerName: PickerList
+    RowTemplate: {fileID: 9197481963319205126, guid: 772e2b361619e8d44a77c96cab437e6d, type: 3}
+    ClearFirst: 1
+    Rows:
+    - Fields:
+      - ElementName: RowName
+        Text: Hand saw
+      - ElementName: RowPriceValue
+        Text: 180
+      - ElementName: RowPriceCurrency
+        Text: EGP
+    - Fields:
+      - ElementName: RowName
+        Text: Claw hammer
+      - ElementName: RowPriceValue
+        Text: 95
+      - ElementName: RowPriceCurrency
+        Text: EGP
+    - Fields:
+      - ElementName: RowName
+        Text: Wood glue
+      - ElementName: RowPriceValue
+        Text: 40
+      - ElementName: RowPriceCurrency
+        Text: EGP
+    - Fields:
+      - ElementName: RowName
+        Text: Nail box
+      - ElementName: RowPriceValue
+        Text: 60
+      - ElementName: RowPriceCurrency
+        Text: EGP
+    - Fields:
+      - ElementName: RowName
+        Text: Paint, ochre
+      - ElementName: RowPriceValue
+        Text: 120
+      - ElementName: RowPriceCurrency
+        Text: EGP
+  _hideElements:
+  - EmptyHint

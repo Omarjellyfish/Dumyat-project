@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01ea6a8e3c19df147b7fe6523f079109, type: 3}
+  m_Name: Mock_CompletedQuests
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PanelMockDataSO
+  _labels: []
+  _rowGroups:
+  - ContainerName: CompletedListContainer
+    RowTemplate: {fileID: 9197481963319205126, guid: 8755ecfac484b7e4eb9b7985f75f22e9, type: 3}
+    ClearFirst: 1
+    Rows:
+    - Fields:
+      - ElementName: TitleLabel
+        Text: Meet the merchants
+      - ElementName: DescLabel
+        Text: Walked the El Borg auction floor with your father.
+    - Fields:
+      - ElementName: TitleLabel
+        Text: First cut
+      - ElementName: DescLabel
+        Text: Cut a plank cleanly enough to use.
+    - Fields:
+      - ElementName: TitleLabel
+        Text: First sale
+      - ElementName: DescLabel
+        Text: Sold a bolti for more than the opening offer.
+  _hideElements: []

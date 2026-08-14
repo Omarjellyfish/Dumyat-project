@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d932a50136f4e2a40b5edd2c6c7bc8d9, type: 3}
+  m_Name: DemoStripRules
+  m_EditorClassIdentifier: Project.Editor::DumyatEditor.DemoStripRulesSO
+  _deleteObjectsNameContains:
+  - XR Origin
+  - XR Rig
+  - XRRig
+  - XR Interaction Manager
+  - ProjectScope
+  - SceneScope
+  - Scene Scope
+  - EventSystem
+  - Event System
+  - Tutorial
+  - Canvas
+  - UIDocument
+  - UI Document
+  - Player
+  - GameManager
+  - Game Manager
+  _keepObjectsNameContains:
+  - Fan
+  - Water
+  - Ocean
+  - Nile
+  - Sea
+  - GodRay
+  - God Ray
+  - LightShaft
+  - Light Shaft
+  - Volumetric
+  - Sky
+  - Lightmap
+  - Reflection Probe
+  - Light Probe
+  _keepComponentTypeNames:
+  - WaterSurface
+  - WaterAnimator
+  - FanRotator
+  - Rotator
+  - Spinner
+  - LightProbeGroup
+  - ReflectionProbe
+  _removeComponentTypeNames:
+  - AudioSource
+  - AudioListener
+  - AudioReverbZone
+  - Canvas
+  - CanvasScaler
+  - GraphicRaycaster
+  - UIDocument
+  - NavMeshAgent
+  - NavMeshObstacle
+  - ContainerScope
+  - SceneInstaller
+  - GenericSceneInstaller
+  _removeAllMonoBehaviours: 1
+  _removeColliders: 1
+  _removeRigidbodies: 1
+  _removeParticleSystems: 0
+  _removeAnimators: 0
+  _removeMissingScripts: 1
+  _removeCameras: 1
+  _removeLights: 0
+  _clearOcclusionData: 1
