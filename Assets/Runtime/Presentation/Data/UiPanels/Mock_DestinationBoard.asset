@@ -14,12 +14,47 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PanelMockDataSO
   _labels:
   - ElementName: BoardEyebrow
-    Text: TRAVEL
+    Text: "DAMIETTA \xB7 LOCAL SERVICE"
   - ElementName: HeaderLabel
     Text: Where to?
   - ElementName: RouteCountLabel
     Text: ROUTES
   - ElementName: RouteCount
-    Text: 5
-  _rowGroups: []
+    Text: 4
+  _rowGroups:
+  - ContainerName: DestinationContainer
+    RowTemplate: {fileID: 9197481963319205126, guid: 47178b38ad44c8f448a83f906dd5e881, type: 3}
+    ClearFirst: 1
+    Rows:
+    - Fields:
+      - ElementName: RouteCode
+        Text: C1
+      - ElementName: DestName
+        Text: Carpentry Quarter
+      - ElementName: DestDescription
+        Text: Master Amgad's workshop on the furniture street. Your bench, your tools.
+    - Fields:
+      - ElementName: RouteCode
+        Text: R3
+      - ElementName: DestName
+        Text: Ras El Bar
+      - ElementName: DestDescription
+        Text: Where the Nile meets the sea. The lighthouse, the boardwalk, and the
+          quietest fishing on the coast.
+    - Fields:
+      - ElementName: RouteCode
+        Text: B3
+      - ElementName: DestName
+        Text: Ezbet El Borg
+      - ElementName: DestDescription
+        Text: The fishing town at the river mouth. Trawlers unload at dawn.
+    - Fields:
+      - ElementName: RouteCode
+        Text: S4
+      - ElementName: DestName
+        Text: The Shipyard
+      - ElementName: DestDescription
+        Text: Where Damietta still builds boats by hand. Timber, tar, and hulls waiting.
   _hideElements: []
+  _showElements: []
+  _classChanges: []

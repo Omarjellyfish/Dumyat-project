@@ -16,25 +16,32 @@ MonoBehaviour:
   - ElementName: verdict-eyebrow
     Text: ASSEMBLY CHECK
   - ElementName: status-title
-    Text: Holds together
+    Text: FAULTS FOUND
   - ElementName: stamp-sub
     Text: graded on joints, not looks
-  - ElementName: quality-label
-    Text: QUALITY
-  - ElementName: quality-score
-    Text: 82
-  - ElementName: faults-label
-    Text: FAULTS
   - ElementName: issue-count
     Text: 2
-  - ElementName: validate-button
-    Text: VALIDATE
-  - ElementName: reset-button
-    Text: RESET
   - ElementName: fault-heading
-    Text: FAULTS FOUND
+    Text: FAULT
   - ElementName: detail-heading
     Text: DETAIL
-  _rowGroups: []
+  _rowGroups:
+  - ContainerName: diagnostic-scroll
+    RowTemplate: {fileID: 9197481963319205126, guid: eb75f5df91f142241aa67693244b0802, type: 3}
+    ClearFirst: 1
+    Rows:
+    - Fields:
+      - ElementName: item-code
+        Text: GAP
+      - ElementName: item-text
+        Text: Seat plank sits 4 mm proud of the left apron. Re-seat it before the
+          pegs go in.
+    - Fields:
+      - ElementName: item-code
+        Text: ANGLE
+      - ElementName: item-text
+        Text: "Rear leg is 6\xB0 off square. The stool will rock on a flat floor."
   _hideElements: []
+  _showElements:
+  - issue-readout
   _classChanges: []

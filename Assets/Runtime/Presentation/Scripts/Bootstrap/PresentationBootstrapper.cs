@@ -24,6 +24,11 @@ namespace DumyatRuntime
                                  "in the build profile's scene list or loading fails in a player.")]
         private string[] _demoSceneNames = new string[0];
 
+        [Header("Output")]
+        [SerializeField, Tooltip("Resolution and pipeline the deck is presented at. Applied before any " +
+                                 "stage loads, so the first thing rendered is already at the right size.")]
+        private PresentationQualitySO _quality;
+
         [Header("Rig")]
         [SerializeField] private PresentationDirector _director;
         [SerializeField] private StageRegistry _registry;
@@ -50,6 +55,10 @@ namespace DumyatRuntime
 
         private void Awake()
         {
+            // Before anything renders. Selecting a quality level mid-deck would rebuild shadow maps
+            // and recompile variants in front of an audience.
+            if (_quality != null) _quality.Apply();
+
             if (_director == null) _director = FindFirstObjectByType<PresentationDirector>();
             if (_registry == null) _registry = FindFirstObjectByType<StageRegistry>();
             if (_prewarmer == null) _prewarmer = FindFirstObjectByType<StagePrewarmer>();

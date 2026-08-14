@@ -14,17 +14,47 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.PanelMockDataSO
   _labels:
   - ElementName: CraftingEyebrow
-    Text: BLUEPRINT
+    Text: "WORKSHOP \xB7 CUT SHEETS"
   - ElementName: CraftingTitle
     Text: Fishing stool
-  - ElementName: UnlockedLabel
-    Text: UNLOCKED
   - ElementName: UnlockedCount
     Text: 7 / 12
   - ElementName: CutListHeading
     Text: CUT LIST
   - ElementName: DimensionHeading
-    Text: DIMENSIONS
-  _rowGroups: []
+    Text: W X H X D (CM)
+  - ElementName: SheetAction
+    Text: SELECT
+  _rowGroups:
+  - ContainerName: BlueprintContainer
+    RowTemplate: {fileID: 9197481963319205126, guid: 026ebd03c1976c54580eab21ee6b2599, type: 3}
+    ClearFirst: 1
+    Rows:
+    - Fields:
+      - ElementName: PartName
+        Text: Seat plank
+      - ElementName: PartSize
+        Text: 32 x 3 x 24
+    - Fields:
+      - ElementName: PartName
+        Text: Leg  (x4)
+      - ElementName: PartSize
+        Text: 6 x 42 x 6
+    - Fields:
+      - ElementName: PartName
+        Text: Apron rail (x2)
+      - ElementName: PartSize
+        Text: 26 x 7 x 2
+    - Fields:
+      - ElementName: PartName
+        Text: Stretcher
+      - ElementName: PartSize
+        Text: 24 x 5 x 2
+    - Fields:
+      - ElementName: PartName
+        Text: Dowel peg (x8)
+      - ElementName: PartSize
+        Text: 1 x 6 x 1
   _hideElements: []
+  _showElements: []
   _classChanges: []

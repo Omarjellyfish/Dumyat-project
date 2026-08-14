@@ -32,6 +32,12 @@ namespace DumyatRuntime
 
         public VisualElement Backdrop { get; private set; }
 
+        /// <summary>
+        /// Legibility veil painted over an image backdrop, owned solely by <see cref="BackdropController"/>.
+        /// Separate from <see cref="Scrim"/> on purpose — see the note on ApplyVeil there.
+        /// </summary>
+        public VisualElement BackdropVeil { get; private set; }
+
         /// <summary>Still of the outgoing stage, for the freeze-based transitions. Below Content.</summary>
         public VisualElement Freeze { get; private set; }
 
@@ -73,6 +79,14 @@ namespace DumyatRuntime
         public Label PipsLabel { get; private set; }
         public VisualElement PipsRow { get; private set; }
 
+        /// <summary>Footer, progress rail and notes together. Theatre mode hides the first two.</summary>
+        public VisualElement Hud { get; private set; }
+
+        /// <summary>The footer ROW. Hide this, not the labels, to clear the bottom edge entirely.</summary>
+        public VisualElement Footer { get; private set; }
+
+        public VisualElement ProgressTrack { get; private set; }
+
         public Label FooterLeft { get; private set; }
         public Label FooterCounter { get; private set; }
         public VisualElement ProgressFill { get; private set; }
@@ -100,9 +114,10 @@ namespace DumyatRuntime
             Root = _document.rootVisualElement;
             int missing = 0;
 
-            Ground     = Need<VisualElement>("presentation-root", ref missing);
-            Backdrop   = Need<VisualElement>("backdrop", ref missing);
-            FreezeClip = Need<VisualElement>("freeze-clip", ref missing);
+            Ground       = Need<VisualElement>("presentation-root", ref missing);
+            Backdrop     = Need<VisualElement>("backdrop", ref missing);
+            BackdropVeil = Need<VisualElement>("backdrop-veil", ref missing);
+            FreezeClip   = Need<VisualElement>("freeze-clip", ref missing);
             Freeze     = Need<VisualElement>("freeze", ref missing);
             Content    = Need<VisualElement>("content", ref missing);
             Cover      = Need<VisualElement>("cover", ref missing);
@@ -137,6 +152,9 @@ namespace DumyatRuntime
             PipsLabel     = Need<Label>("pips-label", ref missing);
             PipsRow       = Need<VisualElement>("pips-row", ref missing);
 
+            Hud           = Need<VisualElement>("hud", ref missing);
+            Footer        = Need<VisualElement>("footer", ref missing);
+            ProgressTrack = Need<VisualElement>("progress-track", ref missing);
             FooterLeft    = Need<Label>("footer-left", ref missing);
             FooterCounter = Need<Label>("footer-counter", ref missing);
             ProgressFill  = Need<VisualElement>("progress-fill", ref missing);

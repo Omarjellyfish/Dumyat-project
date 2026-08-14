@@ -1,0 +1,32 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/Crafting/CraftingStationMenu.uss" />
+
+    <!-- ONE CUT-LIST ROW, FOR THE PRESENTATION DECK ONLY.
+
+         The shipping panel builds these rows in C# (CraftingStationMenuUI.AddPartRow) rather than
+         from a template, so there is no real asset for the deck's mock data to clone. This is that
+         asset, and it is deliberately a copy of the row's STRUCTURE and nothing else: every class
+         here is the shipping one, and the shipping CraftingStationMenu.uss above is what draws it.
+         Restyle the panel and this row follows; nothing needs touching here.
+
+         Named labels are the only addition. PanelMockDataSO fills rows by element name, and the real
+         row has no names because its C# holds the references directly.
+
+         The ruler is 7 ticks with every third a major graduation, matching RulerTicks and the i % 3
+         rule in AddPartRow. It is decorative — the drawing convention for a dimensioned edge. -->
+    <ui:VisualElement class="blueprint-part-row">
+        <ui:Label name="PartName" text="Part" class="blueprint-part-name" />
+
+        <ui:VisualElement class="blueprint-part-ruler" picking-mode="Ignore">
+            <ui:VisualElement class="blueprint-part-tick blueprint-part-tick--major" />
+            <ui:VisualElement class="blueprint-part-tick" />
+            <ui:VisualElement class="blueprint-part-tick" />
+            <ui:VisualElement class="blueprint-part-tick blueprint-part-tick--major" />
+            <ui:VisualElement class="blueprint-part-tick" />
+            <ui:VisualElement class="blueprint-part-tick" />
+            <ui:VisualElement class="blueprint-part-tick blueprint-part-tick--major" />
+        </ui:VisualElement>
+
+        <ui:Label name="PartSize" text="0 x 0 x 0" class="blueprint-part-size" />
+    </ui:VisualElement>
+</ui:UXML>

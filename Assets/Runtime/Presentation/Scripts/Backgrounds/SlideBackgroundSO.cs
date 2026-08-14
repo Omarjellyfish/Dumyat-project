@@ -20,9 +20,30 @@ namespace DumyatRuntime
         public abstract Color GroundColor { get; }
 
         /// <summary>
-        /// Generated image, or null for a flat colour. Returned textures are owned by the caller.
+        /// Generated image, or null for a flat colour. Returned textures are owned by the caller
+        /// UNLESS <see cref="OwnsCreatedImage"/> says otherwise.
         /// </summary>
         public virtual Texture2D CreateImage() => null;
+
+        /// <summary>
+        /// Whether the caller may destroy what <see cref="CreateImage"/> returned.
+        ///
+        /// True for every background that GENERATES its texture, which was all of them until
+        /// <see cref="ImageBackgroundSO"/> started handing back an authored asset instead. The
+        /// controller destroys its cache on teardown, and destroying an asset texture deletes it from
+        /// the project — so a background that returns something it did not create must say so here.
+        /// </summary>
+        public virtual bool OwnsCreatedImage => true;
+
+        /// <summary>
+        /// An optional second layer painted OVER the image, for legibility. Always generated, so the
+        /// caller always owns it.
+        ///
+        /// It has to be a separate texture on a separate element: UI Toolkit cannot stack two
+        /// background images on one element, and baking the veil into a copy of the artwork would mean
+        /// duplicating a full-resolution texture just to darken it.
+        /// </summary>
+        public virtual Texture2D CreateVeil() => null;
 
         /// <summary>
         /// Vertical ramp helper. Delegates to <see cref="GradientRamp"/>, which is shared with the

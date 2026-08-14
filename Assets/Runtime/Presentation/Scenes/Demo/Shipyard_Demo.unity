@@ -16661,6 +16661,81 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1452602991}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &564310034
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 564310035}
+  - component: {fileID: 564310036}
+  m_Layer: 0
+  m_Name: Angle_farsky
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &564310035
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 564310034}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.00989122, y: -0.8778923, z: 0.018149609, w: 0.4784118}
+  m_LocalPosition: {x: -1969.3109, y: 17.797943, z: 635.52936}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 913473901}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &564310036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 564310034}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+  Priority:
+    Enabled: 1
+    m_Value: 0
+  OutputChannel: 1
+  StandbyUpdate: 2
+  m_StreamingVersion: 20241001
+  m_LegacyPriority: 0
+  Target:
+    TrackingTarget: {fileID: 0}
+    LookAtTarget: {fileID: 0}
+    CustomLookAtTarget: 0
+  Lens:
+    FieldOfView: 52
+    OrthographicSize: 10
+    NearClipPlane: 0.108540416
+    FarClipPlane: 21708.084
+    Dutch: 0
+    ModeOverride: 0
+    PhysicalProperties:
+      GateFit: 2
+      SensorSize: {x: 21.946, y: 16.002}
+      LensShift: {x: 0, y: 0}
+      FocusDistance: 10
+      Iso: 200
+      ShutterSpeed: 0.005
+      Aperture: 16
+      BladeCount: 5
+      Curvature: {x: 2, y: 11}
+      BarrelClipping: 0.25
+      Anamorphism: 0
+  BlendHint: 0
 --- !u!1001 &564925506
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26938,6 +27013,7 @@ Transform:
   - {fileID: 1152968643}
   - {fileID: 1945339432}
   - {fileID: 1925057732}
+  - {fileID: 564310035}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &916148022
@@ -28064,6 +28140,11 @@ MonoBehaviour:
       m_Bits: 256
   - Id: yard
     Camera: {fileID: 1925057733}
+    HiddenLayers:
+      serializedVersion: 2
+      m_Bits: 256
+  - Id: farsky
+    Camera: {fileID: 564310036}
     HiddenLayers:
       serializedVersion: 2
       m_Bits: 256
@@ -35413,8 +35494,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1152968642}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.013208576, y: 0.96732455, z: 0.051541988, w: -0.24789548}
-  m_LocalPosition: {x: -2026.3348, y: 4.8219714, z: 549.86414}
+  m_LocalRotation: {x: 0.013285875, y: 0.9669516, z: 0.051522125, w: -0.24934618}
+  m_LocalPosition: {x: -2026.215, y: 7.1688848, z: 550.08374}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -61255,8 +61336,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1945339431}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.04016886, y: -0.9190111, z: -0.09715772, w: -0.37995455}
-  m_LocalPosition: {x: -2073.534, y: 3.9947705, z: 557.01263}
+  m_LocalRotation: {x: -0.00690242, y: -0.4717874, z: -0.0036936284, w: 0.8816776}
+  m_LocalPosition: {x: -2082.2207, y: 5.000439, z: 552.50793}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -61288,8 +61369,8 @@ MonoBehaviour:
   Lens:
     FieldOfView: 52
     OrthographicSize: 10
-    NearClipPlane: 0.099999994
-    FarClipPlane: 20000
+    NearClipPlane: 0.05
+    FarClipPlane: 8767.423
     Dutch: 0
     ModeOverride: 0
     PhysicalProperties:

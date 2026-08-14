@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -87,10 +88,7 @@ namespace DumyatEditor
         {
             if (cam == null || !scene.isLoaded || string.IsNullOrEmpty(angleId)) return;
 
-            CameraAngleSet set = scene.GetRootGameObjects()
-                .Select(g => g.GetComponentInChildren<CameraAngleSet>(true))
-                .FirstOrDefault(s => s != null);
-
+            CameraAngleSet set = FindAngleSet(scene);
             if (set == null)
             {
                 Debug.LogWarning("[AngleLibrary] '" + scene.name + "' has no CameraAngleSet, so '" +
@@ -128,6 +126,267 @@ namespace DumyatEditor
             EditorUtility.SetDirty(set);
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("[AngleLibrary] registered '" + angleId + "' in " + scene.name + "'s CameraAngleSet.", set);
+        }
+
+        // ---- add / delete / rename --------------------------------------------------------------
+
+        /// <summary>
+        /// Appends a genuinely blank row, optionally pre-filled with the scene it was added under.
+        ///
+        /// Blank matters: the previous "Add Empty Angle" called InsertArrayElementAtIndex, and Unity
+        /// defines that as DUPLICATING the element before it. Every "empty" angle arrived carrying the
+        /// last angle's id and pose, so the first Apply silently overwrote a real shot.
+        ///
+        /// No camera is created here. The row has no id yet, and a camera called "Angle_" is worse than
+        /// no camera — <see cref="Apply"/> makes it the moment there is an id to name it after.
+        /// </summary>
+        public static CameraAngleLibrarySO.Entry Create(CameraAngleLibrarySO library,
+                                                        string sceneName, string stageId)
+        {
+            if (library == null) return null;
+
+            Undo.RecordObject(library, "Add presentation angle");
+
+            var entry = new CameraAngleLibrarySO.Entry
+            {
+                SceneName = sceneName ?? string.Empty,
+                StageId = stageId ?? string.Empty,
+                AngleId = string.Empty,
+                FieldOfView = 52f,
+            };
+
+            // Next to its own scene's rows rather than at the very bottom, so the per-scene grouping the
+            // inspector draws does not break the moment you add anything.
+            int at = library.Entries.Count;
+            if (!string.IsNullOrEmpty(sceneName))
+            {
+                for (int i = library.Entries.Count - 1; i >= 0; i--)
+                {
+                    if (library.Entries[i].SceneName == sceneName) { at = i + 1; break; }
+                }
+            }
+
+            library.Entries.Insert(at, entry);
+            EditorUtility.SetDirty(library);
+            return entry;
+        }
+
+        /// <summary>
+        /// Removes a row, and optionally the Cinemachine camera and CameraAngleSet entry behind it.
+        ///
+        /// The scene half is opt-in because the two failure modes are not symmetric: a library row with
+        /// no camera is a visible "no camera" status you can fix with Apply, whereas a deleted camera is
+        /// a composition somebody spent time framing and cannot get back. Callers ask first.
+        /// </summary>
+        public static void Delete(CameraAngleLibrarySO library, int index, bool alsoScene)
+        {
+            if (library == null || index < 0 || index >= library.Entries.Count) return;
+
+            CameraAngleLibrarySO.Entry entry = library.Entries[index];
+
+            if (alsoScene && !string.IsNullOrEmpty(entry.AngleId))
+            {
+                Scene scene = SceneManager.GetSceneByName(entry.SceneName);
+                if (scene.isLoaded)
+                {
+                    Unregister(scene, entry.AngleId);
+
+                    CinemachineCamera live = AngleAuthoring.FindOrCreate(scene, entry.AngleId, false);
+                    if (live != null) Undo.DestroyObjectImmediate(live.gameObject);
+
+                    EditorSceneManager.MarkSceneDirty(scene);
+                    Debug.Log("[AngleLibrary] deleted '" + entry.AngleId + "' from '" + entry.SceneName +
+                              "'. Save the scene to keep it.");
+                }
+                else
+                {
+                    Debug.LogWarning("[AngleLibrary] removed '" + entry.AngleId + "' from the library, " +
+                                     "but '" + entry.SceneName + "' is not open so the camera and its " +
+                                     "CameraAngleSet entry are still there.");
+                }
+            }
+
+            Undo.RecordObject(library, "Delete presentation angle");
+            library.Entries.RemoveAt(index);
+            EditorUtility.SetDirty(library);
+        }
+
+        /// <summary>
+        /// Renames an angle everywhere its id is written down: this row, the <c>Angle_*</c> GameObject,
+        /// the scene's <see cref="CameraAngleSet"/>, and every slide that asks for it.
+        ///
+        /// WHY ALL FOUR OR NONE: the id is a string join, not a reference. Renaming the row alone leaves
+        /// a row pointing at nothing; renaming the camera alone makes every slide using it log "has no
+        /// angle" mid-talk. There is no useful halfway state, so this does the whole set and reports
+        /// what it could not reach rather than leaving you to find out from the projector.
+        ///
+        /// Slides are matched on STAGE PLUS id, not id alone. Angle ids only have to be unique within
+        /// their own stage — two places may both reasonably own a "wide" — so matching on the id by
+        /// itself would rename another stage's slide.
+        /// </summary>
+        public static bool Rename(CameraAngleLibrarySO library, CameraAngleLibrarySO.Entry entry,
+                                  string newId)
+        {
+            if (library == null || entry == null) return false;
+
+            newId = (newId ?? string.Empty).Trim();
+            string oldId = entry.AngleId ?? string.Empty;
+
+            if (newId.Length == 0)
+            {
+                Debug.LogWarning("[AngleLibrary] an angle id cannot be empty.");
+                return false;
+            }
+            if (newId == oldId) return true;
+
+            foreach (CameraAngleLibrarySO.Entry other in library.Entries)
+            {
+                if (!ReferenceEquals(other, entry) &&
+                    other.SceneName == entry.SceneName &&
+                    string.Equals(other.AngleId, newId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    Debug.LogWarning("[AngleLibrary] '" + entry.SceneName + "' already has an angle '" +
+                                     newId + "'. Ids must be unique within a scene — the runtime picks " +
+                                     "the first match.");
+                    return false;
+                }
+            }
+
+            var log = new StringBuilder("[AngleLibrary] renamed '" + oldId + "' → '" + newId + "':\n");
+
+            Undo.RecordObject(library, "Rename presentation angle");
+            entry.AngleId = newId;
+            EditorUtility.SetDirty(library);
+            log.AppendLine("   library row updated.");
+
+            Scene scene = SceneManager.GetSceneByName(entry.SceneName);
+            if (scene.isLoaded)
+            {
+                CinemachineCamera live = AngleAuthoring.FindOrCreate(scene, oldId, false);
+                if (live != null)
+                {
+                    Undo.RecordObject(live.gameObject, "Rename presentation angle");
+                    live.gameObject.name = AngleAuthoring.AnglePrefix + newId;
+                    log.AppendLine("   camera renamed to " + live.gameObject.name + ".");
+                }
+                else log.AppendLine("   no camera called " + AngleAuthoring.AnglePrefix + oldId +
+                                    " in the scene — nothing to rename.");
+
+                if (RenameInAngleSet(scene, oldId, newId)) log.AppendLine("   CameraAngleSet updated.");
+                EditorSceneManager.MarkSceneDirty(scene);
+            }
+            else
+            {
+                log.AppendLine("   ! '" + entry.SceneName + "' is not open, so the camera and its " +
+                               "CameraAngleSet entry still use '" + oldId + "'. Open the scene and " +
+                               "rename again, or the deck will not find this angle.");
+            }
+
+            int slides = RetargetSlides(entry.StageId, oldId, newId);
+            log.AppendLine("   " + slides + " slide(s) repointed at the new id.");
+
+            Debug.Log(log.ToString(), library);
+            return true;
+        }
+
+        /// <summary>Drops an angle id out of a scene's <see cref="CameraAngleSet"/>.</summary>
+        private static void Unregister(Scene scene, string angleId)
+        {
+            CameraAngleSet set = FindAngleSet(scene);
+            if (set == null) return;
+
+            var so = new SerializedObject(set);
+            SerializedProperty arr = so.FindProperty("_angles");
+
+            for (int i = arr.arraySize - 1; i >= 0; i--)
+            {
+                if (!string.Equals(arr.GetArrayElementAtIndex(i).FindPropertyRelative("Id").stringValue,
+                                   angleId, System.StringComparison.OrdinalIgnoreCase)) continue;
+
+                arr.DeleteArrayElementAtIndex(i);
+            }
+
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(set);
+        }
+
+        private static bool RenameInAngleSet(Scene scene, string oldId, string newId)
+        {
+            CameraAngleSet set = FindAngleSet(scene);
+            if (set == null) return false;
+
+            var so = new SerializedObject(set);
+            SerializedProperty arr = so.FindProperty("_angles");
+            bool touched = false;
+
+            for (int i = 0; i < arr.arraySize; i++)
+            {
+                SerializedProperty id = arr.GetArrayElementAtIndex(i).FindPropertyRelative("Id");
+                if (!string.Equals(id.stringValue, oldId, System.StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                id.stringValue = newId;
+                touched = true;
+            }
+
+            if (!touched) return false;
+
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(set);
+            return true;
+        }
+
+        private static CameraAngleSet FindAngleSet(Scene scene)
+        {
+            if (!scene.isLoaded) return null;
+            return scene.GetRootGameObjects()
+                        .Select(g => g.GetComponentInChildren<CameraAngleSet>(true))
+                        .FirstOrDefault(s => s != null);
+        }
+
+        /// <summary>
+        /// Every scene slide asking a stage for an angle id. Used to warn before a delete and to
+        /// repoint after a rename — the reference is a string, so nothing else would notice it break.
+        /// </summary>
+        public static List<SceneShowcaseSlideSO> SlidesUsing(string stageId, string angleId)
+        {
+            var hits = new List<SceneShowcaseSlideSO>();
+            if (string.IsNullOrEmpty(angleId)) return hits;
+
+            foreach (string guid in AssetDatabase.FindAssets("t:" + nameof(SceneShowcaseSlideSO)))
+            {
+                var slide = AssetDatabase.LoadAssetAtPath<SceneShowcaseSlideSO>(
+                    AssetDatabase.GUIDToAssetPath(guid));
+
+                if (slide == null) continue;
+                if (!string.Equals(slide.AngleId, angleId, System.StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // An empty stage id on the entry cannot disambiguate, so it matches on the angle alone.
+                if (!string.IsNullOrEmpty(stageId) &&
+                    !string.Equals(slide.StageId, stageId, System.StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                hits.Add(slide);
+            }
+
+            return hits;
+        }
+
+        private static int RetargetSlides(string stageId, string oldId, string newId)
+        {
+            List<SceneShowcaseSlideSO> slides = SlidesUsing(stageId, oldId);
+
+            foreach (SceneShowcaseSlideSO slide in slides)
+            {
+                var so = new SerializedObject(slide);
+                so.FindProperty("_angleId").stringValue = newId;
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(slide);
+            }
+
+            if (slides.Count > 0) AssetDatabase.SaveAssets();
+            return slides.Count;
         }
 
         /// <summary>True when the entry and its scene camera agree within authoring tolerance.</summary>

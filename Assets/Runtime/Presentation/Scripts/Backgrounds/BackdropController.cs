@@ -6,19 +6,39 @@ namespace DumyatRuntime
 {
     /// <summary>
     /// Paints the backdrop layer from a <see cref="SlideBackgroundSO"/>, and owns the lifetime of the
-    /// textures those assets generate.
+    /// textures those assets produce.
     ///
     /// The cache is the reason this is a component rather than a static helper: generated textures
     /// are unmanaged and must be destroyed. One per background asset is created on first use and
     /// released together in OnDestroy, so switching between the same handful of backgrounds across
-    /// 58 slides allocates a handful of textures, not 58.
+    /// 55 slides allocates a handful of textures, not 55.
+    ///
+    /// NOT EVERYTHING IN THE CACHE MAY BE DESTROYED. <see cref="ImageBackgroundSO"/> hands back an
+    /// authored project asset rather than something it generated, and calling Destroy on that deletes
+    /// the texture from the project. Each entry therefore records whether its image is ours to free;
+    /// the veil always is, because it is always generated.
     /// </summary>
     public sealed class BackdropController : MonoBehaviour
     {
         [SerializeField] private PresentationView _view;
 
-        private readonly Dictionary<SlideBackgroundSO, Texture2D> _cache =
-            new Dictionary<SlideBackgroundSO, Texture2D>();
+        /// <summary>What one background asset resolved to, and what of it we are allowed to free.</summary>
+        private readonly struct Painted
+        {
+            public readonly Texture2D Image;
+            public readonly bool OwnsImage;
+            public readonly Texture2D Veil;
+
+            public Painted(Texture2D image, bool ownsImage, Texture2D veil)
+            {
+                Image = image;
+                OwnsImage = ownsImage;
+                Veil = veil;
+            }
+        }
+
+        private readonly Dictionary<SlideBackgroundSO, Painted> _cache =
+            new Dictionary<SlideBackgroundSO, Painted>();
 
         private SlideBackgroundSO _current;
 
@@ -46,6 +66,7 @@ namespace DumyatRuntime
             if (_view == null || !_view.IsReady) return;
 
             _view.Backdrop.AddToClassList("hidden");
+            HideVeil();
             _view.Ground.style.backgroundColor = Color.clear;
             _current = null;                     // force a repaint when a text slide comes back
         }
@@ -67,33 +88,73 @@ namespace DumyatRuntime
             {
                 surface.style.backgroundColor = new StyleColor(StyleKeyword.Null);
                 surface.style.backgroundImage = new StyleBackground(StyleKeyword.Null);
+                surface.style.unityBackgroundScaleMode = new StyleEnum<ScaleMode>(StyleKeyword.Null);
+                HideVeil();
                 return;
             }
 
             surface.style.backgroundColor = background.GroundColor;
 
-            Texture2D image = Resolve(background);
+            Painted painted = Resolve(background);
+
             // A flat-colour background legitimately has no image; clearing rather than assigning null
             // keeps the previous slide's ramp from lingering underneath.
-            surface.style.backgroundImage = image != null
-                ? new StyleBackground(image)
+            surface.style.backgroundImage = painted.Image != null
+                ? new StyleBackground(painted.Image)
                 : new StyleBackground(StyleKeyword.None);
+
+            // Generated ramps are 1 px wide and must stretch. An authored image says how it wants to be
+            // fitted, because cropping a poster and letterboxing it are both right in different decks.
+            surface.style.unityBackgroundScaleMode =
+                background is ImageBackgroundSO image ? image.Fit : ScaleMode.StretchToFill;
+
+            ApplyVeil(painted.Veil);
         }
 
-        private Texture2D Resolve(SlideBackgroundSO background)
+        /// <summary>
+        /// The veil rides on its OWN element rather than the scene slides' `#scrim`.
+        ///
+        /// The scrim is toggled by three different renderers, and the director paints the backdrop
+        /// BEFORE it calls them — so the outgoing renderer's Hide() would switch the veil straight back
+        /// off, on exactly the slide that needed it. A layer nothing else touches has no such ordering
+        /// to get right.
+        /// </summary>
+        private void ApplyVeil(Texture2D veil)
         {
-            if (_cache.TryGetValue(background, out Texture2D cached)) return cached;
+            if (_view.BackdropVeil == null) return;
 
-            Texture2D created = background.CreateImage();
+            if (veil == null) { HideVeil(); return; }
+
+            _view.BackdropVeil.RemoveFromClassList("hidden");
+            _view.BackdropVeil.style.backgroundImage = new StyleBackground(veil);
+            _view.BackdropVeil.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+        }
+
+        private void HideVeil()
+        {
+            if (_view.BackdropVeil == null) return;
+            _view.BackdropVeil.AddToClassList("hidden");
+            _view.BackdropVeil.style.backgroundImage = new StyleBackground(StyleKeyword.None);
+        }
+
+        private Painted Resolve(SlideBackgroundSO background)
+        {
+            if (_cache.TryGetValue(background, out Painted cached)) return cached;
+
+            var created = new Painted(background.CreateImage(), background.OwnsCreatedImage,
+                                      background.CreateVeil());
             _cache[background] = created;      // cache nulls too, so a flat colour is not re-probed
             return created;
         }
 
         private void OnDestroy()
         {
-            foreach (KeyValuePair<SlideBackgroundSO, Texture2D> entry in _cache)
+            foreach (KeyValuePair<SlideBackgroundSO, Painted> entry in _cache)
             {
-                if (entry.Value != null) Destroy(entry.Value);
+                // Only what we generated. An ImageBackgroundSO's texture is a project asset, and
+                // destroying it deletes it from disk in the Editor.
+                if (entry.Value.OwnsImage && entry.Value.Image != null) Destroy(entry.Value.Image);
+                if (entry.Value.Veil != null) Destroy(entry.Value.Veil);
             }
             _cache.Clear();
         }

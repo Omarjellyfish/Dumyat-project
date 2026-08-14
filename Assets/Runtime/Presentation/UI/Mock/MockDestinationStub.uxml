@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/Runtime/UI%20Toolkit/DestinationBoard/DestinationBoard.uss" />
+
+    <!-- ONE DEPARTURE STUB, FOR THE PRESENTATION DECK ONLY.
+
+         Same reasoning as MockBlueprintPartRow: DestinationBoardUI.CreateDestinationCard builds these
+         in C#, so there is no shipping template to clone. Structure copied, styling NOT — the classes
+         and the shipping DestinationBoard.uss above are what draw it.
+
+         Perforation is 6 dots, matching PerforationDots. It reads as a torn-off ticket rather than a
+         list row, and it is ray-transparent so it never competes with the Travel button.
+
+         The Travel button is a Button so it picks up the real :hover and :active rules; the deck
+         never clicks it. Authored uppercase — UI Toolkit has no text-transform. -->
+    <ui:VisualElement class="destination-card">
+
+        <ui:VisualElement class="destination-perforation" picking-mode="Ignore">
+            <ui:VisualElement class="destination-perforation-dot" />
+            <ui:VisualElement class="destination-perforation-dot" />
+            <ui:VisualElement class="destination-perforation-dot" />
+            <ui:VisualElement class="destination-perforation-dot" />
+            <ui:VisualElement class="destination-perforation-dot" />
+            <ui:VisualElement class="destination-perforation-dot" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="destination-code">
+            <ui:Label name="RouteCode" text="--" class="destination-code-label" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="destination-text">
+            <ui:Label name="DestName" text="Destination" class="destination-name" />
+            <ui:Label name="DestDescription" text="" class="destination-description" />
+        </ui:VisualElement>
+
+        <ui:Button name="TravelButton" text="TRAVEL" class="destination-travel-btn" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -587,6 +587,7 @@ MonoBehaviour:
   - Shipyard_Demo
   - EzbetElBorg_Demo
   - Turntable_Demo
+  _quality: {fileID: 11400000, guid: 1477f742b411361488fc843213bd4314, type: 2}
   _director: {fileID: 1573189073}
   _registry: {fileID: 1573189084}
   _prewarmer: {fileID: 1573189087}
@@ -654,6 +655,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.UiPanelRenderer
   _theme: {fileID: 0}
   _themeSource: {fileID: 11400000, guid: c5170cfb87e2bc14b9fec5b26863c9d0, type: 2}
+  _quality: {fileID: 11400000, guid: 1477f742b411361488fc843213bd4314, type: 2}
 --- !u!114 &1573189091
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -667,7 +669,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MediaSlideRenderer
   _view: {fileID: 1573189075}
-  _videoResolution: {x: 1920, y: 1080}
+  _quality: {fileID: 11400000, guid: 1477f742b411361488fc843213bd4314, type: 2}
+  _maxVideoWidth: 1920
+  _videoSupersample: 1.5
 --- !u!114 &1573189092
 MonoBehaviour:
   m_ObjectHideFlags: 0

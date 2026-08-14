@@ -27,6 +27,11 @@ namespace DumyatRuntime
         [SerializeField, Tooltip("The deck's PanelSettings, used only to borrow a theme when none is set.")]
         private PanelSettings _themeSource;
 
+        [SerializeField, Tooltip("Output resolution the deck is being presented at. Left empty, panels " +
+                                 "render at their authored size — correct at 1080p, and visibly soft on " +
+                                 "anything larger, because these are textures the slide then magnifies.")]
+        private PresentationQualitySO _quality;
+
         private readonly Dictionary<UiPanelEntrySO, RenderTexture> _textures =
             new Dictionary<UiPanelEntrySO, RenderTexture>();
         private readonly List<Object> _owned = new List<Object>();
@@ -54,7 +59,12 @@ namespace DumyatRuntime
 
         private RenderTexture Build(UiPanelEntrySO entry)
         {
-            Vector2Int size = entry.RenderSize;
+            // BOTH halves of this have to scale together. The texture is what the slide samples, and
+            // PanelSettings below draws at ConstantPixelSize — so a bigger texture on its own would not
+            // supersample the panel, it would simply give it more empty room around the same soft render.
+            Vector2Int size = _quality != null
+                ? _quality.PanelRenderSize(entry.RenderSize)
+                : entry.RenderSize;
 
             var rt = new RenderTexture(size.x, size.y, 24, RenderTextureFormat.ARGB32)
             {
@@ -72,7 +82,9 @@ namespace DumyatRuntime
             // ConstantPixelSize with a scale factor: the panel is authored at a fixed size, so scaling
             // with the "screen" would just fight the render texture's own dimensions.
             settings.scaleMode = PanelScaleMode.ConstantPixelSize;
-            settings.scale = entry.ContentScale;
+            settings.scale = _quality != null
+                ? _quality.PanelContentScale(entry.ContentScale)
+                : entry.ContentScale;
             settings.clearColor = true;
             settings.colorClearValue = entry.ClearColor;
             _owned.Add(settings);

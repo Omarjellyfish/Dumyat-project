@@ -31,7 +31,18 @@
     top: 0;
     right: 0;
     bottom: 0;
-    /* Generated ramp is assigned as background-image at runtime; scale-mode stretches it. */
+    /* Generated ramp is assigned as background-image at runtime; scale-mode stretches it.
+       An ImageBackgroundSO overrides this per asset — a poster crops, framed art letterboxes. */
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+/* Over an image backdrop, under everything else. Only BackdropController writes to it. */
+.backdrop-veil {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     -unity-background-scale-mode: stretch-to-fill;
 }
 
@@ -722,6 +733,100 @@
     -unity-background-scale-mode: scale-and-crop;
 }
 
+.media-kicker--inset {
+    position: absolute;
+    left: 120px;
+    top: 236px;
+}
+
+/* ---------- Grid ----------
+   Every tile's width and height are computed in C# from the clip's own aspect ratio, so nothing here
+   sizes anything: the rows only centre what they are handed. Sizing tiles in USS is what would force
+   a crop or a letterbox back in. */
+.media-grid {
+    position: absolute;
+    flex-direction: column;
+}
+
+.media-grid-row {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.media-tile {
+    overflow: hidden;
+    justify-content: flex-end;
+    border-top-width: 1px;
+    border-top-color: rgba(120, 228, 236, 0.42);
+    background-color: rgba(103, 221, 232, 0.05);
+}
+
+.media-tile-caption {
+    font-size: 20px;
+    letter-spacing: 3.4px;
+    color: rgba(214, 246, 250, 0.72);
+    -unity-font-style: bold;
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-top: 12px;
+    padding-bottom: 14px;
+    background-color: rgba(4, 20, 27, 0.72);
+}
+
+/* ---------- Theatre ----------
+   Opaque on purpose: a theatre slide asks for no backdrop, so the ground behind this has been cleared
+   to transparent and the letterbox bars under a fitted clip would otherwise be a hole in the deck. */
+.media-theatre {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(4, 20, 27);
+}
+
+/* Shown only while a theatre clip is paused — the one thing worth putting over an uninterrupted frame. */
+.theatre-pause {
+    position: absolute;
+    left: 56px;
+    bottom: 56px;
+    width: 18px;
+    height: 46px;
+    border-left-width: 6px;
+    border-right-width: 6px;
+    border-left-color: rgb(255, 155, 138);
+    border-right-color: rgb(255, 155, 138);
+}
+
+/* ---------- Window — an anchored crop ----------
+   The frame clips; the child inside it is sized and offset in C# so the authored focus point lands at
+   the centre. overflow:hidden is the whole mechanism — USS has no clip-path. */
+.media-window {
+    position: absolute;
+    overflow: hidden;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgba(120, 228, 236, 0.42);
+    border-right-color: rgba(120, 228, 236, 0.42);
+    border-top-color: rgba(120, 228, 236, 0.42);
+    border-bottom-color: rgba(120, 228, 236, 0.42);
+    background-color: rgb(4, 20, 27);
+}
+
+.media-window-src {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.media-window-copy {
+    position: absolute;
+    top: 300px;
+    flex-direction: column;
+}
+
 .media-eyebrow {
     position: absolute;
     left: 120px;
@@ -886,6 +991,60 @@
 
 .poster-rule.poster-in {
     width: 720px;
+}
+
+/* ---------- title emphasis ----------
+ *
+ * For a title sitting over artwork or live 3D, where ink-on-nothing stops being readable.
+ * Driven by SlideSO.Shadow / SlideSO.Outline via TitleEmphasis, which is what puts these on.
+ *
+ * DELIBERATELY UNSCOPED. They are not `.s-title.title-outline` because the four labels that can end
+ * up carrying a title over something busy live in different trees — the text slide's #title, the
+ * media slide's .media-title, the lockup's #lockup-place and the slate's #slate-title. A scoped rule
+ * would work on one of them and silently do nothing on the other three.
+ *
+ * THE TWO GROUPS COMBINE, THE SHADOWS DO NOT. Outline and shadow are different properties and stack
+ * freely; Deep and Halo are both `text-shadow`, and USS holds exactly ONE — which is why SlideSO
+ * models the shadow as an enum rather than two booleans.
+ */
+
+/* Soft, wide, dark. Matches the lockup treatment already used over live stages. */
+.title-shadow-deep {
+    text-shadow: 0 6px 28px rgba(2, 12, 17, 0.95);
+}
+
+/* Zero offset plus a wide blur in the accent reads as a bloom rather than a shadow. */
+.title-shadow-halo {
+    text-shadow: 0 0 44px rgba(103, 221, 232, 0.62);
+}
+
+/* The one treatment that holds against a LIGHT background as well as a dark one, because it is an
+   edge rather than a darkening. 2 px suits the 96 px body-slide title. */
+.title-outline {
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgba(3, 16, 22, 0.92);
+}
+
+/* Outline width is proportional to type size, or it stops reading as an edge and starts reading as a
+   defect. The poster title is 190 px, the body-slide title 96 px, the kicker 34–38 px. */
+.slide.poster .s-title.title-outline {
+    -unity-text-outline-width: 3px;
+}
+
+.s-kicker.title-outline {
+    -unity-text-outline-width: 1px;
+}
+
+/* The second shadow, when Deep and Halo are both ticked. TitleEmphasis creates this as a CHILD of the
+   title, so it inherits the font, size, letter-spacing, colour AND the poster reveal's transform for
+   free — there is no second set of styles to keep in step. It carries only the halo; the outline stays
+   on the parent, because drawing it twice would just thicken it. */
+.title-echo {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
 }
 
 /* ---------- visibility helper ---------- */

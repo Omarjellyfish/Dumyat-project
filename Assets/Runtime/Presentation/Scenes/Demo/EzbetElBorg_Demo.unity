@@ -15840,15 +15840,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4465305683211947354, guid: 827b8028aa554b240898135076a472a3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3.809
+      value: 3.81
       objectReference: {fileID: 0}
     - target: {fileID: 4465305683211947354, guid: 827b8028aa554b240898135076a472a3, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.54300046
+      value: -0.685
       objectReference: {fileID: 0}
     - target: {fileID: 4465305683211947354, guid: 827b8028aa554b240898135076a472a3, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -8.295
+      value: -8.2931
       objectReference: {fileID: 0}
     - target: {fileID: 4465305683211947354, guid: 827b8028aa554b240898135076a472a3, type: 3}
       propertyPath: m_LocalRotation.w
@@ -31596,7 +31596,7 @@ GameObject:
   - component: {fileID: 398120597}
   - component: {fileID: 398120598}
   m_Layer: 0
-  m_Name: Angle_depth
+  m_Name: Angle_stalls
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -31610,8 +31610,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 398120596}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.10679281, y: 0.15511182, z: 0.016868984, w: 0.9819629}
-  m_LocalPosition: {x: -2472.2007, y: 1.4552307, z: 2506.7354}
+  m_LocalRotation: {x: -0.031899095, y: -0.28898454, z: -0.009635332, w: 0.9567537}
+  m_LocalPosition: {x: -2467.5718, y: 2.7753463, z: 2505.9841}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -31643,8 +31643,8 @@ MonoBehaviour:
   Lens:
     FieldOfView: 52
     OrthographicSize: 10
-    NearClipPlane: 0.8654962
-    FarClipPlane: 173099.25
+    NearClipPlane: 0.05
+    FarClipPlane: 8767.423
     Dutch: 0
     ModeOverride: 0
     PhysicalProperties:
@@ -43356,8 +43356,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 559049748}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.04536731, y: -0.252327, z: 0.011844091, w: -0.9665054}
-  m_LocalPosition: {x: -2503.452, y: 3.4312434, z: 2505.1978}
+  m_LocalRotation: {x: -0.01727009, y: -0.34553534, z: 0.006360324, w: -0.93822527}
+  m_LocalPosition: {x: -2504.911, y: 3.4464245, z: 2505.8901}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -44863,11 +44863,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 34d0379a8089a36438cdb43bd84cd1c4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.013000533
+      value: -0.0345
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 34d0379a8089a36438cdb43bd84cd1c4, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.1829977
+      value: -2.172
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 34d0379a8089a36438cdb43bd84cd1c4, type: 3}
       propertyPath: m_LocalRotation.w
@@ -69763,7 +69763,7 @@ GameObject:
   - component: {fileID: 939361373}
   - component: {fileID: 939361374}
   m_Layer: 0
-  m_Name: Angle_auction
+  m_Name: Angle_maadia
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80898,7 +80898,7 @@ GameObject:
   - component: {fileID: 1107771736}
   - component: {fileID: 1107771737}
   m_Layer: 0
-  m_Name: Angle_stalls
+  m_Name: Angle_indoors
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -80912,8 +80912,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1107771735}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.03348173, y: -0.18770358, z: -0.0064022127, w: 0.981634}
-  m_LocalPosition: {x: -2482.765, y: 1.7513999, z: 2505.9697}
+  m_LocalRotation: {x: -0.039597463, y: -0.39359358, z: -0.016972419, w: 0.9182745}
+  m_LocalPosition: {x: -2481.8218, y: 2.173678, z: 2517.4937}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -101895,12 +101895,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.CameraAngleSet
   _angles:
-  - Id: auction
+  - Id: maadia
     Camera: {fileID: 939361374}
     HiddenLayers:
       serializedVersion: 2
       m_Bits: 256
-  - Id: stalls
+  - Id: indoors
     Camera: {fileID: 1107771737}
     HiddenLayers:
       serializedVersion: 2
@@ -101910,7 +101910,7 @@ MonoBehaviour:
     HiddenLayers:
       serializedVersion: 2
       m_Bits: 256
-  - Id: depth
+  - Id: stalls
     Camera: {fileID: 398120598}
     HiddenLayers:
       serializedVersion: 2
@@ -136401,7 +136401,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6370755579335619869, guid: 7d092c95031e4ff45b178fff6b43899a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.94600105
+      value: -0.89
       objectReference: {fileID: 0}
     - target: {fileID: 6370755579335619869, guid: 7d092c95031e4ff45b178fff6b43899a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -157323,11 +157323,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000183096041704938, guid: a9e377441878cae47a890662ef81190c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.048
+      value: -0.058
       objectReference: {fileID: 0}
     - target: {fileID: 1000183096041704938, guid: a9e377441878cae47a890662ef81190c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.3239975
+      value: -2.322
       objectReference: {fileID: 0}
     - target: {fileID: 1000183096041704938, guid: a9e377441878cae47a890662ef81190c, type: 3}
       propertyPath: m_LocalRotation.w

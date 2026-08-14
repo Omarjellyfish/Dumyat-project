@@ -39,7 +39,7 @@ namespace DumyatEditor
         [MenuItem("Dumyat/Presentation/Validate Deck", priority = 40)]
         private static void ValidateSelected()
         {
-            PresentationDeckSO deck = Resolve();
+            PresentationDeckSO deck = ResolveDeck();
             if (deck == null)
             {
                 Debug.LogError("[DeckValidator] No PresentationDeckSO found. Select one, or create it " +
@@ -110,6 +110,7 @@ namespace DumyatEditor
                         "eyebrow will be hidden. Fine for a poster or closing slide.", slide));
 
                 ValidateTextSlide(slide, where, findings);
+                ValidateMediaSlide(slide, where, findings);
             }
 
             // ---- number-key reachability ----
@@ -139,16 +140,41 @@ namespace DumyatEditor
             }
 
             // ---- orphaned slide assets ----
-            foreach (string guid in AssetDatabase.FindAssets("t:SlideSO"))
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                var asset = AssetDatabase.LoadAssetAtPath<SlideSO>(path);
-                if (asset != null && !seen.ContainsKey(asset))
-                    findings.Add(new Finding(Severity.Info,
-                        $"'{asset.name}' exists but is not in this deck.", asset));
-            }
+            foreach (SlideSO orphan in SlidesNotIn(deck))
+                findings.Add(new Finding(Severity.Info,
+                    $"'{orphan.name}' exists but is not in this deck.", orphan));
 
             return Report(deck, findings);
+        }
+
+        /// <summary>
+        /// Every slide asset in the project that this deck does not reference, in name order.
+        ///
+        /// Shared rather than inlined because the deck inspector lists these with an "Add" button next
+        /// to each: the report and the fix must agree on what counts as orphaned, or the inspector
+        /// offers to add something the validator never mentioned.
+        /// </summary>
+        public static List<SlideSO> SlidesNotIn(PresentationDeckSO deck)
+        {
+            var inDeck = new HashSet<SlideSO>();
+            if (deck != null)
+            {
+                for (int i = 0; i < deck.Count; i++)
+                {
+                    SlideSO slide = deck.SlideAt(i);
+                    if (slide != null) inDeck.Add(slide);
+                }
+            }
+
+            var orphans = new List<SlideSO>();
+            foreach (string guid in AssetDatabase.FindAssets("t:" + nameof(SlideSO)))
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<SlideSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (asset != null && !inDeck.Contains(asset)) orphans.Add(asset);
+            }
+
+            orphans.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+            return orphans;
         }
 
         private static void ValidateTextSlide(SlideSO slide, string where, List<Finding> findings)
@@ -192,6 +218,56 @@ namespace DumyatEditor
             }
         }
 
+        /// <summary>
+        /// Checks a media slide for the mistakes that only show up once footage lands — a layout
+        /// expecting several clips that has one, and above all a decoder count the machine cannot meet.
+        /// A pending slide is skipped: it renders its capture card and is doing exactly its job.
+        /// </summary>
+        private static void ValidateMediaSlide(SlideSO slide, string where, List<Finding> findings)
+        {
+            if (!(slide is MediaSlideSO media) || media.IsPending) return;
+
+            int clips = media.ClipCount;
+
+            // Memory is cheap and pooled; decoding is neither. Four simultaneous 1080p streams is about
+            // what a presenting laptop holds, and finding that out mid-talk is the failure this catches.
+            if (clips > 4)
+                findings.Add(new Finding(Severity.Warning,
+                    $"{where} ('{slide.name}'): {clips} clips play at once. Four is the practical " +
+                    "ceiling — drop one, or author these tiles as downscaled proxies.", slide));
+
+            int withContent = 0;
+            foreach (MediaItem item in media.Items)
+                if (item.HasContent) withContent++;
+
+            switch (media.Layout)
+            {
+                case MediaSlideLayout.Grid when withContent < 2:
+                    findings.Add(new Finding(Severity.Warning,
+                        $"{where} ('{slide.name}'): layout is Grid with {withContent} item(s). " +
+                        "A one-tile grid is a FullBleed slide with extra margins.", slide));
+                    break;
+
+                case MediaSlideLayout.Theatre when media.Primary.Clip == null:
+                    findings.Add(new Finding(Severity.Info,
+                        $"{where} ('{slide.name}'): Theatre is showing a still. That works, but the " +
+                        "layout exists to give footage the whole screen.", slide));
+                    break;
+
+                case MediaSlideLayout.Window when media.Window.Zoom > 3f:
+                    findings.Add(new Finding(Severity.Info,
+                        $"{where} ('{slide.name}'): window zoom is {media.Window.Zoom:0.#}x — past " +
+                        "roughly 3x a 1080p source is visibly soft on a projector.", slide));
+                    break;
+            }
+
+            if (withContent > 1 && media.Layout != MediaSlideLayout.Grid &&
+                media.Layout != MediaSlideLayout.Inset)
+                findings.Add(new Finding(Severity.Info,
+                    $"{where} ('{slide.name}'): {withContent} items but layout is {media.Layout}, " +
+                    "which draws only the first. Switch to Grid to show them all.", slide));
+        }
+
         private static string Report(PresentationDeckSO deck, List<Finding> findings)
         {
             int errors = 0, warnings = 0, infos = 0;
@@ -224,7 +300,8 @@ namespace DumyatEditor
             return sb.ToString();
         }
 
-        private static PresentationDeckSO Resolve()
+        /// <summary>The deck to act on: the selected one, else the only one in the project.</summary>
+        public static PresentationDeckSO ResolveDeck()
         {
             if (Selection.activeObject is PresentationDeckSO selected) return selected;
 

@@ -8,6 +8,12 @@
 
         <ui:VisualElement name="backdrop" class="backdrop" picking-mode="Ignore" />
 
+        <!-- Legibility veil for an image backdrop. It is its OWN element rather than the scene slides'
+             scrim because three renderers toggle that one, and the director paints the backdrop before
+             calling them — the outgoing renderer's Hide() would switch the veil straight back off.
+             BackdropController is the only thing that touches this. -->
+        <ui:VisualElement name="backdrop-veil" class="backdrop-veil hidden" picking-mode="Ignore" />
+
         <!-- The still of the outgoing stage, used by every freeze-based transition. It sits ABOVE the
              backdrop and the 3D but BELOW content on purpose: the incoming place's name should appear
              at once, over the old image while it clears, rather than waiting for it.

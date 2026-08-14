@@ -74,6 +74,12 @@ namespace DumyatRuntime
                 layout == TextSlideLayout.TwoColumn ||
                 (layout == TextSlideLayout.TitleAndBody && !string.IsNullOrEmpty(text.Body)));
 
+            // Always called, including for slides that ask for nothing — these labels are reused for
+            // every slide, so an outline switched on by the poster would otherwise stay on for the
+            // whole deck.
+            TitleEmphasis.Apply(_view.Title, slide.Effects);
+            TitleEmphasis.Apply(_view.Kicker, slide.KickerEffects);
+
             // ---- kicker ----
             bool hasKicker = !string.IsNullOrEmpty(slide.Kicker);
             SetVisible(_view.Kicker, hasKicker);

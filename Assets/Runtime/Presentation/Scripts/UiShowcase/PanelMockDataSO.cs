@@ -59,6 +59,13 @@ namespace DumyatRuntime
                                  "that would otherwise sit on top of the mock rows.")]
         private string[] _hideElements = new string[0];
 
+        [SerializeField, Tooltip("Element names to SHOW.\n\nSeveral panels author a readout with an " +
+                                 "inline style=\"display: none\" and let their presenter reveal it — " +
+                                 "the validation panel's fault counter is one. An inline style beats " +
+                                 "any class, so the class-change list below cannot reach these; only " +
+                                 "writing display back on the element can.")]
+        private string[] _showElements = new string[0];
+
         [System.Serializable]
         public struct ClassChange
         {
@@ -127,6 +134,18 @@ namespace DumyatRuntime
                 if (string.IsNullOrEmpty(name)) continue;
                 VisualElement el = root.Q(name);
                 if (el != null) el.style.display = DisplayStyle.None;
+            }
+
+            foreach (string name in _showElements)
+            {
+                if (string.IsNullOrEmpty(name)) continue;
+                VisualElement el = root.Q(name);
+                if (el == null)
+                {
+                    Debug.LogWarning($"[MockData] no element '{name}' to show.");
+                    continue;
+                }
+                el.style.display = DisplayStyle.Flex;
             }
 
             // Applied last, so a class can override anything set above.

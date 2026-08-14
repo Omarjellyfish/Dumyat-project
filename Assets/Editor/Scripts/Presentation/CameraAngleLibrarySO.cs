@@ -60,8 +60,10 @@ namespace DumyatEditor
                 (string.IsNullOrEmpty(StageId) ? SceneName : StageId) + " · " + AngleId;
         }
 
-        [SerializeField, Tooltip("Every angle across every demo scene. Order is cosmetic; slides find " +
-                                 "angles by id, not by index.")]
+        [SerializeField, Tooltip("Every angle across every demo scene, grouped by scene — the inspector " +
+                                 "reads that grouping off this order and numbers each scene's angles " +
+                                 "from 1. The numbers are for talking about shots while authoring; " +
+                                 "nothing resolves an angle by index, at runtime or here.")]
         private List<Entry> _entries = new List<Entry>();
 
         public List<Entry> Entries => _entries;

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8db4ece192515be42a2d77cb71da439a, type: 3}
+  m_Name: Slide_24_ArtTools_Cleanup
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MediaSlideSO
+  _sectionNumber: 4
+  _sectionName: Art Showcase
+  _title: "Art tools \xB7 cleanup and colliders"
+  _kicker: 
+  _speakerNotes: Both loop. Mesh cleanup on the left, Batch auto collider on the
+    right.
+  _titleEffects: 0
+  _background: {fileID: 0}
+  _transitionIn: {fileID: 0}
+  _layout: 3
+  _items:
+  - Clip: {fileID: 32900000, guid: dc2c738344ee8bc4db69be6b0eb2953c, type: 3}
+    Still: {fileID: 0}
+    Caption: Mesh cleanup
+  - Clip: {fileID: 32900000, guid: 7c49833a9f132f84c91ce3c1adf343cb, type: 3}
+    Still: {fileID: 0}
+    Caption: Batch auto collider
+  _gridColumns: 2
+  _theatreFit: 0
+  _window:
+    Focus: {x: 0.5, y: 0.5}
+    Zoom: 1
+    Anchor: 5
+    Size: {x: 0.36, y: 0.82}
+    Corner: 22
+  _autoPlay: 1
+  _loop: 1
+  _playAudio: 0
+  _caption: Scene hygiene before the export, and colliders generated in batch after
+    the import.
+  _captureBrief: 
+  _captureLength: 
