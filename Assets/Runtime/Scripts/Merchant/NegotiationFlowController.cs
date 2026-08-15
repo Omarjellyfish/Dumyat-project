@@ -1076,8 +1076,10 @@ namespace DumyatRuntime
                 else
                     Debug.LogWarning($"{LogPrefix} PlayerStats missing; sale of {record.fishType} not recorded.");
 
-                // One selling-score notification for this (single-fish) sale.
-                _eventService?.Publish(new SellScoreEvent(record.successRate, record.agreedPrice, 1));
+                // One deal-closed event for this (single-fish) sale — same channel a bundle uses, with a
+                // one-row deal, so nothing downstream needs to know which path sold the fish.
+                _eventService?.Publish(new SellScoreEvent(record.successRate, record.agreedPrice,
+                    new[] { record }));
 
                 // Remove/consume the sold fish from the inventory (no-op for the random test provider).
                 ResolveFishInventory()?.MarkFishSold(fish);
@@ -1731,9 +1733,12 @@ namespace DumyatRuntime
         private void PayoutBundle(ISellScale scale, Dictionary<FishData, float> priceByFish)
         {
             float total = BundleSaleSettler.Payout(scale, priceByFish, ResolveFishInventory(), _playerStats,
-                _calculator, out int soldCount, out float sellScore);
-            if (soldCount > 0)
-                _eventService?.Publish(new SellScoreEvent(sellScore, total, soldCount));
+                _calculator, out List<FishSaleRecord> sold, out float sellScore);
+
+            // ONE event for the whole bundle, carrying every row. Everything downstream — wallet, quests,
+            // the notification HUD — treats the hand-over as the single action it was.
+            if (sold.Count > 0)
+                _eventService?.Publish(new SellScoreEvent(sellScore, total, sold));
         }
 
         private static bool ContainsByRef(IReadOnlyList<FishData> list, FishData fish)

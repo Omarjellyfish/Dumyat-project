@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace DumyatRuntime
 {
     /// <summary>
@@ -52,10 +55,17 @@ namespace DumyatRuntime
     }
 
     /// <summary>
-    /// Published once when a sale completes (accepted deal), carrying the aggregate SELLING SCORE — how close
-    /// the final total was to the catch's maximum fair value: <c>Σ agreedPrice / Σ fairMarketValue × 100</c>,
-    /// clamped 0–100. One event per sale (a multi-fish bundle is scored as a whole, not per fish).
-    /// <see cref="SaleScoreNotifier"/> maps the score to a rank notification.
+    /// A DEAL CLOSED — one event per accepted sale, whatever its size. Carries the aggregate SELLING SCORE
+    /// (how close the final total came to the catch's maximum fair value:
+    /// <c>Σ agreedPrice / Σ fairMarketValue × 100</c>, clamped 0–100) and <see cref="Records"/>, the row for
+    /// every fish in the deal. <see cref="SaleScoreNotifier"/> maps the score to a rank notification.
+    ///
+    /// THIS is the channel for anything reacting to the player's ACTION. <see cref="FishSaleRecordedEvent"/>
+    /// is the ledger row and fires once per FISH, which is not the same thing: handing four fish across the
+    /// scale is one deal the player struck, and four rows in the books. The wallet has always credited from
+    /// here for that reason; quests advance by the whole bundle in one step from here too. Counting the
+    /// per-fish event instead is what made a four-fish sale tick a quest four separate times — four HUD
+    /// cards for one hand-over, with the tick that actually finished the quest arriving on its own.
     /// </summary>
     public readonly struct SellScoreEvent : IGameEvent
     {
@@ -65,14 +75,21 @@ namespace DumyatRuntime
         /// <summary>Total paid for the sale, whole Egyptian Pounds.</summary>
         public readonly float Total;
 
-        /// <summary>Number of fish in the sale.</summary>
-        public readonly int FishCount;
+        /// <summary>
+        /// One row per fish in this deal, in the order they were settled. Never null; a listener that only
+        /// needs the size reads <see cref="FishCount"/>, one that has to tell species apart (a "sell 5
+        /// Bouri" quest) reads the rows.
+        /// </summary>
+        public readonly IReadOnlyList<FishSaleRecord> Records;
 
-        public SellScoreEvent(float score, float total, int fishCount)
+        /// <summary>Number of fish in the sale.</summary>
+        public int FishCount => Records.Count;
+
+        public SellScoreEvent(float score, float total, IReadOnlyList<FishSaleRecord> records)
         {
             Score = score;
             Total = total;
-            FishCount = fishCount;
+            Records = records ?? Array.Empty<FishSaleRecord>();
         }
     }
 

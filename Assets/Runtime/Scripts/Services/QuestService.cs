@@ -150,7 +150,11 @@ namespace DumyatRuntime
             // Gameplay triggers.
             _eventService.Subscribe<CraftingValidatedEvent>(OnCraftingValidated);
             _eventService.Subscribe<FishCaughtEvent>(OnFishCaught);
-            _eventService.Subscribe<FishSaleRecordedEvent>(OnFishSaleRecorded);
+
+            // The DEAL, not the ledger row. FishSaleRecordedEvent fires once per fish, so subscribing to it
+            // made a four-fish hand-over four separate quest ticks; SellScoreEvent fires once per accepted
+            // sale and carries every row, which is what the player actually did.
+            _eventService.Subscribe<SellScoreEvent>(OnSaleCompleted);
             _eventService.Subscribe<BlueprintUnlockedEvent>(OnBlueprintUnlocked);
             _eventService.Subscribe<InventoryChangedEvent>(OnInventoryChanged);
         }
@@ -211,15 +215,43 @@ namespace DumyatRuntime
             AdvanceMatchingQuests(QuestTriggerType.FishCaught, fishName, tag);
         }
 
-        private void OnFishSaleRecorded(FishSaleRecordedEvent evt)
+        /// <summary>
+        /// One closed deal advances a sell-quest by every fish in it that matches the quest's filter, in a
+        /// SINGLE step. Selling four fish across the scale is one thing the player did, so it is one tick,
+        /// one HUD card, and — when it finishes the quest — one completion.
+        /// </summary>
+        private void OnSaleCompleted(SellScoreEvent evt)
         {
-            string saleName = evt.Record?.fishType;
+            IReadOnlyList<FishSaleRecord> records = evt.Records;
+            if (records == null || records.Count == 0) return;
 
-            // A sale record is a row of data with no GameObject left to read a tag from, so the
-            // category is supplied here. FishSaleRecordedEvent only ever describes a fish, which is
-            // what makes that safe — and it keeps "Fish" meaning the same thing on both sides of the
-            // catch/sell pair.
-            AdvanceMatchingQuests(QuestTriggerType.ItemSold, saleName, FishCategoryTag);
+            // Iterate a copy — completing a quest modifies the active list.
+            var activeSnapshot = new List<string>(_questData.activeQuestIDs);
+
+            for (int i = 0; i < activeSnapshot.Count; i++)
+            {
+                string questID = activeSnapshot[i];
+                QuestDefinitionSO def = _questDatabase.GetByID(questID);
+                if (def == null) continue;
+                if (def.triggerType != QuestTriggerType.ItemSold) continue;
+
+                int steps = 0;
+                for (int r = 0; r < records.Count; r++)
+                {
+                    FishSaleRecord record = records[r];
+                    if (record == null) continue;
+
+                    // A sale record is a row of data with no GameObject left to read a tag from, so the
+                    // category is supplied here. A closed deal only ever contains fish, which is what makes
+                    // that safe — and it keeps "Fish" meaning the same thing on both sides of the
+                    // catch/sell pair. A species-filtered quest ("sell 5 Bouri") still counts only its own.
+                    if (IsTargetMatch(def, record.fishType, FishCategoryTag)) steps++;
+                }
+
+                Advance(questID, def, steps);
+            }
+
+            _saveService.SaveAsync();
         }
 
         private void OnBlueprintUnlocked(BlueprintUnlockedEvent evt)
@@ -284,9 +316,12 @@ namespace DumyatRuntime
         /// <summary>
         /// Scans all active quests for the given <paramref name="triggerType"/>.
         /// If a quest has a target set (SO or string), it must match <paramref name="eventName"/> or
-        /// the category <paramref name="eventTag"/>.
-        /// Increments progress by 1, publishes <see cref="QuestProgressedEvent"/>,
-        /// and completes the quest when the target is reached.
+        /// the category <paramref name="eventTag"/>, then advances it by one through <see cref="Advance"/>.
+        ///
+        /// For triggers where ONE player action can satisfy several steps at once, don't call this in a
+        /// loop — count the steps and make a single <see cref="Advance"/> call, the way
+        /// <see cref="OnSaleCompleted"/> does for a bundle sale. Ticking N times publishes N
+        /// <see cref="QuestProgressedEvent"/>s for what the player experienced as one thing.
         /// </summary>
         private void AdvanceMatchingQuests(QuestTriggerType triggerType, string eventName,
             string eventTag = null)
@@ -306,20 +341,37 @@ namespace DumyatRuntime
                     continue;
                 }
 
-                int progress = _questData.GetProgress(questID) + 1;
-                _questData.SetProgress(questID, progress);
-
-                _eventService.Publish(new QuestProgressedEvent(questID, progress, def.targetCount));
-
-                Debug.Log($"[QuestService] '{def.displayName}' progress: {progress}/{def.targetCount}");
-
-                if (progress >= def.targetCount)
-                {
-                    CompleteQuest(questID, def);
-                }
+                Advance(questID, def, 1);
             }
 
             _saveService.SaveAsync();
+        }
+
+        /// <summary>
+        /// Applies <paramref name="steps"/> of progress to one quest, announces it, and completes the quest
+        /// if that reaches the target.
+        ///
+        /// The single place progress is written, so the one-event-per-thing path and the whole-deal path
+        /// can never disagree about what a step costs. <paramref name="steps"/> is why it exists: a bundle
+        /// sale has to move the counter by four in one publish, not publish four times.
+        /// </summary>
+        private void Advance(string questID, QuestDefinitionSO def, int steps)
+        {
+            if (steps <= 0) return;
+
+            // Clamped so nothing ever has to render "6 / 5" for a player who sold more than the quest asked.
+            int progress = Mathf.Min(_questData.GetProgress(questID) + steps, def.targetCount);
+            _questData.SetProgress(questID, progress);
+
+            _eventService.Publish(new QuestProgressedEvent(questID, progress, def.targetCount));
+
+            Debug.Log($"[QuestService] '{def.displayName}' progress: {progress}/{def.targetCount}" +
+                      (steps > 1 ? $" (+{steps} from one deal)" : string.Empty));
+
+            if (progress >= def.targetCount)
+            {
+                CompleteQuest(questID, def);
+            }
         }
 
         private void CompleteQuest(string questID, QuestDefinitionSO def)

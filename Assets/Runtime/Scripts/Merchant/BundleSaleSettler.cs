@@ -8,8 +8,11 @@ namespace DumyatRuntime
     /// (<see cref="NegotiationFlowController"/>) and the scripted offline flow (<c>ScriptedSaleController</c>)
     /// so the money/inventory seam has exactly one implementation. For each fish still resting on the scale
     /// that is part of the agreed deal, it records the sale (<see cref="IPlayerStatsService.RecordSale"/>,
-    /// which fires <see cref="FishSaleRecordedEvent"/> — the currency seam), consumes it from the player's
-    /// inventory (<see cref="IFishInventory.MarkFishSold"/>), and destroys the world fish so it "disappears".
+    /// which fires <see cref="FishSaleRecordedEvent"/> — the LEDGER row, one per fish), consumes it from the
+    /// player's inventory (<see cref="IFishInventory.MarkFishSold"/>), and destroys the world fish so it
+    /// "disappears". The rows are handed back so the caller can announce the DEAL as a single
+    /// <see cref="SellScoreEvent"/> — that, not the per-fish row, is what the wallet and the quest system
+    /// react to.
     ///
     /// Pure logic — a static helper, no Unity object of its own. Fish identity is by reference: the
     /// <see cref="FishData"/> keys in <paramref name="priceByFish"/> must be the same instances the scale
@@ -19,14 +22,19 @@ namespace DumyatRuntime
     {
         /// <summary>
         /// Pays out every fish on <paramref name="scale"/> that appears in <paramref name="priceByFish"/>.
-        /// Returns the total paid and the number of fish sold via <paramref name="soldCount"/>. A fish on the
-        /// scale but absent from the map is left untouched (it was not part of the deal).
+        /// Returns the total paid; <paramref name="sold"/> comes back holding one record per fish sold, in
+        /// settlement order. A fish on the scale but absent from the map is left untouched (it was not part
+        /// of the deal).
+        ///
+        /// The rows come back rather than just a count because the deal is what listeners react to: the
+        /// caller publishes ONE <see cref="SellScoreEvent"/> carrying all of them, so a four-fish bundle
+        /// reaches quests and the HUD as one sale instead of four.
         /// </summary>
         public static float Payout(ISellScale scale, IReadOnlyDictionary<FishData, float> priceByFish,
             IFishInventory inventory, IPlayerStatsService playerStats,
-            PriceNegotiationCalculator calculator, out int soldCount, out float sellScore)
+            PriceNegotiationCalculator calculator, out List<FishSaleRecord> sold, out float sellScore)
         {
-            soldCount = 0;
+            sold = new List<FishSaleRecord>();
             sellScore = 0f;
             float total = 0f;
             float fairTotal = 0f;
@@ -52,10 +60,10 @@ namespace DumyatRuntime
                     successRate = calculator != null ? calculator.CalculateSuccessRate(price, fair) : 0f
                 };
 
-                playerStats?.RecordSale(record);        // currency seam: fires FishSaleRecordedEvent per fish
+                playerStats?.RecordSale(record);        // ledger seam: fires FishSaleRecordedEvent per fish
                 total += record.agreedPrice;
                 fairTotal += fair;
-                soldCount++;
+                sold.Add(record);
 
                 inventory?.MarkFishSold(data);          // removes from inventory + destroys the tracked world fish
                 if (fish != null) Object.Destroy(fish.gameObject);   // safety if the fish was not inventory-tracked
@@ -66,7 +74,7 @@ namespace DumyatRuntime
                 ? calculator.CalculateSuccessRate(total, fairTotal)
                 : 0f;
 
-            Debug.Log($"[BundleSale] SOLD {soldCount} fish for {total:0} EGP total " +
+            Debug.Log($"[BundleSale] SOLD {sold.Count} fish for {total:0} EGP total " +
                       $"(score {sellScore:0}/100 vs {fairTotal:0} fair; removed from the scale).");
             return total;
         }
