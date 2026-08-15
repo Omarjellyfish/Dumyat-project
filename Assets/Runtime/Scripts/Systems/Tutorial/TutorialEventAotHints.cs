@@ -3,71 +3,84 @@ using UnityEngine.Scripting;
 namespace DumyatRuntime
 {
     /// <summary>
-    /// Never called. It exists purely so the IL2CPP compiler emits
-    /// <c>IEventService.Subscribe&lt;T&gt;</c> / <c>Unsubscribe&lt;T&gt;</c> for every event type a
-    /// <see cref="TutorialStepSO"/> is allowed to name.
+    /// Never called. It exists purely so the IL2CPP compiler emits, for every event type a
+    /// <see cref="TutorialStepSO"/> is allowed to name, all three generic methods the tutorial reaches
+    /// by reflection: <c>IEventService.Subscribe&lt;T&gt;</c>, <c>Unsubscribe&lt;T&gt;</c>, and
+    /// <see cref="TutorialRunner.HandleGenericEvent{T}"/>.
     ///
-    /// Why it is needed: <see cref="TutorialRunner"/> reaches those methods through
-    /// <c>MakeGenericMethod</c>, and AOT cannot create a new generic instantiation at runtime when the
-    /// type argument is a value type. Every event here is a <c>readonly struct</c>. A publisher calling
+    /// Why it is needed: <see cref="TutorialRunner"/> reaches those through <c>MakeGenericMethod</c>, and
+    /// AOT cannot create a new generic instantiation at runtime when the type argument is a value type.
+    /// Every event here is a <c>readonly struct</c>. A publisher calling
     /// <c>Publish(new WoodCutEvent(...))</c> generates <c>Publish&lt;WoodCutEvent&gt;</c> and nothing
     /// else — so an event that no C# code ever subscribes to by name has no
     /// <c>Subscribe&lt;WoodCutEvent&gt;</c> in the binary, and the first tutorial step that waits on it
-    /// throws <c>ExecutionEngineException</c>. Android builds here are IL2CPP with High managed
-    /// stripping, so this bites on device while the Editor's JIT hides it completely.
+    /// throws <c>ExecutionEngineException</c>. Android builds here are IL2CPP, so this bites on device
+    /// while the Editor's JIT hides it completely.
     ///
-    /// ADD A LINE HERE whenever a step asset is pointed at a new event type. There is no way to catch
-    /// a missing one in the Editor.
+    /// The handler half used to be missing: only Subscribe/Unsubscribe were preserved, while
+    /// <c>HandleGenericEvent&lt;T&gt;</c> — which is equally reflective and equally value-typed — was
+    /// not. Routing everything through one <see cref="Preserve{T}"/> call keeps the list of event types
+    /// in exactly one place, so that half can never go missing again.
+    ///
+    /// ADD A LINE HERE whenever a step asset is pointed at a new event type. There is no way to catch a
+    /// missing one in the Editor.
     /// </summary>
     internal static class TutorialEventAotHints
     {
+        private static void Preserve<T>(IEventService s, TutorialRunner r) where T : IGameEvent
+        {
+            s.Subscribe<T>(null);
+            s.Unsubscribe<T>(null);
+            r.HandleGenericEvent<T>(default);
+        }
+
         [Preserve]
-        private static void PreserveTutorialEventSubscriptions(IEventService s)
+        private static void PreserveTutorialEventSubscriptions(IEventService s, TutorialRunner r)
         {
             // Crafting (carpentar_room)
-            s.Subscribe<RecipeSelectedEvent>(null);        s.Unsubscribe<RecipeSelectedEvent>(null);
-            s.Subscribe<WoodCutEvent>(null);               s.Unsubscribe<WoodCutEvent>(null);
-            s.Subscribe<PaintAppliedEvent>(null);          s.Unsubscribe<PaintAppliedEvent>(null);
-            s.Subscribe<GlueAppliedEvent>(null);           s.Unsubscribe<GlueAppliedEvent>(null);
-            s.Subscribe<AttachmentRemovedEvent>(null);     s.Unsubscribe<AttachmentRemovedEvent>(null);
-            s.Subscribe<CraftingValidatedEvent>(null);     s.Unsubscribe<CraftingValidatedEvent>(null);
+            Preserve<RecipeSelectedEvent>(s, r);
+            Preserve<WoodCutEvent>(s, r);
+            Preserve<PaintAppliedEvent>(s, r);
+            Preserve<GlueAppliedEvent>(s, r);
+            Preserve<AttachmentRemovedEvent>(s, r);
+            Preserve<CraftingValidatedEvent>(s, r);
 
             // Fishing (El_manara / Ras El Bar)
-            s.Subscribe<FishingRodPickedUpEvent>(null);    s.Unsubscribe<FishingRodPickedUpEvent>(null);
-            s.Subscribe<RodCastArmedEvent>(null);          s.Unsubscribe<RodCastArmedEvent>(null);
-            s.Subscribe<RodCastReleasedEvent>(null);       s.Unsubscribe<RodCastReleasedEvent>(null);
-            s.Subscribe<HookLandedInWaterEvent>(null);     s.Unsubscribe<HookLandedInWaterEvent>(null);
-            s.Subscribe<ReelTurnedEvent>(null);            s.Unsubscribe<ReelTurnedEvent>(null);
-            s.Subscribe<FishCaughtEvent>(null);            s.Unsubscribe<FishCaughtEvent>(null);
-            s.Subscribe<FishGrabbedEvent>(null);           s.Unsubscribe<FishGrabbedEvent>(null);
-            s.Subscribe<FatherPathCompletedEvent>(null);   s.Unsubscribe<FatherPathCompletedEvent>(null);
-            s.Subscribe<BoatBoardedEvent>(null);           s.Unsubscribe<BoatBoardedEvent>(null);
-            s.Subscribe<BoatLeftEvent>(null);              s.Unsubscribe<BoatLeftEvent>(null);
+            Preserve<FishingRodPickedUpEvent>(s, r);
+            Preserve<RodCastArmedEvent>(s, r);
+            Preserve<RodCastReleasedEvent>(s, r);
+            Preserve<HookLandedInWaterEvent>(s, r);
+            Preserve<ReelTurnedEvent>(s, r);
+            Preserve<FishCaughtEvent>(s, r);
+            Preserve<FishGrabbedEvent>(s, r);
+            Preserve<FatherPathCompletedEvent>(s, r);
+            Preserve<BoatBoardedEvent>(s, r);
+            Preserve<BoatLeftEvent>(s, r);
 
             // Narrative — the Ras El Bar opening step waits on the father's speech finishing.
-            s.Subscribe<DialogueEndedEvent>(null);         s.Unsubscribe<DialogueEndedEvent>(null);
+            Preserve<DialogueEndedEvent>(s, r);
 
             // Market (Ezbet Al Bourg)
-            s.Subscribe<MerchantSpokeEvent>(null);         s.Unsubscribe<MerchantSpokeEvent>(null);
-            s.Subscribe<ScaleContentsChangedEvent>(null);  s.Unsubscribe<ScaleContentsChangedEvent>(null);
-            s.Subscribe<MerchantOfferedPriceEvent>(null);  s.Unsubscribe<MerchantOfferedPriceEvent>(null);
-            s.Subscribe<FishSaleRecordedEvent>(null);      s.Unsubscribe<FishSaleRecordedEvent>(null);
+            Preserve<MerchantSpokeEvent>(s, r);
+            Preserve<ScaleContentsChangedEvent>(s, r);
+            Preserve<MerchantOfferedPriceEvent>(s, r);
+            Preserve<FishSaleRecordedEvent>(s, r);
 
             // Shipyard
-            s.Subscribe<ShipPartSocketedEvent>(null);      s.Unsubscribe<ShipPartSocketedEvent>(null);
-            s.Subscribe<ShipAssembledEvent>(null);         s.Unsubscribe<ShipAssembledEvent>(null);
+            Preserve<ShipPartSocketedEvent>(s, r);
+            Preserve<ShipAssembledEvent>(s, r);
 
             // Intro / basic controls
-            s.Subscribe<PlayerMovedEvent>(null);           s.Unsubscribe<PlayerMovedEvent>(null);
-            s.Subscribe<PlayerGrabbedObjectEvent>(null);   s.Unsubscribe<PlayerGrabbedObjectEvent>(null);
-            s.Subscribe<PlayerUsedHeldItemEvent>(null);    s.Unsubscribe<PlayerUsedHeldItemEvent>(null);
-            s.Subscribe<GamePauseToggledEvent>(null);      s.Unsubscribe<GamePauseToggledEvent>(null);
-            s.Subscribe<InventoryPanelToggledEvent>(null); s.Unsubscribe<InventoryPanelToggledEvent>(null);
+            Preserve<PlayerMovedEvent>(s, r);
+            Preserve<PlayerGrabbedObjectEvent>(s, r);
+            Preserve<PlayerUsedHeldItemEvent>(s, r);
+            Preserve<GamePauseToggledEvent>(s, r);
+            Preserve<InventoryPanelToggledEvent>(s, r);
 
             // General-purpose, usable from any sequence
-            s.Subscribe<InventoryChangedEvent>(null);      s.Unsubscribe<InventoryChangedEvent>(null);
-            s.Subscribe<QuestCompletedEvent>(null);        s.Unsubscribe<QuestCompletedEvent>(null);
-            s.Subscribe<KeyUnlockedEvent>(null);           s.Unsubscribe<KeyUnlockedEvent>(null);
+            Preserve<InventoryChangedEvent>(s, r);
+            Preserve<QuestCompletedEvent>(s, r);
+            Preserve<KeyUnlockedEvent>(s, r);
         }
     }
 }

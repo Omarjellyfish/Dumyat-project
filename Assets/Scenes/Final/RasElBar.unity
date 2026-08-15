@@ -625,7 +625,7 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 16868437}
   m_Mesh: {fileID: 0}
---- !u!1 &18830011
+--- !u!1 &18424981
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -633,30 +633,27 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 18830012}
+  - component: {fileID: 18424982}
   m_Layer: 0
-  m_Name: Fishing
+  m_Name: Shoal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &18830012
+--- !u!4 &18424982
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 18830011}
+  m_GameObject: {fileID: 18424981}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1695008358}
-  - {fileID: 216118485}
-  - {fileID: 625306486}
   - {fileID: 5194178721415813150}
   - {fileID: 1620870955}
   - {fileID: 1754356918}
@@ -687,6 +684,40 @@ Transform:
   - {fileID: 1028608749}
   - {fileID: 208036618}
   - {fileID: 1745133778}
+  m_Father: {fileID: 18830012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &18830011
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 18830012}
+  m_Layer: 0
+  m_Name: Fishing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &18830012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 18830011}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 401710443}
+  - {fileID: 18424982}
+  - {fileID: 1768812383}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &20606871
@@ -2968,7 +2999,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2976,7 +3007,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -3012,11 +3043,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -6259,7 +6294,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6267,7 +6302,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6303,11 +6338,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -6423,7 +6462,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 18830012}
+  m_Father: {fileID: 1768812383}
   m_LocalEulerAnglesHint: {x: -95.376, y: -90, z: 90}
 --- !u!1 &216523905
 GameObject:
@@ -7376,15 +7415,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -7400,7 +7443,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -8528,15 +8571,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -8552,7 +8599,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9938,7 +9985,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9946,7 +9993,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9982,11 +10029,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -11284,6 +11335,38 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 400400683}
   m_Mesh: {fileID: 0}
+--- !u!1 &401710442
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 401710443}
+  m_Layer: 0
+  m_Name: Water Volume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &401710443
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 401710442}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 625306486}
+  m_Father: {fileID: 18830012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &405427233
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13269,15 +13352,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -13293,7 +13380,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -13570,15 +13657,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -13594,7 +13685,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -15000,7 +15091,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -15008,7 +15099,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -15044,11 +15135,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -15070,15 +15165,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -15094,7 +15193,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -17419,8 +17518,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 0.39516172, z: 1}
-  m_Center: {x: 0, y: -0.30242115, z: 0}
+  m_Size: {x: 1, y: 0.07578429, z: 1}
+  m_Center: {x: 0, y: -0.10695689, z: 0}
 --- !u!4 &625306486
 Transform:
   m_ObjectHideFlags: 0
@@ -17435,7 +17534,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 359012847}
-  m_Father: {fileID: 18830012}
+  m_Father: {fileID: 401710443}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &625306487
 MonoBehaviour:
@@ -17465,6 +17564,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.FishingRodSpawner
   _fishingRodPrefab: {fileID: 1695008351}
   _spawnPoint: {fileID: 2096941672}
+  _settings: {fileID: 0}
+  _recoverySeconds: 6
+  _maxDistance: 25
+  _recoverBelow: 3
+  _rodTag: Rod
 --- !u!1001 &631311519
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20312,7 +20416,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -20320,7 +20424,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -20356,11 +20460,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -27145,15 +27253,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -27169,7 +27281,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -27770,15 +27882,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -27794,7 +27910,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -28278,7 +28394,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -28286,7 +28402,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -28322,11 +28438,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -30552,7 +30672,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -30560,7 +30680,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -30596,11 +30716,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -32688,15 +32812,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -32712,7 +32840,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -33325,7 +33453,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -33333,7 +33461,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -33369,11 +33497,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -33884,15 +34016,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -33908,7 +34044,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -34837,15 +34973,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -34861,7 +35001,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -42489,15 +42629,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -42513,7 +42657,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -42988,15 +43132,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -43012,7 +43160,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -44316,15 +44464,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -44340,7 +44492,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -46097,7 +46249,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 1768812383}
     m_Modifications:
     - target: {fileID: 5545310233330177, guid: cc5edafa8dc808b49a8631e1e980d7b2, type: 3}
       propertyPath: fishArea
@@ -47544,15 +47696,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -47568,7 +47724,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -48154,7 +48310,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -48162,7 +48318,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -48198,11 +48354,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -48425,15 +48585,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -48449,7 +48613,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -48673,6 +48837,39 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1760832764}
   m_Mesh: {fileID: 0}
+--- !u!1 &1768812382
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1768812383}
+  m_Layer: 0
+  m_Name: Rod Rig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1768812383
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1768812382}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1695008358}
+  - {fileID: 216118485}
+  m_Father: {fileID: 18830012}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1769097987
 GameObject:
   m_ObjectHideFlags: 0
@@ -52136,15 +52333,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -52160,7 +52361,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -52905,15 +53106,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -52929,7 +53134,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -57209,15 +57414,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -57233,7 +57442,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -91458,7 +91667,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -91466,7 +91675,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 3695267975350372803, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -91502,11 +91711,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671993148436465904, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7421054705412596291, guid: c44ca3b9bcbc1b24e81d1e9998bc99fc, type: 3}
       propertyPath: m_Name
@@ -100270,15 +100483,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3878992216968837681, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 7090295438093893417, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_Name
@@ -100294,7 +100511,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8011505662694824252, guid: e4c87a9ea69461b45943fe0f1d9ec2c6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -122651,15 +122868,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 18830012}
+    m_TransformParent: {fileID: 18424982}
     m_Modifications:
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: patrolSpeed
-      value: 25
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: swimToHookSpeed
-      value: 25
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5566485664101560945, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
+      propertyPath: stoppingDistance
+      value: 0.12
       objectReference: {fileID: 0}
     - target: {fileID: 6079116794871847922, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_Name
@@ -122675,7 +122896,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -18.52
+      value: -3.17
       objectReference: {fileID: 0}
     - target: {fileID: 8109897179450095216, guid: 51139e7af7c7f3843ac6b945ff79588c, type: 3}
       propertyPath: m_LocalPosition.z

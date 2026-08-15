@@ -48,7 +48,8 @@ namespace DumyatRuntime
             Rigidbody myRb = GetComponent<Rigidbody>();
             if (myRb != null)
             {
-                Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, 3f);
+                Collider[] nearbyColliders = Physics.OverlapSphere(
+                    transform.position, 3f, ~0, QueryTriggerInteraction.Ignore);
                 foreach (Collider col in nearbyColliders)
                 {
                     if (col.attachedRigidbody != null && col.attachedRigidbody != myRb)

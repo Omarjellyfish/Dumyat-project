@@ -51,10 +51,12 @@ namespace DumyatRuntime
         [SerializeField] private XRGrabInteractable fishRodInteractable;
 
         [Header("Movement Lock")]
-        [Tooltip("GameObject carrying the locomotion move provider. Disabled while aboard, so the " +
-                 "player fishes from where they stand. Found by tag at runtime if left empty.")]
+        [Tooltip("LEGACY — no longer read. Locking is done by PlayerLocomotionLock, which switches off " +
+                 "every locomotion provider on the rig except turning. Kept only so existing scenes do " +
+                 "not report a missing field; safe to clear.")]
         [SerializeField] private GameObject moveProvider;
 
+        [Tooltip("LEGACY — no longer read. See moveProvider.")]
         [SerializeField] private string moveProviderTag = "Move";
 
         [Header("Fade")]
@@ -226,24 +228,15 @@ namespace DumyatRuntime
 
         private void SetWalkingLocked(bool locked)
         {
-            // Resolved lazily and cached on first success. FindGameObjectWithTag cannot see an inactive
-            // object, so if this were left until after the lock had switched it off there would be no
-            // second chance to find it and the player would be stuck unable to walk.
-            if (moveProvider == null)
-            {
-                moveProvider = GameObject.FindGameObjectWithTag(moveProviderTag);
-
-                if (moveProvider == null)
-                {
-                    Debug.LogWarning($"{name}: no GameObject tagged '{moveProviderTag}' — walking " +
-                                     "cannot be locked on the boat.", this);
-                    return;
-                }
-            }
-
-            // Walking only. Turning stays live deliberately: taking it away in VR causes nausea without
-            // preventing any movement, and standing still is the point of being on a small boat.
-            moveProvider.SetActive(!locked);
+            // Delegated to PlayerLocomotionLock, which switches off every LocomotionProvider on the rig
+            // except turning.
+            //
+            // This used to disable a single GameObject found by the 'Move' tag, and it did not work.
+            // RasElBar contains no object with that tag at all — the rig is spawned at runtime — and the
+            // rig prefab it spawns carries a Teleportation provider, two teleport interactors and a Grab
+            // Move provider besides the tagged walking object. So the lock either found nothing and gave
+            // up, or switched off walking while leaving the player free to teleport off the boat.
+            PlayerLocomotionLock.SetLocked(locked);
             _lockApplied = locked;
         }
     }

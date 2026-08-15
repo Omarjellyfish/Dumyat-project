@@ -541,7 +541,12 @@ namespace DumyatRuntime
         private Type _cachedEventType;
         private Delegate _cachedEventDelegate;
 
-        private void HandleGenericEvent<T>(T evt) where T : IGameEvent
+        // Internal rather than private so TutorialEventAotHints can force IL2CPP to emit an
+        // instantiation of this method per event type. It is only ever reached through
+        // MakeGenericMethod, and AOT cannot build a value-type generic instantiation at runtime — so
+        // without that hint the first tutorial step waiting on an event throws ExecutionEngineException
+        // on device while the Editor's JIT hides the problem completely.
+        internal void HandleGenericEvent<T>(T evt) where T : IGameEvent
         {
             MarkStepSatisfied();
         }

@@ -57,6 +57,19 @@ namespace DumyatRuntime
 
         void Start()
         {
+            // Unguarded, a missing reference threw here BEFORE the segment list was filled, which left
+            // the rope permanently empty — and ApplyConstraints then threw ArgumentOutOfRangeException
+            // on every FixedUpdate for the rest of the session, drowning the console and taking the
+            // hook-position lock down with it. Fail once, clearly, and switch off instead.
+            if (whatIsHangingFromTheRope == null || whatTheRopeIsConnectedTo == null)
+            {
+                Debug.LogWarning($"'{name}': the fishing line needs both ends assigned " +
+                                 "(whatTheRopeIsConnectedTo = rod tip, whatIsHangingFromTheRope = hook). " +
+                                 "Disabling the line rather than throwing every physics step.", this);
+                enabled = false;
+                return;
+            }
+
             springJoint = whatIsHangingFromTheRope.GetComponent<SpringJoint>();
 
             whatIsHangingFromTheRope.position = whatTheRopeIsConnectedTo.position;
@@ -131,6 +144,10 @@ namespace DumyatRuntime
 
         private void Simulation()
         {
+            // The constraint pass indexes both ends of the list directly, so an empty rope is not a
+            // no-op — it is an exception every physics step.
+            if (ropeSegments.Count < 2) return;
+
             Vector3 forceGravity = new Vector3(0f, -1f, 0f);
 
             for (int i = 1; i < ropeSegments.Count; i++)
@@ -139,8 +156,12 @@ namespace DumyatRuntime
                 Vector3 velocity = currentSegment.posNow - currentSegment.posOld;
                 currentSegment.posOld = currentSegment.posNow;
 
+                // Ignore triggers. Physics.queriesHitTriggers is on project-wide, and the fishing area in
+                // Ras El Bar is a 672 x 649 m trigger volume — so every rope segment hanging over the
+                // water was being frozen against it and the line stopped moving near the surface.
                 RaycastHit hit;
-                if (Physics.Raycast(currentSegment.posNow, -Vector3.up, out hit, 1f))
+                if (Physics.Raycast(currentSegment.posNow, -Vector3.up, out hit, 1f,
+                        ~0, QueryTriggerInteraction.Ignore))
                 {
                     if (hit.collider != null)
                     {
@@ -161,6 +182,8 @@ namespace DumyatRuntime
 
         private void ApplyConstraints()
         {
+            if (ropeSegments.Count < 2) return;
+
             RopeSegment firstSegment = ropeSegments[0];
             firstSegment.posNow = whatTheRopeIsConnectedTo.position;
             ropeSegments[0] = firstSegment;
@@ -209,6 +232,8 @@ namespace DumyatRuntime
         //Display the rope with a line renderer
         private void DisplayRope()
         {
+            if (lineRenderer == null || ropeSegments.Count == 0) return;
+
             lineRenderer.startWidth = lineWidth;
             lineRenderer.endWidth = lineWidth;
 
@@ -227,6 +252,8 @@ namespace DumyatRuntime
         //Update the spring constant and the length of the spring
         private void UpdateSpring()
         {
+            if (springJoint == null) return;
+
             //Someone said you could set this to infinity to avoid bounce, but it doesnt work
             //kRope = float.inf
 
@@ -350,7 +377,11 @@ namespace DumyatRuntime
             var rb = whatIsHangingFromTheRope.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                springJoint.connectedBody = whatTheRopeIsConnectedTo.GetComponent<Rigidbody>();
+                if (springJoint != null)
+                {
+                    springJoint.connectedBody = whatTheRopeIsConnectedTo.GetComponent<Rigidbody>();
+                }
+
                 rb.constraints = RigidbodyConstraints.None;
             }
 
@@ -381,6 +412,13 @@ namespace DumyatRuntime
                 return;
 
             _nextReelSoundTime = Time.time + _reelSoundInterval;
+
+            // Unguarded, this threw inside UpdateWinch — which runs from FixedUpdate, so the exception
+            // took Simulation() and the hook-position lock down with it and the reel appeared completely
+            // dead. SoundManager lives on the ProjectScope prefab, not in the fishing scene, so it is
+            // genuinely absent whenever that scope has not been created yet.
+            if (_soundManager == null || _reelInSound == null || _reelPos == null) return;
+
             _soundManager.PlaySoundFxAtPosition(_reelInSound, _reelPos, 1f);
         }
         public void LockHookPosition()
