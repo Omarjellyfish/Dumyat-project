@@ -31,6 +31,27 @@ namespace DumyatEditor
         /// </summary>
         private const float PivotDistance = 10f;
 
+        /// <summary>
+        /// True when the Editor is playing, in which case NOTHING may be written to a scene.
+        ///
+        /// WHY THIS GUARD EXISTS: authoring an angle during Play mode looks like it works and then
+        /// silently loses the camera. The library is an ASSET so its pose survives; the camera goes into
+        /// the play-mode copy of the scene, which Unity throws away on exit. The result is a library row
+        /// with a real pose and no camera behind it — the row reads "no camera", the slide logs "has no
+        /// angle", and it looks like the angle broke on its own rather than never having been saved.
+        ///
+        /// This happened twice to the Home 'skybox' angle before the guard was added.
+        /// </summary>
+        public static bool BlockedByPlayMode(string what)
+        {
+            if (!EditorApplication.isPlayingOrWillChangePlaymode) return false;
+
+            Debug.LogWarning($"[AngleAuthoring] {what} refused: the Editor is in PLAY MODE, and scene " +
+                             "edits made now are discarded when play stops — the camera would vanish " +
+                             "while the library kept the pose. Stop play mode and try again.");
+            return true;
+        }
+
         /// <summary>The Scene view to author against, or null with a reason worth showing the user.</summary>
         public static SceneView ActiveView(out string error)
         {
@@ -52,6 +73,7 @@ namespace DumyatEditor
         public static bool CaptureFromSceneView(CinemachineCamera cam)
         {
             if (cam == null) return false;
+            if (BlockedByPlayMode($"capturing onto '{cam.name}'")) return false;
 
             SceneView view = ActiveView(out string error);
             if (view == null) { Debug.LogWarning("[AngleAuthoring] " + error); return false; }
@@ -158,6 +180,7 @@ namespace DumyatEditor
                     if (cam.name == wanted) return cam;
 
             if (!create) return null;
+            if (BlockedByPlayMode($"creating angle '{angleId}'")) return null;
 
             var go = new GameObject(wanted);
             Undo.RegisterCreatedObjectUndo(go, "Create presentation angle");

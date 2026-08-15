@@ -44,10 +44,9 @@ namespace DumyatRuntime
                                  "asset is assigned above.")]
         private int _maxVideoWidth = 1920;
 
-        [SerializeField, Range(1f, 2f),
-         Tooltip("Render textures are allocated this much wider than the clip is drawn, so the deck " +
-                 "still looks sharp on a projector running above 1080p. Never exceeds the source.")]
-        private float _videoSupersample = 1.5f;
+        // Video render textures are sized from the CLIP, not from how wide they are drawn — see
+        // VideoPlayerPool.TargetSize. A per-tile size meant reallocating on every navigation, which
+        // freed textures the renderer was still drawing and crashed the Editor.
 
         private VisualElement _host;
         private VideoPlayerPool _pool;
@@ -58,6 +57,10 @@ namespace DumyatRuntime
         private VisualElement _stateIcon;
         private Label _stateLabel;
         private VisualElement _theatrePause;
+
+        /// <summary>When the chrome should start fading. Infinity means it never does.</summary>
+        private float _briefEndsAt = float.PositiveInfinity;
+        private bool _briefFaded;
 
         /// <summary>True while a clip is loaded and not paused. Read by the input relay for the P key.</summary>
         public bool IsPlaying => _pool != null && _pool.AnyPlaying;
@@ -70,7 +73,7 @@ namespace DumyatRuntime
             // times the pixels to fill, and capping it at 1920 would upscale the one thing on the slide
             // the audience is actually looking at. It still never exceeds the clip's own resolution.
             int maxWidth = _quality != null ? _quality.MaxVideoWidth : _maxVideoWidth;
-            _pool = new VideoPlayerPool(transform, maxWidth, _videoSupersample);
+            _pool = new VideoPlayerPool(transform, maxWidth);
         }
 
         /// <summary>
@@ -126,8 +129,11 @@ namespace DumyatRuntime
             _timeLabel = null; _fill = null; _stateIcon = null; _stateLabel = null; _theatrePause = null;
 
             // Chrome is restored first so a layout that hides it is the only thing that can, and
-            // arriving from theatre mode never leaves the footer missing.
+            // arriving from theatre mode never leaves the footer missing. This also clears any fade the
+            // previous slide's brief left on the shared elements.
             ShowChrome();
+            _briefEndsAt = float.PositiveInfinity;
+            _briefFaded = false;
 
             _pool.BeginSlide();
 
@@ -231,6 +237,13 @@ namespace DumyatRuntime
             DrawLockup(media, theme, lifted: item.Clip != null);
 
             if (item.Clip != null) DrawVideoBar(theme);
+
+            // The brief: label the slide, then get out of the way. Only for footage — a still has
+            // nothing to reveal by fading its own caption away.
+            _briefEndsAt = item.Clip != null && media.BriefSeconds > 0f
+                ? Time.unscaledTime + media.BriefSeconds
+                : float.PositiveInfinity;
+            _briefFaded = false;
         }
 
         private void DrawSideBySide(MediaSlideSO media, PresentationThemeSO theme)
@@ -260,7 +273,19 @@ namespace DumyatRuntime
 
             var pic = new VisualElement();
             pic.AddToClassList("media-split-pic");
-            Paint(pic, media.Primary, media, RefWidth * 0.5f, ScaleMode.ScaleAndCrop);
+
+            // A still keeps its whole frame: the split panel is an arbitrary shape, and cropping a
+            // drawing whose edges carry content to fill it is exactly the wrong trade. Footage still
+            // crops, because a clip in this panel is 16:9 against a panel that is nearly 16:9.
+            //
+            // The modifier is what stops a fitted still landing flush against the screen edge — the
+            // bare panel deliberately runs to it, which only reads correctly for cropped footage.
+            MediaItem item = media.Primary;
+            bool isStill = item.Clip == null;
+            if (isStill) pic.AddToClassList("media-split-pic--still");
+
+            Paint(pic, item, media, RefWidth * 0.5f,
+                  isStill ? ScaleMode.ScaleToFit : ScaleMode.ScaleAndCrop);
             row.Add(pic);
         }
 
@@ -533,16 +558,16 @@ namespace DumyatRuntime
         // -------------------------------------------------------------------------
 
         /// <summary>
-        /// Puts an item's clip or still onto an element. <paramref name="displayWidth"/> is how wide it
-        /// will be drawn in reference pixels, which is what sizes the video's render texture.
+        /// Puts an item's clip or still onto an element. <paramref name="displayWidth"/> is kept for the
+        /// call sites' readability — it documents how wide each layout draws the item — but it no longer
+        /// sizes anything, because the render texture now follows the clip's own resolution.
         /// </summary>
         private void Paint(VisualElement target, MediaItem item, MediaSlideSO media, float displayWidth,
                            ScaleMode fit)
         {
             if (item.Clip != null)
             {
-                RenderTexture rt = _pool.Acquire(item.Clip, displayWidth, media.Loop, media.PlayAudio,
-                                                 media.AutoPlay);
+                RenderTexture rt = _pool.Acquire(item.Clip, media.Loop, media.PlayAudio, media.AutoPlay);
                 if (rt != null)
                 {
                     target.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(rt));
@@ -586,6 +611,42 @@ namespace DumyatRuntime
         {
             _view.Footer?.RemoveFromClassList("hidden");
             _view.ProgressTrack?.RemoveFromClassList("hidden");
+            ClearBriefFade();
+        }
+
+        /// <summary>
+        /// Fades the label away and leaves the clip alone. Opacity rather than display, so USS can
+        /// transition it — and every element is put back by <see cref="ClearBriefFade"/>, because these
+        /// are the deck's shared chrome elements and a slide that faded them must not hand them on faded.
+        /// </summary>
+        private void ApplyBriefFade(float seconds)
+        {
+            foreach (VisualElement e in BriefElements())
+            {
+                if (e == null) continue;
+                e.style.transitionProperty = new List<StylePropertyName> { "opacity" };
+                e.style.transitionDuration = new List<TimeValue> { new TimeValue(seconds, TimeUnit.Second) };
+                e.style.opacity = 0f;
+            }
+        }
+
+        private void ClearBriefFade()
+        {
+            foreach (VisualElement e in BriefElements())
+            {
+                if (e == null) continue;
+                e.style.transitionProperty = new StyleList<StylePropertyName>(StyleKeyword.Null);
+                e.style.transitionDuration = new StyleList<TimeValue>(StyleKeyword.Null);
+                e.style.opacity = new StyleFloat(StyleKeyword.Null);
+            }
+        }
+
+        private IEnumerable<VisualElement> BriefElements()
+        {
+            yield return _view.Scrim;
+            yield return _view.Lockup;
+            yield return _view.Footer;
+            yield return _view.ProgressTrack;
         }
 
         private void DrawLockup(MediaSlideSO media, PresentationThemeSO theme, bool lifted)
@@ -653,6 +714,13 @@ namespace DumyatRuntime
         private void Update()
         {
             if (_pool == null) return;
+
+            // The brief expiring is a one-shot: the fade itself is USS's job from there.
+            if (!_briefFaded && _current != null && Time.unscaledTime >= _briefEndsAt)
+            {
+                _briefFaded = true;
+                ApplyBriefFade(_current.BriefFadeSeconds);
+            }
 
             VideoPlayer player = _pool.Primary;
             bool playing = _pool.AnyPlaying;

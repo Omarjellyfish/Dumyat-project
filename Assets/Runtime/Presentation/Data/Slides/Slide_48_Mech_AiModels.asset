@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415097fcf87d83b40bb69c6c788022fa, type: 3}
+  m_Name: Slide_48_Mech_AiModels
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TextSlideSO
+  _sectionNumber: 6
+  _sectionName: Mechanics
+  _title: "Merchant AI \xB7 the models"
+  _kicker: Every type is a pool sorted by priority, so a provider that fails falls
+    through to the next.
+  _speakerNotes: 
+  _titleEffects: 0
+  _kickerEffects: 0
+  _background: {fileID: 0}
+  _transitionIn: {fileID: 0}
+  _layout: 3
+  _posterTreatment: 0
+  _body: 
+  _bullets:
+  - "Language \u2014 Gemini gemini-3.1-flash-lite at priority 10, falling back to
+    Groq llama-3.3-70b-versatile at 1."
+  - "Speech in \u2014 Munsit Realtime at priority 10, tuned for Egyptian Arabic,
+    falling back to ElevenLabs Scribe v2 at 0."
+  - "Speech out \u2014 ElevenLabs eleven_flash_v2_5. The only type with no second
+    option: if it fails the line is shown, not spoken."
+  - "Swapping a provider is a priority number in the Inspector, not a code change
+    \u2014 the managers only ever ask for the highest-priority model that reports
+    itself available."
+  - 'The thresholds are game constants, not model settings: accept at 70, confirm
+    at 55, and the same pair mirrored for walking away.'
+  _readouts:
+  - Label: LLM
+    Value: gemini-3.1-flash-lite
+    Positive: 0
+  - Label: Speech in
+    Value: Munsit Realtime
+    Positive: 0
+  - Label: Speech out
+    Value: eleven_flash_v2_5
+    Positive: 0

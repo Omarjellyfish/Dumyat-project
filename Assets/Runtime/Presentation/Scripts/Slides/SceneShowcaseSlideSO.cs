@@ -29,6 +29,15 @@ namespace DumyatRuntime
                                                  "slide Kicker when empty.")]
         private string _caption;
 
+        [Header("Transition")]
+        [SerializeField, Tooltip("Play this slide's transition even when arriving from another angle of " +
+                                 "the SAME stage.\n\nNormally that move is a cut, so Cinemachine blends " +
+                                 "between the two cameras and no dissolve hides the camera move worth " +
+                                 "watching. Tick this where the two angles are far enough apart that a " +
+                                 "blend reads as a swing across the room rather than a move — the " +
+                                 "skybox-to-fan pair in Home is exactly that case.")]
+        private bool _forceTransitionWithinStage;
+
         [Header("Angle pips")]
         [SerializeField, Tooltip("Show the 'ANGLE 2 / 4' pips.\n\nOff by default: the deck deliberately " +
                                  "does not tell the audience which camera angle they are looking at — " +
@@ -42,6 +51,12 @@ namespace DumyatRuntime
         public string PlaceNameArabic => _placeNameArabic;
         public string Caption => string.IsNullOrEmpty(_caption) ? Kicker : _caption;
         public bool ShowAnglePips => _showAnglePips;
+
+        /// <summary>
+        /// Opts this slide out of the same-stage cut. See <see cref="PresentationDeckSO.ResolveTransition"/>
+        /// — the rule is about the slide being ARRIVED AT, so the flag lives on the destination.
+        /// </summary>
+        public bool ForceTransitionWithinStage => _forceTransitionWithinStage;
 
         /// <summary>Never — the backdrop would cover the stage render.</summary>
         public override bool WantsBackdrop => false;

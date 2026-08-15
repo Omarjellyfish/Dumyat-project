@@ -22,6 +22,13 @@ namespace DumyatRuntime
         [SerializeField, Tooltip("Pause target for P. Optional — the key does nothing without it.")]
         private MediaSlideRenderer _media;
 
+        [SerializeField, Tooltip("Before/after audio target for Z and X. Optional.\n\nZ and X because " +
+                                 "nearly everything else is spoken for: A/D and the arrows navigate, " +
+                                 "Space advances, N is notes, C the counter, P pauses media, and 1–9 " +
+                                 "jump between sections — so the obvious '1 and 2' would teleport the " +
+                                 "presenter across the deck mid-demo.")]
+        private AudioCompareRenderer _audio;
+
         [Header("Quit")]
         [SerializeField, Range(0f, 2f),
          Tooltip("Escape must be held this long to quit, so a stray press cannot end the talk.")]
@@ -68,6 +75,8 @@ namespace DumyatRuntime
             if (Pressed(KeyKind.Notes) && _notes != null) _notes.Toggle();
             if (Pressed(KeyKind.Counter) && _counter != null) _counter.Toggle();
             if (Pressed(KeyKind.PauseMedia) && _media != null) _media.TogglePause();
+            if (Pressed(KeyKind.AudioBefore) && _audio != null) _audio.PlayBefore();
+            if (Pressed(KeyKind.AudioAfter) && _audio != null) _audio.PlayAfter();
 
             HandleQuit();
         }
@@ -97,7 +106,7 @@ namespace DumyatRuntime
             // Digit1..Digit8 must stay contiguous and first — the section loop does arithmetic on them.
             Digit1 = 0, Digit2, Digit3, Digit4, Digit5, Digit6, Digit7, Digit8,
             First, Last,
-            Next, Previous, Restart, Notes, Counter, PauseMedia, Quit,
+            Next, Previous, Restart, Notes, Counter, PauseMedia, AudioBefore, AudioAfter, Quit,
         }
 
         private static bool Pressed(KeyKind kind)
@@ -124,7 +133,9 @@ namespace DumyatRuntime
                                kb.endKey.wasPressedThisFrame;
                     case KeyKind.Notes:      return kb.nKey.wasPressedThisFrame;
                     case KeyKind.Counter:    return kb.cKey.wasPressedThisFrame;
-                    case KeyKind.PauseMedia: return kb.pKey.wasPressedThisFrame;
+                    case KeyKind.PauseMedia:  return kb.pKey.wasPressedThisFrame;
+                    case KeyKind.AudioBefore: return kb.zKey.wasPressedThisFrame;
+                    case KeyKind.AudioAfter:  return kb.xKey.wasPressedThisFrame;
                     default:
                         int digit = (int)kind - (int)KeyKind.Digit1;
                         if (digit < 0 || digit > 7) return false;
@@ -149,7 +160,9 @@ namespace DumyatRuntime
                            Input.GetKeyDown(KeyCode.End);
                 case KeyKind.Notes:      return Input.GetKeyDown(KeyCode.N);
                 case KeyKind.Counter:    return Input.GetKeyDown(KeyCode.C);
-                case KeyKind.PauseMedia: return Input.GetKeyDown(KeyCode.P);
+                case KeyKind.PauseMedia:  return Input.GetKeyDown(KeyCode.P);
+                case KeyKind.AudioBefore: return Input.GetKeyDown(KeyCode.Z);
+                case KeyKind.AudioAfter:  return Input.GetKeyDown(KeyCode.X);
                 default:
                     int digit = (int)kind - (int)KeyKind.Digit1;
                     if (digit < 0 || digit > 7) return false;

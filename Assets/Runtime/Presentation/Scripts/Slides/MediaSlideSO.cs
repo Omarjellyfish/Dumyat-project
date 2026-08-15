@@ -143,6 +143,17 @@ namespace DumyatRuntime
                                  "soundtracks at once is never what was wanted.")]
         private bool _playAudio;
 
+        [Header("Brief — full-bleed video only")]
+        [SerializeField, Range(0f, 20f),
+         Tooltip("Seconds the title, caption and deck chrome stay up before fading away, leaving the " +
+                 "clip playing on its own.\n\nThe slide introduces itself, then gets out of the way — " +
+                 "so a video can be both labelled AND full screen, instead of choosing one. 0 keeps the " +
+                 "chrome up for the whole clip.")]
+        private float _briefSeconds = 4f;
+
+        [SerializeField, Range(0.1f, 3f), Tooltip("How long the fade itself takes.")]
+        private float _briefFadeSeconds = 0.6f;
+
         [Header("Caption")]
         [SerializeField, TextArea(2, 4), Tooltip("Shown in the lockup. Falls back to the slide Kicker.")]
         private string _caption;
@@ -162,6 +173,11 @@ namespace DumyatRuntime
         public TheatreFit TheatreFit => _theatreFit;
         public MediaWindow Window => _window;
         public bool AutoPlay => _autoPlay;
+
+        /// <summary>Seconds of chrome before it fades. 0 means it never does.</summary>
+        public float BriefSeconds => Mathf.Max(0f, _briefSeconds);
+
+        public float BriefFadeSeconds => Mathf.Clamp(_briefFadeSeconds, 0.1f, 3f);
         public bool Loop => _loop;
         public string Caption => string.IsNullOrEmpty(_caption) ? Kicker : _caption;
         public string CaptureBrief => _captureBrief;

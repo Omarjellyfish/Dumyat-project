@@ -59,12 +59,21 @@ namespace DumyatRuntime
         /// scene slides can all carry the dissolve for arriving in a new place, and moving within a place
         /// silently opts out. Deciding it here rather than per asset is what makes it correct in BOTH
         /// directions: walking backwards out of a place is just as much a place change as walking in.
+        ///
+        /// THE EXCEPTION: two angles of one stage are not always a small move. Where they point in
+        /// opposite directions — Home's skybox looks up and out, its fan looks straight up indoors — a
+        /// blend reads as the camera being flung across the room rather than as a move worth watching,
+        /// and a covering transition is the better answer. A destination slide can say so with
+        /// <see cref="SceneShowcaseSlideSO.ForceTransitionWithinStage"/>. It is opt-in per slide rather
+        /// than a distance heuristic because "far enough to need covering" is a judgement about the shot,
+        /// not about the numbers.
         /// </summary>
         public SlideTransitionSO ResolveTransition(SlideSO from, SlideSO to)
         {
             if (from is SceneShowcaseSlideSO a && to is SceneShowcaseSlideSO b &&
                 !string.IsNullOrEmpty(a.StageId) &&
-                string.Equals(a.StageId, b.StageId, System.StringComparison.OrdinalIgnoreCase))
+                string.Equals(a.StageId, b.StageId, System.StringComparison.OrdinalIgnoreCase) &&
+                !b.ForceTransitionWithinStage)
                 return null;
 
             return ResolveTransition(to);

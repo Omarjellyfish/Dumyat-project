@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415097fcf87d83b40bb69c6c788022fa, type: 3}
+  m_Name: Slide_47_Mech_AiPipeline
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.TextSlideSO
+  _sectionNumber: 6
+  _sectionName: Mechanics
+  _title: "Merchant AI \xB7 the pipeline"
+  _kicker: "Voice in, a haggle, voice out \u2014 with the money kept out of the model's
+    hands."
+  _speakerNotes: 
+  _titleEffects: 0
+  _kickerEffects: 0
+  _background: {fileID: 0}
+  _transitionIn: {fileID: 0}
+  _layout: 3
+  _posterTreatment: 0
+  _body: 
+  _bullets:
+  - Consent, then the microphone. Voice is opt-in, and a missing headset permission
+    is explained on the merchant's subtitle rather than failing silently.
+  - Speech to text. Munsit streams the player's Egyptian Arabic over a WebSocket
+    and returns one final transcript per utterance.
+  - 'One LLM call per turn returns three things: the merchant''s spoken line, the
+    action to take, and two scores for what the player meant.'
+  - "The money stays deterministic. PriceNegotiationCalculator owns the opening offer,
+    the per-turn deception roll and the final score \u2014 the model only colours
+    the tone."
+  - Intent is measured, never matched. Accepting and declining come from a scored
+    judgment against a threshold, because Egyptian-Arabic transcripts are far too
+    noisy for keyword checks.
+  - Nothing closes on a single turn. An accept or a decline has to be confirmed on
+    the next one, or the validator coerces it back into haggling.
+  - Text to speech. ElevenLabs voices the reply while the subtitle carries the Arabic
+    with an English line beneath it.
+  _readouts: []

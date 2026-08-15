@@ -36,14 +36,24 @@ namespace DumyatRuntime
         private readonly Transform _parent;
         private readonly List<Slot> _slots = new List<Slot>();
 
-        private readonly int _maxWidth;
-        private readonly float _supersample;
+        /// <summary>
+        /// Textures a slot has stopped using but which may still be referenced by draw commands already
+        /// submitted for this frame. They are destroyed on <see cref="Dispose"/> and never before.
+        ///
+        /// This list is the fix for a hard Editor crash. Releasing a RenderTexture the moment a slot
+        /// stopped needing it freed GPU memory that UI Toolkit still had bound as a background image,
+        /// and the render thread then crashed registering a shader resource view for it —
+        /// TexturesD3D12::AllocateAndCreateSRV, on the GfxDeviceWorker thread, under both the AMD and
+        /// NVIDIA drivers. A texture is cheap; a crash mid-presentation is not.
+        /// </summary>
+        private readonly List<RenderTexture> _retired = new List<RenderTexture>();
 
-        public VideoPlayerPool(Transform parent, int maxWidth, float supersample)
+        private readonly int _maxWidth;
+
+        public VideoPlayerPool(Transform parent, int maxWidth)
         {
             _parent = parent;
             _maxWidth = Mathf.Clamp(maxWidth, 256, 4096);
-            _supersample = Mathf.Clamp(supersample, 1f, 2f);
         }
 
         /// <summary>The first claimed player — what the progress bar and the time readout follow.</summary>
@@ -90,19 +100,28 @@ namespace DumyatRuntime
         /// <summary>
         /// A render texture carrying <paramref name="clip"/>, playing.
         ///
-        /// <paramref name="displayWidth"/> is how wide the clip will be drawn in the deck's 1920-wide
-        /// reference space — a full-bleed clip passes 1920, one tile of a 2x2 grid passes about 820.
+        /// The size comes from the CLIP, never from how wide it happens to be drawn. Sizing it to the
+        /// on-screen width meant every navigation between a grid tile and a full-bleed slide reallocated
+        /// the texture, which is what opened the use-after-free window described on <see cref="_retired"/>.
+        /// Clip-native is also simply better: the GPU downsamples with filtering when the tile is smaller,
+        /// whereas a tile-sized buffer throws the source detail away before it ever reaches the screen.
         /// </summary>
-        public RenderTexture Acquire(VideoClip clip, float displayWidth, bool loop, bool audio, bool autoPlay)
+        public RenderTexture Acquire(VideoClip clip, bool loop, bool audio, bool autoPlay)
         {
             if (clip == null) return null;
 
             Slot slot = Claim(clip);
-            Vector2Int size = TargetSize(clip, displayWidth);
+            Vector2Int size = TargetSize(clip);
 
             if (slot.Target == null || slot.Target.width != size.x || slot.Target.height != size.y)
             {
-                ReleaseTarget(slot);
+                // Stop BEFORE the target is taken away. A player left decoding into a texture that is
+                // being swapped out is the other half of the same crash.
+                if (slot.Player.clip != null) slot.Player.Stop();
+                slot.Player.targetTexture = null;
+
+                if (slot.Target != null) _retired.Add(slot.Target);
+
                 slot.Target = new RenderTexture(size.x, size.y, 0, RenderTextureFormat.ARGB32)
                 {
                     name = "RT_PresentationVideo_" + clip.name,
@@ -158,16 +177,14 @@ namespace DumyatRuntime
         }
 
         /// <summary>
-        /// Never larger than the source, never larger than the cap, never smaller than it is drawn.
-        /// Height follows the clip's own aspect so the texture itself never distorts anything.
+        /// The clip's own resolution, capped. Deterministic for a given clip, which is what makes the
+        /// allocation happen once and never again — and a texture that is never reallocated is a texture
+        /// that can never be freed while something is still drawing it.
         /// </summary>
-        private Vector2Int TargetSize(VideoClip clip, float displayWidth)
+        private Vector2Int TargetSize(VideoClip clip)
         {
-            int wanted = Mathf.RoundToInt(Mathf.Max(displayWidth, 1f) * _supersample);
-            int width = Mathf.Min(wanted, _maxWidth);
-
-            if (clip.width > 0) width = Mathf.Min(width, (int)clip.width);
-            width = Mathf.Clamp(width, 256, 4096);
+            int width = clip.width > 0 ? (int)clip.width : 1920;
+            width = Mathf.Clamp(Mathf.Min(width, _maxWidth), 256, 4096);
 
             float aspect = clip.height > 0 ? clip.width / (float)clip.height : 16f / 9f;
             int height = Mathf.Clamp(Mathf.RoundToInt(width / Mathf.Max(aspect, 0.01f)), 144, 4096);
@@ -200,24 +217,34 @@ namespace DumyatRuntime
             }
         }
 
+        /// <summary>
+        /// Tears the pool down. This is the ONLY place a render texture is released — by now the panel
+        /// is going away with it, so nothing can still be drawing one.
+        /// </summary>
         public void Dispose()
         {
             foreach (Slot s in _slots)
             {
-                ReleaseTarget(s);
+                if (s.Player != null)
+                {
+                    s.Player.Stop();
+                    s.Player.targetTexture = null;
+                }
+                Release(s.Target);
+                s.Target = null;
                 if (s.Host != null) Object.Destroy(s.Host);
             }
             _slots.Clear();
+
+            foreach (RenderTexture rt in _retired) Release(rt);
+            _retired.Clear();
         }
 
-        private static void ReleaseTarget(Slot slot)
+        private static void Release(RenderTexture rt)
         {
-            if (slot.Target == null) return;
-
-            if (slot.Player != null) slot.Player.targetTexture = null;
-            slot.Target.Release();
-            Object.Destroy(slot.Target);
-            slot.Target = null;
+            if (rt == null) return;
+            rt.Release();
+            Object.Destroy(rt);
         }
     }
 }

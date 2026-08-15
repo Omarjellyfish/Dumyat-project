@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 594278317}
   - component: {fileID: 594278319}
   - component: {fileID: 594278320}
+  - component: {fileID: 594278321}
   m_Layer: 0
   m_Name: Presentation Camera
   m_TagString: MainCamera
@@ -280,6 +281,14 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!81 &594278321
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594278316}
+  m_Enabled: 1
 --- !u!1 &1542779706
 GameObject:
   m_ObjectHideFlags: 0
@@ -367,6 +376,8 @@ GameObject:
   - component: {fileID: 1573189089}
   - component: {fileID: 1573189091}
   - component: {fileID: 1573189092}
+  - component: {fileID: 1573189093}
+  - component: {fileID: 1573189094}
   m_Layer: 0
   m_Name: Presentation Rig
   m_TagString: Untagged
@@ -446,6 +457,8 @@ MonoBehaviour:
   - {fileID: 1573189085}
   - {fileID: 1573189089}
   - {fileID: 1573189091}
+  - {fileID: 1573189093}
+  - {fileID: 1573189094}
 --- !u!114 &1573189078
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -475,6 +488,7 @@ MonoBehaviour:
   _notes: {fileID: 1573189080}
   _counter: {fileID: 1573189081}
   _media: {fileID: 1573189091}
+  _audio: {fileID: 1573189094}
   _quitHoldSeconds: 0.6
 --- !u!114 &1573189080
 MonoBehaviour:
@@ -671,7 +685,6 @@ MonoBehaviour:
   _view: {fileID: 1573189075}
   _quality: {fileID: 11400000, guid: 1477f742b411361488fc843213bd4314, type: 2}
   _maxVideoWidth: 1920
-  _videoSupersample: 1.5
 --- !u!114 &1573189092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -687,6 +700,33 @@ MonoBehaviour:
   _applyDisplaySettings: 1
   _targetFrameRate: 60
   _verbose: 1
+--- !u!114 &1573189093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1573189072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc5828dee57447a409ffb7b7f046feff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.DiagramSlideRenderer
+  _view: {fileID: 0}
+--- !u!114 &1573189094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1573189072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13eecb67c06361a40a00c84cd4497e7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.AudioCompareRenderer
+  _view: {fileID: 0}
+  _source: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

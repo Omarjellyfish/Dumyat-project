@@ -58,6 +58,7 @@ namespace DumyatEditor
         public static bool Apply(CameraAngleLibrarySO.Entry entry)
         {
             if (entry == null || string.IsNullOrEmpty(entry.AngleId)) return false;
+            if (AngleAuthoring.BlockedByPlayMode($"applying '{entry.AngleId}' to the scene")) return false;
 
             Scene scene = SceneManager.GetSceneByName(entry.SceneName);
             if (!scene.isLoaded) return false;

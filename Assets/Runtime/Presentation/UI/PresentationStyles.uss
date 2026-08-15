@@ -685,6 +685,23 @@
     -unity-background-scale-mode: scale-and-crop;
 }
 
+/* A STILL in this panel, rather than footage.
+ *
+ * The bare panel runs to the screen edge on purpose: footage is cropped to fill it and bleeding off
+ * the edge is the intent. A still is FITTED instead, so it lands exactly on that edge and reads as
+ * having collided with it. These insets give it the same margin the copy opposite has, and scale-to-fit
+ * centres it in what is left — so the picture sits in its half rather than being pushed against the
+ * frame. Slightly tighter at the top than the bottom, matching the text side, because optical centring
+ * wants a shade more air beneath. */
+/* MARGIN, not padding. A background image is painted across the element's padding box, so padding
+   shrinks nothing — the picture kept landing flush on the screen edge. Margin reduces the element's
+   own box, which is the only thing that moves a background image inward. */
+.media-split-pic--still {
+    margin-right: 96px;
+    margin-top: 72px;
+    margin-bottom: 84px;
+}
+
 /* Inset */
 .media-title {
     font-size: 68px;
@@ -991,6 +1008,214 @@
 
 .poster-rule.poster-in {
     width: 720px;
+}
+
+/* ---------- audio compare ----------
+ * Sizes are the design's container-percentages resolved against the 1920-wide reference: 7cqw of
+ * padding is 134px, an 11cqw ring is 211px, a 9cqw visualiser is 173px. Keeping them as reference
+ * pixels rather than percentages is what makes them agree with every other layout number in the deck. */
+.audio-host {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    padding-left: 134px;
+    padding-right: 134px;
+}
+
+/* Page title, matching the diagram slides' placement so the two AI slides and this one read as a set. */
+.audio-title {
+    position: absolute;
+    left: 134px;
+    top: 84px;
+    font-size: 60px;
+    color: rgb(234, 248, 251);
+}
+
+.audio-kicker {
+    position: absolute;
+    left: 134px;
+    top: 162px;
+    font-size: 30px;
+    color: rgba(214, 246, 250, 0.55);
+}
+
+.audio-lane {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 48px;
+    margin-bottom: 48px;
+}
+
+.audio-icon {
+    width: 211px;
+    height: 211px;
+    flex-shrink: 0;
+    margin-right: 61px;
+    border-top-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-top-left-radius: 106px;
+    border-top-right-radius: 106px;
+    border-bottom-left-radius: 106px;
+    border-bottom-right-radius: 106px;
+}
+
+.audio-body {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.audio-head {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 21px;
+}
+
+.audio-tag {
+    font-size: 36px;
+    letter-spacing: 8px;
+    -unity-font-style: bold;
+}
+
+.audio-time {
+    font-size: 34px;
+    color: rgba(214, 246, 250, 0.32);
+}
+
+.audio-viz {
+    flex-direction: row;
+    align-items: center;
+    height: 173px;
+}
+
+/* Bars share the row evenly; height is written per frame from the spectrum. */
+.audio-bar {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-left: 4px;
+    margin-right: 4px;
+    background-color: rgba(214, 246, 250, 0.32);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.audio-bar--live {
+    background-color: rgb(103, 221, 232);
+}
+
+.audio-lane--after .audio-bar {
+    background-color: rgba(141, 235, 175, 0.42);
+}
+
+.audio-lane--after .audio-bar--live {
+    background-color: rgb(141, 235, 175);
+}
+
+.audio-rail {
+    height: 5px;
+    margin-top: 21px;
+    background-color: rgba(120, 228, 236, 0.14);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.audio-rail-fill {
+    height: 5px;
+    width: 0;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.audio-divider {
+    height: 1px;
+    background-color: rgba(120, 228, 236, 0.16);
+}
+
+/* Lifted clear of the footer. The deck's own footer line sits at the bottom edge, and at the design's
+   original 77px these keys landed almost on top of "GTK · Dumyat". */
+.audio-hint {
+    position: absolute;
+    left: 134px;
+    bottom: 150px;
+    flex-direction: row;
+}
+
+.audio-key {
+    font-size: 33px;
+    color: rgba(214, 246, 250, 0.55);
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-color: rgba(120, 228, 236, 0.16);
+    border-bottom-color: rgba(120, 228, 236, 0.16);
+    border-left-color: rgba(120, 228, 236, 0.16);
+    border-right-color: rgba(120, 228, 236, 0.16);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding-left: 21px;
+    padding-right: 21px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-right: 46px;
+}
+
+/* ---------- diagram slides ----------
+ * The drawing itself is built in code from primitives — see DiagramIcons for why there is no other
+ * option. These rules only own the container and the one element that carries words. */
+.diagram-host {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.diagram-title {
+    position: absolute;
+    left: 120px;
+    top: 84px;
+    font-size: 60px;
+    color: rgb(234, 248, 251);
+}
+
+.diagram-pill {
+    position: absolute;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    justify-content: center;
+    padding-left: 30px;
+}
+
+.diagram-pill--filled {
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-right-width: 3px;
+}
+
+.diagram-pill-label {
+    font-size: 30px;
+    color: rgb(234, 248, 251);
 }
 
 /* ---------- title emphasis ----------

@@ -46,6 +46,36 @@ namespace DumyatRuntime
 
             // Put every stage to sleep on the way out, so a text slide is never drawn over a live scene.
             (_stages as StageRegistry)?.DeactivateAll();
+
+            // ...and stop the camera painting the SKYBOX once there is nothing left to paint.
+            //
+            // Deactivating the stages removes the geometry but not the sky: the camera stays enabled and
+            // keeps clearing to Skybox, so a stageless frame is a bare horizon. On the way to a media or
+            // text slide that sky flashes through wherever the slide's own ground has not covered it yet,
+            // which is what "the skybox shows sometimes" was. Clearing to a flat colour instead makes a
+            // stageless frame simply empty, which is what it should be. Show() puts the sky back.
+            BlankCamera();
+        }
+
+        /// <summary>
+        /// Makes the rendering camera clear to a flat colour rather than the skybox. Reversed by
+        /// <see cref="RestoreCameraSky"/> whenever a stage is live again.
+        /// </summary>
+        private void BlankCamera()
+        {
+            Camera cam = _camera != null ? _camera : Camera.main;
+            if (cam == null) return;
+
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = Color.black;
+        }
+
+        private void RestoreCameraSky()
+        {
+            Camera cam = _camera != null ? _camera : Camera.main;
+            if (cam == null) return;
+
+            cam.clearFlags = CameraClearFlags.Skybox;
         }
 
         public void Show(SlideSO slide, PresentationDeckSO deck)
@@ -65,6 +95,10 @@ namespace DumyatRuntime
             if (stage == null)
                 Debug.LogWarning($"[SceneShowcaseRenderer] '{slide.name}' wants stage " +
                                  $"'{scene.StageId}' which is not loaded — the frame will be empty.", this);
+
+            // A live stage wants its sky back — Hide() takes it away so a stageless frame is not a
+            // bare horizon, and this is the other end of that pair.
+            RestoreCameraSky();
 
             ApplyCullingMask(hiddenLayers);
             DrawLockup(scene, deck, stage);
