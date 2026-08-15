@@ -29,7 +29,7 @@ namespace DumyatRuntime
         }
 
         #region Music Logic
-        public void PlayMusic(AudioClip newClip, float fadeDuration = -1f)
+        public void PlayMusic(AudioClip newClip, float fadeDuration = -1f, float targetVolume = 1.0f)
         {
             if (newClip == null) return;
             if (_activeMusicSource.clip == newClip && _activeMusicSource.isPlaying) return;
@@ -40,7 +40,7 @@ namespace DumyatRuntime
 
             if (_currentMusicFadeCoroutine != null) StopCoroutine(_currentMusicFadeCoroutine);
 
-            _currentMusicFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
+            _currentMusicFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration, targetVolume));
             _activeMusicSource = fadingInSource;
         }
         public void StopMusic(float fadeDuration = -1f)
@@ -55,7 +55,7 @@ namespace DumyatRuntime
         #endregion
 
         #region Ambient Logic
-        public void PlayAmbient(AudioClip newClip, float fadeDuration = -1f)
+        public void PlayAmbient(AudioClip newClip, float fadeDuration = -1f, float targetVolume = 1.0f)
         {
             if (newClip == null) return;
 
@@ -67,7 +67,7 @@ namespace DumyatRuntime
             AudioSource fadingOutSource = _activeAmbientSource;
             if (_currentAmbientFadeCoroutine != null) StopCoroutine(_currentAmbientFadeCoroutine);
 
-            _currentAmbientFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration));
+            _currentAmbientFadeCoroutine = StartCoroutine(Crossfade(fadingOutSource, fadingInSource, newClip, duration, targetVolume));
             _activeAmbientSource = fadingInSource;
         }
         public void StopAmbient(float fadeDuration = -1f)
@@ -82,7 +82,7 @@ namespace DumyatRuntime
         #endregion
 
         // Generic crossfade coroutine used by both Music and Ambient systems
-        private IEnumerator Crossfade(AudioSource fadeOut, AudioSource fadeIn, AudioClip newClip, float duration)
+        private IEnumerator Crossfade(AudioSource fadeOut, AudioSource fadeIn, AudioClip newClip, float duration, float targetVolume = 1.0f)
         {
             fadeIn.clip = newClip;
             fadeIn.volume = 0f;
@@ -97,13 +97,13 @@ namespace DumyatRuntime
                 timeElapsed += Time.deltaTime;
                 float t = timeElapsed / duration;
 
-                fadeIn.volume = Mathf.Lerp(0f, 1f, t);
+                fadeIn.volume = Mathf.Lerp(0f, targetVolume, t);
                 fadeOut.volume = Mathf.Lerp(startVolumeFadeOut, 0f, t);
 
                 yield return null;
             }
 
-            fadeIn.volume = 1f;
+            fadeIn.volume = targetVolume;
             fadeOut.volume = 0f;
             fadeOut.Stop();
         }
