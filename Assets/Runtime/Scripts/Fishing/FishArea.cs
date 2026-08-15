@@ -34,10 +34,34 @@ namespace DumyatRuntime
         [Tooltip("How often (in seconds) to re-check which fish are inside the area bounds.")]
         public float leaveCheckInterval = 0.5f;
 
+        [Header("Depth")]
+        [Tooltip("How far below the TOP of this volume a fish may swim. The top of the box is the water " +
+                 "surface as far as the shoal is concerned, and patrol targets are clamped back into the " +
+                 "box with ClosestPoint — so without a clearance, every target drawn above the surface " +
+                 "lands exactly ON the ceiling and the shoal collects at the waterline in plain sight.")]
+        [SerializeField] private float _surfaceClearance = 2.5f;
+
         private float _leaveCheckTimer;
 
         /// <summary>How many fish are currently inside the area and available to take a hook.</summary>
         public int AvailableFishCount => _fishes.Count;
+
+        /// <summary>
+        /// The highest a fish will voluntarily swim — <see cref="_surfaceClearance"/> below the top of the
+        /// volume, and never below its floor. Only patrol obeys it: a fish invited to a hook still comes
+        /// all the way up, otherwise a bite near the surface could never be completed.
+        /// </summary>
+        private float SwimCeilingY
+        {
+            get
+            {
+                Bounds bounds = GetBounds();
+
+                // A clearance taller than the volume itself would put the ceiling under the floor, which
+                // would pin the whole shoal to the seabed.
+                return Mathf.Max(bounds.max.y - Mathf.Max(0f, _surfaceClearance), bounds.min.y);
+            }
+        }
 
         private void Awake()
         {
@@ -200,7 +224,7 @@ namespace DumyatRuntime
                 Random.Range(-halfSize.y, halfSize.y),
                 Random.Range(-halfSize.z, halfSize.z));
 
-            return _areaCollider.transform.TransformPoint(localPoint);
+            return ClampBelowSurface(_areaCollider.transform.TransformPoint(localPoint));
         }
 
         /// <summary>
@@ -215,7 +239,27 @@ namespace DumyatRuntime
 
             if (_areaCollider == null) return candidate;
 
-            return _areaCollider.ClosestPoint(candidate);
+            return ClampBelowSurface(_areaCollider.ClosestPoint(candidate));
+        }
+
+        /// <summary>
+        /// Bring a swim target back under the swim ceiling. Both point helpers hand out swim targets, so
+        /// the depth rule lives here once instead of at each call site.
+        /// </summary>
+        private Vector3 ClampBelowSurface(Vector3 point)
+        {
+            if (_areaCollider == null) return point;
+
+            float ceiling = SwimCeilingY;
+
+            if (point.y <= ceiling) return point;
+
+            // Reflect the target under the ceiling rather than clamping to it. A plain Mathf.Min would
+            // flatten every rejected target onto the same plane, and a shoal all holding one exact depth
+            // reads as a sheet of fish — which is the same artefact as swimming at the surface, moved
+            // down a few metres.
+            point.y = Mathf.Max(ceiling - (point.y - ceiling), _areaCollider.bounds.min.y);
+            return point;
         }
     }
 }
