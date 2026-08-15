@@ -33,6 +33,9 @@ namespace DumyatRuntime
         [Tooltip("How long it takes to fade into this track upon entering.")]
         [SerializeField] private float fadeDuration = 3.0f;
 
+        [Tooltip("Target volume for this ambient zone.")]
+        [SerializeField] private float volume = 0.6f;
+
         private IWorldAudioService _worldAudio;
 
         [Inject]
@@ -43,7 +46,7 @@ namespace DumyatRuntime
             if (other.CompareTag("Player"))
             {
                 Debug.Log("Player entered ambient zone");
-                _worldAudio?.PlayAmbient(zoneAmbience, fadeDuration);
+                _worldAudio?.PlayAmbient(zoneAmbience, fadeDuration, volume);
             }
         }
     }
