@@ -97,13 +97,19 @@ namespace DumyatRuntime
                 ProgressAccent,
                 evt.CurrentProgress,
                 evt.TargetCount,
-                $"quest-progress:{evt.QuestID}"));
+                ProgressKey(evt.QuestID)));
         }
 
         private void HandleCompleted(QuestCompletedEvent evt)
         {
             QuestDefinitionSO def = Resolve(evt.QuestID);
             if (def == null) return;
+
+            // Retire the progress card before raising the medal. The tick that finishes a quest is
+            // suppressed above, so without this the coalesced card is left holding the count BEFORE the
+            // finishing one — selling four fish into a "sell 4" quest sat on "3 / 4" while the medal
+            // waited its turn behind it, which reads as the quest having failed to register the sale.
+            _notifications?.Dismiss(ProgressKey(evt.QuestID));
 
             Enqueue(new NotificationData(
                 def.DisplayNameFor(Arabic),
@@ -116,6 +122,13 @@ namespace DumyatRuntime
         }
 
         // --- Helpers ----------------------------------------------------------------
+
+        /// <summary>
+        /// The coalesce key for one quest's progress card. Shared by the card and by the completion that
+        /// retires it — two copies of this string would drift apart and the medal would quietly stop
+        /// clearing the toast, which is a bug with no symptom until someone finishes a quest.
+        /// </summary>
+        private static string ProgressKey(string questID) => $"quest-progress:{questID}";
 
         private QuestDefinitionSO Resolve(string questID)
         {

@@ -55,6 +55,13 @@ namespace DumyatRuntime
             _instance.Clear();
         }
 
+        public void Dismiss(string coalesceKey)
+        {
+            // Same reasoning as Clear: with no HUD there is no card to retire.
+            if (_instance == null) return;
+            _instance.Dismiss(coalesceKey);
+        }
+
         /// <summary>
         /// Spawns the HUD on first use.
         ///

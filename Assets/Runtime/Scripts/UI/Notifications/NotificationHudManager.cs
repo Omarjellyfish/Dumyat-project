@@ -80,6 +80,11 @@ namespace DumyatRuntime
         // text changes with one second left would show the new number for one second.
         private float _holdElapsed;
 
+        // Set by Dismiss, cleared when the next card is built. Checked by both the fade-in and the hold
+        // loop, because a dismissal commonly arrives in the same frame the card was enqueued — the whole
+        // burst is published synchronously — and by then the card is already fading in.
+        private bool _dismissActive;
+
         // Shared comfort-cone follow, identical to the one driving the inventory panel.
         private readonly LazyFollowYaw _follow = new LazyFollowYaw();
 
@@ -137,6 +142,32 @@ namespace DumyatRuntime
         }
 
         public void Clear() => _queue.Clear();
+
+        /// <summary>
+        /// Retire everything carrying this key. See <see cref="INotificationService.Dismiss"/> for why.
+        ///
+        /// Unlike <see cref="TryReplace"/> this deliberately ignores the card's style: the point is to
+        /// clear a stale progress toast on behalf of a completion medal, and those are different styles
+        /// by definition.
+        /// </summary>
+        public void Dismiss(string coalesceKey)
+        {
+            if (string.IsNullOrEmpty(coalesceKey)) return;
+
+            for (int i = _queue.Count - 1; i >= 0; i--)
+            {
+                if (_queue[i].CoalesceKey == coalesceKey) _queue.RemoveAt(i);
+            }
+
+            if (_active == null || _activeData.CoalesceKey != coalesceKey) return;
+
+            // Flag it rather than tearing the card out from under the animation: the playback loop reads
+            // this every frame and leaves through its normal fade-out, from whatever alpha it had
+            // reached. A dismissal usually lands in the same frame the card was built, so "fade out from
+            // here" is what keeps a one-action burst from flashing a toast before its medal.
+            _dismissActive = true;
+            _activeReplaceable = false;
+        }
 
         /// <summary>
         /// Supersedes an earlier card carrying the same <see cref="NotificationData.CoalesceKey"/> —
@@ -227,6 +258,7 @@ namespace DumyatRuntime
                 _follow.Reanchor();      // snap the fresh card into the current view, then world-anchor
                 _activeData = data;
                 _activeReplaceable = true;
+                _dismissActive = false;
                 _cardAlpha = 0f;
                 _active.Build(data);
                 if (_active.GroupHandle == null) { _activeReplaceable = false; yield return null; continue; }
@@ -237,7 +269,7 @@ namespace DumyatRuntime
 
                 // Fade + slide + scale in (unscaled, so a paused game still animates it).
                 float t = 0f;
-                while (t < FadeIn)
+                while (t < FadeIn && !_dismissActive)
                 {
                     t += Time.unscaledDeltaTime;
                     float k = Mathf.Clamp01(t / FadeIn);
@@ -252,17 +284,23 @@ namespace DumyatRuntime
                     }
                     yield return null;
                 }
-                _cardAlpha = 1f;
-                ApplyAlpha(1f);
-                if (_active.ContentHandle != null)
+                // Snapping to the settled pose is only right for a card that finished arriving. A card
+                // dismissed mid-fade-in must leave from where it got to, or it flashes to full opacity
+                // on its way out.
+                if (!_dismissActive)
                 {
-                    _active.ContentHandle.localScale = Vector3.one;
-                    _active.ContentHandle.anchoredPosition = Vector2.zero;
+                    _cardAlpha = 1f;
+                    ApplyAlpha(1f);
+                    if (_active.ContentHandle != null)
+                    {
+                        _active.ContentHandle.localScale = Vector3.one;
+                        _active.ContentHandle.anchoredPosition = Vector2.zero;
+                    }
                 }
 
                 // Hold + countdown bar. _holdElapsed is a field so a coalesced update can restart it.
                 _holdElapsed = 0f;
-                while (_holdElapsed < _holdSeconds)
+                while (_holdElapsed < _holdSeconds && !_dismissActive)
                 {
                     _holdElapsed += Time.unscaledDeltaTime;
                     _active.SetProgress(1f - _holdElapsed / _holdSeconds);
@@ -273,11 +311,16 @@ namespace DumyatRuntime
                 // Fade out. The card is leaving, so it stops accepting in-place updates here.
                 _activeReplaceable = false;
                 t = 0f;
+
+                // From wherever the card actually is, not from opaque: a dismissed card can leave from
+                // part-way through its fade-in.
+                float fadeFrom = _cardAlpha;
+
                 while (t < FadeOut)
                 {
                     t += Time.unscaledDeltaTime;
                     float k = Mathf.Clamp01(t / FadeOut);
-                    _cardAlpha = 1f - k;
+                    _cardAlpha = fadeFrom * (1f - k);
                     ApplyAlpha(_cardAlpha);
                     RectTransform c = _active.ContentHandle;
                     if (c != null) c.localScale = Vector3.one * Mathf.Lerp(1f, 0.98f, k);
