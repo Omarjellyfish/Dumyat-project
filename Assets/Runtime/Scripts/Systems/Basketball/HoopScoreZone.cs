@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Reflex.Attributes;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace DumyatRuntime
 {
@@ -30,18 +31,18 @@ namespace DumyatRuntime
                  "the rim's own radius. A ball that physically fits through is geometrically limited to " +
                  "(rim inner radius − ball radius); set this a little above that so a real basket is " +
                  "never missed, and far below the rim radius so a ball deflecting down OUTSIDE the ring " +
-                 "is rejected. Home hoop: rim inner 0.233, ball radius 0.168, so 0.065 is the maximum " +
-                 "and 0.09 is the tolerant setting.")]
-        [SerializeField] private float _scoreRadius = 0.09f;
+                 "is rejected. Home hoop: rim inner 0.229, ball radius 0.12, so 0.109 is the maximum " +
+                 "and 0.1 is the tolerant setting.")]
+        [SerializeField] private float _scoreRadius = 0.1f;
 
         [Tooltip("Height of the rim plane relative to this transform. Leave at 0 when the transform sits " +
                  "on the rim itself.")]
         [SerializeField] private float _rimPlaneOffset;
 
         [Header("Rules")]
-        [Tooltip("Ignore balls that are still held. Without this the player can carry the ball through " +
-                 "the hoop by hand and farm baskets — XR grab makes the Rigidbody kinematic while held, " +
-                 "which is what this detects.")]
+        [Tooltip("Ignore balls that are still held. Without this the player can carry the ball down " +
+                 "through the hoop by hand and farm baskets. Detected by asking the ball's interactable " +
+                 "whether a hand has it selected, so it holds for every XR grab movement type.")]
         [SerializeField] private bool _ignoreHeldBalls = true;
 
         [Tooltip("Seconds before the same ball can score again. Stops a ball that settles in the net and " +
@@ -63,6 +64,12 @@ namespace DumyatRuntime
         // are tracked, so the per-step cost is proportional to balls in the hoop, not balls in the scene.
         private readonly Dictionary<Rigidbody, Vector3> _lastCentre = new Dictionary<Rigidbody, Vector3>();
         private readonly Dictionary<Rigidbody, float> _nextScoreTime = new Dictionary<Rigidbody, float>();
+
+        // Ball -> the interactable that answers "does a hand have hold of this right now". Resolved once
+        // when the ball enters the trigger rather than every physics step, because GetComponentInChildren
+        // walks the hierarchy and the answer cannot change for the lifetime of the ball.
+        private readonly Dictionary<Rigidbody, XRBaseInteractable> _grabbable =
+            new Dictionary<Rigidbody, XRBaseInteractable>();
 
         // Scratch buffer, reused every step: the dictionary cannot be mutated while it is being
         // enumerated, so the keys are copied out first. A field rather than a local to keep FixedUpdate
@@ -110,6 +117,9 @@ namespace DumyatRuntime
             // Seed the previous sample on entry, so the first FixedUpdate compares against a real
             // position rather than against Vector3.zero and reports a spurious crossing.
             _lastCentre[body] = body.worldCenterOfMass;
+
+            if (!_grabbable.ContainsKey(body))
+                _grabbable[body] = body.GetComponentInChildren<XRBaseInteractable>();
         }
 
         private void OnTriggerExit(Collider other)
@@ -117,6 +127,7 @@ namespace DumyatRuntime
             Rigidbody body = other.attachedRigidbody;
             if (body == null) return;
             _lastCentre.Remove(body);
+            _grabbable.Remove(body);
         }
 
         private void FixedUpdate()
@@ -129,7 +140,7 @@ namespace DumyatRuntime
             foreach (Rigidbody body in _tracked)
             {
                 // A ball destroyed or pooled while inside the trigger never raises OnTriggerExit.
-                if (body == null) { _lastCentre.Remove(body); continue; }
+                if (body == null) { _lastCentre.Remove(body); _grabbable.Remove(body); continue; }
 
                 Vector3 previous = _lastCentre[body];
                 Vector3 current = body.worldCenterOfMass;
@@ -154,7 +165,7 @@ namespace DumyatRuntime
             // Strictly above then at-or-below: a ball sitting exactly on the plane cannot re-trigger.
             if (previous.y <= rimY || current.y > rimY) return false;
 
-            if (_ignoreHeldBalls && body.isKinematic) return false;
+            if (_ignoreHeldBalls && IsHeld(body)) return false;
 
             if (_nextScoreTime.TryGetValue(body, out float readyAt) && Time.time < readyAt) return false;
 
@@ -167,6 +178,26 @@ namespace DumyatRuntime
             float dx = crossing.x - centre.x;
             float dz = crossing.z - centre.z;
             return dx * dx + dz * dz <= _scoreRadius * _scoreRadius;
+        }
+
+        /// <summary>
+        /// True while a hand has hold of this ball.
+        ///
+        /// Deliberately NOT <c>body.isKinematic</c>. XRI only forces a held Rigidbody kinematic for the
+        /// Kinematic and Instantaneous movement types; Velocity Tracking — which the Home ball uses, so
+        /// that a carried ball still collides with the world — leaves it dynamic the whole time it is
+        /// held. Against that, a kinematic test is always false and the guard silently does nothing:
+        /// the player can walk the ball down through the ring and farm baskets. Asking the interactable
+        /// whether it is selected is true for every movement type.
+        /// </summary>
+        private bool IsHeld(Rigidbody body)
+        {
+            if (_grabbable.TryGetValue(body, out XRBaseInteractable grab) && grab != null)
+                return grab.isSelected;
+
+            // A scoreable prop with no interactable on it cannot be picked up, so the only way it could
+            // be under external control is a script driving it kinematically.
+            return body.isKinematic;
         }
 
         private void RegisterBasket(Rigidbody body, Vector3 crossing)
