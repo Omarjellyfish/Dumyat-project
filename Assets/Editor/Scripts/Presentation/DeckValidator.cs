@@ -242,10 +242,13 @@ namespace DumyatEditor
 
             switch (media.Layout)
             {
-                case MediaSlideLayout.Grid when withContent < 2:
+                // Only a grid with NOTHING ELSE on it is really a FullBleed in disguise. A single tile
+                // under a heading is a legitimate composition — it is how a run of sprint slides keeps
+                // one shape whether a sprint produced one clip or four — so the warning would be wrong.
+                case MediaSlideLayout.Grid when withContent < 2 && string.IsNullOrEmpty(slide.Title):
                     findings.Add(new Finding(Severity.Warning,
-                        $"{where} ('{slide.name}'): layout is Grid with {withContent} item(s). " +
-                        "A one-tile grid is a FullBleed slide with extra margins.", slide));
+                        $"{where} ('{slide.name}'): layout is Grid with {withContent} item(s) and no " +
+                        "title. With nothing above it, that is a FullBleed slide with extra margins.", slide));
                     break;
 
                 case MediaSlideLayout.Theatre when media.Primary.Clip == null:

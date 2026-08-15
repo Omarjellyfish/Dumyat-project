@@ -25,11 +25,18 @@ namespace DumyatRuntime
         private const float RefWidth = 1920f;
         private const float RefHeight = 1080f;
 
-        /// <summary>Margins of the area the grid may use, clear of the title above and the rail below.</summary>
+        /// <summary>
+        /// Margins of the area the grid may use, clear of the heading above and the rail below.
+        ///
+        /// The top margin is tight on purpose. A 2x2 of 16:9 tiles is HEIGHT-limited in a 16:9 frame —
+        /// every pixel taken off the top is width the tiles can actually use — and at the original 330
+        /// the four tiles came out barely a quarter of the screen with a third of the width empty either
+        /// side. The heading moved up to match, so nothing is squeezed.
+        /// </summary>
         private const float GridSideMargin = 120f;
-        private const float GridTopWithTitle = 330f;
+        private const float GridTopWithTitle = 250f;
         private const float GridTopBare = 140f;
-        private const float GridBottomMargin = 160f;
+        private const float GridBottomMargin = 120f;
         private const float GridGap = 24f;
 
         [SerializeField] private PresentationView _view;
