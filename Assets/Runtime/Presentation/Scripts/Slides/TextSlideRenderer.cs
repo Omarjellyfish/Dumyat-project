@@ -26,6 +26,9 @@ namespace DumyatRuntime
         {
             if (_view == null || !_view.IsReady) return;
             _view.TextSlide.AddToClassList("hidden");
+
+            // A Bare slide took the footer and rail away; the renderer that follows must not inherit it.
+            SlideChrome.SetVisible(_view, true);
         }
 
         public void Show(SlideSO slide, PresentationDeckSO deck)
@@ -37,11 +40,24 @@ namespace DumyatRuntime
                 return;
             }
 
-            _view.TextSlide.RemoveFromClassList("hidden");
             ApplyTheme(deck != null ? deck.Theme : null);
             ResetPoster();
 
             TextSlideLayout layout = text.Layout;
+
+            // ---- bare: the background is the whole slide ----
+            // The tree itself goes, rather than each label in turn, so a part added to the UXML later
+            // cannot survive here. Chrome is set on EVERY layout and not only in Hide(), because the
+            // registry skips Hide() between two text slides — see SlideChrome.
+            bool isBare = layout == TextSlideLayout.Bare;
+            _view.TextSlide.EnableInClassList("hidden", isBare);
+            SlideChrome.SetVisible(_view, !isBare);
+            if (isBare)
+            {
+                _view.TextSlide.RemoveFromClassList("poster");
+                return;
+            }
+
             bool isDivider = layout == TextSlideLayout.SectionDivider;
             bool isTitleOnly = layout == TextSlideLayout.TitleOnly;
 

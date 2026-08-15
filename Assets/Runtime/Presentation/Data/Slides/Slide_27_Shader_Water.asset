@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2f81c3137dce5b84a9ddf33c275d7e29, type: 3}
+  m_Script: {fileID: 11500000, guid: 8db4ece192515be42a2d77cb71da439a, type: 3}
   m_Name: Slide_27_Shader_Water
-  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.SceneShowcaseSlideSO
+  m_EditorClassIdentifier: Project.Runtime::DumyatRuntime.MediaSlideSO
   _sectionNumber: 4
   _sectionName: Art Showcase
   _title: "Shaders \xB7 water"
@@ -20,12 +20,28 @@ MonoBehaviour:
     are alpha 0 and its normal detail fades past 6.5 units, so it only reads against
     geometry \u2014 a bare surface close-up renders as a flat dark rectangle. Angle
     'waterclose' is left for hand-framing."
+  _titleEffects: 0
+  _kickerEffects: 0
   _background: {fileID: 0}
-  _transitionIn: {fileID: 11400000, guid: 0a6125f12b98d164c993dd941f557ef5, type: 2}
-  _stageId: RasElBar
-  _angleId: waterline
-  _placeName: "Shaders \xB7 water"
-  _placeNameArabic: "\u0627\u0644\u0645\u064A\u0647"
-  _caption: "Barzakh water against the breakwater \u2014 where the surface, its foam
-    and the contact line read."
-  _showAnglePips: 0
+  _transitionIn: {fileID: 0}
+  _layout: 3
+  _items:
+  - Clip: {fileID: 32900000, guid: 59d311bbbced57a4d8feefc07d4d4776, type: 3}
+    Still: {fileID: 0}
+    Caption: 
+  _gridColumns: 0
+  _theatreFit: 0
+  _window:
+    Focus: {x: 0.5, y: 0.5}
+    Zoom: 1
+    Anchor: 5
+    Size: {x: 0.36, y: 0.82}
+    Corner: 22
+  _autoPlay: 1
+  _loop: 1
+  _playAudio: 0
+  _briefSeconds: 4
+  _briefFadeSeconds: 0.6
+  _caption: Barzakh shader control overview
+  _captureBrief: Barzakh shader control overview
+  _captureLength: "20\u201330 s"

@@ -195,6 +195,12 @@ namespace DumyatEditor
                         $"{where} ('{slide.name}'): layout is {text.Layout} but there are no bullets.", slide));
                     break;
 
+                case TextSlideLayout.Bare:
+                    findings.Add(new Finding(Severity.Info,
+                        $"{where} ('{slide.name}'): layout is Bare — the background is the whole slide, " +
+                        "so its title, kicker, the footer and the progress rail are not drawn.", slide));
+                    break;
+
                 case TextSlideLayout.TwoColumn when text.Bullets.Count < 4:
                     findings.Add(new Finding(Severity.Info,
                         $"{where} ('{slide.name}'): only {text.Bullets.Count} bullets in TwoColumn — " +

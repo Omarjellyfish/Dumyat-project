@@ -8,16 +8,21 @@ namespace DumyatRuntime
     ///
     /// WHY THIS IS A BACKGROUND AND NOT A FIELD ON THE SLIDE:
     /// a background is already defined as "what sits behind a slide's type", and every slide already
-    /// resolves one. Putting the poster art here means the opening slide keeps its oversized title, its
-    /// kicker, its hairline and its one-off reveal with NOTHING in <see cref="TextSlideSO"/> or the text
-    /// renderer changed — the artwork is simply what the backdrop is painted with. Any other slide can
-    /// have one by assigning a second asset.
+    /// resolves one. Putting the artwork here means a slide keeps its whole composition — title,
+    /// kicker, hairline, reveal — with NOTHING in <see cref="TextSlideSO"/> or the text renderer
+    /// changed; the artwork is simply what the backdrop is painted with. Any slide can have one by
+    /// assigning a second asset.
     ///
-    /// THE VEIL IS NOT OPTIONAL POLISH:
+    /// THE VEIL IS NOT OPTIONAL POLISH WHEN THERE IS TYPE OVER IT:
     /// pale type over an unmodified photograph is unreadable at the back of a room, and this deck's type
     /// is deliberately light-weight. The veil is a three-stop vertical ramp so the darkening can sit
     /// where the type is — heavy at the top and bottom, clear through the middle — instead of flattening
     /// the whole image to make one line legible.
+    ///
+    /// The one case where all three stops are 0 is an image carrying NO type: an authored poster
+    /// (BG_Poster, behind the Bare opening slide) is already a finished composition, and darkening it
+    /// for lettering that is not drawn only dulls the artwork. Zeroed stops skip the ramp entirely
+    /// rather than generating a transparent texture to draw — see <see cref="CreateVeil"/>.
     /// </summary>
     [CreateAssetMenu(fileName = "BG_Image", menuName = "Dumyat/Presentation/Background/Image")]
     public sealed class ImageBackgroundSO : SlideBackgroundSO

@@ -57,6 +57,19 @@ namespace DumyatRuntime
 
         /// <summary>As Bullets, but the list is split into two columns. Doubles as the contents page.</summary>
         TwoColumn = 4,
+
+        /// <summary>
+        /// No type and no chrome at all — the background IS the slide.
+        ///
+        /// For an authored poster: it is already a finished composition, and a title, a hairline, a
+        /// footer or a progress rail laid over it is damage rather than furniture. The slide's Title
+        /// and Kicker stay authored so the asset still says what it is in the Inspector and the deck
+        /// validator can still name it; Bare simply does not draw them.
+        ///
+        /// Pair it with an <see cref="ImageBackgroundSO"/> whose veil stops are all 0, or the image
+        /// still gets darkened for type that is no longer there.
+        /// </summary>
+        Bare = 5,
     }
 
     /// <summary>A label-and-value pair shown as a right-aligned figure rather than a badge.</summary>

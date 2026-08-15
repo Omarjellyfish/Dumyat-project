@@ -608,16 +608,11 @@ namespace DumyatRuntime
             _host.Add(cap);
         }
 
-        private void HideChrome()
-        {
-            _view.Footer?.AddToClassList("hidden");
-            _view.ProgressTrack?.AddToClassList("hidden");
-        }
+        private void HideChrome() => SlideChrome.SetVisible(_view, false);
 
         private void ShowChrome()
         {
-            _view.Footer?.RemoveFromClassList("hidden");
-            _view.ProgressTrack?.RemoveFromClassList("hidden");
+            SlideChrome.SetVisible(_view, true);
             ClearBriefFade();
         }
 
