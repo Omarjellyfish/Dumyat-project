@@ -17,14 +17,28 @@ MonoBehaviour:
   _title: AI haggling, out loud, in Egyptian Arabic
   _kicker: 
   _speakerNotes: "Footage pending \u2014 see the capture card on screen."
+  _titleEffects: 0
+  _kickerEffects: 0
   _background: {fileID: 0}
   _transitionIn: {fileID: 0}
   _layout: 0
-  _clip: {fileID: 0}
-  _stills: []
+  _items:
+  - Clip: {fileID: 32900000, guid: ffca1644350e55146832fe39d798fff6, type: 3}
+    Still: {fileID: 21300000, guid: ec1c6c0093f522641b3e840feb2a4ca6, type: 3}
+    Caption: Preview of selling Demo
+  _gridColumns: 0
+  _theatreFit: 0
+  _window:
+    Focus: {x: 0.5, y: 0.5}
+    Zoom: 1
+    Anchor: 5
+    Size: {x: 0.36, y: 0.82}
+    Corner: 22
   _autoPlay: 1
   _loop: 1
   _playAudio: 0
+  _briefSeconds: 4
+  _briefFadeSeconds: 0.6
   _caption: "Speech to text, an LLM in character, spoken reply \u2014 with deterministic
     C# owning the money."
   _captureBrief: "The headline demo. Speak a haggle in Egyptian Arabic and let the
